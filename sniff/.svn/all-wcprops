@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 28
+/svn/rfbus/!svn/ver/50/sniff
+END
+db.py
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/rfbus/!svn/ver/43/sniff/db.py
+END
+sniff.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/rfbus/!svn/ver/11/sniff/sniff.py
+END
+xbus_types.py
+K 25
+svn:wc:ra_dav:version-url
+V 42
+/svn/rfbus/!svn/ver/44/sniff/xbus_types.py
+END
+h2.py
+K 25
+svn:wc:ra_dav:version-url
+V 34
+/svn/rfbus/!svn/ver/50/sniff/h2.py
+END
+meteo.py
+K 25
+svn:wc:ra_dav:version-url
+V 37
+/svn/rfbus/!svn/ver/43/sniff/meteo.py
+END
+mpl115.py
+K 25
+svn:wc:ra_dav:version-url
+V 38
+/svn/rfbus/!svn/ver/44/sniff/mpl115.py
+END
+xbus.py
+K 25
+svn:wc:ra_dav:version-url
+V 36
+/svn/rfbus/!svn/ver/49/sniff/xbus.py
+END
