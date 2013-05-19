@@ -1,0 +1,106 @@
+XBDEVNAME=\""METEO1"\"
+SVN:=\""$(shell svnversion -n .)"\"
+
+
+OBJ=obj
+SRC=src
+XBDEVNAME=\""METEO1"\"
+SVN:=\""$(shell svnversion -n .)"\"
+
+GLIB=../glib
+GCC=msp430-gcc
+LD=msp430-ld
+XBID=0x11
+XBNET=25
+CFLAGS=-O0 -I${SRC} -I${GLIB} -DXB_ID=${XBID}  -DXB_NET=${XBNET} -DMHZ_868 -DSPI_UEXT -Wfatal-errors -mmcu=cc430f5137 -g -DMCLK_4MHZ_DCO -DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN}
+
+CCFLAGS=-c ${CFLAGS}
+
+LD=msp430-ld
+OD=msp430-objdump -dt
+
+LIBS=${GLIB}/spi.c ${GLIB}/LCD1x9.c ${GLIB}/hal_pmm.c ${GLIB}/RF1A.c  \
+	${GLIB}/RfRegSettings.c  ${GLIB}/rtc.c ${GLIB}/xbus.c\
+	${GLIB}/modtc.c  ${GLIB}/timera.c
+
+LIBOBJS=${GLIB}/spi.o ${GLIB}/LCD1x9.o ${GLIB}/hal_pmm.o ${GLIB}/RF1A.o  \
+	${GLIB}/RfRegSettings.o  ${GLIB}/rtc.o ${GLIB}/xbus.o\
+	${GLIB}/modtc.o  ${GLIB}/timera.o ${GLIB}/clock.o  ${GLIB}/adc.o\
+	${GLIB}/squeue.o  ${GLIB}/glib.o ${GLIB}/xqueues.o ${GLIB}/i2c.o\
+	${GLIB}/sht21.o ${GLIB}/mpl115a2.o
+#	${GLIB}/modtc.o  ${GLIB}/timera.o ${GLIB}/clock.o
+
+
+SOURCES=${SRC}/main.c
+
+
+OBJS=${SRC}/main.o
+
+
+
+BIN=bin
+LST=lst
+ALL: BIN LST
+
+CLEAN:
+	rm  ${BIN} ${LST}  ${OBJS}  ${LIBOBJS}
+
+BIN: ${OBJS} ${LIBOBJS}
+	${GCC} -Os ${CFLAGS} ${OBJS}  ${LIBOBJS} -o ${BIN}
+
+#BIN: ${SOURCES} ${LIBS}
+#	${GCC} -Os ${CCFLAGS}    ${SOURCES}  ${LIBS} -o ${BIN}
+
+#BIN: ${OBJS}
+#	${GCC} ${CCFLAGS}   --Wfatal-errors  ${OBJS}  -o ${BIN}
+
+LST: ${BIN}
+	${OD} ${BIN} > ${LST}
+
+
+${SRC}/main.o :	${SRC}/main.c
+	 ${GCC} ${CCFLAGS} ${SRC}/main.c -o ${SRC}/main.o
+
+${GLIB}/spi.o :	${GLIB}/spi.c
+	${GCC} ${CCFLAGS} ${GLIB}/spi.c -o ${GLIB}/spi.o
+
+${GLIB}/LCD1x9.o :	${GLIB}/LCD1x9.c
+	${GCC} ${CCFLAGS} ${GLIB}/LCD1x9.c -o ${GLIB}/LCD1x9.o
+
+${GLIB}/hal_pmm.o :	${GLIB}/hal_pmm.c
+	${GCC} ${CCFLAGS} ${GLIB}/hal_pmm.c -o ${GLIB}/hal_pmm.o
+${GLIB}/RF1A.o :	${GLIB}/RF1A.c
+	${GCC} ${CCFLAGS} ${GLIB}/RF1A.c -o ${GLIB}/RF1A.o
+${GLIB}/RfRegSettings.o :	${GLIB}/RfRegSettings.c
+	${GCC} ${CCFLAGS} ${GLIB}/RfRegSettings.c -o ${GLIB}/RfRegSettings.o
+${GLIB}/rtc.o :	${GLIB}/rtc.c ${GLIB}/rtc.h
+	${GCC} ${CCFLAGS} ${GLIB}/rtc.c -o ${GLIB}/rtc.o
+${GLIB}/xbus.o :	${GLIB}/xbus.c 	${GLIB}/xbus.h  ${GLIB}/rtc.h
+	${GCC} ${CCFLAGS} ${GLIB}/xbus.c -o ${GLIB}/xbus.o
+${GLIB}/modtc.o :	${GLIB}/modtc.c
+	${GCC} ${CCFLAGS} ${GLIB}/modtc.c -o ${GLIB}/modtc.o
+${GLIB}/timera.o :	${GLIB}/timera.c
+	${GCC} ${CCFLAGS} ${GLIB}/timera.c -o ${GLIB}/timera.o
+${GLIB}/clock.o :	${GLIB}/clock.c
+	${GCC} ${CCFLAGS} ${GLIB}/clock.c -o ${GLIB}/clock.o
+
+${GLIB}/adc.o :	${GLIB}/adc.c
+	${GCC} ${CCFLAGS} ${GLIB}/adc.c -o ${GLIB}/adc.o
+
+${GLIB}/squeue.o :	${GLIB}/squeue.c ${GLIB}/squeue.h
+	${GCC} ${CCFLAGS} ${GLIB}/squeue.c -o ${GLIB}/squeue.o
+
+${GLIB}/glib.o :	${GLIB}/glib.c ${GLIB}/glib.h
+	${GCC} ${CCFLAGS} ${GLIB}/glib.c -o ${GLIB}/glib.o
+
+${GLIB}/xqueues.o :	${GLIB}/xqueues.c ${GLIB}/xqueues.h
+	${GCC} ${CCFLAGS} ${GLIB}/xqueues.c -o ${GLIB}/xqueues.o
+
+${GLIB}/i2c.o :	${GLIB}/i2c.c ${GLIB}/i2c.h
+	${GCC} ${CCFLAGS} ${GLIB}/i2c.c -o ${GLIB}/i2c.o
+
+${GLIB}/sht21.o :	${GLIB}/sht21.c ${GLIB}/sht21.h
+	${GCC} ${CCFLAGS} ${GLIB}/sht21.c -o ${GLIB}/sht21.o
+
+${GLIB}/mpl115a2.o :	${GLIB}/mpl115a2.c ${GLIB}/mpl115a2.h
+	${GCC} ${CCFLAGS} ${GLIB}/mpl115a2.c -o ${GLIB}/mpl115a2.o

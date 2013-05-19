@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 33
+/svn/rfbus/!svn/ver/46/meteo1/src
+END
+main.c
+K 25
+svn:wc:ra_dav:version-url
+V 40
+/svn/rfbus/!svn/ver/46/meteo1/src/main.c
+END
+spi_pin_def.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/rfbus/!svn/ver/38/meteo1/src/spi_pin_def.h
+END
+i2c_pin_def.h
+K 25
+svn:wc:ra_dav:version-url
+V 47
+/svn/rfbus/!svn/ver/42/meteo1/src/i2c_pin_def.h
+END
