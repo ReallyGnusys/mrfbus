@@ -77,8 +77,8 @@ typedef struct  __attribute__ ((packed)){
 } XB_FULLACK_BUFF;
 
 
-
 static volatile XB_FULLACK_BUFF _xb_ack_buff;
+
 //static volatile uint8 ack_data[sizeof(XB_PKT_STATS)];  // enough to take stats
 
 static unsigned char rx_buffer_Length = 0;
@@ -211,7 +211,7 @@ void _response_info(){
   for ( i = 0 ; i < sizeof(XB_PKT_STATS) ; i++){
     destptr[i] = statsptr[i];
     //_xb_ack_buff.ack_data[i] = statsptr[i];
-  }
+   }
  
 }
 
@@ -326,18 +326,6 @@ int xbus_is_idle(){
   return _xb_tx_rdy() && !xq_tx_data_avail();
 }
 
-void _xb_receive_enable(void){
-  RF1AIES |= BIT9;                          // Falling edge of RFIFG9
-  RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
-  RF1AIE  |= BIT9;                          // Enable the interrupt 
-  
-  // Radio is in IDLE following a TX, so strobe SRX to enter Receive Mode
-  // _xb_state = XB_ST_RX;
-  // Strobe( RF_SFRX  );    
-  Strobe( RF_SIDLE );
-  Strobe(RF_SFRX);
-  Strobe( RF_SRX );      
-}
 
 void xb_receive_on(void)
 {  
@@ -386,6 +374,7 @@ unsigned char GetRF1ASTATB(void){
 
 int _TIMEXXX;
 uint8 _STATXXX;
+
 
 uint8 xbus_copy_stats(uint8 *buffer){
   uint8 i;
@@ -602,11 +591,7 @@ void _xb_hub_tick(){
     xq_utx_pop(NULL);
 
   }
-
-1
 #endif
-
-
 }
 
 #define TX_MAX_RETRIES 3
@@ -726,7 +711,7 @@ typedef enum {
   XB_TX_FAIL} XB_TX_RESULT;
 
 
-
+/*segment ack check*/
 int _xb_check_sack(XB_RX_BUFF *rx_buff){
 
   if (rx_buff->hdr.msgid != _xb_tx_buff.hdr.msgid)
@@ -787,8 +772,6 @@ XB_TX_STATUS _xbus_transmit(uint8 dest, uint8 type,uint8 *xdata){
   _xb_tx_buff.hdr.udest = dest;
   _xb_tx_buff.hdr.type = type;
   _xb_tx_buff.hdr.msgid++;
- 
-    
  
   dptr = (uint8 *)&_xb_tx_buff.td;
  
@@ -904,24 +887,19 @@ void mon_dbg(){
 RX_PKT_INFO rx_pkt_info;
 
 
-int xb_rx_intr()
+// called by xb_hw.c interrupt handlers
+
+int xb_process_packet(uint8 *buff)
 {
   int len,result;
   uint8 pkt_code,pkt_vflags;
   XB_CMD_FUNC cmd_func;
   uint16 cflags;
-  if (_xb_state == XB_ST_IDLE){
-    xb_hw_idle();
-    return -1;
-  }
-  if(xb_hw_rd_rx_fifo(&_xb_rx_buff,&rx_pkt_info))
-    return -1;
-  
-    
-  if (rx_pkt_info.len < 1)
-    return -1;
 
-#ifdef XB_MODE_SNIFFER
+  
+
+#ifdef XB_MODE_SNIFFER  
+  
   // sniffer gets all packets        
   if (_rx_queue_full())
     _xb_stats.rx_overruns++;
@@ -974,6 +952,8 @@ int xb_rx_intr()
 	      
 	if ((cflags & XB_CFLG_INTR) && ( cmd_func != NULL))
 	  (*cmd_func)(_xb_rx_buff.hdr.type,&_xb_rx_buff);
+
+
       } else {
 	// relay message 
 
@@ -994,11 +974,16 @@ int xb_rx_intr()
 
 	  if (_xb_device_is_awake(_xb_rx_buff.hdr.hsrc))
 	    _xb_status.ackcode |= XB_ACK_RXON;
- 
+	  if ( xb_cmds[pkt_code].data != NULL){
+	    // return data in ack
+	    
+	}
 	  _xb_setup_ack();
 	}	     		    
-    } 
-  } else {	   
+    } else {  // got packet for different network TODO should be used as a channel congestion indicator
+      _xb_stats.rx_net_errs++;
+    }
+  } else {  // csum error	   
     _xb_stats.rx_crc_errs++; 
   }
   if(xbus_can_sleep())
@@ -1006,6 +991,7 @@ int xb_rx_intr()
   else
     xb_receive_on(); 	 
 #endif 
+
 #endif
 }
 
@@ -1017,7 +1003,6 @@ int xb_tx_intr(){
         //  _xb_state = XB_ST_IDLE;
         // P3OUT &= ~BIT6;                     // Turn off LED after Transmit 
   if (_xb_state ==  XB_ST_TX){
-
     _xb_state = XB_ST_WAITSACK;
     RF1AIES |= BIT9;                          // Falling edge of RFIFG9
     RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
@@ -1028,15 +1013,10 @@ int xb_tx_intr(){
   // Strobe( RF_SFRX  );    
     Strobe(RF_SIDLE );
     Strobe(RF_SFRX);
-    Strobe(RF_SRX );    
-
-    
+    Strobe(RF_SRX );        
     _xb_ps0_disable();
-
     _xb_tick_count = 0;
-
     _xb_ps0_enable(_xb_tick);
-
   }
   else if(_xb_state ==  XB_ST_ACK){ 
     _xb_stats.tx_acks++;
@@ -1054,7 +1034,7 @@ int xb_tx_intr(){
         // xb_receive_on(); // desperate measures
 
 }
-// sys built in command handlers
+// sys built in command handlers - run on reception of associated cmd packet - see xbus_cmds.h
 
 XB_CMD_RES xb_task_ack(XB_CMD_CODE cmd,XB_RX_BUFF *buff){
   if ((_xb_status.state != XB_ST_WAITSACK) && (_xb_status.state != XB_ST_WAITUACK))
@@ -1068,11 +1048,8 @@ XB_CMD_RES xb_task_ack(XB_CMD_CODE cmd,XB_RX_BUFF *buff){
     _xb_status.tx_status = XB_TX_POSTED;    
     _xb_status.nstate = XB_ST_WAITUACK;
     _xb_status.ackrxbuff = buff;
-
-    _xb_status.ackcode = XB_ACK_SEG;
-    
-    if( _xb_check_uack(buff))
-      
+    _xb_status.ackcode = XB_ACK_SEG;   
+    if( _xb_check_uack(buff))      
       _xb_status.tx_status = XB_TX_DELIVERED;     
     
     if ( _xb_device_is_awake(buff->hdr.hsrc))
@@ -1083,6 +1060,10 @@ XB_CMD_RES xb_task_ack(XB_CMD_CODE cmd,XB_RX_BUFF *buff){
   }
 
   return XB_CMD_RES_IGNORE;
+}
+
+XB_CMD_RES xb_task_sleep(XB_CMD_CODE cmd,XB_RX_BUFF *buff){
+  return 0;
 }
 
 XB_CMD_RES xb_task_time(XB_CMD_CODE cmd,XB_RX_BUFF *buff){

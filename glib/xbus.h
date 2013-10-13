@@ -5,7 +5,7 @@
 #include "g430_types.h"
 #include "RF1A.h"
 #include "rtc.h"
-
+#include <stddef.h>
 
 #ifndef XB_ID
 #error "XB_ID must be defined - use -DXB_ID=<ID> on GCC command line "
@@ -21,6 +21,9 @@
 
 typedef int (*XBRXFUNCPTR)(XB_CMD_CODE cmd,void *);
 
+#define true 1
+#define false 0
+//#define NULL  0
 
 typedef struct{
   char *name;

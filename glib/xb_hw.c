@@ -1,52 +1,99 @@
 #include "xbus.h"
 #include "xb_sys.h"
+#include "xb_if.h"
+#include "xb_buff.h"
 
-extern  XB_PKT_STATS  _xb_stats;
+
+#define xb_alloc()  xb_alloc_if(RF1)
+#define xb_buff_loaded(buff,em)  xb_buff_loaded_if(RF1,buff,em)
+
+
+static XB_IF_STATS  _xb_stats;
+
 
 void xb_hw_idle(){
   Strobe(RF_SIDLE);
   Strobe(RF_SFRX);// flush rx fifo
 }
 
-int xb_hw_rd_rx_fifo(uint8 *buff,RX_PKT_INFO *pkt_info){
-  int len,i,j;
-  uint8 linktoks[2];
+void _xb_receive_enable(void){
+  RF1AIES |= BIT9;                          // Falling edge of RFIFG9
+  RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
+  RF1AIE  |= BIT9;                          // Enable the interrupt 
+  
+  // Radio is in IDLE following a TX, so strobe SRX to enter Receive Mode
+  // _xb_state = XB_ST_RX;
+  // Strobe( RF_SFRX  );    
+  Strobe( RF_SIDLE );
+  Strobe(RF_SFRX);
+  Strobe( RF_SRX );      
+}
+
+
+// emergency buff used to record packet header if main alloc fails 
+EBUFF ebuff;
+
+int _xb_hw_rd_rx_fifo(){
+  uint8 i,len;
+  uint8 *buff;
+  uint8 em = false,lenerr = false;
+
   len = ReadSingleReg( RXBYTES ); 
 
-  if ( len < 3 )  // at least 2 are LQI and RSSI
-    return -1;
-  if ( len == 0 )
-    return -1;
+  if ( len < sizeof(XB_PKT_HDR) + 2) { // at least 2 are LQI and RSSI
+    _xb_stats.under++;
+    lenerr = true;
+    
+  }
+ 
+  else if  (len > _XB_BUFFLEN -1){ // packet too long
+     _xb_stats.over++;
+    lenerr = true;
+  }
+  else{
+    buff = xb_alloc();
 
+    if ( buff == NULL){  // emergency buffer used to collect header + toks only
+      em = true;
+      ebuff.len = len;
+      buff = (uint8 *)&ebuff;
+    }else {
+      buff[0] = len;
+    }
+  }
+  
   while (!(RF1AIFCTL1 & RFINSTRIFG));    // wait for RFINSTRIFG
   RF1AINSTR1B = (RF_RXFIFORD | RF_REGRD);          
 
-  for (i = 0; i < (len - 2); i++)
+  for (i = 0; i < len; i++)
     {
       while (!(RFDOUTIFG&RF1AIFCTL1));        // wait for RFDOUTIFG
-      buff[i] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
-                                              // Also initiates auo-read for next DOUT byte
+      if (lenerr)
+	ebuff.hdr[0] = RF1ADOUT1B;  // clear fifo regardless of len err	
+      else if ( em == false)
+	buff[i+1] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
+      else if ( i < sizeof(XB_PKT_HDR))  // if em == true  save hdr and link toks to embuff 
+	ebuff.hdr[i] = RF1ADOUT1B;
+      else if ( i >= (len - 2))
+	ebuff.tok[i - (len -2)] = RF1ADOUT1B;	  
+                                              // Also initiates auto-read for next DOUT byte
     }
-  
-  while (!(RFDOUTIFG&RF1AIFCTL1));        // wait for RFDOUTIFG
-  linktoks[0] = RF1ADOUT1B;    
+
+  if (lenerr){ // re-enable reception
+    _xb_receive_enable();
+    return;
+  }
+
    
+  xb_buff_loaded(buff,em);
   
-  while (!(RFDOUTIFG&RF1AIFCTL1));        // wait for RFDOUTIFG
-  linktoks[1] = RF1ADOUT0B;             // Store the last DOUT from Radio Core  
+  
+
 
   
-  pkt_info->csumok = linktoks[1] & 0x80;
-  pkt_info->linktoks[0] = linktoks[0];  // RSSI
-  pkt_info->linktoks[1] = linktoks[1] & 0x7f; // LQI
-  
+
   return 0;
-  /*
-        // Stop here to see contents of _xb_rx_buff
-  __no_operation();
-  RFRXRSSI = *(((uint8 *)(&_xb_rx_buff)) + rx_buff_len-2);	
-  RFRXCSUM = *(((uint8 *)(&_xb_rx_buff)) + rx_buff_len-1);
-  */
+ 
 }
 int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   int i;
@@ -111,7 +158,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
     case 20:                                // RFIFG9
       if(xbreceiving)			    // RX end of packet
       {
-	xb_rx_intr();
+	_xb_hw_rd_rx_fifo();
       }
       else if(xbtransmitting)		    // TX end of packet
       {
@@ -128,9 +175,6 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
     case 30: break;                         // RFIFG14
     case 32: break;                         // RFIFG15
   }  
-  //  __bic_SR_register_on_exit(LPM3_bits);     
-  //  xb_receive_on(); // desperate measures
-  // Strobe( RF_SRX );                      
-
+ 
 }
 

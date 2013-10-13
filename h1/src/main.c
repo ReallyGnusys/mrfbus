@@ -73,7 +73,6 @@ int mtcR;
 
 #if 1
 
-XB_MSG_TEMP temp_msg;
 XB_TX_STATUS txres;
 
 
@@ -89,32 +88,7 @@ void tx_fail(XB_TX_STATUS res){
   txres = res;
 }
 
-void transmit_temp(uint8 whole, uint8 part){
-  XB_TX_STATUS res;
-  temp_msg.wholec = whole;
-  temp_msg.fract = part;
-  res = xbus_despatch(XB_HUBADDR,XB_PKT_TEMP,(uint8 *)&temp_msg);
-  if ( res == XB_TX_COMPLETED)
-    tx_success(res);
-  else
-    tx_fail(res);
-  
-  
-  //Transmit((unsigned char *)TxBuffer,PACKET_LEN);
-}
 
-
-void transmit_getstats(uint8 addr){
-  XB_TX_STATUS res;
-  res = _xbus_transmit(addr,XB_PKT_GETSTATS,NULL);
-  if ( res == XB_TX_COMPLETED)
-    tx_success(res);
-  else
-    tx_fail(res);
-  
-  
-  //Transmit((unsigned char *)TxBuffer,PACKET_LEN);
-}
 
 
 TIMEDATE timedate;
@@ -282,18 +256,7 @@ int main( void )
     }
     */
 #define FKFKDS_NO
-#ifdef FKFKDS
-    c1++;
-    if (c1 == 10000){
-      transmit_getstats(PERIPH1_ADDR);
-      xb_receive_on();
-      c1 = 0;
-      __delay_cycles(1000);
-    }
- __delay_cycles(100) ;
-    //   for(i=0 ; i < 15 ; i++)
-    //  __delay_cycles(100000) ;
-#endif
+
     //displaytime();
     //  __delay_cycles(100)   ;
 

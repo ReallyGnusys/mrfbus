@@ -164,7 +164,6 @@ void uart_init(){
   // init rx buff 
   _rx_buff_index = 0;
 
-
   // debug
  _uart_rx_int_cnt = 0;
  _uart_tx_int_cnt = 0;
@@ -172,7 +171,6 @@ void uart_init(){
 
   //dbg
   _tx_rdy_cnt =0 ;
-
 
   //
   UCA0CTL1 |= UCSWRST;                      // **Put state machine in reset**
@@ -203,7 +201,6 @@ void uart_init(){
   UCA0BR1 = 0x00;                           //
   //UCA0MCTL = UCBRS_4+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
   UCA0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
-
   UCA0CTL1 |= UCSSEL_2;                     // CLK = MCLK
   UCA0BR0 = 52;                           // 32kHz/9600=3.41 (see User's Guide)
   UCA0BR1 = 0x00;                           //
@@ -226,37 +223,6 @@ uint8 _uart_response[_XB_MAXPKTLEN];
 uint8 tmp_resp[5] = {0xFF,0xFF,3,4,5};
 
 static void _uart_local_packet(){
-  uint8 i,cmd;
-  cmd = _rx_buff[1]; 
-  if (cmd == XB_PKT_GETTIME){
-    rtc_get((TIMEDATE *)(_uart_response+2));
-    _uart_response[0] = 0xff;
-    _uart_response[1] = XB_PKT_GETTIME | XB_PKT_ACK;
-    xq_utx_push(_uart_response,sizeof(TIMEDATE)+2);
-
-  }
-  else if (cmd == XB_PKT_SETTIME){
-    rtc_set((TIMEDATE *)&_rx_buff[2]);
-    xq_utx_push(tmp_resp,5);
-   
-  }
-  else if (cmd == XB_PKT_CLRSTATS){
-    xbus_clear_stats();
-    xq_utx_push(tmp_resp,5);
-   
-  }
-  else if  (cmd == XB_PKT_GETSTATS){    
-    _uart_response[0] = 0xff;
-    _uart_response[1] = XB_PKT_GETSTATS | XB_PKT_ACK;
-    i = xbus_copy_stats( _uart_response + 2);
-    xq_utx_push(_uart_response,i+2);
- }
-  else if  (cmd == XB_PKT_INFO){    
-    _uart_response[0] = 0xff;
-    _uart_response[1] = XB_PKT_INFO | XB_PKT_ACK;
-    i = xbus_copy_info( _uart_response + 2);
-    xq_utx_push(_uart_response,i+2);
- }
 
 }
 
@@ -264,36 +230,8 @@ static void _uart_local_packet(){
 
 static void _uart_process_packet(){  
   uint8 dest,type;
-  dest = _rx_buff[0];
-  type = _rx_buff[1];
-  if ( dest == XB_ID ){
-    _uart_local_packet();
-  }
-  else {
-    if ( type == XB_PKT_STAYAWAKE) {
-1      xb_wake_device(dest);
-      xq_utx_push(tmp_resp,5);
-
-    }
-    else if ( type == XB_PKT_SLEEP){
-      xb_sleep_device(dest);
-      xq_tx_push(_rx_buff,_rx_buff_index);
-    }
-    else if ( type == XB_PKT_SETTIME){  // set device time to hub time
-      rtc_get((TIMEDATE *)(_rx_buff+2));
-      xq_tx_push(_rx_buff,_rx_buff_index);
-    }
-
-    
-    else{
-      xq_tx_push(_rx_buff,_rx_buff_index);
-    }
-  }
-  _rx_buff_index = 0;
-
+ 
 }
-
-
 
 
 static void _rx_ready(){

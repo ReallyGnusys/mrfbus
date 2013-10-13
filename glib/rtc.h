@@ -4,15 +4,7 @@
 #include <legacymsp430.h>
 #include "cc430f5137.h"
 #include "g430_types.h"
-
-typedef struct  __attribute__ ((packed)) timedate {
-  uint8 sec;
-  uint8 min;
-  uint8 hour;
-  uint8 day;
-  uint8 mon;
-  uint8 year;  // 0 = 2000CE  
-}TIMEDATE;
+#include "xb_sys_structs.h"
 
 void rtc_init(void);
 int rtc_get(TIMEDATE *td);

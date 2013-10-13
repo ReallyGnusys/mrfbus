@@ -1,9 +1,27 @@
 #ifndef __XB_SYS_STRUCTS_INCL__
 #define __XB_SYS_STRUCTS_INCL__
-#include "rtc.h"
 
 #define XB_ACK_FLAG_RETRY  1
 #define XB_ACK_FLAG_DELIVERED 2
+
+typedef struct  __attribute__ ((packed)) {
+  uint8 hdest;  // hop destination
+  uint8 udest;// ultimate destination of this packet
+  uint8 netid;
+  uint8 type;
+  uint8 hsrc; // hop source
+  uint8 usrc; // ultimate source of this packet 
+  uint16 msgid; 
+}XB_PKT_HDR ;
+
+typedef struct  __attribute__ ((packed)) timedate {
+  uint8 sec;
+  uint8 min;
+  uint8 hour;
+  uint8 day;
+  uint8 mon;
+  uint8 year;  // 0 = 2000CE  
+}TIMEDATE;
 
 
 typedef struct  __attribute__ ((packed))   {
@@ -26,6 +44,8 @@ typedef struct __attribute__ ((packed)){
   uint32 tx_pkts;
   uint16 rx_crc_errs;
   uint16 rx_net_errs;
+  uint16 rx_short;
+  uint16 rx_long;
   uint16 tx_fails;
   uint16 tx_retries;
   uint16 tx_no_eop; 

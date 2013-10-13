@@ -1,6 +1,10 @@
 #ifndef __XB_SYS_INCLUDED__
 #define __XB_SYS_INCLUDED__
+
+#include "xb_sys_structs.h"
+
 /* xbus "protected" symbols , not for application use */
+
 
 typedef enum {
   XB_ST_NONE,
@@ -8,7 +12,6 @@ typedef enum {
   XB_ST_TX,
   XB_ST_WAITSACK,  // wait for segment ack
   XB_ST_WAITUACK,  // wait for ultimate ack
-  XB_ST_CHKACK,
   XB_ST_RX,
   XB_ST_ACKDELAY,
   XB_ST_ACK,
@@ -21,19 +24,6 @@ typedef struct {
   uint8 linktoks[2];
 } RX_PKT_INFO;
 
-typedef struct  __attribute__ ((packed)) {
-  uint8 hdest;  // hop destination
-  uint8 udest;// ultimate destination of this packet
-  uint8 netid;
-  uint8 type;
-  uint8 hsrc; // hop source
-  uint8 usrc; // ultimate source of this packet 
-  uint16 msgid;
-  /*
-  uint8 rssi;  // rssi info byte
-  uint8 lqi;  // lqi info byte
-  */
-}XB_PKT_HDR ;
 
 
 typedef volatile struct  __attribute__ ((packed)){
@@ -72,9 +62,10 @@ typedef XB_CMD_RES (*XB_CMD_FUNC)(XB_CMD_CODE cmd, XB_RX_BUFF *buff );
 
 #define XB_VFLAG_MASK   (XB_VFLG_PAYLOAD | XB_VFLG_INITF | XB_VFLAG_SEND )
 #define XB_CODE_MASK   ~XB_VFLAG_MASK
+
 /* constant flags */
 #define XB_CFLG_NACK 1   // send ack when received 
-#define XB_CFLG_INTR    2  // task is run in interrupt handler
+#define XB_CFLG_INTR 2  // task is run in interrupt handler
 
 typedef struct {
   const char *str;
