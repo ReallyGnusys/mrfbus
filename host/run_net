@@ -1,0 +1,42 @@
+pids=""
+
+devs="zl_0 host_1 usbrf_2 rf_20 rf_2f"
+
+declare -i height=10
+declare -i width=75
+declare -i top=20
+declare -i left=0
+declare -i pnum=0
+
+declare -i hgrid=460
+declare -i vgrid=160
+
+declare -i vmax=600
+
+for dev in $devs ; do
+    
+    xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./"$dev &
+    pd=$!
+    echo $pd
+    pids=$pids" "$pd
+
+    top=$top+$vgrid
+    [ $top -gt $vmax ] && top=0 && left=$left+$hgrid
+
+done
+
+echo $pids
+
+echo "Type q to quit"
+
+key='c'
+
+while [ $key != 'q' ] ; do
+ read -n 1 -s key
+ echo "Key was "$key
+done
+
+for pd in $pids ; do
+ kill $pd
+ echo "killed "$pd
+done
