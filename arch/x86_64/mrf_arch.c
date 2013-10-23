@@ -43,12 +43,6 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
 
 }
 
-uint8 _mrf_tick_enable(){
-
-}
-uint8 _mrf_tick_disable(){
-
-}
 
 
 
@@ -99,17 +93,7 @@ int mrf_arch_init(){
   struct itimerspec new_value;
   char sname[64];
   printf("Initialising DEVTYPE %s MRFID %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),MRFID,NUM_INTERFACES);
-  /*
-    // control interface 
-  i = 0;
-  mrf_if_register(i,&lnx_if_type);
-  sprintf(sname,"%s%d-cntr-in",SOCKET_DIR,MRFID);
-  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d",sname,tmp);
-  _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
 
-  */
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
       mrf_if_register(i,&lnx_if_type);
       sprintf(sname,"%s%d-%d-in",SOCKET_DIR,MRFID,i);
@@ -345,20 +329,23 @@ int mrf_arch_main_loop(){
        // timer tick
 
        s = 1;
-       count++;
        int l = 0;
        // while (s > 0){
-         s = read(_input_fd[NUM_INTERFACES], buff, 1024);
-         buff[s] = 0;
-         l++;
+       s = read(_input_fd[NUM_INTERFACES], buff, 1024);
+       buff[s] = 0;
+       l++;
          // }
          //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);  
 
        
          //if((count ) == 1000 ){
-         if((count % 1000 ) == 0 ){
-           printf("%d\n",count);
-         }
+       _mrf_tick();
+       count++;
+       if((count ) == 1000 ){
+
+         //if((count % 1000 ) == 0 ){
+         printf("%d\n",count);
+       }
 
      }
 
@@ -372,21 +359,21 @@ int mrf_arch_main_loop(){
        s = strlen(buff);
 
 
-       printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
+       //printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
        if ( s > 10){
 
          if(strcmp(buff,"tick_enable") == 0){
-           printf("INTERNAL:tick_enable\n");
+           //printf("INTERNAL:tick_enable\n");
            epoll_ctl(efd, EPOLL_CTL_ADD,_input_fd[NUM_INTERFACES] , &ievent[NUM_INTERFACES]);
-           printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+           //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
 
 
            
          }
          else if (strcmp(buff,"tick_disable") == 0){
-           printf("INTERNAL:tick_disable\n");
+           //printf("INTERNAL:tick_disable\n");
            epoll_ctl(efd, EPOLL_CTL_DEL,_input_fd[NUM_INTERFACES] , &ievent[NUM_INTERFACES]);
-           printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+           //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
 
          }
        }
@@ -423,9 +410,35 @@ int mrf_rtc_get(TIMEDATE *td){
 int mrf_rtc_set(TIMEDATE *td){
 
 }
-int mrf_tick_enable(VFUNCPTR func){
+
+const char tick_en_str[] = "tick_enable";
+const char tick_dis_str[] = "tick_disable";
+
+int mrf_tick_enable(){
+  char sname[64];
+  int fd,bc,tb;
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  fd = open(sname, O_WRONLY);
+  if(fd == -1){
+    printf(" %d\n",fd);
+    perror("mrf_tick_enable ERROR sock open\n");
+    return -1;
+  }
+  bc = write(fd, tick_en_str,sizeof(tick_en_str) );
+
 }
 
 int mrf_tick_disable(){
+  char sname[64];
+  int fd,bc,tb;
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  fd = open(sname, O_WRONLY);
+  if(fd == -1){
+    printf(" %d\n",fd);
+    perror("mrf_tick_enable ERROR sock open\n");
+    return -1;
+  }
+  bc = write(fd, tick_dis_str,sizeof(tick_dis_str) );
+
 }
 

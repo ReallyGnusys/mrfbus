@@ -1,8 +1,15 @@
 #include <mrf.h>
 #include <stdio.h>
 
+#define _QUOTE_SYM_(SYM)  #SYM
+#define SYM_NAME(name) _QUOTE_SYM_(name)
+#define _CONCAT_(A,B) # A ## B
 
-const MRF_PKT_DEVICE_INFO device_info  = {XBDEVNAME ,"1", SVN };
+#define _DEVNAME_STR_  SYM_NAME(DEVTYPE)
+
+//#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
+
+const MRF_PKT_DEVICE_INFO device_info  = {_DEVNAME_STR_ ,"1", SVN };
 
 int mrf_init(){  
   mrf_if_init();

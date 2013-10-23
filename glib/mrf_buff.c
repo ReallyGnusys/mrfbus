@@ -5,35 +5,15 @@
 #include "mrf_debug.h"
 #include "mrf_sys.h"
 #include "mrf_cmd_def.h"
+#include "mrf_buff.h"
 #include "mrf_cmds.h"
 
-typedef  enum { FREE,
-		LOADING, // allocated and being written by IF or app 
-		LOADED,  // loaded and awaiting classification
-		FORWARD, // loaded and requires forwarding via an interface 
-                APPIN  // loaded and requires processing by app
-} mrf_buff_state_t;
-
-typedef struct __attribute__ ((packed)){
-  mrf_buff_state_t state;
-  I_F owner;		
-} MRF_BUFF_STATE;
-
-typedef struct __attribute__ ((packed)){
-  uint16 emrx;  // rx recieved with emergency buffer
-  uint16 rx;  // rx by us
-  uint16 rel;  // relayed
-  uint16 tx;  // tx by us
-  uint16 rxerr; // rx packet error
-} MRF_BUFF_STATS;
-
-/* each buffer can take a full mrfus packet - 128 bytes */
+/* each buffer can take a full mrfbus packet - 128 bytes */
 
 static uint8 _mrf_buff[_MRF_BUFFS][_MRF_BUFFLEN];
 
 static MRF_BUFF_STATE _mrf_buffst[_MRF_BUFFS];
 
-static MRF_BUFF_STATS _mrf_buff_stats;
 //extern const MRF_CMD const mrf_cmds[];
 void _mrf_buff_free(uint8 i){
   if (i < _MRF_BUFFS){
@@ -41,7 +21,6 @@ void _mrf_buff_free(uint8 i){
     _mrf_buffst[i].owner = NUM_INTERFACES;    
   }
 }
-
 
 
 // this is where OS processes buffer
@@ -74,18 +53,25 @@ void mrf_free(uint8* buff){
     }      
 }
 
-void _mrf_buff_clear_stats(){
-  uint8 i,*buff = (uint8 *)&_mrf_buff_stats;
-  for (i = 0 ; i < sizeof(MRF_BUFF_STATS);i++)
-    buff[i] = 0;    
+void _mrf_buff_clear_status(){
+
 }
 
 void mrf_buff_init(){
   uint8 i;
   for ( i = 0 ; i < _MRF_BUFFS ; i++)
     _mrf_buff_free(i);
-  _mrf_buff_clear_stats();
+  _mrf_buff_clear_status();
 }
+MRF_BUFF_STATE *_mrf_buff_state(uint8 bnum){
+  if  ( bnum <  _MRF_BUFFS )
+    return &(_mrf_buffst[bnum]);
+  else
+    return NULL;
+}
+
+
+
 
 uint8 *mrf_alloc_if(I_F i_f){
   int i;
@@ -101,7 +87,7 @@ uint8 *mrf_alloc_if(I_F i_f){
 }
 
 uint8 *_mrf_buff_ptr(uint8 bind){
-  return _mrf_buff[bind];
+  return (uint8 *)_mrf_buff[bind];
 
 }
 

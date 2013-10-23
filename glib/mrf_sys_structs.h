@@ -1,7 +1,8 @@
 #ifndef __MRF_SYS_STRUCTS_INCL__
 #define __MRF_SYS_STRUCTS_INCL__
 
-#include <mrf_types.h>
+//#include <mrf_types.h>
+//#include <mrf_if.h>
 #define MRF_ACK_FLAG_RETRY  1
 #define MRF_ACK_FLAG_DELIVERED 2
 
@@ -40,11 +41,24 @@ typedef struct  __attribute__ ((packed))   {
   uint8 rlen;  
 } MRF_PKT_RESP;
 
+typedef struct  __attribute__ ((packed))   {
+  uint8 num_if;
+  uint8 errors;
+  uint16 tx_retries;
+  uint32  rx_pkts;
+  uint32 tx_pkts;
+
+} MRF_PKT_IF_INFO;
+
+typedef struct  __attribute__ ((packed))   {
+  uint8 i_f;
+
+}MRF_PKT_IF_STAT_REQ;
 
 typedef struct  __attribute__ ((packed))   {
   char dev_name[16];
   char dev_version[6];
-  char xbus_version[8];
+  char mrfbus_version[8];
 } MRF_PKT_DEVICE_INFO;
 
 

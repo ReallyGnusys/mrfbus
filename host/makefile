@@ -6,7 +6,7 @@ DEVTYPE=host
 MRFID=0x01
 MRFNET=0x25
 GITSH=\""$(git rev-parse HEAD)"\"
-XBDEVNAME=\""HOST_ROUTER"\"
+#MBDEVNAME=\""HOST_ROUTER"\"
 
 clean : 
 	rm mtest

@@ -1,7 +1,7 @@
 #ifndef __MRF_ROUTE_INCLUDED__
 #define __MRF_ROUTE_INCLUDED__
 
-#include "mrf_if.h"
+#include "mrf_sys.h"
 #define SNETSZ  0x20
 
 #ifndef MRFID

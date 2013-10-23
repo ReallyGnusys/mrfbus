@@ -2,11 +2,12 @@
 #define __MRF_SYS_INCLUDED__
 
 #include "mrf_types.h"
-#include "if.h"
-
 #include "mrf_sys_structs.h"
-#include "mrf_cmd_def.h"
+#include "if.h"
 #include "mrf_if.h"
+#include "mrf_buff.h"
+
+#include "mrf_cmd_def.h"
 /* xbus "protected" symbols , not for application use */
 
 
@@ -26,7 +27,7 @@ typedef struct {
 extern volatile MRF_RX_BUFF _xb_rx_buff;
 typedef enum {
   MRF_CMD_RES_RETRY,
-  MRF_CMD_RES_ACCEPTED,
+  MRF_CMD_RES_OK,
   MRF_CMD_RES_IGNORE,
   MRF_CMD_RES_ERROR
 } MRF_CMD_RES;
@@ -62,7 +63,8 @@ typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum );
 typedef struct {
   const char *str;
   const uint8 cflags;
-  const uint8 size;
+  const uint8 req_size;
+  const uint8 rsp_size;
   void *data;
   MRF_CMD_FUNC func;
 } MRF_CMD;

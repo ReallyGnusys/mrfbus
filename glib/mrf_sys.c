@@ -23,30 +23,62 @@ int mrf_tx_bnum(I_F i_f,uint8 bnum){
 }
 
 // segment ack buffer;
- MRF_PKT_HDR sack;
 
-int mrf_sack(uint8 bnum){
+int mrf_sack(I_F i_f,uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
-
  MRF_ROUTE route;
- //mrf_debug("mrf_sack :  bnum %d  \n",bnum);
- sack.length = sizeof(MRF_PKT_HDR);
- sack.udest = hdr->hsrc;
- sack.hdest = hdr->hsrc;
- sack.hsrc = MRFID;
- sack.usrc = MRFID;
- sack.netid = MRFNET;
+ mrf_nexthop(&route,MRFID,hdr->hsrc);
+ MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff.hdest = hdr->hsrc;
+ if_ptr->ackbuff.udest = hdr->hsrc;
+ if_ptr->ackbuff.netid = MRFNET;
+ if_ptr->ackbuff.type = mrf_cmd_ack;
 
- sack.usrc = MRFID;
- sack.type = mrf_cmd_ack;  
-
-
- mrf_nexthop(&route,MRFID,sack.hdest);
- mrf_tx_buffer(route.i_f,(uint8 *)&sack);
-
+ if_ptr->ackbuff.hsrc = MRFID;
+ if_ptr->ackbuff.usrc = MRFID;
+ if_ptr->ackbuff.msgid = hdr->msgid;
+ if_ptr->status.acktimer =  if_ptr->type->tx_del;;
+ mrf_tick_enable();
 }
 
+int mrf_retry(I_F i_f,uint8 bnum){
+ MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+ MRF_ROUTE route;
+ mrf_nexthop(&route,MRFID,hdr->hsrc);
+ MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff.hdest = hdr->hsrc;
+ if_ptr->ackbuff.udest = hdr->hsrc;
+ if_ptr->ackbuff.netid = MRFNET;
+ if_ptr->ackbuff.type = mrf_cmd_retry;
+ if_ptr->ackbuff.hsrc = MRFID;
+ if_ptr->ackbuff.usrc = MRFID;
+ if_ptr->ackbuff.msgid = hdr->msgid;
+ if_ptr->status.acktimer =  if_ptr->type->tx_del;;
+}
 
+/*
+// turn buffer around - ready to append response data
+int mrf_respond_buffer(uint8 bnum){
+ MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+ MRF_ROUTE route;
+ //mrf_debug("mrf_data_response :  bnum %d  len %d\n",bnum,len);
+
+ hdr->udest = hdr->usrc; 
+ mrf_nexthop(&route,MRFID,hdr->udest);
+ hdr->hdest = route.relay;
+ hdr->usrc = MRFID;
+ hdr->hsrc = MRFID;
+ hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
+ MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+ resp-> type = hdr->type;
+ resp-> usrc = hdr->usrc;
+ resp-> udest = hdr->udest;
+ resp-> rlen = len;
+
+}
+*/
 int mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
@@ -76,7 +108,11 @@ int mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
 
  hdr->length = sizeof(MRF_PKT_HDR) + len;
  
- mrf_tx_bnum(route.i_f,bnum);
+ if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
+   mrf_retry(route.i_f,bnum);
+
+
+ return 0;
 }
 void _mrf_print_packet_header(MRF_PKT_HDR *hdr){
   
@@ -114,6 +150,8 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
     return -1;
   }
 
+  MRF_IF *ifp = mrf_if_ptr(owner);
+  ifp->status.stats.rx_pkts++;
 
   // lookup command
   const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_cmds[pkt->type]);
@@ -125,18 +163,21 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
     {
       //mrf_debug("INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,MRFID);
       // printf("cmd name %s  len %d \n",cmd->str,cmd->size);
-      if( ( cmd->data != NULL )  && ( cmd->size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
+      if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
         //printf("sending data response \n");
   
-        mrf_data_response(bnum,cmd->data,cmd->size);
+        mrf_data_response(bnum,cmd->data,cmd->rsp_size);
         return;
 
       }
+      // check if command func defined
       if(cmd->func != NULL){
         (*(cmd->func))(pkt->type,bnum);
       }
+
+      // send ack if allowed
       if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
-        mrf_sack(bnum);
+        mrf_sack(owner,bnum);
 
       }
       
@@ -145,12 +186,12 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
     //otherwise send segment ack then forward on network
 
     if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
-      mrf_sack(bnum);
+      mrf_sack(owner,bnum);
     }
     MRF_ROUTE route;
 
     mrf_nexthop(&route,MRFID,pkt->udest);
-    mrf_debug("INFO:  UDEST %02X : forwarding to %d on I_F %d \n",pkt->udest,route.relay,route.i_f);
+    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d \n",pkt->udest,route.relay,route.i_f);
     
     pkt->hdest = route.relay;
     pkt->hsrc = MRFID;
@@ -159,4 +200,105 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
 
   }
   
+}
+
+int _tick_count;
+
+void mrf_sys_init(){
+  _tick_count = 0;
+}
+void _mrf_tick(){
+
+  // check each i_f
+
+ 
+  MRF_IF *mif; 
+  I_F i;
+  uint8 j;
+  uint8 *tb;
+  MRF_BUFF_STATE *bs;
+  uint8 bnum;
+  int count = 0;
+
+  // check each i_f for ack queued
+  for ( i = 0 ; i < NUM_INTERFACES ; i++){
+    mif = mrf_if_ptr(i);
+    
+    if ((mif->status.acktimer) <= 0 ){
+      count++;
+      continue;
+
+    }
+    
+    mif->status.acktimer--;
+    if((mif->status.acktimer) == 0){
+      (*(mif->type->send_func))(i,(uint8 *)&(mif->ackbuff));
+      count++;
+    }
+    
+  }
+
+
+  // check each i_f for tx queued
+  for ( i = 0 ; i < NUM_INTERFACES ; i++){
+    mif = mrf_if_ptr(i);
+    
+    //printf("I_F %d txq = ",i);
+    for ( j = 0 ; j < MRF_IF_QL ; j++){
+      bnum = mif->status.txqueue[j];
+      //printf(" %02X",bnum);
+      if (bnum != MRF_BUFF_NONE) {     
+
+        
+        bs = _mrf_buff_state(bnum);
+        //printf("\nmrf_tick : FOUND txqueue -IF = %d buffer is %d j = %d tx_timer %d \n",i,bnum,j,bs->tx_timer);
+
+        
+        if (  (bs->tx_timer) == 0 ){
+          tb = _mrf_buff_ptr(bnum);
+          //printf("calling send func\n");
+          (*(mif->type->send_func))(i,tb);
+          bs->tx_timer = 0;
+          mif->status.txqueue[j] = MRF_BUFF_NONE;
+          count++;
+        }
+        else {
+          (bs->tx_timer) --;  
+          //printf("tx_timer -> %d\n",bs->tx_timer);
+
+        }
+        continue;
+
+        // check buff count 
+        
+      }
+    }
+    //printf("\n");
+    if ( j== MRF_IF_QL){
+      count++;
+      //printf("IF %d empty txq\n",i);
+    }
+     
+  }
+
+ 
+  
+
+
+  if ( count == NUM_INTERFACES * 2)  // all interfaces quiet
+    {
+      //printf("mrf_tick : count = %d - stopping tick\n",count);
+      mrf_tick_disable();
+    }
+  /*
+  if( ( (_tick_count++) % 1000 ) == 0){
+
+    printf("_mrf_tick %d count %d\n",_tick_count,count);
+  }
+  else*/ 
+  _tick_count ++;
+  //if (_tick_count < 10)
+  //printf("_mrf_tick %d count %d NUM_INTERFACES %d\n",_tick_count,count,NUM_INTERFACES);
+ 
+
 }

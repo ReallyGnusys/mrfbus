@@ -10,23 +10,26 @@
 
 
 
-// emergency buffer - each I/F should have one so if case buffer
-// allocation fails a retry can be sent to the originator
-// only the header part of the message and the link tokens ([LQI|CSUMOK, RSSI] )
+typedef  enum { FREE,
+		LOADING, // allocated and being written by IF or app 
+		LOADED,  // loaded and awaiting classification
+		TXQUEUE, // loaded and requires forwarding via an interface 
+                APPIN,  // loaded and requires processing by app
+} mrf_buff_state_t;
 
 typedef struct __attribute__ ((packed)){
-  uint8 len;
-  uint8 hdr[sizeof(MRF_PKT_HDR)];
-  uint8 tok[2];
-} EBUFF;
-
+  mrf_buff_state_t state;
+  I_F owner;
+  uint16 tx_timer;		
+} MRF_BUFF_STATE;
 
 
 uint8 *mrf_alloc_if(I_F i_f);
 void mrf_free(uint8* buff);
 void mrf_buff_loaded_if(I_F owner, uint8 *buff,uint8 em);
 
-uint8 *_mrf_buff_ptr(uint8 bind);
+uint8* _mrf_buff_ptr(uint8 bind);
+MRF_BUFF_STATE *_mrf_buff_state(uint8 bnum);
 
 //extern static uint8 _mrf_buff[_MRF_BUFFS][_MRF_BUFFLEN];
 #endif

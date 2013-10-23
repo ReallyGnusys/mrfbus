@@ -1,8 +1,8 @@
 #ifndef _MRF_IF_INCLUDED_
 #define _MRF_IF_INCLUDED_
 //#include <mrf_sys.h>
+#include <if.h>
 #include "mrf_sys_structs.h"
-#include "if.h"
 
 typedef volatile struct  __attribute__ ((packed)){
  MRF_PKT_HDR hdr;
@@ -47,20 +47,31 @@ typedef enum {
   MRF_TX_BADACK,
   MRF_TX_NOACK,
   MRF_TX_ABORTED,
+  MRF_TX_QUEUE_FULL,
   MRF_TX_STAYAWAKE,
   MRF_TX_ERRX} IF_TX_STATUS;
 
+enum{
+  MRF_BUFF_NONE = 255
+};
+
+#define MRF_IF_QL 4
+
+typedef struct  __attribute__ ((packed))  {
+  uint16 rx_pkts;
+  uint16 tx_pkts;
+  uint16 tx_overruns;
+  uint16 tx_retries;  
+} IF_STATS;
+
 typedef struct  {
   IF_STATE state;
-  IF_STATE nstate;  // next state
-  uint8 timer;
-  MRF_RX_BUFF *rxbuff;
-  MRF_RX_BUFF *ackrxbuff;
-  MRF_ACK_CODE ackcode;
+  IF_STATS stats;
+  uint8 acktimer;
+  uint8 txqueue[MRF_IF_QL];     
   uint8 rx_last_id;
   uint8 rx_last_src;
   uint8 tx_id;
-  uint8 tx_retrycnt;
   IF_TX_STATUS tx_status; 
   uint8 rx_on;  // default xbus mode , when not transmitting
 } IF_STATUS;
@@ -69,10 +80,15 @@ typedef struct  {
 typedef struct  {
   IF_STATUS status;
   MRF_IF_TYPE *type;
+  MRF_PKT_HDR ackbuff;
 } MRF_IF;
 
 void mrf_if_init();
 
 void mrf_if_register(I_F i_f, MRF_IF_TYPE *type);
+
 MRF_IF *mrf_if_ptr(I_F i_f);
+
+int8 mrf_if_tx_queue(I_F i_f, uint8 bnum );
+
 #endif

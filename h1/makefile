@@ -1,5 +1,5 @@
 XBDEVNAME=\""USBHUB1"\"
-SVN:=\""$(shell svnversion -n .)"\"
+SVN:=\""$(echo GITNOSTATUS)"\"
 
 OBJ=obj
 COBJ=../obj
@@ -14,7 +14,7 @@ LD=msp430-ld
 XBID=0x02
 XBNET=25
 CCFLAGS=-O0 -I${SRC} -I${GLIB} -I${NET}  -DXB_ID=${XBID}  -DXB_NET=${XBNET} -DMHZ_868 -DSPI_UEXT -Wfatal-errors -mmcu=cc430f5137 -g -DMCLK_8MHZ_DCO -DXB_UART -DXB_HUB  -DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN}
-LD=msp430-ld
+LD=msp430-ld														
 OD=msp430-objdump -dt
 
 LIBS=${GLIB}/LCD1x9.c ${GLIB}/hal_pmm.c ${GLIB}/RF1A.c  \
