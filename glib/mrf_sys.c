@@ -274,7 +274,8 @@ void _mrf_tick(){
   uint8 if_busy = 0;
   IQUEUE *qp;
   _tick_count++;
-
+  if ( (_tick_count % 1000 ) == 0)
+    printf("%d\n",_tick_count);
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     mif = mrf_if_ptr(i);
     qp = &(mif->status.txqueue);
@@ -358,101 +359,3 @@ void _mrf_tick(){
   }
 }
 
-void _mrf_tick_tx_ok(){
-
-  // check each i_f
- 
-  MRF_IF *mif; 
-  I_F i;
-  uint8 j;
-  uint8 *tb;
-  MRF_BUFF_STATE *bs;
-  uint8 bnum;
-  int count = 0;
-  _tick_count++;
-
-  // check each i_f for ack queued
-  for ( i = 0 ; i < NUM_INTERFACES ; i++){
-    mif = mrf_if_ptr(i);
-    if ((mif->status.acktimer) <= 0 ){
-      count++;
-      continue;
-    }
-    mif->status.acktimer--;
-    if((mif->status.acktimer) == 0){
-      (*(mif->type->send_func))(i,(uint8 *)&(mif->ackbuff));
-      printf("tick - send ack i_f %d  tc %d \n",i,_tick_count);
-      count++;
-    }
-  }
-
-  uint8 if_busy = 0;
-  IQUEUE *qp;
-  // check each i_f for tx queued
-  for ( i = 0 ; i < NUM_INTERFACES ; i++){
-    if_busy = 0;
-    mif = mrf_if_ptr(i);
-    qp = &(mif->status.txqueue);
-    
-    
-    
-    if(queue_data_avail(qp))
-      {
-        bnum = queue_head(qp);
-        if_busy = 1;
-
-        bs = _mrf_buff_state(bnum);
-        printf("\nmrf_tick : FOUND txqueue -IF = %d buffer is %d j = %d tx_timer %d  tc %d\n",i,bnum,j,bs->tx_timer,_tick_count);
-
-        
-        if (  (bs->tx_timer) == 0 ){
-          tb = _mrf_buff_ptr(bnum);
-          //printf("calling send func\n");
-          printf("tick - send buff %d i_f %d tc %d\n",bnum,i,_tick_count);
-
-          (*(mif->type->send_func))(i,tb);
-
-          mif->status.state = MRF_ST_WAITSACK;
-          bs->tx_timer = 0;
-          
-          // queue_pop(qp);
-          //count++;
-        }
-        else {
-          (bs->tx_timer) --;  
-          //printf("tx_timer -> %d\n",bs->tx_timer);
-        }
-
-        // check buff count 
-        
-      }
-  
-    //printf("\n");
-    if ( if_busy == 0){
-      count++;
-      //printf("IF %d empty txq\n",i);
-    }
-     
-
-
-  }
-  
-
-
-  if ( count == NUM_INTERFACES * 2)  // all interfaces quiet
-    {
-      printf("mrf_tick : count = %d  NIF %d- stopping tick tc %d\n",count,NUM_INTERFACES,_tick_count);
-      mrf_tick_disable();
-    }
-  /*
-  if( ( (_tick_count++) % 1000 ) == 0){
-
-    printf("_mrf_tick %d count %d\n",_tick_count,count);
-  }
-  else*/ 
-  _tick_count ++;
-  //if (_tick_count < 10)
-  //printf("_mrf_tick %d count %d NUM_INTERFACES %d\n",_tick_count,count,NUM_INTERFACES);
- 
-
-}

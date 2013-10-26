@@ -51,8 +51,8 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
   //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
   // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
   sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  //printf("using socket *%s*\n",spath);
-  fd = open(spath, O_WRONLY);
+  printf("using socket *%s*\n",spath);
+  fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
     printf(" %d\n",fd);
     perror("ERROR file open\n");
