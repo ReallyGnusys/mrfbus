@@ -18,16 +18,16 @@ make DEVTYPE=usbrf MRFID=2
 cp mtest usbrf_2
 
 make clean
-make DEVTYPE=usbrf MRFID=0x20
+make DEVTYPE=rf MRFID=0x20
 cp mtest rf_20
 
 make clean
-make DEVTYPE=usbrf MRFID=0x2f
+make DEVTYPE=rf MRFID=0x2f
 cp mtest rf_2f
 
 
-make clean
-make DEVTYPE=usbrf MRFID=4
-cp mtest usbrf_4
+#make clean
+#make DEVTYPE=usbrf MRFID=4
+#cp mtest usbrf_4
 
 

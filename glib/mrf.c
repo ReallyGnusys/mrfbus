@@ -13,6 +13,7 @@ const MRF_PKT_DEVICE_INFO device_info  = {_DEVNAME_STR_ ,"1", SVN };
 
 int mrf_init(){  
   mrf_if_init();
+  mrf_sys_init();
   return mrf_arch_init();
 }
 

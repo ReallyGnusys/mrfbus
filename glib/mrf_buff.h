@@ -8,12 +8,11 @@
 
 #include "mrf_sys_structs.h"
 
-
-
 typedef  enum { FREE,
 		LOADING, // allocated and being written by IF or app 
 		LOADED,  // loaded and awaiting classification
-		TXQUEUE, // loaded and requires forwarding via an interface 
+		TXQUEUE, // loaded and requires forwarding via an interface ,
+                TX,  // currently being transmitted by I_F
                 APPIN,  // loaded and requires processing by app
 } mrf_buff_state_t;
 

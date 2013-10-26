@@ -36,7 +36,7 @@ typedef enum {
 
 
 
-typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum );
+typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , MRF_IF *ifp);
 
 
 #ifndef HOSTBUILD
@@ -72,4 +72,4 @@ typedef struct {
 
 
 int _mrf_process_packet(I_F owner,uint8 bnum);
-void _mrf_print_packet_header(MRF_PKT_HDR *hdr);
+void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F i_f);

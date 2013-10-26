@@ -3,6 +3,7 @@
 //#include <mrf_sys.h>
 #include <if.h>
 #include "mrf_sys_structs.h"
+#include "iqueue.h"
 
 typedef volatile struct  __attribute__ ((packed)){
  MRF_PKT_HDR hdr;
@@ -20,6 +21,7 @@ typedef enum {
 typedef enum {
   MRF_ST_NONE,
   MRF_ST_IDLE,
+  MRF_ST_TXQ,
   MRF_ST_TX,
   MRF_ST_WAITSACK,  // wait for segment ack
   MRF_ST_WAITUACK,  // wait for ultimate ack
@@ -34,6 +36,7 @@ typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buff);
 
 typedef struct {
   uint8 tx_del;
+  uint8 tx_q_len;
   IF_SEND_FUNCPTR send_func;
 } MRF_IF_TYPE;
 
@@ -62,13 +65,15 @@ typedef struct  __attribute__ ((packed))  {
   uint16 tx_pkts;
   uint16 tx_overruns;
   uint16 tx_retries;  
+  uint8   unexp_ack;  
+  
 } IF_STATS;
 
 typedef struct  {
   IF_STATE state;
   IF_STATS stats;
   uint8 acktimer;
-  uint8 txqueue[MRF_IF_QL];     
+  IQUEUE txqueue;
   uint8 rx_last_id;
   uint8 rx_last_src;
   uint8 tx_id;
@@ -90,5 +95,6 @@ void mrf_if_register(I_F i_f, MRF_IF_TYPE *type);
 MRF_IF *mrf_if_ptr(I_F i_f);
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum );
+void _mrf_if_print_all();
 
 #endif

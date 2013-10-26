@@ -2,17 +2,71 @@
 #include <stdio.h>
 #include <mrf_cmds.h>
 
-MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum){
-  printf("mrf_task_ack\n");
+
+
+
+MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  printf("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status.state);
+
+  uint8 bn;
+
+
+
+  IQUEUE *qp = &(ifp->status.txqueue);
+
+  MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
+  MRF_PKT_HDR *txhdr; 
+  MRF_BUFF_STATE *bs;
+
+  // clear buff state of ack buffer
+  _mrf_buff_state(bnum)->state = FREE;
+
+  if ( ifp->status.state != MRF_ST_WAITSACK){    
+    ifp->status.stats.unexp_ack++;
+    return MRF_CMD_RES_ERROR;
+  }
+
+
+  printf("ack 1\n");
+  if (queue_data_avail(qp)){
+      bn = queue_head(qp);
+      bs = _mrf_buff_state(bn);
+      txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
+      printf(" qhead is %d state %d\n",bn,bs->state);
+
+      if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
+        {
+        printf("acknowledge recieved buffer %d \n",bnum);
+        queue_pop(qp);
+        ifp->status.state = MRF_ST_RX;
+
+        bs->state = FREE;
+        return;
+        
+        }
+      else{
+        printf("no ack 1\n");
+
+      }
+      
+  }
+  printf("i_f status %d da %d\n",ifp->status.state,queue_data_avail(&(ifp->status.txqueue)));
+  printf("no ack 2\n");
+  
+
 
 }
-MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   printf("mrf_task_retry\n");
 
 }
 
-MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   printf("mrf_task_resp\n");
+
+
+  // send ack
+  mrf_sack(bnum);
 
   MRF_PKT_HDR *hdr1;
   // hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+0);
@@ -20,6 +74,7 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum){
 
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
 
+  // send a seg ack when we get resp
   printf("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_cmds[resp->type].str,resp->rlen,resp->usrc,resp->udest);
 
   if (resp->type == mrf_cmd_device_info){
@@ -34,9 +89,11 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum){
     IF_STATUS *if_status = (IF_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     printf("IF STATUS : state %d rx_pkts %u tx_pkts %u tx_retries %u \n",if_status->state,if_status->stats.rx_pkts,if_status->stats.tx_pkts,if_status->stats.tx_retries);
   }  
+  _mrf_buff_state(bnum)->state = FREE;
+
 }
 
-MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   printf("mrf_task_if_info\n");
 
   MRF_PKT_IF_INFO info;
@@ -55,11 +112,13 @@ MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum){
     info.tx_pkts += i_f->status.stats.tx_pkts;
     info.rx_pkts += i_f->status.stats.rx_pkts;    
   }
-  
+  printf("mrf_task_if_info l1\n");
+
   mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_IF_INFO));  
+  printf("mrf_task_if_info exit\n");
 
 }
-MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   MRF_PKT_IF_STAT_REQ *streq = (MRF_PKT_IF_STAT_REQ *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
   printf("mrf_task_if_status request for i_f %d\n",streq->i_f);
@@ -72,14 +131,14 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum){
   return MRF_CMD_RES_OK;
 
 }
-MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 }
-MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   printf("mrf_task_test_1\n");
 }
-MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum){
+MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   printf("mrf_task_test_2\n");
 
 }

@@ -16,7 +16,9 @@ static MRF_BUFF_STATE _mrf_buffst[_MRF_BUFFS];
 
 //extern const MRF_CMD const mrf_cmds[];
 void _mrf_buff_free(uint8 i){
+  
   if (i < _MRF_BUFFS){
+    printf("_mrf_buff_free : free buff %d \n",i);
     _mrf_buffst[i].state = FREE;
     _mrf_buffst[i].owner = NUM_INTERFACES;    
   }
@@ -32,9 +34,8 @@ void mrf_buff_loaded_if(I_F owner, uint8 *buff,uint8 em){
     //printf("i %d buff i %p bsowner %d\n",i,_mrf_buff[i],_mrf_buffst[i].owner);
     if((buff == &(_mrf_buff[i][0])) && (_mrf_buffst[i].owner == owner)){       
       _mrf_buffst[i].state = LOADED;
- 
       _mrf_process_packet(owner,i);	
-      _mrf_buff_free(i);
+      //_mrf_buff_free(i);
       return;
     }
 }
@@ -49,6 +50,7 @@ void mrf_free(uint8* buff){
   for ( i = 0 ; i < _MRF_BUFFS ; i++)
     if(buff == &(_mrf_buff[i][0])){
       _mrf_buff_free(i);
+      printf("mrf_free : free buff %d \n",i);
       return;
     }      
 }
@@ -71,15 +73,23 @@ MRF_BUFF_STATE *_mrf_buff_state(uint8 bnum){
 }
 
 
+void _mrf_buff_print(){
+  int i;
+  for ( i = 0 ; i < _MRF_BUFFS ; i++){
+    printf("buff %d state %d owner %d\n",i,_mrf_buffst[i].state,_mrf_buffst[i].owner);    
+  }
+}
 
 
 uint8 *mrf_alloc_if(I_F i_f){
   int i;
+  _mrf_buff_print();
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     if ( _mrf_buffst[i].state == FREE)
       {
 	_mrf_buffst[i].state = LOADING;
 	_mrf_buffst[i].owner = i_f;	
+        printf("mrf_alloc_if : alloc buff %d to i_f %d\n",i,i_f);
 	return &(_mrf_buff[i][0]);
       }
   }

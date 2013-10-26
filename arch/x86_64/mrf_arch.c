@@ -6,13 +6,19 @@
 #include <mrf_buff.h>
 #include <mrf_sys.h>
 #include <mrf_if.h>
+#include <mrf_route.h>
 #include <mrf_debug.h>
 #define SOCKET_DIR "/tmp/mrf_bus/"
 
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
+int lnx_if_send_func(I_F i_f, uint8 *buff);
 
+MRF_IF_TYPE lnx_if_type = {
+ tx_del : 1,
+ send_func : lnx_if_send_func
+};
 
 
 int _bin2hex(uint* inbuff,uint *outbuff,uint8 *len);
@@ -24,11 +30,27 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
   char spath[64];
   uint8 txbuff[_MRF_BUFFLEN];
   int fd,bc,tb;
+  uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
+
+  // rough hack to get up and down using correct sockets
+  if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
+    sknum = 0;
+  else if (hdr->hdest >= 1)  // usbrf or host
+    {
+      if(hdr->hdest < MRFID) 
+        sknum = 1;
+      else
+        sknum = 0;
+    }
+  else  // zl-0
+    sknum = 0;
+
+
 
   //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
   // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
-  sprintf(spath,"%s%d-0-in",SOCKET_DIR,hdr->hdest);
+  sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
   //printf("using socket *%s*\n",spath);
   fd = open(spath, O_WRONLY);
   if(fd == -1){
@@ -50,10 +72,6 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
-MRF_IF_TYPE lnx_if_type = {
- tx_del : 0,
- send_func : lnx_if_send_func
-};
 
 // lnx i_f uses sockets 
 
@@ -239,6 +257,9 @@ int packet_received(I_F i_f,char *buffer,int len){
     copy_to_mbuff(buffer,len,mbuff);
     //printf("\npkt copied\n");
     mrf_buff_loaded_if(i_f, mbuff,0);
+  }
+  else {
+    printf("mrf_arch : packet_received - failed to allocate buffer!\n");
   }
 }
 char buff[2048];

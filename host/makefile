@@ -11,7 +11,7 @@ GITSH=\""$(git rev-parse HEAD)"\"
 clean : 
 	rm mtest
 
-SRCS=../glib/mrf.c ../arch/${ARCH}/mrf_arch.c ../glib/mrf_buff.c ../glib/mrf_sys.c ../glib/mrf_sys_tasks.c ../glib/mrf_if.c  ../glib/mrf_route.c  ../net/mrf_cmds.c
+SRCS=../glib/mrf.c ../arch/${ARCH}/mrf_arch.c ../glib/mrf_buff.c ../glib/mrf_sys.c ../glib/mrf_sys_tasks.c ../glib/mrf_if.c  ../glib/mrf_route.c  ../net/mrf_cmds.c ../glib/iqueue.c
 CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../glib  -I../arch/${ARCH}  -I../devices/${DEVTYPE} -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH}
 
 intest : intest.c ../glib/xb_buff.c

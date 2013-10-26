@@ -1,5 +1,10 @@
 #ifndef _MRF_ARCH_INCLUDED_
 #define _MRF_ARCH_INCLUDED_
+
+
+#define IQUEUE_DEPTH 8
+
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <mrf_types.h>
