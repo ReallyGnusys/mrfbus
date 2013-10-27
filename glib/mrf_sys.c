@@ -5,6 +5,10 @@
 #include "mrf_debug.h"
 #include "mrf_cmds.h"
 #include "mrf_route.h"
+
+#define _MRF_TX_TIMEOUT 10
+#define _MRF_MAX_RETRY 4
+
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
@@ -276,6 +280,13 @@ void _mrf_tick(){
   _tick_count++;
   if ( (_tick_count % 1000 ) == 0)
     printf("%d\n",_tick_count);
+  /*
+  if(_tick_count > 100 ){
+    _mrf_if_print_all();
+    _mrf_buff_print();
+    exit(1);
+  }
+  */
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     mif = mrf_if_ptr(i);
     qp = &(mif->status.txqueue);
@@ -301,9 +312,7 @@ void _mrf_tick(){
         }
 
       }
-    else if (_mrf_if_can_tx(istate)) {
-      //printf("mrf_sys can_tx i = %d - tc %d\n",i,_tick_count);
-      if (queue_data_avail(qp))
+    else if (queue_data_avail(qp))
         {
 
           if_busy = 1;
@@ -316,21 +325,22 @@ void _mrf_tick(){
      
           // if (_tick_count >10)
           //  exit(1);
-          if ( bs->state == TXQUEUE ){
+          if ( (bs->state) == TXQUEUE ){
             printf("mrf_tick 11 \n");
 
         
-            if (  (bs->tx_timer) == 0 ){
-              tb = _mrf_buff_ptr(bnum);
-            //printf("calling send func\n");
-              printf("tick - send buff %d i_f %d tc %d\n",bnum,i,_tick_count);
-              bs->state = TX;
+            if ( (bs->tx_timer) == 0 ){
+              if (1) { //(_mrf_if_can_tx(istate)) {
+                tb = _mrf_buff_ptr(bnum);
+                //printf("calling send func\n");
+                bs->retry_count++;
+                printf("tick - send buff %d i_f %d tc %d retry_count %d\n",bnum,i,_tick_count,bs->retry_count);
+                (*(mif->type->send_func))(i,tb);
 
-              (*(mif->type->send_func))(i,tb);
-
-              mif->status.state = MRF_ST_WAITSACK;
-              bs->tx_timer = 0;
-            
+                bs->state = TX;
+                mif->status.state = MRF_ST_WAITSACK;
+                bs->tx_timer = 0;
+              }
             // queue_pop(qp);
             //count++;
             }
@@ -339,10 +349,40 @@ void _mrf_tick(){
             //printf("tx_timer -> %d\n",bs->tx_timer);
             }
           }
+          else if ( (bs->state) == TX ){
+            printf("mrf_tick : bs state TX  on IF %d - timer = %d tc %d\n",i,bs->tx_timer,_tick_count);         
+ 
+            if(((bs->tx_timer) ++) > _MRF_TX_TIMEOUT ){
+              printf("mrf_tick : tx timeout on IF %d - timer = %d tc %d\n",i,bs->tx_timer,_tick_count);         
+              if ((bs->retry_count ) < _MRF_MAX_RETRY){
+                printf("retry number %d\n",bs->retry_count);
+                bs->tx_timer = mif->type->tx_del;
+                bs->state = TXQUEUE;
+                mif->status.state = MRF_ST_TXQ;
+                mif->status.stats.tx_retries++;
+
+
+              }else{
+
+                printf("retry limit reached - abort buffer tx\n");
+                // maybe send NDR here ..but in meantime
+                bs->state = FREE;
+                bs->owner = NUM_INTERFACES;
+                mif->status.state = MRF_ST_RX;
+
+                queue_pop(qp);
+              }
+              
+                
+            }
+            
+
+          }
         }
-  
-    } // end if can_tx 
+    // end if can_tx 
   } // for i=0 to NUM_INTERFACES
+
+ 
   if (if_busy == 0 )
     {
       // all i_fs are idle - turn off tick

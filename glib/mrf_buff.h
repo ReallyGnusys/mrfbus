@@ -19,7 +19,8 @@ typedef  enum { FREE,
 typedef struct __attribute__ ((packed)){
   mrf_buff_state_t state;
   I_F owner;
-  uint16 tx_timer;		
+  uint16 tx_timer;
+  uint8 retry_count;
 } MRF_BUFF_STATE;
 
 

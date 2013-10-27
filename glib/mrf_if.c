@@ -60,6 +60,7 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
       mbst->owner = i_f;
       mbst->tx_timer = mif->type->tx_del;
       mbst->state = TXQUEUE;
+      mbst->retry_count = 0;
       mrf_tick_enable();
       //printf("mrf_if_tx_queue OK\n");
       return 0;
