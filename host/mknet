@@ -1,33 +1,21 @@
-killall zl_0
-killall host_1
-killall usbrf_2
-killall rf_20
-killall rf_2f
-
-
-make clean
-make DEVTYPE=zl MRFID=0
-cp mtest zl_0
-
-make clean
-make DEVTYPE=host MRFID=1
-cp mtest host_1
-
-make clean
-make DEVTYPE=usbrf MRFID=2
-cp mtest usbrf_2
-
-make clean
-make DEVTYPE=rf MRFID=0x20
-cp mtest rf_20
-
-make clean
-make DEVTYPE=rf MRFID=0x2f
-cp mtest rf_2f
+killall zl_0x00
+killall host_0x01
+killall usbrf_0x02
+killall rf_0x20
+killall rf_0x2f
 
 
 #make clean
-#make DEVTYPE=usbrf MRFID=4
-#cp mtest usbrf_4
+#mak
+make DEVTYPE=zl MRFID=0x00
+make DEVTYPE=host MRFID=0x01
+
+make DEVTYPE=usbrf MRFID=0x02
+
+make DEVTYPE=rf MRFID=0x20
+
+make DEVTYPE=rf MRFID=0x2f
+
+
 
 

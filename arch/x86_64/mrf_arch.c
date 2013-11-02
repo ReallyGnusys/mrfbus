@@ -10,6 +10,7 @@
 #include <mrf_debug.h>
 #define SOCKET_DIR "/tmp/mrf_bus/"
 
+extern uint8 _mrfid;
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
@@ -38,7 +39,7 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
     sknum = 0;
   else if (hdr->hdest >= 1)  // usbrf or host
     {
-      if(hdr->hdest < MRFID) 
+      if(hdr->hdest < _mrfid) 
         sknum = 1;
       else
         sknum = 0;
@@ -110,11 +111,11 @@ int mrf_arch_init(){
   struct timespec now;
   struct itimerspec new_value;
   char sname[64];
-  printf("Initialising DEVTYPE %s MRFID %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),MRFID,NUM_INTERFACES);
+  printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
 
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
       mrf_if_register(i,&lnx_if_type);
-      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,MRFID,i);
+      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);
       tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
       printf("created pipe %s res %d",sname,tmp);
       _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
@@ -140,7 +141,7 @@ int mrf_arch_init(){
   printf("opened pipe i = %d  fd = %d\n",NUM_INTERFACES,_input_fd[NUM_INTERFACES]);
 
   i = NUM_INTERFACES + 1;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   printf("created pipe %s res %d",sname,tmp);
   _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
@@ -438,7 +439,7 @@ const char tick_dis_str[] = "tick_disable";
 int mrf_tick_enable(){
   char sname[64];
   int fd,bc,tb;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
     printf(" %d\n",fd);
@@ -452,7 +453,7 @@ int mrf_tick_enable(){
 int mrf_tick_disable(){
   char sname[64];
   int fd,bc,tb;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
     printf(" %d\n",fd);

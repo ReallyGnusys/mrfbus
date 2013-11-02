@@ -18,7 +18,7 @@ const MRF_CMD const mrf_cmds[] = {
   [ mrf_cmd_resp        ] = {"RESP"       , MRF_CFLG_INTR | MRF_CFLG_NO_RESP, 0                          , 0                          ,  NULL               , mrf_task_resp     },
   [ mrf_cmd_device_info ] = {"DEVICE_INFO", 0                               , 0                          , sizeof(MRF_PKT_DEVICE_INFO),  (void*)&device_info, NULL },
   [ mrf_cmd_if_info     ] = {"IF_INFO"    , 0                               , 0                          , sizeof(MRF_PKT_IF_INFO)    ,  NULL               , mrf_task_if_info  },
-  [ mrf_cmd_if_status   ] = {"IF_STATUS"    , 0                            , sizeof(MRF_PKT_IF_STAT_REQ), sizeof(IF_STATUS      )    ,  NULL               , mrf_task_if_status  },
+  [ mrf_cmd_if_status   ] = {"IF_STATUS"    , 0                             , sizeof(MRF_PKT_IF_STAT_REQ), sizeof(IF_STATUS      )    ,  NULL               , mrf_task_if_status  },
 
   [ mrf_cmd_get_time    ] = {"GET_TIME"   , 0                               , sizeof(MRF_PKT_TIMEDATE)   , 0                          ,  NULL               , mrf_task_get_time },
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_test_1   },

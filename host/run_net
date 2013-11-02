@@ -1,6 +1,6 @@
 pids=""
 
-devs="zl_0 host_1 usbrf_2 rf_20 rf_2f"
+devs="zl_0x00 host_0x01 usbrf_0x02 rf_0x20 rf_0x2f"
 
 declare -i height=10
 declare -i width=75
@@ -15,7 +15,7 @@ declare -i vmax=600
 
 for dev in $devs ; do
     
-    xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./"$dev &
+    xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./bin/"$dev &
     pd=$!
     echo $pd
     pids=$pids" "$pd
