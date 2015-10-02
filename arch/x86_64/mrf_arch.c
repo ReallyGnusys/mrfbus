@@ -16,7 +16,7 @@ extern uint8 _mrfid;
 #define STR(s) #s
 int lnx_if_send_func(I_F i_f, uint8 *buff);
 
-MRF_IF_TYPE lnx_if_type = {
+const MRF_IF_TYPE lnx_if_type = {
  tx_del : 1,
  send_func : lnx_if_send_func
 };
@@ -146,7 +146,6 @@ int mrf_arch_init(){
   printf("created pipe %s res %d",sname,tmp);
   _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
   printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
-
   
 }
 
@@ -257,7 +256,7 @@ int packet_received(I_F i_f,char *buffer,int len){
   if ( mbuff != NULL) {
     copy_to_mbuff(buffer,len,mbuff);
     //printf("\npkt copied\n");
-    mrf_buff_loaded_if(i_f, mbuff,0);
+    mrf_buff_loaded_if(i_f, mbuff);
   }
   else {
     printf("mrf_arch : packet_received - failed to allocate buffer!\n");
