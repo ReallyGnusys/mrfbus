@@ -262,7 +262,7 @@ int _mrf_if_can_tx(IF_STATE istate){
 
 
 void _mrf_tick(){
- MRF_IF *mif; 
+  MRF_IF *mif; 
   I_F i;
   uint8 j;
   uint8 *tb;

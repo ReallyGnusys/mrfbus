@@ -10,13 +10,15 @@ typedef enum mrf_cmd_code
    mrf_cmd_device_info = 3,
    mrf_cmd_if_info = 4,
    mrf_cmd_if_status = 5,
-   
    mrf_cmd_get_time = 6,
-   mrf_cmd_test_1 = 7, 
-   mrf_cmd_test_2 = 8
+   mrf_cmd_set_time = 7,
+   mrf_cmd_sensor_data = 8,
+   mrf_cmd_get_sensor_data = 9,
+   mrf_cmd_test_1 = 10, 
+   mrf_cmd_test_2 = 11
  } MRF_CMD_CODE;
 
-#define MRF_NUM_CMDS 9
+#define MRF_NUM_CMDS 12
 
 
 

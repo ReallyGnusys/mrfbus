@@ -52,7 +52,7 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
   //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
   // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
   sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  printf("using socket *%s*\n",spath);
+  printf("mrf_arch.c lnx_if_send_func using socket *%s*\n",spath);
   fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
     printf(" %d\n",fd);
@@ -252,7 +252,7 @@ int packet_received(I_F i_f,char *buffer,int len){
   }
  
   mbuff = mrf_alloc_if(i_f);
-  //printf("\nPACKET RECIEVED IF = %d: mbuff = %p\n",i_f,mbuff);
+  mrf_debug("\nmrf_arch PACKET RECIEVED IF = %d: mbuff = %p\n",i_f,mbuff);
   if ( mbuff != NULL) {
     copy_to_mbuff(buffer,len,mbuff);
     //printf("\npkt copied\n");
