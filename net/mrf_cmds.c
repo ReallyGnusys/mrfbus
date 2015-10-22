@@ -20,8 +20,8 @@ const MRF_CMD const mrf_cmds[] = {
   [ mrf_cmd_if_info     ] = {"IF_INFO"    , 0                               , 0                          , sizeof(MRF_PKT_IF_INFO)    ,  NULL               , mrf_task_if_info  },
   [ mrf_cmd_if_status   ] = {"IF_STATUS"    , 0                             , sizeof(MRF_PKT_IF_STAT_REQ), sizeof(IF_STATUS      )    ,  NULL               , mrf_task_if_status  },
 
-  [ mrf_cmd_get_time    ] = {"GET_TIME"   , 0                               , sizeof(MRF_PKT_TIMEDATE)   , 0                          ,  NULL               , mrf_task_get_time },
-  [ mrf_cmd_set_time    ] = {"SET_TIME"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_set_time   },
+  [ mrf_cmd_get_time    ] = {"GET_TIME"   , 0                               , 0   ,   sizeof(MRF_PKT_TIMEDATE)                         ,  NULL               , mrf_task_get_time },
+  [ mrf_cmd_set_time    ] = {"SET_TIME"     , 0                             ,sizeof(MRF_PKT_TIMEDATE)              , 0                          ,  NULL               , mrf_task_set_time   },
   [ mrf_cmd_sensor_data      ] = {"SENSOR_DATA"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_sensor_data   },
   [ mrf_cmd_get_sensor_data ] = {"GET_SENSOR_DATA"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_get_sensor_data   },
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_test_1   },

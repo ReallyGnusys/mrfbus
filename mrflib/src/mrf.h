@@ -21,7 +21,7 @@ int mrf_rtc_set(TIMEDATE *td);
 int mrf_tick_enable();
 int mrf_tick_disable();
 
-
+int mrf_time(char *buff);
 
 
 #endif

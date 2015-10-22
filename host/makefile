@@ -1,6 +1,7 @@
 GCC=gcc
 LD=ld
 ARCH=x86_64
+#ARCH=cc430
 DEVTYPE=host
 MRFID=0x01
 MRFNET=0x25
@@ -36,17 +37,9 @@ ${BIN}:
 
 
 
-#${MOBJS}:
-#	cd ../mrflib ; make ALL ARCH=${ARCH} DEVTYPE=${DEVTYPE} MRFID=${MRFID} MRFNET=${MRFNET}
 
-#MOBJS:
-#	cd ../mrflib ; make all ARCH=${ARCH} DEVTYPE=${DEVTYPE} MRFID=${MRFID} MRFNET=${MRFNET}
-
-SRCS=../glib/mrf.c ../arch/${ARCH}/mrf_arch.c ../glib/mrf_buff.c ../glib/mrf_sys.c ../glib/mrf_sys_tasks.c ../glib/mrf_if.c  ../glib/mrf_route.c  ../net/mrf_cmds.c ../glib/iqueue.c
 CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../mrflib/src  -I../arch/${ARCH}  -I../devices/${DEVTYPE} -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DGITSH=${GITSH}
 
-#${TARG} : ttest.c ${MOBJS}
-#	${GCC} ${CCFLAGS}  ttest.c ${MOBJS}  -lrt -o ${TARG}
 
 
 ${TARG} :

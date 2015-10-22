@@ -27,35 +27,26 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     ifp->status.stats.unexp_ack++;
     return MRF_CMD_RES_ERROR;
   }
-  
   mrf_debug("ack 1\n");
   if (queue_data_avail(qp)){
       bn = queue_head(qp);
       bs = _mrf_buff_state(bn);
       txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
       mrf_debug(" qhead is %d state %d\n",bn,bs->state);
-
       if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
         {
         mrf_debug("acknowledge recieved buffer %d \n",bnum);
         queue_pop(qp);
         ifp->status.state = MRF_ST_RX;
-
         bs->state = FREE;
         return;
-        
         }
       else{
         mrf_debug("no ack 1\n");
-
       }
-      
   }
   mrf_debug("i_f status %d da %d\n",ifp->status.state,queue_data_avail(&(ifp->status.txqueue)));
   mrf_debug("no ack 2\n");
-  
-
-
 }
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_retry\n");
@@ -89,6 +80,13 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   else if  (resp->type == mrf_cmd_if_status){
     IF_STATUS *if_status = (IF_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("IF STATUS : state %d rx_pkts %u tx_pkts %u tx_retries %u \n",if_status->state,if_status->stats.rx_pkts,if_status->stats.tx_pkts,if_status->stats.tx_retries);
+  }  
+  else if  (resp->type == mrf_cmd_get_time){
+    TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
   }  
   _mrf_buff_state(bnum)->state = FREE;
 
@@ -133,8 +131,15 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 }
 MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_get_time exit\n");
-  mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
+  TIMEDATE td;
+  mrf_rtc_get(&td);
+  mrf_debug("mrf_task_get_time \n");
+  mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td.day,td.mon,td.year,td.hour,td.min,td.sec);
+
+  mrf_debug("hex buff follows:");
+  _mrf_print_hex_buff((uint8 *)&td,sizeof(TIMEDATE));
+  mrf_debug(":end of hex");
+  mrf_data_response( bnum,&td,sizeof(TIMEDATE));  
   return MRF_CMD_RES_OK;
 }
 

@@ -417,7 +417,10 @@ int mrf_arch_main_loop(){
 int mrf_rtc_get(TIMEDATE *td){
 
   time_t t = time(NULL);
+  mrf_debug("mrf_rtc_get t %lx\n",t);
   struct tm tm = *localtime(&t);
+  mrf_debug("\nyear is %u mon %u day %u hour %u min %u sec %u ",
+         tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
   td->year = tm.tm_year - 100;  // mrf bus years start at 2000
   td->mon = tm.tm_mon;
   td->day = tm.tm_mday;

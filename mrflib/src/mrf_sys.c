@@ -128,12 +128,27 @@ int mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
      for ( i = 0 ; i < len ; i++ )
        *(dptr + i) = data[i];
 
-     hdr->length = sizeof(MRF_PKT_HDR) + len;
-
+     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+     mrf_debug("mrf_data_resp, responding - header follows");
+     mrf_print_packet_header(hdr);
    }
 
  return 0;
 }
+
+void mrf_print_packet_header(MRF_PKT_HDR *hdr){
+
+  uint8 type = hdr->type;
+   mrf_debug("**************************************\n");
+
+   mrf_debug("PACKET %s\n",mrf_cmds[hdr->type].str);
+  
+   mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
+   mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
+   mrf_debug("**************************************\n");
+}
+
+
 void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
   MRF_IF *ifp = mrf_if_ptr(owner);
 
@@ -145,7 +160,33 @@ void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
    mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
    mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
    mrf_debug("**************************************\n");
+}
 
+uint8 _nibble2hex(uint8 nib){
+  nib = nib%16;
+  if(( 0 <= nib ) && ( nib < 10))
+    return '0' + nib;
+  else
+    return 'A' + (nib - 10);
+}
+
+void _mrf_print_hex_buff(uint8 *buff,uint16 len){
+ 
+  uint8 s[50];
+  uint8 i;
+  mrf_debug("print_hex_buff : len is %u buff:",len);
+  if (len > 16 ){
+    mrf_debug("try len < 16 - you had %d\n",len);
+    return;
+  }
+  for ( i=0; i<len ; i++){
+    s[i*2] = _nibble2hex(buff[i]/16);
+    s[i*2+1] = _nibble2hex(buff[i]%16);
+  }
+  s[i*2] = '\0';
+ 
+  //s[0] = '\0';
+  mrf_debug("%s",s);
 
 }
 
