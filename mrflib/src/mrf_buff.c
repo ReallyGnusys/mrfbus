@@ -16,7 +16,6 @@ static MRF_BUFF_STATE _mrf_buffst[_MRF_BUFFS];
 
 //extern const MRF_CMD const mrf_cmds[];
 void _mrf_buff_free(uint8 i){
-  
   if (i < _MRF_BUFFS){
     mrf_debug("_mrf_buff_free : free buff %d \n",i);
     _mrf_buffst[i].state = FREE;
@@ -79,9 +78,8 @@ void _mrf_buff_print(){
   }
 }
 
-
-uint8 *mrf_alloc_if(I_F i_f){
-  int i;
+uint8 mrf_alloc_if(I_F i_f){
+  uint8 i;
   _mrf_buff_print();
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     if ( _mrf_buffst[i].state == FREE)
@@ -89,6 +87,21 @@ uint8 *mrf_alloc_if(I_F i_f){
 	_mrf_buffst[i].state = LOADING;
 	_mrf_buffst[i].owner = i_f;	
         mrf_debug("mrf_alloc_if : alloc buff %d to i_f %d\n",i,i_f);
+        return i;
+      }
+  }
+  return _MRF_BUFFS;
+}
+
+uint8 *mrf_alloc_if_tbd(I_F i_f){
+  int i;
+  _mrf_buff_print();
+  for ( i = 0 ; i < _MRF_BUFFS ; i++){
+    if ( _mrf_buffst[i].state == FREE)
+      {
+	_mrf_buffst[i].state = LOADING;
+	_mrf_buffst[i].owner = i_f;	
+        mrf_debug("mrf_alloc_if_tbd : alloc buff %d to i_f %d\n",i,i_f);
 	return &(_mrf_buff[i][0]);
       }
   }

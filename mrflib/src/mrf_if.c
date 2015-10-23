@@ -67,9 +67,7 @@ void _mrf_if_print_all(){
   MRF_IF *ifp;
   for ( i_f = 0 ; i_f < NUM_INTERFACES ; i_f++){
     MRF_IF *ifp = mrf_if_ptr(i_f);
-
     mrf_debug("I_F %d state %d txq_da %d\n",i_f,ifp->status.state,queue_data_avail(&(ifp->status.txqueue)));
-
   }
 }
 

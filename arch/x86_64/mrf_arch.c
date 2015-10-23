@@ -198,16 +198,12 @@ void  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
   int i;
   for ( i = 0 ; i < len/2 ; i++)
     mbuff[i] = hex_dig_str_to_int(&buffer[i*2]);
-
 }
 int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
   int i;
   for ( i = 0 ; i < len ; i++){
-
     txbuff[i*2] = int_to_hex_digit(buffer[i]/16);
-    txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);
-    
-
+    txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);    
   }
   return i*2;
 }
@@ -225,6 +221,7 @@ int packet_received(I_F i_f,char *buffer,int len){
   int i;
   uint8 *mbuff; // mrf_buff
   uint8 cbuff[64];
+  uint8 bind;
   // sanity check packet
   //printf("pr 1 : len %d\n",len);
   if ( len > _MRF_BUFFLEN * 2)
@@ -251,7 +248,8 @@ int packet_received(I_F i_f,char *buffer,int len){
     printf("PACKET too short ( %d bytes )\n",len);
   }
  
-  mbuff = mrf_alloc_if(i_f);
+  bind = mrf_alloc_if(i_f);
+  mbuff = _mrf_buff_ptr(bind);
   mrf_debug("\nmrf_arch PACKET RECIEVED IF = %d: mbuff = %p\n",i_f,mbuff);
   if ( mbuff != NULL) {
     copy_to_mbuff(buffer,len,mbuff);

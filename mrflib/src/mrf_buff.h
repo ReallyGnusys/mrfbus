@@ -25,7 +25,7 @@ typedef struct __attribute__ ((packed)){
 } MRF_BUFF_STATE;
 
 
-uint8 *mrf_alloc_if(I_F i_f);
+uint8  mrf_alloc_if(I_F i_f);
 void mrf_free(uint8* buff);
 void mrf_buff_loaded_if(I_F owner, uint8 *buff);
 

@@ -84,7 +84,7 @@ int mrf_respond_buffer(uint8 bnum){
  hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
  resp-> type = hdr->type;
- resp-> usrc = hdr->usrc;
+ resp-> usrc = hdr->usrc;\
  resp-> udest = hdr->udest;
  resp-> rlen = len;
 
@@ -190,6 +190,24 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
 
 }
 
+int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
+      mrf_debug("_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
+      mrf_debug("cmd name %s  req size %d  rsp size %d\n",
+                cmd->str,cmd->req_size,cmd->rsp_size);
+      if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
+        mrf_debug("sending data response \n");
+        mrf_data_response(bnum,cmd->data,cmd->rsp_size);
+        return;
+
+      }
+      mrf_debug("pp l12\n");
+      // check if command func defined
+      if(cmd->func != NULL){
+        (*(cmd->func))(pkt->type,bnum,ifp);
+        return;
+      }
+}
+
 int _mrf_process_packet(I_F owner,uint8 bnum)
 {
   uint8 len;
@@ -236,9 +254,10 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
   if ( pkt->udest == _mrfid)
     {
       if(type >= mrf_cmd_resp)
-        ifp->status.stats.rx_pkts++;
-      
-
+        ifp->status.stats.rx_pkts++;     
+ 
+      _mrf_ex_packet(bnum, pkt, cmd, ifp);
+      /*
       mrf_debug("INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
       mrf_debug("cmd name %s  req size %d  rsp size %d\n",
                 cmd->str,cmd->req_size,cmd->rsp_size);
@@ -255,6 +274,7 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
         return;
       }
       mrf_debug("pp l13\n");
+      */
     }
   else{
     //otherwise send segment ack then forward on network
@@ -410,11 +430,8 @@ void _mrf_tick(){
                 bs->state = FREE;
                 bs->owner = NUM_INTERFACES;
                 mif->status.state = MRF_ST_RX;
-
                 queue_pop(qp);
-              }
-              
-                
+              }                              
             }
             
 
