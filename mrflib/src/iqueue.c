@@ -7,18 +7,19 @@ void queue_init(IQUEUE *q){
   int i;
   q->qip = 0;
   q->qop = 0;
-  q->items = 0;
+  //q->items = 0;
   q->push_errors = 0;
   q->pop_errors = 0;
 
 }
 
 int queue_full(IQUEUE *q){
-  return (q->items == (IQUEUE_DEPTH -1 ));
+  //return (q->items == (IQUEUE_DEPTH -1 ));
+  return ((q->qip+1) % IQUEUE_DEPTH) == q->qop;
 }
 
 int queue_data_avail(IQUEUE *q){
-  return (q->items != 0);
+  return (q->qip != q->qop);
 }
 
 // returns elem for entry qop
@@ -59,7 +60,6 @@ uint8 queue_pop(IQUEUE *q){
   data = queue_head(q);
   
   q->qop = (q->qop + 1) % IQUEUE_DEPTH;
-  q->items--;
   return data;
 
 }

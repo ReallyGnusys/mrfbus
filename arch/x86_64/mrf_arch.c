@@ -338,8 +338,7 @@ int mrf_arch_main_loop(){
        s = strlen(buff);
 
        if (s >=  sizeof(MRF_PKT_HDR)*2) { // min cntrl packet size (ascii hex coded)
-         //printf("infd event p_r next: read %d bytes = %s ,  inif = %d fd = %d \n",(int)s,buff,inif,_input_fd[inif]);  
-       
+         //printf("infd event p_r next: read %d bytes = %s ,  inif = %d fd = %d \n",(int)s,buff,inif,_input_fd[inif]);         
          packet_received(inif,buff,s);              
        }
 
