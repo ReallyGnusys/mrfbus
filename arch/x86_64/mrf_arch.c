@@ -254,7 +254,8 @@ int packet_received(I_F i_f,char *buffer,int len){
   if ( mbuff != NULL) {
     copy_to_mbuff(buffer,len,mbuff);
     //printf("\npkt copied\n");
-    mrf_buff_loaded_if(i_f, mbuff);
+    //mrf_buff_loaded_if(i_f, mbuff);
+    mrf_buff_loaded(bind);
   }
   else {
     printf("mrf_arch : packet_received - failed to allocate buffer!\n");
@@ -336,7 +337,7 @@ int mrf_arch_main_loop(){
        trim_trailing_space(buff);
        s = strlen(buff);
 
-       if (s >=  sizeof(MRF_PKT_HDR)*2) { // min cntrl packet size 
+       if (s >=  sizeof(MRF_PKT_HDR)*2) { // min cntrl packet size (ascii hex coded)
          //printf("infd event p_r next: read %d bytes = %s ,  inif = %d fd = %d \n",(int)s,buff,inif,_input_fd[inif]);  
        
          packet_received(inif,buff,s);              

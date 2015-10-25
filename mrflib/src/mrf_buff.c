@@ -25,6 +25,15 @@ void _mrf_buff_free(uint8 i){
 
 
 // this is where OS processes buffer
+int mrf_buff_loaded(uint8 bnum){
+  if (bnum <  _MRF_BUFFS){
+    _mrf_buffst[bnum].state = LOADED;
+    _mrf_process_buff(bnum);	
+    return 0;
+  } else {
+    return -1;
+  }
+}
 
 void mrf_buff_loaded_if(I_F owner,uint8 *buff){
   int i;
@@ -92,6 +101,14 @@ uint8 mrf_alloc_if(I_F i_f){
   }
   return _MRF_BUFFS;
 }
+
+I_F mrf_buff_owner(uint8 bnum){
+  if (bnum < _MRF_BUFFS){
+    return _mrf_buffst[bnum].owner;
+  } else {
+    return NUM_INTERFACES;
+  }  
+} 
 
 uint8 *mrf_alloc_if_tbd(I_F i_f){
   int i;
