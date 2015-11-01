@@ -43,7 +43,7 @@ CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../mrflib/src  -I../arch/${ARCH}
 
 
 ${TARG} :
-	${GCC} ${CCFLAGS}  ttest.c ${MOBJS}  -lrt -o ${TARG}
+	${GCC} ${CCFLAGS}  ttest.c ${MOBJS} -lpthread -lrt -o ${TARG}
 
 ${MOBJ}/%.o: ${MSRC}/%.c
 	mkdir -p ${MOBJ}

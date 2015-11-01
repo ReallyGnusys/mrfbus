@@ -1,7 +1,7 @@
 #include "mrf.h"
 #include <time.h>
 #include <string.h>
-
+#include <pthread.h>
 #include <mrf_arch.h>
 #include <mrf_buff.h>
 #include <mrf_sys.h>
@@ -104,7 +104,9 @@ static void print_elapsed_time(void)
   printf("%d.%03d: ", secs, (nsecs + 500000) / 1000000);
 }
 
+static pthread_t _sys_loop_pthread;
 
+static void *_sys_loop(void *arg);
 
 int mrf_arch_init(){
   int i,timerfd,tmp;
@@ -147,6 +149,15 @@ int mrf_arch_init(){
   _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
   printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
   
+  // run io event loop in pthread
+
+ if(pthread_create(&_sys_loop_pthread, NULL, _sys_loop, NULL)) {
+
+   printf("Error creating thread\n");
+   return -1;
+
+} 
+ return 0;
 }
 
 int is_hex_digit(uint8 dig){
@@ -268,7 +279,7 @@ char buff[2048];
 
 
 
-int mrf_arch_main_loop(){
+ void *_sys_loop(void *arg){
   
   //uint8 *buff;
   struct itimerspec new_value;
@@ -279,7 +290,6 @@ int mrf_arch_main_loop(){
   struct epoll_event revent[NUM_INTERFACES + 2];
   int nfds;
   uint32 inif;
-
   printf("mrf_arch_main_loop:entry\n");
 
   int count = 0;
@@ -400,13 +410,10 @@ int mrf_arch_main_loop(){
      }
    }
 
-
    
   }
        
-
-  
-  return 0;
+  return NULL;
 
 }
 

@@ -17,11 +17,11 @@ int mrf_init(){
   return mrf_arch_init();
 }
 
-
+/*
 int mrf_main_loop(){
   return mrf_arch_main_loop();
 }
-
+*/
 int mrf_time(char *buff){
   TIMEDATE td;
   mrf_rtc_get(&td);
