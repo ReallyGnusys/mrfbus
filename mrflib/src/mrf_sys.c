@@ -10,6 +10,10 @@
 #define _MRF_MAX_RETRY 4
 extern uint8 _mrfid;
 
+
+static IQUEUE _app_queue;
+
+
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
@@ -29,9 +33,7 @@ int mrf_tx_bnum(I_F i_f,uint8 bnum){
   
 }
 
-
-
-// send segment acknowledge for buffer
+// send segment ack for buffer
 int mrf_sack(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
@@ -42,6 +44,27 @@ int mrf_sack(uint8 bnum){
  if_ptr->ackbuff.udest = hdr->hsrc;
  if_ptr->ackbuff.netid = MRFNET;
  if_ptr->ackbuff.type = mrf_cmd_ack;
+
+ if_ptr->ackbuff.hsrc = _mrfid;
+ if_ptr->ackbuff.usrc = _mrfid;
+ if_ptr->ackbuff.msgid = hdr->msgid;
+ if_ptr->status.acktimer =  if_ptr->type->tx_del;
+
+ if_ptr->status.state = MRF_ST_ACKDELAY;
+ mrf_tick_enable();
+}
+
+// send segment retry for buffer
+int mrf_sretry(uint8 bnum){
+ MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+ MRF_ROUTE route;
+ mrf_nexthop(&route,_mrfid,hdr->hsrc);
+ MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff.hdest = hdr->hsrc;
+ if_ptr->ackbuff.udest = hdr->hsrc;
+ if_ptr->ackbuff.netid = MRFNET;
+ if_ptr->ackbuff.type = mrf_cmd_retry;
 
  if_ptr->ackbuff.hsrc = _mrfid;
  if_ptr->ackbuff.usrc = _mrfid;
@@ -255,8 +278,22 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
     {
       if(type >= mrf_cmd_resp)
         ifp->status.stats.rx_pkts++;     
- 
-      _mrf_ex_packet(bnum, pkt, cmd, ifp);
+      if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
+        mrf_debug("executing packet in intr");
+        _mrf_ex_packet(bnum, pkt, cmd, ifp); 
+      } else {
+        int rv = queue_push(&_app_queue,bnum);
+        if (rv == 0){
+          mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
+          if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+            mrf_sack(bnum);   
+          }
+        } else {
+            mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
+            mrf_sretry(bnum);
+          
+        }
+      }
       /*
       mrf_debug("INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
       mrf_debug("cmd name %s  req size %d  rsp size %d\n",
@@ -344,32 +381,27 @@ int _mrf_process_buff(uint8 bnum)
 
   // check if we are udest
 
-  if ( pkt->udest == _mrfid)
-    {
+  if ( pkt->udest == _mrfid){
       if(type >= mrf_cmd_resp)
         ifp->status.stats.rx_pkts++;     
+      if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
+        mrf_debug("executing packet in intr");
+        _mrf_ex_packet(bnum, pkt, cmd, ifp); 
+      } else {
+        int rv = queue_push(&_app_queue,bnum);
+        if (rv == 0){
+          mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
+          if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+            mrf_sack(bnum);   
+          }
+        } else {
+            mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
+            mrf_sretry(bnum);
+          
+        }
  
-      _mrf_ex_packet(bnum, pkt, cmd, ifp);
-      /*
-      mrf_debug("INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
-      mrf_debug("cmd name %s  req size %d  rsp size %d\n",
-                cmd->str,cmd->req_size,cmd->rsp_size);
-      if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
-        mrf_debug("sending data response \n");
-        mrf_data_response(bnum,cmd->data,cmd->rsp_size);
-        return;
-
       }
-      mrf_debug("pp l12\n");
-      // check if command func defined
-      if(cmd->func != NULL){
-        (*(cmd->func))(pkt->type,bnum,ifp);
-        return;
-      }
-      mrf_debug("pp l13\n");
-      */
-    }
-  else{
+  } else {
     //otherwise send segment ack then forward on network
     MRF_ROUTE route;
  
@@ -399,6 +431,7 @@ int _tick_count;
 
 void mrf_sys_init(){
   _tick_count = 0;
+  queue_init(&_app_queue);
 }
 
 
