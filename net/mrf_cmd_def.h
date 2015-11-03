@@ -13,7 +13,7 @@ typedef enum mrf_cmd_code
    mrf_cmd_get_time = 6,
    mrf_cmd_set_time = 7,
    mrf_cmd_sensor_data = 8,
-   mrf_cmd_get_sensor_data = 9,
+   mrf_cmd_read_sensor = 9,
    mrf_cmd_test_1 = 10, 
    mrf_cmd_test_2 = 11
  } MRF_CMD_CODE;

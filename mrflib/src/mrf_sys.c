@@ -226,10 +226,22 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp)
       mrf_debug("pp l12\n");
       // check if command func defined
       if(cmd->func != NULL){
+        mrf_debug("executing cmd func");
         (*(cmd->func))(pkt->type,bnum,ifp);
         return;
       }
 }
+
+int _mrf_ex_buffer(uint8 bnum){
+  MRF_PKT_HDR *pkt;
+  I_F owner = mrf_buff_owner(bnum);
+  MRF_IF *ifp = mrf_if_ptr(owner);
+  pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+  mrf_debug("_mrf_ex_buffer bnum %d",bnum);
+  const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_cmds[pkt->type]);
+  return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
+}
+
 
 int _mrf_process_packet(I_F owner,uint8 bnum)
 {
@@ -338,6 +350,7 @@ int _mrf_process_packet(I_F owner,uint8 bnum)
 }
 
 
+
 int _mrf_process_buff(uint8 bnum)
 {
   uint8 len;
@@ -434,6 +447,21 @@ void mrf_sys_init(){
   queue_init(&_app_queue);
 }
 
+
+int mrf_foreground(){
+  uint8 bnum;
+  int rv,cnt = 0;
+  while(queue_data_avail(&_app_queue)){
+    mrf_debug("appq data available\n");
+    bnum = queue_pop(&_app_queue);
+    mrf_debug("got bnum %d\n",bnum);
+    _mrf_ex_buffer(bnum);
+    mrf_debug("rv was %d",rv);
+    cnt++;
+  }
+  //mrf_debug("no more data available returning after %d cmds",cnt);
+  return cnt;
+}
 
 // can i_f start tx?
 int _mrf_if_can_tx(IF_STATE istate){

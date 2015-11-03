@@ -49,7 +49,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("no ack 2\n");
 }
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_retry\n");
+  mrf_debug("mrf_task_retry..doing nothing yet\n");
 
 }
 
@@ -157,7 +157,7 @@ MRF_CMD_RES mrf_task_sensor_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 }
 
-MRF_CMD_RES mrf_task_get_sensor_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_get_sensor_data exit\n");
   mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;  

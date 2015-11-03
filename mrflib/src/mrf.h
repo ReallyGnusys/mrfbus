@@ -6,6 +6,7 @@
 //#include <mrf_types.h>
 //#include <mrf_if.h>
 #include <mrf_arch.h>
+#include <mrf_debug.h>
 
 //#include <mrf_sys_structs.h>
 
