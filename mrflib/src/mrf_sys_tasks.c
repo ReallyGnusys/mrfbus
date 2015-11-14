@@ -38,6 +38,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
         mrf_debug("acknowledge recieved buffer %d \n",bnum);
         queue_pop(qp);
         ifp->status.state = MRF_ST_RX;
+        ifp->status.stats.tx_pkts++;
         bs->state = FREE;
         return;
         }
@@ -67,7 +68,7 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
 
   // send a seg ack when we get resp
-  mrf_debug("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_cmds[resp->type].str,resp->rlen,resp->usrc,resp->udest);
+  mrf_debug("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_cmds[resp->type].str,resp->rlen,hdr1->usrc,hdr1->udest);
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -165,9 +166,10 @@ MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-
+  uint8 *rbuff = mrf_response_buffer(bnum);
+  uint8 rlen = mrf_time(rbuff);
+  mrf_send_response(bnum,rlen);
   mrf_debug("mrf_task_test_1\n");
-  mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;  
 
 }

@@ -30,14 +30,7 @@ typedef struct  __attribute__ ((packed)) timedate {
 
 typedef struct  __attribute__ ((packed))   {
   uint8 type;
-  uint8 usrc;
-  uint8 udest;
-} MRF_PKT_ACK;
-
-typedef struct  __attribute__ ((packed))   {
-  uint8 type;
-  uint8 usrc;
-  uint8 udest;
+  uint8 msgid; 
   uint8 rlen;  
 } MRF_PKT_RESP;
 

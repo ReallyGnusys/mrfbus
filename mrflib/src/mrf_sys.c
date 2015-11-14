@@ -10,9 +10,7 @@
 #define _MRF_MAX_RETRY 4
 extern uint8 _mrfid;
 
-
 static IQUEUE _app_queue;
-
 
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
@@ -113,10 +111,29 @@ int mrf_respond_buffer(uint8 bnum){
 
 }
 */
-int mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
+
+uint8 *mrf_response_buffer(uint8 bnum){
+  return _mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP);
+
+}
+
+mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
+  int i;
+  uint8 *dptr = mrf_response_buffer(bnum);
+  for ( i = 0 ; i < len ; i++ )
+    *(dptr + i) = data[i];
+
+  return mrf_send_response(bnum, len);
+}
+
+
+
+int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+ MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+
  MRF_ROUTE route;
- mrf_debug("mrf_data_response :  bnum %d  len %d\n",bnum,len);
+ mrf_debug("mrf_data_response :  bnum %d  rlen %d\n",bnum,rlen);
 
  // turning buffer around - deliver to usrc
 
@@ -139,19 +156,10 @@ int mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
      hdr->usrc = _mrfid;
      hdr->hsrc = _mrfid;
 
-     MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
-     resp-> type = hdr->type;
-     resp-> usrc = hdr->usrc;
-     resp-> udest = hdr->udest;
-     resp-> rlen = len;
+     resp-> rlen = rlen;
+     resp->type = hdr->type;
      hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
-     uint8 *dptr = ((uint8 *)resp)+ sizeof(MRF_PKT_RESP);
- 
-     int i;
-     for ( i = 0 ; i < len ; i++ )
-       *(dptr + i) = data[i];
-
-     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
      mrf_debug("mrf_data_resp, responding - header follows");
      mrf_print_packet_header(hdr);
    }
@@ -503,10 +511,19 @@ void _mrf_tick(){
     mif = mrf_if_ptr(i);
     qp = &(mif->status.txqueue);
     istate = mif->status.state;
+    mrf_debug("tick -  i_f %d MRF_ST_WAITSACK acktimer %d\n",i,mif->status.acktimer);
 
     // check if i_f busy
     if ( istate == MRF_ST_WAITSACK){
-      mrf_debug("tick -  i_f %d MRF_ST_WAITSACK \n",i);
+      if_busy = 1;
+      if ((mif->status.acktimer) > 0 ){
+ 
+        mif->status.acktimer--;
+        if((mif->status.acktimer) == 0){
+          mrf_debug("tick - aborting wait for ack  i_f %d  tc %d \n",i,_tick_count);
+          mif->status.state = MRF_ST_TX;
+        }
+      }
  
       if_busy = 1;
     }
@@ -556,6 +573,7 @@ void _mrf_tick(){
 
                 bs->state = TX;
                 mif->status.state = MRF_ST_WAITSACK;
+                mif->status.acktimer = 10;
                 bs->tx_timer = 0;
               }
             // queue_pop(qp);

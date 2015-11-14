@@ -23,7 +23,7 @@ const MRF_CMD const mrf_cmds[] = {
   [ mrf_cmd_set_time    ] = {"SET_TIME"   , MRF_CFLG_INTR                   ,sizeof(MRF_PKT_TIMEDATE)    , 0                          ,  NULL               , mrf_task_set_time   },
   [ mrf_cmd_sensor_data ] = {"SENSOR_DATA", 0                               ,0                           , 0                          ,  NULL               , mrf_task_sensor_data },
   [ mrf_cmd_read_sensor ] = {"READ_SENSOR", 0                               ,0                           , 0                          ,  NULL          , mrf_task_read_sensor   },
-  [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_test_1   },
+  [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               ,0                           , sizeof(MRF_PKT_DBG_CHR32)  ,  NULL          , mrf_task_test_1   },
   [ mrf_cmd_test_2      ] = {"TEST_2"     , 0                               ,0                           , 0                          ,  NULL               , mrf_task_test_2   },
 	  
 };
