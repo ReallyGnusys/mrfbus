@@ -89,6 +89,24 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
   }  
+
+  else if  (resp->type == mrf_cmd_test_1){
+    TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+  }  
+  else if  (resp->type == mrf_cmd_test_2){
+    char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("TEST_2 : %s \n",buff);
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
+    mrf_debug(":end of hex");
+  }  
+
+
+
   _mrf_buff_state(bnum)->state = FREE;
 
 }
@@ -161,21 +179,22 @@ MRF_CMD_RES mrf_task_sensor_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_get_sensor_data exit\n");
   mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
-  return MRF_CMD_RES_OK;  
-
+  return MRF_CMD_RES_OK;
 }
 
 MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  mrf_debug("mrf_task_test_1 entry\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
-  uint8 rlen = mrf_time(rbuff);
-  mrf_send_response(bnum,rlen);
-  mrf_debug("mrf_task_test_1\n");
+  mrf_rtc_get(rbuff);
+  mrf_send_response(bnum,sizeof(TIMEDATE));
+  mrf_debug("mrf_task_test_1 exit\n");
   return MRF_CMD_RES_OK;  
-
 }
+
 MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_test_2\n");
+  uint8 *rbuff = mrf_response_buffer(bnum);
+ 
   mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;  
-
 }
