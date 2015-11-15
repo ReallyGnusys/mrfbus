@@ -457,6 +457,7 @@ void mrf_sys_init(){
 
 
 int mrf_foreground(){
+  /* empty application queue and return */
   uint8 bnum;
   int rv,cnt = 0;
   while(queue_data_avail(&_app_queue)){

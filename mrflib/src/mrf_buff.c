@@ -126,7 +126,10 @@ uint8 *mrf_alloc_if_tbd(I_F i_f){
 }
 
 uint8 *_mrf_buff_ptr(uint8 bind){
-  return (uint8 *)_mrf_buff[bind];
+  if (bind < _MRF_BUFFS)
+    return (uint8 *)_mrf_buff[bind];
+  else
+    return NULL;
 
 }
 
