@@ -1,7 +1,7 @@
 #ifndef _MRF_IF_INCLUDED_
 #define _MRF_IF_INCLUDED_
 //#include <mrf_sys.h>
-#include <if.h>
+//#include <device.h>
 #include "mrf_sys_structs.h"
 #include "iqueue.h"
 
@@ -25,6 +25,8 @@ typedef enum {
   MRF_ST_ACK,
 } IF_STATE;
 
+
+#include "device.h"
 
 typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buff);
  

@@ -1,5 +1,5 @@
-#ifndef _G430_TYPES_INCLUDED_
-#define _G430_TYPES_INCLUDED_
+#ifndef _MRF_TYPES_INCLUDED_
+#define _MRF_TYPES_INCLUDED_
 #include "stddef.h"
 
 #define uint32 unsigned long int

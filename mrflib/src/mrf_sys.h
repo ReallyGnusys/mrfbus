@@ -3,7 +3,7 @@
 
 #include "mrf_types.h"
 #include "mrf_sys_structs.h"
-#include "if.h"
+#include "device.h"
 #include "mrf_if.h"
 #include "mrf_buff.h"
 

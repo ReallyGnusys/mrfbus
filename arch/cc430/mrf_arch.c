@@ -29,7 +29,7 @@ int mrf_arch_init(){
   P3DIR = 0x00;
   // LCD1x9_Initialize();
  
-  mrf_if_register(USB0,&rf_if_type);
+  mrf_device_init();
   
 
 

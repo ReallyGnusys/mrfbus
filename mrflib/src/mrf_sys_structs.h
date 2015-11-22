@@ -1,7 +1,7 @@
 #ifndef __MRF_SYS_STRUCTS_INCL__
 #define __MRF_SYS_STRUCTS_INCL__
 
-//#include <mrf_types.h>
+#include <mrf_types.h>
 //#include <mrf_if.h>
 #define MRF_ACK_FLAG_RETRY  1
 #define MRF_ACK_FLAG_DELIVERED 2
