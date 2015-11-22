@@ -1,7 +1,7 @@
 pids=""
 
-devs="zl_0x00 host_0x01 usbrf_0x02 rf_0x20 rf_0x2f"
-#devs="zl_0x00 host_0x01 usbrf_0x02 rf_0x20"
+#devs="zl_0x00 host_0x01 usbrf_0x02 rf_0x20 rf_0x2f"
+devs="zl_0x00 usbrf_0x02"
 
 arch=x86_64
 declare -i height=10
@@ -17,7 +17,6 @@ declare -i vmax=600
 
 [ -d /tmp/mrf_bus/ ] || mkdir /tmp/mrf_bus
 for dev in $devs ; do
-    
     xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./bin/"${arch}/$dev &
     pd=$!
     echo $pd

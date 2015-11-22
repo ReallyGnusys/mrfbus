@@ -10,8 +10,8 @@
 typedef struct  __attribute__ ((packed)) {
   uint8 length;  // packet length
   uint8 hdest;  // hop destination
-  uint8 udest;// ultimate destination of this packet
   uint8 netid;
+  uint8 udest;// ultimate destination of this packet
   uint8 type;
   uint8 hsrc; // hop source
   uint8 usrc; // ultimate source of this packet 

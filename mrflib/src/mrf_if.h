@@ -60,9 +60,9 @@ typedef struct  __attribute__ ((packed))  {
   uint16 tx_pkts;
   uint16 tx_overruns;
   uint16 tx_retries;  
-  uint8   unexp_ack;  
-  uint8 alloc_err;
-  uint8 st_err;
+  uint8  unexp_ack;  
+  uint8  alloc_err;
+  uint8  st_err;
 } IF_STATS;
 
 typedef struct  {

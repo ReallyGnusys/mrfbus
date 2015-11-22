@@ -47,8 +47,6 @@ void mrf_buff_loaded_if(I_F owner,uint8 *buff){
       return;
     }
   }
-  
-  
 }
 
 

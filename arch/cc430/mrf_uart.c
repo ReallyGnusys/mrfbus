@@ -18,9 +18,10 @@ const MRF_IF_TYPE uart_if_type = {
 
 
 typedef struct{
-  int8 busy;
+  uint8 *buff;
   uint8 len;
   uint8 count;
+  int8 busy;
   int8 errors;
   int  tx_st_cnt;
   int  tx_cmp_cnt;
@@ -31,10 +32,23 @@ typedef struct{
 static uint8 _rx_bnum;
 
 static uint8 *_rx_buff;
+static uint8 *_tx_buff;
 
 int uart_if_send_func(I_F i_f, uint8 *buff){
   MRF_IF *mif = mrf_if_ptr(i_f);
-  _xb_hw_wr_tx_fifo(buff[0] , buff);
+  if (_uart_tx_status.busy != 0) {
+    mrf_debug("uart_if_send_func found if busy");
+    return -1;
+  }
+  _tx_buff = buff;
+  _tx_rdy_cnt = 0;
+
+ 
+  _uart_tx_status.len = len;
+  _uart_tx_status.busy = 1;
+  _uart_tx_status.count = 0;
+  UCA0IE |= UCTXIE;         // enable TX ready interrupt
+  __bis_SR_register(GIE);
 }
 
 int mrf_uart_init(){
@@ -184,18 +198,13 @@ int uart_tx_data(uint8 *buffer,int len){
   }
   */
   _tx_rdy_cnt = 0;
-  utd_len = _build_tx_buffer(buffer,len);
 
-  if ((utd_len < 0 ) || (utd_len > 199))
-    {
-      uart_error();
-    }
-  else {
-    _uart_tx_status.len = utd_len;
-    _uart_tx_status.busy = 1;
-    _uart_tx_status.count = 0;
-    UCA0IE |= UCTXIE;         // enable TX ready interrupt
-    __bis_SR_register(GIE);
+ 
+  _uart_tx_status.len = len;
+  _uart_tx_status.busy = 1;
+  _uart_tx_status.count = 0;
+  UCA0IE |= UCTXIE;         // enable TX ready interrupt
+  __bis_SR_register(GIE);
   }
 }
 typedef enum _rstate {
@@ -307,21 +316,19 @@ static void _tx_ready(){
 
     //    UCA0TXBUF = _tx_buffer[_uart_tx_status.count];
     _uart_tx_status.count++;
+  }
 
-    if (_uart_tx_status.count == _uart_tx_status.len){
-      _uart_tx_status.busy = 0;
+  if (_uart_tx_status.count >= _uart_tx_status.len){
       _uart_tx_status.len = 0;
       _uart_tx_status.count = 0;
       _uart_tx_status.tx_cmp_cnt++;
+      _uart_tx_status.busy = 0;
       UCA0IE &= ~UCTXIE; 
-    }
-    else{
-      UCA0IE |= UCTXIE;         // re-enable TX ready interrupt
-    }
-  } else {
-    _uart_tx_status.busy = 0;
-    UCA0IE &= ~UCTXIE; 
   }
+  else{
+    UCA0IE |= UCTXIE;         // re-enable TX ready interrupt
+  }
+
 
 }
 interrupt (USCI_A0_VECTOR) USCI_A0_ISR()

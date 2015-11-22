@@ -14,7 +14,7 @@
 #define TRUE  1
 
 #define _MRF_BUFFS 8
-#define _MRF_BUFFLEN 128
+#define _MRF_BUFFLEN 64
 
 
 typedef struct {

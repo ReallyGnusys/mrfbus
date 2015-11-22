@@ -3,8 +3,9 @@
 #include "mrf_buff.h"
 #include  <msp430.h>
 #include <legacymsp430.h>
+#include "_mrf_rf1.h"
 
-#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(RF0,buff)
+//#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(RF0,buff)
 
 #define mrf_alloc() mrf_alloc_if(RF0)
 
@@ -29,6 +30,7 @@ static void _mrf_init_radio(void)
   WriteRfSettings(&rfSettings);
   WriteSinglePATable(PATABLE_VAL);
 }
+void _mrf_receive_enable(void);
 
 int mrf_rf_init(){
   ResetRadioCore();

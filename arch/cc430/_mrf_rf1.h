@@ -8,6 +8,9 @@
 /********************
  * Variable definition
  */
+
+#define  PATABLE_VAL        (0x51)          // 0 dBm output 
+
 typedef struct S_RF_SETTINGS {
     unsigned char fsctrl1;   // Frequency synthesizer control.
     unsigned char fsctrl0;   // Frequency synthesizer control.
