@@ -1,20 +1,14 @@
-killall zl_0x00
-killall host_0x01
-killall usbrf_0x02
-killall rf_0x20
-killall rf_0x2f
+dev=hostsim
 
+adds="0x00 0x01 0x02 0x20 0x2f"
 
-#make clean
-#mak
-make DEVTYPE=zl MRFID=0x00
-make DEVTYPE=host MRFID=0x01
+for add in $adds ; do
+  killall ${dev}_${add}
+done
 
-make DEVTYPE=usbrf MRFID=0x02
-
-make DEVTYPE=rf MRFID=0x20
-
-make DEVTYPE=rf MRFID=0x2f
+for add in $adds ; do
+  make DEVTYPE=${dev} MRFID=${add}
+done
 
 
 
