@@ -1,6 +1,6 @@
-#ifndef __IF_INCLUDED__
-#define __IF_INCLUDED__
-// device type host with 4 usb interfaces
+#ifndef __DEVICE_INCLUDED__
+#define __DEVICE_INCLUDED__
+
 
 typedef  enum { USB0,
      	        USB1,
@@ -8,5 +8,8 @@ typedef  enum { USB0,
 		USB3,
                 CNTRL,
                 NUM_INTERFACES} I_F;
+
+
+
 
 #endif

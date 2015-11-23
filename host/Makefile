@@ -12,9 +12,10 @@ MOBJ=../mrflib/obj/${ARCH}/${DEVTYPE}
 MSRC=../mrflib/src
 NET=../net
 ARCHDIR=../arch/${ARCH}
+DEVDIR=../devices/${DEVTYPE}
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o ${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
-	${MOBJ}/mrf_cmds.o ${MOBJ}/mrf_arch.o
+	${MOBJ}/mrf_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
 
 ALL : ${BIN} ${OBJ} ${MOBJS} ${TARG}
 
@@ -38,7 +39,7 @@ ${BIN}:
 
 
 
-CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../mrflib/src  -I../arch/${ARCH}  -I../devices/${DEVTYPE} -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DGITSH=${GITSH} -g
+CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../mrflib/src  -I${ARCHDIR}  -I${DEVDIR}  -I../devices/${DEVTYPE} -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DGITSH=${GITSH} -g
 
 
 
@@ -57,3 +58,7 @@ ${MOBJ}/%.o: ${NET}/%.c
 ${MOBJ}/%.o: ${ARCHDIR}/%.c
 	mkdir -p ${MOBJ}
 	gcc  -c $(CCFLAGS) $< -o $@
+
+${MOBJ}/%.o: ${DEVDIR}/%.c
+	mkdir -p ${MOBJ}
+	$(GCC)  -c $(CCFLAGS) $< -o $@

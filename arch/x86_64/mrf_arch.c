@@ -178,7 +178,8 @@ int mrf_arch_init(){
   struct itimerspec new_value;
   char sname[64];
   printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
-
+  mrf_device_init();
+  /*
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
 
     if ( i == 1) {
@@ -201,7 +202,7 @@ int mrf_arch_init(){
       printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
     }
   }
-
+  */
   new_value.it_value.tv_sec = 0;
   new_value.it_value.tv_nsec = 1000000;
   new_value.it_interval.tv_sec = 0;
