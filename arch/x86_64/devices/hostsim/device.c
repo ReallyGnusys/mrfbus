@@ -8,7 +8,7 @@
 #include <termios.h>
 #include <stdio.h>
 #define SOCKET_DIR "/tmp/mrf_bus/"
-#define SPORT0 "/dev/ttyUSB0"
+
 
 extern uint8 _mrfid;
 
@@ -21,7 +21,6 @@ extern int _input_fd[];
 int mrf_device_init(){
   int i,tmp;
   char sname[64];
-
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     mrf_if_register(i,&lnx_if_type);
     sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);

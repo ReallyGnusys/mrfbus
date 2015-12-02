@@ -35,32 +35,12 @@ volatile TX_STATUS _uart_tx_status;
 
 static int _tx_rdy_cnt;
 
-
 static uint8 _rx_buff_index;
 
 static uint8 _rx_bnum;
 
 static uint8 *_rx_buff;
-static uint8 *_tx_buff;
 
-
-typedef enum _rstate {
-  S_PREAMBLE_0 = 0,
-  S_PREAMBLE_1 = 1,
-  S_LEN        = 2,
-  S_ADDR       = 3,
-  S_NETID      = 4,
-  S_HDR        = 5,
-  S_DATA       = 6,
-  S_CSUM       = 7
-} RSTATE;
-
-typedef struct {
-  RSTATE state;
-  int bindex;
-  uint16 errors;
-  uint16 empties;
-} UART_RX_STATE;
 
 static UART_RX_STATE rxstate;
 
@@ -68,15 +48,13 @@ static UART_RX_STATE rxstate;
 
 
 int uart_if_send_func(I_F i_f, uint8 *buff){
-  MRF_IF *mif = mrf_if_ptr(i_f);
+  // MRF_IF *mif = mrf_if_ptr(i_f);
   if (_uart_tx_status.busy != 0) {
     mrf_debug("uart_if_send_func found if busy");
     return -1;
   }
-  _tx_buff = buff;
   _tx_rdy_cnt = 0;
-
- 
+  _uart_tx_status.buff = buff;
   _uart_tx_status.len = buff[0];
   _uart_tx_status.busy = 1;
   _uart_tx_status.count = 0;
@@ -88,8 +66,26 @@ void rx_newpacket(){
   rxstate.bindex = 0;
 }
 
+
+int mrf_uart_init_rx_state(UART_RX_STATE *rxstate){
+  rxstate->state = S_PREAMBLE_0;
+  rxstate->bindex = 0;
+  rxstate->bnum = mrf_alloc();
+  if (rxstate->bnum == _MRF_BUFFS){
+    mrf_debug("mrf_uart_init: failed to alloc buff!");
+    rxstate->buff = NULL;
+    rxstate->errors = 1;
+    return -1;
+  }
+  rxstate->buff = _mrf_buff_ptr(rxstate->bnum);
+  rxstate->errors = 0;
+  return 0;
+}
+
+
 int mrf_uart_init(){
 
+  
   _rx_bnum =  mrf_alloc();
 
   if (_rx_bnum == _MRF_BUFFS){
@@ -193,11 +189,11 @@ int _uart_rx_int_cnt;
 int _uart_tx_int_cnt;
 
 
-static void _tx_byte(uint8 chr){
+static inline void _tx_byte(uint8 chr){
   UCA0TXBUF = chr;     
-  _uart_tx_status.tx_bytes++;
 }
-static uint8  _rx_byte(){
+
+static inline uint8  _rx_byte(){
   return UCA0RXBUF;
 }
 
@@ -222,7 +218,7 @@ static void _rx_ready(){
     if ((c1 <= _MRF_BUFFLEN) && (c1 >= sizeof(MRF_PKT_HDR))){
       rxstate.state = S_ADDR;
       rxstate.bindex = 0; 
-      _rx_buff[rxstate.bindex++] = c1;
+      rxstate.buff[rxstate.bindex++] = c1;
     } else {
       rxstate.state = S_PREAMBLE_0;
     }
@@ -230,7 +226,7 @@ static void _rx_ready(){
   case  S_ADDR:
     if (c1 == MRFID){
       rxstate.state = S_NETID;
-      _rx_buff[rxstate.bindex++] = c1;
+      rxstate.buff[rxstate.bindex++] = c1;
     } else {
       rxstate.state = S_PREAMBLE_0;
     }
@@ -238,17 +234,17 @@ static void _rx_ready(){
   case  S_NETID:
     if (c1 == MRFNET){
       rxstate.state = S_HDR;
-      _rx_buff[rxstate.bindex++] = c1;
+      rxstate.buff[rxstate.bindex++] = c1;
     } else {
       rxstate.state = S_PREAMBLE_0;
     }
     break;    
   case  S_DATA:
-    if(rxstate.bindex < _rx_buff[0]){
-      _rx_buff[rxstate.bindex++] = c1;
+    if(rxstate.bindex < rxstate.buff[0]){
+      rxstate.buff[rxstate.bindex++] = c1;
     }
 
-    if (rxstate.bindex >= _rx_buff[0]){
+    if (rxstate.bindex >= rxstate.buff[0]){
       // packet received
       mrf_buff_loaded(_rx_bnum);
       rxstate.state = S_PREAMBLE_0;
@@ -265,7 +261,7 @@ static void _rx_ready(){
 static void _tx_ready(){
   _tx_rdy_cnt++;
   if (_uart_tx_status.count < _uart_tx_status.len) {
-    _tx_byte( _tx_buff[_uart_tx_status.count]);
+    _tx_byte( _uart_tx_status.buff[_uart_tx_status.count]);
 
     //    UCA0TXBUF = _tx_buffer[_uart_tx_status.count];
     _uart_tx_status.count++;
@@ -291,11 +287,17 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
   case 0:break;                             // Vector 0 - no interrupt
   case 2:                                   // Vector 2 - RXIFG
     _uart_rx_int_cnt++;
+    
    _rx_ready();                             
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
-   _tx_ready();                             
+    if (mrf_uart_tx_complete(txstate)){
+      UCA0IE &= ~UCTXIE;  // disable this intr
+    } else {
+      _tx_byte(mrf_uart_tx_byte(txstate));
+      UCA0IE |= UCTXIE;  //re-enable this intr
+    }
     break;
   default: break;
   }  

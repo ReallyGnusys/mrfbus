@@ -30,8 +30,6 @@ int mrf_arch_init(){
   // LCD1x9_Initialize();
  
   mrf_device_init();
-  
-
 
   _mrf_receive_enable();
   //rtc_ps0_init(DIV64,ps0_handler);
