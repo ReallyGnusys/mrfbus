@@ -28,28 +28,20 @@ typedef enum {
 
 #include "device.h"
 
-typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buff);
- 
+typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buf);
+typedef int (*IF_INIT_FUNCPTR)(I_F i_f);
 
 typedef struct {
-  uint8 tx_del;
-  uint8 tx_q_len;
-  IF_SEND_FUNCPTR send_func;
+  const IF_SEND_FUNCPTR send;
+  const IF_INIT_FUNCPTR init; 
+} IF_FUNCS;
+  
+typedef struct {
+  const uint8 tx_del;
+  const IF_FUNCS funcs;
 } MRF_IF_TYPE;
 
 
-typedef enum {
-  MRF_TX_IDLE,
-  MRF_TX_BUSY,
-  MRF_TX_POSTED,
-  MRF_TX_DELIVERED,
-  MRF_TX_DEFERRED,
-  MRF_TX_BADACK,
-  MRF_TX_NOACK,
-  MRF_TX_ABORTED,
-  MRF_TX_QUEUE_FULL,
-  MRF_TX_STAYAWAKE,
-  MRF_TX_ERRX} IF_TX_STATUS;
 
 enum{
   MRF_BUFF_NONE = 255
@@ -69,22 +61,20 @@ typedef struct  __attribute__ ((packed))  {
 
 typedef struct  {
   IF_STATE state;
-  IF_STATE nstate; // state after tx complete
   IF_STATS stats;
   uint8 acktimer;
   IQUEUE txqueue;
   uint8 rx_last_id;
   uint8 rx_last_src;
   uint8 tx_id;
-  IF_TX_STATUS tx_status; 
   uint8 rx_on;  // default xbus mode , when not transmitting
 } IF_STATUS;
 
 
 typedef struct  {
-  IF_STATUS status;
+  const IF_STATUS *status;
   const MRF_IF_TYPE *type;
-  MRF_PKT_HDR ackbuff;
+  MRF_PKT_HDR *ackbuff;
 } MRF_IF;
 
 void mrf_if_init();

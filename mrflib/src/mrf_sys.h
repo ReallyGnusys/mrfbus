@@ -13,7 +13,6 @@
 #define FALSE 0
 #define TRUE  1
 
-#define _MRF_BUFFS 8
 #define _MRF_BUFFLEN 64
 
 

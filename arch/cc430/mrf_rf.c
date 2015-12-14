@@ -9,9 +9,15 @@
 
 #define mrf_alloc() mrf_alloc_if(RF0)
 
+const MRF_IF_TYPE mrf_rf_cc_if = {
+ tx_del : 4,
+ funcs : { send : rf_if_send_func
+           init : mrf_rf_init }
+};
+
 int rf_if_send_func(I_F i_f, uint8 *buff);
 
-const MRF_IF_TYPE rf_if_type = {
+const MRF_IF_TYPE mrf_rf_if_cc = {
  tx_del : 4,
  send_func : rf_if_send_func
 };
@@ -24,7 +30,7 @@ int rf_if_send_func(I_F i_f, uint8 *buff){
 
 extern RF_SETTINGS rfSettings;
 
-static void _mrf_init_radio(void)
+static void _mrf_init_radio()
 {
   // xb_active_on_lpm3();
   WriteRfSettings(&rfSettings);
@@ -32,7 +38,7 @@ static void _mrf_init_radio(void)
 }
 void _mrf_receive_enable(void);
 
-int mrf_rf_init(){
+int mrf_rf_init(I_F i_f){
   ResetRadioCore();
   _mrf_init_radio();
   _mrf_receive_enable();
@@ -94,8 +100,7 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     if ( lenerr == FALSE)
       buff[i+1] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
     else 
-      ebuff = RF1ADOUT1B;
-                                              // Also initiates auto-read for next DOUT byte
+      ebuff = RF1ADOUT1B;                     // Also initiates auto-read for next DOUT byte
   if (lenerr){ // re-enable reception
     _mrf_receive_enable();
     return;
@@ -158,7 +163,6 @@ int _mrf_rf_tx_intr(I_F i_f){
     }
   }else { // some cockup
     ifp->status.stats.st_err ++;
-
   }
 
 }

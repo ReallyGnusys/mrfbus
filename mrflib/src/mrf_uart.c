@@ -21,7 +21,11 @@ int mrf_uart_init_tx_state(UART_CSTATE *txstate){
 
 }
 
-int mrf_uart_init(I_F i_f, IF_STATE
+int mrf_uart_init(I_F i_f, IF_STATE *state){
+
+
+
+}
 
 // binary packet data on serial ports 
 // intr handler for uart rx

@@ -50,7 +50,6 @@ void mrf_if_init(){
       dptr[j] = 0;    
     queue_init(&(_sys_ifs[i].status.txqueue));
     _sys_ifs[i].status.state = MRF_ST_IDLE;
-    _sys_ifs[i].status.tx_status = MRF_TX_IDLE;
 
   }
 

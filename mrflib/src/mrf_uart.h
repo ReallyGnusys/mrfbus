@@ -1,8 +1,7 @@
 #ifndef _MRF_UART_INCLUDED_
 #define _MRF_UART_INCLUDED_
-int mrf_uart_init();
-void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
 
+  // uart line state
 typedef enum _rstate {
   S_IDLE       = 0,
   S_START      = 1,
@@ -16,6 +15,7 @@ typedef enum _rstate {
   S_CSUM_LS    = 9
 } UART_LSTATE;
 
+// uart channel state
 typedef struct {
   UART_LSTATE state;
   uint8 bnum;  // mrfbuff num
@@ -24,5 +24,8 @@ typedef struct {
   uint16 csum;
   uint16 errors;
 } UART_CSTATE;
+
+int mrf_uart_init();
+void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate);
 
 #endif
