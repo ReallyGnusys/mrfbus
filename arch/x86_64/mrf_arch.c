@@ -33,15 +33,8 @@ const MRF_IF_TYPE lnx_if_type = {
  tx_del : 1,
  send_func : lnx_if_send_func
 };
-int usb_if_send_func(I_F i_f, uint8 *buff);
-
-const MRF_IF_TYPE usb_if_type = {
- tx_del : 1,
- send_func : usb_if_send_func
-};
 
 
-int _bin2hex(uint* inbuff,uint *outbuff,uint8 *len);
 // define interfaces 
 //int lnx_if_send_func(I_F i_f, uint8 bnum){
 
@@ -78,61 +71,6 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
   bc = write(fd, txbuff,tb );
   //printf("bc = %d  fd = %d\n",bc,fd);
 }
-
-// B115200 
-#define BAUDRATE B9600
-#define SPORT0 "/dev/ttyUSB0"
-#define _POSIX_SOURCE 1 /* POSIX compliant source */
-#define FALSE 0
-#define TRUE 1
-
-static struct termios _oldtio;
-
-int usb_open(char *dev){
-  struct termios newtio;
-  int fd = open(dev, O_RDWR | O_NOCTTY ); 
-  if (fd < 0) {
-    printf("failed to open %s",dev);
-    perror(dev); 
-    return -1; 
-  }
-  printf("%s opened ok",dev);
-  tcgetattr(fd,&_oldtio); /* save current port settings */  
-  bzero(&newtio, sizeof(newtio));
-  newtio.c_cflag = BAUDRATE | CRTSCTS | CS8 | CLOCAL | CREAD;
-  newtio.c_iflag = IGNPAR;
-  newtio.c_oflag = 0;
-        
-  /* set input mode (non-canonical, no echo,...) */
-  newtio.c_lflag = 0;
-         
-  newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-  newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
-        
-  tcflush(fd, TCIFLUSH);
-  tcsetattr(fd,TCSANOW,&newtio);  
-  return fd;
-}
-int usb_if_send_func(I_F i_f, uint8 *buff){
-  char spath[64];
-  uint8 txbuff[_MRF_BUFFLEN];
-  int fd,bc,tb;
-  uint8 sknum;
-  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
-  
-  printf("mrf_arch.c usb_if_send_func fd = %d",_output_fd[i_f]);
-  if(fd < 0){
-    printf("fd not valid %d\n",fd);
-    perror("ERROR file open\n");
-    return -1;
-  }
-  //tb = copy_to_txbuff(buff,buff[0],txbuff);
-  //bc = write(fd, txbuff,tb );
-  bc = write(fd,buff,buff[0]);
-  
-  //printf("bc = %d  fd = %d\n",bc,fd);
-}
-
 
 
 
@@ -179,30 +117,7 @@ int mrf_arch_init(){
   char sname[64];
   printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
   mrf_device_init();
-  /*
-  for ( i = 0 ; i < NUM_INTERFACES ; i++){
 
-    if ( i == 1) {
-      mrf_if_register(i,&usb_if_type);
-      _output_fd[i] = usb_open(SPORT0);
-      if(_output_fd[i] < 0 ){
-        printf("gotta prob initialising i_f %d using sport %s",i,SPORT0);
-        exit(-1);
-      }
-      else{
-        printf("initialised i_f %d using sport %s OK",i,SPORT0);
-      }
-    } else {
-      mrf_if_register(i,&lnx_if_type);
-      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);
-      tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-      printf("created pipe %s res %d",sname,tmp);
-      _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
-      _output_fd[i] = -1;
-      printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
-    }
-  }
-  */
   new_value.it_value.tv_sec = 0;
   new_value.it_value.tv_nsec = 1000000;
   new_value.it_interval.tv_sec = 0;

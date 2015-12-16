@@ -44,13 +44,13 @@ void mrf_if_init(){
   int i,j;
   uint8 *dptr;
   for (i = 0 ; i < NUM_INTERFACES ; i++){
-    // rough zeroing of data
-    dptr = (uint8 *)&_sys_ifs[i];
+    // rough zeroing of status data
+    dptr = (uint8 *)_sys_ifs[i].status;
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;    
     queue_init(&(_sys_ifs[i].status.txqueue));
     _sys_ifs[i].status.state = MRF_ST_IDLE;
-
+    
   }
 
 }

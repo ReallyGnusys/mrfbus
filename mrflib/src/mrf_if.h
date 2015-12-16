@@ -72,9 +72,10 @@ typedef struct  {
 
 
 typedef struct  {
-  const IF_STATUS *status;
+  IF_STATUS *status;
   const MRF_IF_TYPE *type;
   MRF_PKT_HDR *ackbuff;
+  int fd;  // fd used by lnx epoll
 } MRF_IF;
 
 void mrf_if_init();

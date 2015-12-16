@@ -495,3 +495,33 @@ void _mrf_tick(){
     
   }
 }
+
+int _if_handles[NUM_INTERFACES];
+
+int mrf_device_init(){
+  int i,tmp;
+  char sname[64];
+
+  for ( i = 0 ; i < NUM_INTERFACES ; i++){
+
+    if ( i == 1) {
+      mrf_if_register(i,&usb_if_type);
+      _output_fd[i] = usb_open(SPORT0);
+      if(_output_fd[i] < 0 ){
+        printf("gotta prob initialising i_f %d using sport %s",i,SPORT0);
+        exit(-1);
+      }
+      else{
+        printf("initialised i_f %d using sport %s OK",i,SPORT0);
+      }
+    } else {
+      mrf_if_register(i,&lnx_if_type);
+      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);
+      tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+      printf("created pipe %s res %d",sname,tmp);
+      _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
+      _output_fd[i] = -1;
+      printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
+    }
+  }
+}
