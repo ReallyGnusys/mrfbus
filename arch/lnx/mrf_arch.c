@@ -19,60 +19,6 @@ extern uint8 _mrfid;
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
-int lnx_if_send_func(I_F i_f, uint8 *buff);
-
-// lnx i_f uses named pipes , usb uses tty
-// lnx i_f opens fd for each write
-// usb keeps opened ( in output_fd ) 
-
-int _input_fd[NUM_INTERFACES+2];
-int _output_fd[NUM_INTERFACES+2];
-
-
-const MRF_IF_TYPE lnx_if_type = {
- tx_del : 1,
- send_func : lnx_if_send_func
-};
-
-
-// define interfaces 
-//int lnx_if_send_func(I_F i_f, uint8 bnum){
-
-
-int lnx_if_send_func(I_F i_f, uint8 *buff){
-  char spath[64];
-  uint8 txbuff[_MRF_BUFFLEN];
-  int fd,bc,tb;
-  uint8 sknum;
-  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
-  // rough hack to get up and down using correct sockets
-  if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
-    sknum = 0;
-  else if (hdr->hdest >= 1) { // usbrf or host
-      if(hdr->hdest < _mrfid) 
-        sknum = 1;
-      else
-        sknum = 0;
-  }
-  else  // zl-0
-    sknum = 0;
-  //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
-  // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
-  // apologies - this is how we frig the 'wiring' on the interface to write to the intended target
-  sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  printf("mrf_arch.c lnx_if_send_func using socket *%s*\n",spath);
-  fd = open(spath, O_WRONLY | O_NONBLOCK);
-  if(fd == -1){
-    printf(" %d\n",fd);
-    perror("ERROR file open\n");
-    return -1;
-  }
-  tb = copy_to_txbuff(buff,buff[0],txbuff);
-  bc = write(fd, txbuff,tb );
-  //printf("bc = %d  fd = %d\n",bc,fd);
-}
-
-
 
 #define handle_error(msg)  \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -83,9 +29,9 @@ int lnx_if_send_func(I_F i_f, uint8 *buff){
 
 static void print_elapsed_time(void)
 {
-  static struct timespec start;
+  struct timespec start;
   struct timespec curr;
-  static int first_call = 1;
+  int first_call = 1;
   int secs, nsecs;
 
   if (first_call) {
@@ -111,36 +57,6 @@ static pthread_t _sys_loop_pthread;
 static void *_sys_loop(void *arg);
 
 int mrf_arch_init(){
-  int i,timerfd,tmp;
-  struct timespec now;
-  struct itimerspec new_value;
-  char sname[64];
-  printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
-  mrf_device_init();
-
-  new_value.it_value.tv_sec = 0;
-  new_value.it_value.tv_nsec = 1000000;
-  new_value.it_interval.tv_sec = 0;
-  new_value.it_interval.tv_nsec = 1000000;
-
-  timerfd = timerfd_create(CLOCK_MONOTONIC,0);
-  if (timerfd == -1)
-    handle_error("timerfd_create");
-  if (clock_gettime(CLOCK_REALTIME, &now) == -1)
-    handle_error("clock_gettime");
-  if (timerfd_settime(timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
-    handle_error("timerfd_settime");
-  _input_fd[NUM_INTERFACES] = timerfd;
-  print_elapsed_time();
-  printf("timer started - fd = %d\n",timerfd);
-  printf("opened pipe i = %d  fd = %d\n",NUM_INTERFACES,_input_fd[NUM_INTERFACES]);
-
-  i = NUM_INTERFACES + 1;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
-  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d",sname,tmp);
-  _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
   
   // run io event loop in pthread
 
@@ -269,22 +185,44 @@ int packet_received(I_F i_f,char *buffer,int len){
 }
 char buff[2048];
 
-#define MAX_EVENTS 8
-
-
-
 
  void *_sys_loop(void *arg){
   
-  //uint8 *buff;
   struct itimerspec new_value;
   struct timespec now;
   uint64_t exp, tot_exp; 
-  int timerfd,fd , i;
+  int timerfd,fd , i, tmp;
   ssize_t s;
   struct epoll_event revent[NUM_INTERFACES + 2];
   int nfds;
   uint32 inif;
+  char sname[64];
+  printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
+
+  new_value.it_value.tv_sec = 0;
+  new_value.it_value.tv_nsec = 1000000;
+  new_value.it_interval.tv_sec = 0;
+  new_value.it_interval.tv_nsec = 1000000;
+
+  timerfd = timerfd_create(CLOCK_MONOTONIC,0);
+  if (timerfd == -1)
+    handle_error("timerfd_create");
+  if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+    handle_error("clock_gettime");
+  if (timerfd_settime(timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
+    handle_error("timerfd_settime");
+  print_elapsed_time();
+  printf("timer started - fd = %d\n",timerfd);
+  printf("opened pipe i = %d  fd = %d\n",NUM_INTERFACES,timerfd);
+
+  i = NUM_INTERFACES + 1;
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d",sname,tmp);
+  intfd = open(sname,O_RDONLY | O_NONBLOCK);
+  printf("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
+
+
   printf("mrf_arch_main_loop:entry\n");
 
   int count = 0;
@@ -331,12 +269,13 @@ char buff[2048];
      // search input fds for each event
      inif = revent[i].data.u32;
 
-     if (revent[i].data.u32 < NUM_INTERFACES){
+     if (inif < NUM_INTERFACES){
        //it's an input stream
        
+       fd = mrf_if_ptr(inif)->fd;
        //sanity check
-     
-       s = read(_input_fd[inif], buff, 1024);
+       printf("event on fd %d",fd);
+       s = read(fd, buff, 1024);
        buff[s] = 0;
 
        trim_trailing_space(buff);
@@ -361,7 +300,6 @@ char buff[2048];
          // }
          //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);  
 
-       
          //if((count ) == 1000 ){
        _mrf_tick();
        count++;

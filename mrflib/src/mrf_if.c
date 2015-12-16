@@ -41,7 +41,7 @@ int mrf_if_transmitting(I_F i_f){
 
 
 void mrf_if_init(){
-  int i,j;
+  int i,j,fd;
   uint8 *dptr;
   for (i = 0 ; i < NUM_INTERFACES ; i++){
     // rough zeroing of status data
@@ -50,6 +50,10 @@ void mrf_if_init(){
       dptr[j] = 0;    
     queue_init(&(_sys_ifs[i].status.txqueue));
     _sys_ifs[i].status.state = MRF_ST_IDLE;
+    fd = (*(_sys_ifs[i].type->funcs->init))(i_f);
+#ifdef MRF_ARCH_lnx
+    _sys_ifs[i].fd = fd; //needed for epoll
+#endif
     
   }
 
