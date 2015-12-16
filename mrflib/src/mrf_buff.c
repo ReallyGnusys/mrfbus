@@ -35,20 +35,6 @@ int mrf_buff_loaded(uint8 bnum){
   }
 }
 
-void mrf_buff_loaded_if(I_F owner,uint8 *buff){
-  int i;
-  //mrf_debug("\nmrf_buff_loaded_if owner %d buff %p\n",owner,buff);
-  for ( i = 0 ; i < _MRF_BUFFS ; i++){
-    //mrf_debug("i %d buff i %p bsowner %d\n",i,_mrf_buff[i],_mrf_buffst[i].owner);
-    if( buff == &(_mrf_buff[i][0]) ){       
-      _mrf_buffst[i].state = LOADED;
-      _mrf_process_packet(owner,i);	
-      //_mrf_buff_free(i);
-      return;
-    }
-  }
-}
-
 
 void mrf_free(uint8* buff){
   int i;

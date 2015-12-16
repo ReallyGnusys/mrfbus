@@ -9,6 +9,7 @@ typedef  enum { USB0,
                 CNTRL,
                 NUM_INTERFACES} I_F;
 
+#define _MRF_BUFFS 16
 
 
 
