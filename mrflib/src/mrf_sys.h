@@ -7,7 +7,7 @@
 #include "mrf_if.h"
 #include "mrf_buff.h"
 
-#include "mrf_cmd_def.h"
+#include "mrf_sys_cmds.h"
 /* xbus "protected" symbols , not for application use */
 
 #define FALSE 0
@@ -84,3 +84,6 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 void mrf_print_packet_header(MRF_PKT_HDR *hdr);
 uint8 *mrf_response_buffer(uint8 bnum);
 int mrf_send_response(uint8 bnum,uint8 rlen);
+
+#include "mrf_sys_tasks.h"
+#include "mrf_sys_cmds.h"

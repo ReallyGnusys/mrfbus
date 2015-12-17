@@ -1,8 +1,4 @@
-#include "mrf_types.h"
-#include "mrf_sys_cmds.h"
-#include "mrf_sys_structs.h"
-#include "mrf_sys_tasks.h"
-#include "mrf_usr_structs.h"
+#include "mrf_sys.h"
 
 extern const MRF_PKT_DEVICE_INFO device_info;
 
@@ -22,4 +18,4 @@ const MRF_CMD const mrf_sys_cmds[] = {
 	  
 };
 
-const uint16 mrf_num_cmds = (uint16)MRF_NUM_CMDS;
+const uint16 mrf_num_cmds = (uint16)MRF_NUM_SYS_CMDS;  // FIXME -better to have user commands separate from sys

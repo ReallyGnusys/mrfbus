@@ -1,6 +1,7 @@
+MRFHOME=../..
 GCC=gcc
 LD=ld
-ARCH=x86_64
+ARCH=lnx
 #ARCH=cc430  this won't work because wrong gcc and ld above - see dir usbrf etc for working makefile
 DEVTYPE=hostsim
 MRFID=0x01
@@ -8,15 +9,15 @@ MRFNET=0x25
 GITSH=\""$(git rev-parse HEAD)"\"
 BIN=bin/${ARCH}
 TARG=${BIN}/${DEVTYPE}_${MRFID}
-MOBJ=../mrflib/obj/${ARCH}/${DEVTYPE}
-MSRC=../mrflib/src
-NET=../net
-ARCHDIR=../arch/${ARCH}
-DEVDIR=../devices/${DEVTYPE}
+MOBJ=${MRFHOME}/mrflib/obj/${ARCH}/${DEVTYPE}
+MSRC=${MRFHOME}/mrflib/src
+NET=${MRFHOME}/net
+ARCHDIR=${MRFHOME}/arch/${ARCH}
+DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
-	${MOBJ}/mrf_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
+	${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
 #MOBJS := $(wildcard ${MOBJ}/*.o)
 #MOBJS = ${MOBJ}/*.o
 
@@ -42,7 +43,7 @@ ${BIN}:
 
 
 
-CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I../mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DGITSH=${GITSH} -g
+CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH} -g
 
 
 

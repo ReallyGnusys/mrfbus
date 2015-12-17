@@ -7,27 +7,40 @@
 
 extern uint8 _mrfid;
 
-int lnx_if_send_func(I_F i_f, uint8 *buff);
+
+static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
+static int _mrf_pipe_init_lnx(I_F i_f);
+
+const MRF_IF_TYPE lnx_if_type = {
+ tx_del : 1,
+ funcs : { send : _mrf_pipe_send_lnx
+           init : _mrf_pipe_init_lnx }
+};
+
+
+
 
 // lnx i_f uses named pipes , usb uses tty
 // lnx i_f opens fd for each write
 // usb keeps opened ( in output_fd ) 
 
 int _input_fd[NUM_INTERFACES+2];
-int _output_fd[NUM_INTERFACES+2];
+
+int _mrf_pipe_init_lnx(I_F i_f){
+  int fd,tmp;
+  char sname[64];
+  mrf_if_register(i_f,&lnx_if_type);
+  sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i_f);
+  // create input fifo for i_f
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d",sname,tmp);
+  fd = open(sname,O_RDONLY | O_NONBLOCK);
+  printf("opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
+  return fd; // lnx arch needs it for epoll
+}
 
 
-const MRF_IF_TYPE lnx_if_type = {
- tx_del : 1,
- send_func : lnx_if_send_func
-};
-
-
-// define interfaces 
-//int lnx_if_send_func(I_F i_f, uint8 bnum){
-
-
-int lnx_if_send_func(I_F i_f, uint8 *buff){
+int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   char spath[64];
   uint8 txbuff[_MRF_BUFFLEN];
   int fd,bc,tb;

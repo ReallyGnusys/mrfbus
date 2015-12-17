@@ -4,9 +4,8 @@
 #include "mrf_if.h"
 #include "mrf_debug.h"
 #include "mrf_sys.h"
-#include "mrf_cmd_def.h"
+#include "mrf_sys_cmds.h"
 #include "mrf_buff.h"
-#include "mrf_cmds.h"
 
 /* each buffer can take a full mrfbus packet - 128 bytes */
 

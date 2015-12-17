@@ -3,8 +3,9 @@
 #include "mrf_buff.h"
 #include "mrf_if.h"
 #include "mrf_debug.h"
-#include "mrf_cmds.h"
+#include "mrf_sys_structs.h"
 #include "mrf_route.h"
+#include "mrf_sys_cmds.h"
 
 #define _MRF_TX_TIMEOUT 10
 #define _MRF_MAX_RETRY 4
@@ -20,7 +21,7 @@ int mrf_tx_bnum(I_F i_f,uint8 bnum){
   //mrf_debug("mrf_tx_buff : i_f %d  bnum %d\n",i_f,bnum);
   MRF_IF *if_ptr = mrf_if_ptr(i_f);
   uint8 *buff = _mrf_buff_ptr(bnum);
-  (*(if_ptr->type->send_func))(i_f,buff);
+  (*(if_ptr->type->funcs.send))(i_f,buff);
   
 }
 
@@ -30,18 +31,18 @@ int mrf_sack(uint8 bnum){
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
- if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
- if_ptr->ackbuff.hdest = hdr->hsrc;
- if_ptr->ackbuff.udest = hdr->hsrc;
- if_ptr->ackbuff.netid = MRFNET;
- if_ptr->ackbuff.type = mrf_cmd_ack;
+ if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff->hdest = hdr->hsrc;
+ if_ptr->ackbuff->udest = hdr->hsrc;
+ if_ptr->ackbuff->netid = MRFNET;
+ if_ptr->ackbuff->type = mrf_cmd_ack;
 
- if_ptr->ackbuff.hsrc = _mrfid;
- if_ptr->ackbuff.usrc = _mrfid;
- if_ptr->ackbuff.msgid = hdr->msgid;
- if_ptr->status.acktimer =  if_ptr->type->tx_del;
+ if_ptr->ackbuff->hsrc = _mrfid;
+ if_ptr->ackbuff->usrc = _mrfid;
+ if_ptr->ackbuff->msgid = hdr->msgid;
+ if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
- if_ptr->status.state = MRF_ST_ACKDELAY;
+ if_ptr->status->state = MRF_ST_ACKDELAY;
  mrf_tick_enable();
 }
 
@@ -51,18 +52,18 @@ int mrf_sretry(uint8 bnum){
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
- if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
- if_ptr->ackbuff.hdest = hdr->hsrc;
- if_ptr->ackbuff.udest = hdr->hsrc;
- if_ptr->ackbuff.netid = MRFNET;
- if_ptr->ackbuff.type = mrf_cmd_retry;
+ if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff->hdest = hdr->hsrc;
+ if_ptr->ackbuff->udest = hdr->hsrc;
+ if_ptr->ackbuff->netid = MRFNET;
+ if_ptr->ackbuff->type = mrf_cmd_retry;
 
- if_ptr->ackbuff.hsrc = _mrfid;
- if_ptr->ackbuff.usrc = _mrfid;
- if_ptr->ackbuff.msgid = hdr->msgid;
- if_ptr->status.acktimer =  if_ptr->type->tx_del;
+ if_ptr->ackbuff->hsrc = _mrfid;
+ if_ptr->ackbuff->usrc = _mrfid;
+ if_ptr->ackbuff->msgid = hdr->msgid;
+ if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
- if_ptr->status.state = MRF_ST_ACKDELAY;
+ if_ptr->status->state = MRF_ST_ACKDELAY;
  mrf_tick_enable();
 }
 
@@ -71,15 +72,15 @@ int mrf_retry(I_F i_f,uint8 bnum){
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
- if_ptr->ackbuff.length = sizeof(MRF_PKT_HDR);
- if_ptr->ackbuff.hdest = hdr->hsrc;
- if_ptr->ackbuff.udest = hdr->hsrc;
- if_ptr->ackbuff.netid = MRFNET;
- if_ptr->ackbuff.type = mrf_cmd_retry;
- if_ptr->ackbuff.hsrc = _mrfid;
- if_ptr->ackbuff.usrc = _mrfid;
- if_ptr->ackbuff.msgid = hdr->msgid;
- if_ptr->status.acktimer =  if_ptr->type->tx_del;
+ if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
+ if_ptr->ackbuff->hdest = hdr->hsrc;
+ if_ptr->ackbuff->udest = hdr->hsrc;
+ if_ptr->ackbuff->netid = MRFNET;
+ if_ptr->ackbuff->type = mrf_cmd_retry;
+ if_ptr->ackbuff->hsrc = _mrfid;
+ if_ptr->ackbuff->usrc = _mrfid;
+ if_ptr->ackbuff->msgid = hdr->msgid;
+ if_ptr->status->acktimer =  if_ptr->type->tx_del;
  _mrf_buff_free(bnum);
 }
 
@@ -111,7 +112,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  mrf_nexthop(&route,_mrfid,hdr->usrc);
 
  MRF_IF *ifp = mrf_if_ptr(route.i_f);
- mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status.state);
+ mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
 
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
    mrf_debug("mdr l0 i_f %d bnum %d\n",route.i_f,bnum);
@@ -143,7 +144,7 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
   uint8 type = hdr->type;
    mrf_debug("**************************************\n");
 
-   mrf_debug("PACKET %s\n",mrf_cmds[hdr->type].str);
+   mrf_debug("PACKET %s\n",mrf_sys_cmds[hdr->type].str);
   
    mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
    mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
@@ -157,7 +158,7 @@ void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
   uint8 type = hdr->type;
    mrf_debug("**************************************\n");
 
-   mrf_debug("PACKET %s rx on I_F %d  state %d\n",mrf_cmds[hdr->type].str,owner,ifp->status.state);
+   mrf_debug("PACKET %s rx on I_F %d  state %d\n",mrf_sys_cmds[hdr->type].str,owner,ifp->status->state);
   
    mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
    mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
@@ -217,7 +218,7 @@ int _mrf_ex_buffer(uint8 bnum){
   MRF_IF *ifp = mrf_if_ptr(owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   mrf_debug("_mrf_ex_buffer bnum %d",bnum);
-  if(pkt_type < MRF_NUM_SYS_CMDS){
+  if(pkt->type < MRF_NUM_SYS_CMDS){
     const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
     return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
   }
@@ -241,7 +242,7 @@ int _mrf_process_buff(uint8 bnum)
       mrf_debug("ERROR:  HDEST %02X is not us %02X - mrf_bus.pkt_error\n",pkt->hdest,_mrfid);
       return -1;
     }
-  if(type >= MRF_NUM_CMDS){
+  if(type >= MRF_NUM_SYS_CMDS){
     mrf_debug("unsupported packed type 0x%02X\n",pkt->type);
     return -1;
   }
@@ -249,10 +250,10 @@ int _mrf_process_buff(uint8 bnum)
   MRF_IF *ifp = mrf_if_ptr(owner);
   // don't count ack and retry
   //  if(type < mrf_cmd_resp)
-  // ifp->status.stats.rx_pkts++;
+  // ifp->status->stats.rx_pkts++;
   
   // lookup command
-  const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_cmds[pkt->type]);
+  const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
 
  
   // begin desperate
@@ -269,7 +270,7 @@ int _mrf_process_buff(uint8 bnum)
 
   if ( pkt->udest == _mrfid){
       if(type >= mrf_cmd_resp)
-        ifp->status.stats.rx_pkts++;     
+        ifp->status->stats.rx_pkts++;     
       if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
         mrf_debug("executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
@@ -301,7 +302,7 @@ int _mrf_process_buff(uint8 bnum)
       mrf_retry(route.i_f,bnum);
     else{
 
-      mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status.state);
+      mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);
     
       pkt->hdest = route.relay;
       pkt->hsrc = _mrfid;
@@ -375,19 +376,19 @@ void _mrf_tick(){
   */
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     mif = mrf_if_ptr(i);
-    qp = &(mif->status.txqueue);
-    istate = mif->status.state;
-    mrf_debug("tick -  i_f %d MRF_ST_WAITSACK acktimer %d\n",i,mif->status.acktimer);
+    qp = &(mif->status->txqueue);
+    istate = mif->status->state;
+    mrf_debug("tick -  i_f %d MRF_ST_WAITSACK acktimer %d\n",i,mif->status->acktimer);
 
     // check if i_f busy
     if ( istate == MRF_ST_WAITSACK){
       if_busy = 1;
-      if ((mif->status.acktimer) > 0 ){
+      if ((mif->status->acktimer) > 0 ){
  
-        mif->status.acktimer--;
-        if((mif->status.acktimer) == 0){
+        mif->status->acktimer--;
+        if((mif->status->acktimer) == 0){
           mrf_debug("tick - aborting wait for ack  i_f %d  tc %d \n",i,_tick_count);
-          mif->status.state = MRF_ST_TX;
+          mif->status->state = MRF_ST_TX;
         }
       }
  
@@ -397,14 +398,14 @@ void _mrf_tick(){
     else if ( istate == MRF_ST_ACKDELAY)
       {
         if_busy = 1;
-        if ((mif->status.acktimer) > 0 ){
+        if ((mif->status->acktimer) > 0 ){
  
-          mif->status.acktimer--;
-          if((mif->status.acktimer) == 0){
+          mif->status->acktimer--;
+          if((mif->status->acktimer) == 0){
             mrf_debug("tick - send ack i_f %d  tc %d \n",i,_tick_count);
             
-            mif->status.state = MRF_ST_ACK;
-            (*(mif->type->send_func))(i,(uint8 *)&(mif->ackbuff));
+            mif->status->state = MRF_ST_ACK;
+            (*(mif->type->funcs.send))(i,(uint8 *)&(mif->ackbuff));
           }
         }
 
@@ -434,12 +435,12 @@ void _mrf_tick(){
                 bs->retry_count++;
                 mrf_debug("tick - send buff %d i_f %d tc %d retry_count %d\n",
                           bnum,i,_tick_count,bs->retry_count);
-                mif->status.state = MRF_ST_TX;
-                (*(mif->type->send_func))(i,tb);
+                mif->status->state = MRF_ST_TX;
+                (*((mif->type->funcs).send))(i,tb);
 
                 bs->state = TX;
-                mif->status.state = MRF_ST_WAITSACK;
-                mif->status.acktimer = 10;
+                mif->status->state = MRF_ST_WAITSACK;
+                mif->status->acktimer = 10;
                 bs->tx_timer = 0;
               }
             // queue_pop(qp);
@@ -459,8 +460,8 @@ void _mrf_tick(){
                 mrf_debug("retry number %d\n",bs->retry_count);
                 bs->tx_timer = mif->type->tx_del;
                 bs->state = TXQUEUE;
-                mif->status.state = MRF_ST_TXQ;
-                mif->status.stats.tx_retries++;
+                mif->status->state = MRF_ST_TXQ;
+                mif->status->stats.tx_retries++;
 
 
               }else{
@@ -469,7 +470,7 @@ void _mrf_tick(){
                 // maybe send NDR here ..but in meantime
                 bs->state = FREE;
                 bs->owner = NUM_INTERFACES;
-                mif->status.state = MRF_ST_RX;
+                mif->status->state = MRF_ST_RX;
                 queue_pop(qp);
               }                              
             }
@@ -496,32 +497,4 @@ void _mrf_tick(){
   }
 }
 
-int _if_handles[NUM_INTERFACES];
 
-int mrf_device_init(){
-  int i,tmp;
-  char sname[64];
-
-  for ( i = 0 ; i < NUM_INTERFACES ; i++){
-
-    if ( i == 1) {
-      mrf_if_register(i,&usb_if_type);
-      _output_fd[i] = usb_open(SPORT0);
-      if(_output_fd[i] < 0 ){
-        printf("gotta prob initialising i_f %d using sport %s",i,SPORT0);
-        exit(-1);
-      }
-      else{
-        printf("initialised i_f %d using sport %s OK",i,SPORT0);
-      }
-    } else {
-      mrf_if_register(i,&lnx_if_type);
-      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);
-      tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-      printf("created pipe %s res %d",sname,tmp);
-      _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
-      _output_fd[i] = -1;
-      printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
-    }
-  }
-}

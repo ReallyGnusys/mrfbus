@@ -1,19 +1,19 @@
 #include <mrf_sys.h>
 //#include <stdio.h>
-#include <mrf_cmds.h>
+#include <mrf_sys_cmds.h>
 #include <mrf_debug.h>
 
 
 
 
 MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status.state);
+  mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status->state);
 
   uint8 bn;
 
 
 
-  IQUEUE *qp = &(ifp->status.txqueue);
+  IQUEUE *qp = &(ifp->status->txqueue);
 
   MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
   MRF_PKT_HDR *txhdr; 
@@ -22,9 +22,9 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   // clear buff state of ack buffer
   _mrf_buff_state(bnum)->state = FREE;
 
-  if ( ifp->status.state != MRF_ST_WAITSACK){  
+  if ( ifp->status->state != MRF_ST_WAITSACK){  
     mrf_debug("mrf_task_ack: unexpected ack for i_f ");
-    ifp->status.stats.unexp_ack++;
+    ifp->status->stats.unexp_ack++;
     return MRF_CMD_RES_ERROR;
   }
   mrf_debug("ack 1\n");
@@ -37,8 +37,8 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
         {
         mrf_debug("acknowledge recieved buffer %d \n",bnum);
         queue_pop(qp);
-        ifp->status.state = MRF_ST_RX;
-        ifp->status.stats.tx_pkts++;
+        ifp->status->state = MRF_ST_RX;
+        ifp->status->stats.tx_pkts++;
         bs->state = FREE;
         return;
         }
@@ -46,7 +46,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
         mrf_debug("no ack 1\n");
       }
   }
-  mrf_debug("i_f status %d da %d\n",ifp->status.state,queue_data_avail(&(ifp->status.txqueue)));
+  mrf_debug("i_f status %d da %d\n",ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
   mrf_debug("no ack 2\n");
 }
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
@@ -68,7 +68,7 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
 
   // send a seg ack when we get resp
-  mrf_debug("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_cmds[resp->type].str,resp->rlen,hdr1->usrc,hdr1->udest);
+  mrf_debug("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_sys_cmds[resp->type].str,resp->rlen,hdr1->usrc,hdr1->udest);
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -126,9 +126,9 @@ MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_IF *i_f;
   for ( i = 0 ; i < NUM_INTERFACES ; i++ ) {
     i_f = mrf_if_ptr(i);
-    info.tx_retries += i_f->status.stats.tx_retries;
-    info.tx_pkts += i_f->status.stats.tx_pkts;
-    info.rx_pkts += i_f->status.stats.rx_pkts;    
+    info.tx_retries += i_f->status->stats.tx_retries;
+    info.tx_pkts += i_f->status->stats.tx_pkts;
+    info.rx_pkts += i_f->status->stats.rx_pkts;    
   }
   mrf_debug("mrf_task_if_info l1\n");
 

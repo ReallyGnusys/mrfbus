@@ -191,7 +191,7 @@ char buff[2048];
   struct itimerspec new_value;
   struct timespec now;
   uint64_t exp, tot_exp; 
-  int timerfd,fd , i, tmp;
+  int timerfd,intfd,fd , i, tmp;
   ssize_t s;
   struct epoll_event revent[NUM_INTERFACES + 2];
   int nfds;
@@ -234,27 +234,31 @@ char buff[2048];
   // input events for each i_f + one for timer tick
   struct epoll_event ievent[NUM_INTERFACES + 2];
 
+  // devices must have been initialised - we're getting fds from _sys_if
+  // lnx arch drivers must set an fd for input stream
   // add i_f events + cntrl if
+  MRF_IF *ifp;
   for ( i = 0 ; i <  NUM_INTERFACES ; i++){
+    ifp = mrf_if_ptr(i);
     ievent[i].data.u32 = i;
     ievent[i].events = EPOLLIN | EPOLLET;
 
-    epoll_ctl(efd, EPOLL_CTL_ADD, _input_fd[i], &ievent[i]);
-    printf("I_F event added %d fd %d infd %d\n",i,ievent[i].data.fd,_input_fd[i]);
+    epoll_ctl(efd, EPOLL_CTL_ADD, ifp->fd, &ievent[i]);
+    printf("I_F event added %d fd %d infd %d\n",i,ievent[i].data.fd,ifp->fd);
   }
 
   // timer event
   ievent[NUM_INTERFACES].data.u32 = NUM_INTERFACES;
   ievent[NUM_INTERFACES].events = EPOLLIN | EPOLLET;
-  /*
-  epoll_ctl(efd, EPOLL_CTL_ADD,_input_fd[NUM_INTERFACES] , &ievent[NUM_INTERFACES]);
-  printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-  */
+ 
+  epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
+  printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,timerfd);
+
   // internal cntrl pipe
   ievent[NUM_INTERFACES+1].data.u32 = NUM_INTERFACES+1;
   ievent[NUM_INTERFACES+1].events = EPOLLIN | EPOLLET;
-  epoll_ctl(efd, EPOLL_CTL_ADD,_input_fd[NUM_INTERFACES+1] , &ievent[NUM_INTERFACES+1]);
-  printf("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,_input_fd[NUM_INTERFACES+1]);
+  epoll_ctl(efd, EPOLL_CTL_ADD, intfd , &ievent[NUM_INTERFACES+1]);
+  printf("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
 
 
 
@@ -275,7 +279,7 @@ char buff[2048];
        fd = mrf_if_ptr(inif)->fd;
        //sanity check
        printf("event on fd %d",fd);
-       s = read(fd, buff, 1024);
+       s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
        trim_trailing_space(buff);
@@ -294,7 +298,7 @@ char buff[2048];
        s = 1;
        int l = 0;
        // while (s > 0){
-       s = read(_input_fd[NUM_INTERFACES], buff, 1024);
+       s = read(timerfd, buff, 1024);
        buff[s] = 0;
        l++;
          // }
@@ -315,7 +319,7 @@ char buff[2048];
        // internal cntrl
 
  
-       s = read(_input_fd[NUM_INTERFACES+1], buff, 1024);
+       s = read(intfd, buff, 1024);
        buff[s] = 0;
        trim_trailing_space(buff);
        s = strlen(buff);
@@ -326,7 +330,7 @@ char buff[2048];
 
          if(strcmp(buff,"tick_enable") == 0){
            //printf("INTERNAL:tick_enable\n");
-           epoll_ctl(efd, EPOLL_CTL_ADD,_input_fd[NUM_INTERFACES] , &ievent[NUM_INTERFACES]);
+           epoll_ctl(efd, EPOLL_CTL_ADD,intfd , &ievent[NUM_INTERFACES]);
            //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
 
 
@@ -334,7 +338,7 @@ char buff[2048];
          }
          else if (strcmp(buff,"tick_disable") == 0){
            //printf("INTERNAL:tick_disable\n");
-           epoll_ctl(efd, EPOLL_CTL_DEL,_input_fd[NUM_INTERFACES] , &ievent[NUM_INTERFACES]);
+           epoll_ctl(efd, EPOLL_CTL_DEL,intfd , &ievent[NUM_INTERFACES]);
            //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
 
          }
