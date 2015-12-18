@@ -11,9 +11,9 @@ extern uint8 _mrfid;
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
 static int _mrf_pipe_init_lnx(I_F i_f);
 
-const MRF_IF_TYPE lnx_if_type = {
+const MRF_IF_TYPE mrf_pipe_lnx_if = {
  tx_del : 1,
- funcs : { send : _mrf_pipe_send_lnx
+ funcs : { send : _mrf_pipe_send_lnx,
            init : _mrf_pipe_init_lnx }
 };
 
@@ -29,7 +29,6 @@ int _input_fd[NUM_INTERFACES+2];
 int _mrf_pipe_init_lnx(I_F i_f){
   int fd,tmp;
   char sname[64];
-  mrf_if_register(i_f,&lnx_if_type);
   sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
