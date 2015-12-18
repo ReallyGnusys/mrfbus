@@ -365,7 +365,7 @@ int mrf_rtc_set(TIMEDATE *td){
 int mrf_tick_enable(){
   char sname[64];
   int fd,bc,tb;
-  mrf_debug("mrf_tick_enable arch lnx");
+  mrf_debug("mrf_tick_enable arch lnx\n");
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   fd = open(sname, O_WRONLY);
   if(fd == -1){

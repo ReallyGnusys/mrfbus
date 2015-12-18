@@ -45,6 +45,8 @@ int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   int fd,bc,tb;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
+  printf("_mrf_pipe_send_lnx : sending..\n");
+  mrf_print_packet_header(hdr);
   // rough hack to get up and down using correct sockets
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
     sknum = 0;
@@ -60,7 +62,7 @@ int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
   // apologies - this is how we frig the 'wiring' on the interface to write to the intended target
   sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  printf("mrf_arch.c lnx_if_send_func using socket *%s*\n",spath);
+  printf("_mrf_pipe_send_lnx using socket *%s*\n",spath);
   fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
     printf(" %d\n",fd);

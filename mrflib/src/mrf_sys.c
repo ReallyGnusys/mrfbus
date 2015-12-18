@@ -30,9 +30,9 @@ int mrf_sack(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
- mrf_debug("mrf_sack : orig header is ");
+ mrf_debug("mrf_sack : orig header is\n");
  mrf_print_packet_header(hdr);
- mrf_debug("route if is %d",route.i_f);
+ mrf_debug("route if is %d\n",route.i_f);
  MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
@@ -108,7 +108,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
 
  MRF_ROUTE route;
- mrf_debug("mrf_data_response :  bnum %d  rlen %d\n",bnum,rlen);
+ mrf_debug("\nmrf_data_response :  bnum %d  rlen %d\n",bnum,rlen);
 
  // turning buffer around - deliver to usrc
 
@@ -197,7 +197,7 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
 }
 
 int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
-      mrf_debug("_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
+      mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
       mrf_debug("cmd name %s  req size %d  rsp size %d\n",
                 cmd->str,cmd->req_size,cmd->rsp_size);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
@@ -209,7 +209,7 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp)
       mrf_debug("pp l12\n");
       // check if command func defined
       if(cmd->func != NULL){
-        mrf_debug("executing cmd func");
+        mrf_debug("executing cmd func\n");
         (*(cmd->func))(pkt->type,bnum,ifp);
         return;
       }
@@ -257,7 +257,7 @@ int _mrf_process_buff(uint8 bnum)
   
   // lookup command
   const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
-  mrf_debug("looked up command %d %s",pkt->type,cmd->str);
+  mrf_debug("looked up command %d %s\n",pkt->type,cmd->str);
  
   // begin desperate
   
@@ -406,7 +406,7 @@ void _mrf_tick(){
           mif->status->acktimer--;
           if((mif->status->acktimer) == 0){
             mrf_debug("tick - send ack i_f %d  tc %d \n",i,_tick_count);
-            
+            mrf_print_packet_header(mif->ackbuff);
             mif->status->state = MRF_ST_ACK;
             (*(mif->type->funcs.send))(i,(uint8 *)&(mif->ackbuff));
           }

@@ -24,7 +24,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   _mrf_buff_state(bnum)->state = FREE;
 
   if ( ifp->status->state != MRF_ST_WAITSACK){  
-    mrf_debug("mrf_task_ack: unexpected ack for i_f ");
+    mrf_debug("mrf_task_ack: unexpected ack for i_f\n");
     ifp->status->stats.unexp_ack++;
     return MRF_CMD_RES_ERROR;
   }
