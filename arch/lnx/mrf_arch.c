@@ -185,6 +185,8 @@ int packet_received(I_F i_f,char *buffer,int len){
 }
 char buff[2048];
 
+#define TICK_DISABLE "tick_disable"
+#define TICK_ENABLE "tick_enable"
 
  void *_sys_loop(void *arg){
   
@@ -268,12 +270,9 @@ char buff[2048];
    //s = read(fd, &exp, sizeof(uint64_t));
    //printf("nfds = %d\n",nfds);
    
-   for ( i = 0 ; i < nfds ; i++){
+   for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
-
-     // search input fds for each event
-     inif = revent[i].data.u32;
-
+     inif = revent[i].data.u32; // data contains mrfbus i_f num
      if (inif < NUM_INTERFACES){
        //it's an input stream
        
@@ -295,17 +294,14 @@ char buff[2048];
    
      else if (revent[i].data.u32 == NUM_INTERFACES){
        // timer tick
-
        s = 1;
        int l = 0;
        // while (s > 0){
        s = read(timerfd, buff, 1024);
        buff[s] = 0;
        l++;
-         // }
-         //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);  
+       //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);  
 
-         //if((count ) == 1000 ){
        _mrf_tick();
        count++;
        if((count ) == 1000 ){
@@ -329,26 +325,19 @@ char buff[2048];
        //printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
        if ( s > 10){
 
-         if(strcmp(buff,"tick_enable") == 0){
+         if(strcmp(buff,TICK_ENABLE) == 0){
            //printf("INTERNAL:tick_enable\n");
-           epoll_ctl(efd, EPOLL_CTL_ADD,intfd , &ievent[NUM_INTERFACES]);
-           //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-
-
-           
+           epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
+           //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
          }
-         else if (strcmp(buff,"tick_disable") == 0){
+         else if (strcmp(buff,TICK_DISABLE) == 0){
            //printf("INTERNAL:tick_disable\n");
-           epoll_ctl(efd, EPOLL_CTL_DEL,intfd , &ievent[NUM_INTERFACES]);
+           epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
            //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-
          }
-       }
-       
+       }   
      }
    }
-
-   
   }
        
   return NULL;
@@ -378,12 +367,12 @@ int mrf_rtc_set(TIMEDATE *td){
 
 }
 
-const char tick_en_str[] = "tick_enable";
-const char tick_dis_str[] = "tick_disable";
+
 
 int mrf_tick_enable(){
   char sname[64];
   int fd,bc,tb;
+  mrf_debug("mrf_tick_enable arch lnx");
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
@@ -391,7 +380,7 @@ int mrf_tick_enable(){
     perror("mrf_tick_enable ERROR sock open\n");
     return -1;
   }
-  bc = write(fd, tick_en_str,sizeof(tick_en_str) );
+  bc = write(fd, TICK_ENABLE,sizeof(TICK_ENABLE) );
 
 }
 
@@ -405,7 +394,7 @@ int mrf_tick_disable(){
     perror("mrf_tick_enable ERROR sock open\n");
     return -1;
   }
-  bc = write(fd, tick_dis_str,sizeof(tick_dis_str) );
+  bc = write(fd, TICK_DISABLE,sizeof(TICK_DISABLE) );
 
 }
 
