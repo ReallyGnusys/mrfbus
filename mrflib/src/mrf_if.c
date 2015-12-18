@@ -43,17 +43,20 @@ int mrf_if_transmitting(I_F i_f){
 void mrf_if_init(){
   int i,j,fd;
   uint8 *dptr;
+  printf("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
   for (i = 0 ; i < NUM_INTERFACES ; i++){
+    printf("interface %d\n",i);
     MRF_IF *mif = mrf_if_ptr(i);
     // rough zeroing of status data
-    dptr = (uint8 *)_sys_ifs[i].status;
+    dptr = (uint8 *)mif->status;
+    printf("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;    
     queue_init(&(mif->status->txqueue));
     mif->status->state = MRF_ST_IDLE;
     fd = (*(mif->type->funcs.init))(i);
 #ifdef MRF_ARCH_lnx
-    _mif->fd = fd; //needed for epoll
+    mif->fd = fd; //needed for epoll
 #endif
     
   }

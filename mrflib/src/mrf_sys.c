@@ -12,6 +12,7 @@
 extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
+extern const MRF_CMD const *mrf_sys_cmds;
 
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
