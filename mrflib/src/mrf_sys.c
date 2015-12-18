@@ -12,8 +12,7 @@
 extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
-extern const MRF_CMD const *mrf_sys_cmds;
-
+extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
@@ -31,6 +30,9 @@ int mrf_sack(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
+ mrf_debug("mrf_sack : orig header is ");
+ mrf_print_packet_header(hdr);
+ mrf_debug("route if is %d",route.i_f);
  MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
@@ -255,7 +257,7 @@ int _mrf_process_buff(uint8 bnum)
   
   // lookup command
   const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
-
+  mrf_debug("looked up command %d %s",pkt->type,cmd->str);
  
   // begin desperate
   
@@ -263,7 +265,7 @@ int _mrf_process_buff(uint8 bnum)
   if (((pkt->type) == mrf_cmd_resp) && ((pkt->usrc) == (pkt->hsrc))){
     // act like we received and ack
       mrf_debug("got resp_should count as ack \n");
-    mrf_task_ack(pkt->type,bnum,ifp);
+      mrf_task_ack(pkt->type,bnum,ifp);
   }
   // end desperate
 
@@ -379,7 +381,7 @@ void _mrf_tick(){
     mif = mrf_if_ptr(i);
     qp = &(mif->status->txqueue);
     istate = mif->status->state;
-    mrf_debug("tick -  i_f %d MRF_ST_WAITSACK acktimer %d\n",i,mif->status->acktimer);
+    mrf_debug("tick -  i_f %d state %d  acktimer %d\n",i,istate,mif->status->acktimer);
 
     // check if i_f busy
     if ( istate == MRF_ST_WAITSACK){

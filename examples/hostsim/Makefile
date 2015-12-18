@@ -24,10 +24,7 @@ MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o
 ALL : ${BIN} ${OBJ} ${MOBJS} ${TARG}
 
 
-
 #MBDEVNAME=\""HOST_ROUTER"\"
-
-
 
 
 clean : 
@@ -39,12 +36,7 @@ ${BIN}:
 	mkdir -p ${BIN}
 
 
-
-
-
-
 CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH} -g
-
 
 
 ${TARG} :

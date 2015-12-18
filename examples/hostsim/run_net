@@ -6,7 +6,6 @@ adds="0x00 0x01 0x02 0x20 0x2f"
 #devs="zl_0x00 host_0x01 usbrf_0x02 rf_0x20 rf_0x2f"
 #devs="zl_0x00 usbrf_0x02"
 
-arch=x86_64
 declare -i height=10
 declare -i width=75
 declare -i top=20
@@ -21,7 +20,8 @@ declare -i vmax=600
 [ -d /tmp/mrf_bus/ ] || mkdir /tmp/mrf_bus
 for add in $adds ; do
     dev=${devtype}_${add}
-    xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./bin/"${arch}/$dev &
+    echo trying to run "./bin/${arch}/$dev"
+    xterm -geometry ${width}x${height}+${left}+${top} -fg black -bg white -sb -sl 2000 -e "./bin/lnx/$dev" &
     pd=$!
     echo $pd
     pids=$pids" "$pd

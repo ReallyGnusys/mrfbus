@@ -130,13 +130,6 @@ int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
   return i*2;
 }
 
-typedef struct  __attribute__ ((packed))   {
-  uint8 netid;
-  uint8 dest;
-  uint8 type;
-    
-} MRF_CNTRL_PKT;
-
 
 
 int packet_received(I_F i_f,char *buffer,int len){
