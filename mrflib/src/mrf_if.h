@@ -76,7 +76,7 @@ typedef struct  {
   const MRF_IF_TYPE *type;
   MRF_PKT_HDR *ackbuff;
 #ifdef MRF_ARCH_lnx
-  int fd;  // fd used by lnx epoll
+  int *fd;  // fd used by lnx epoll
 #endif
 } MRF_IF;
 

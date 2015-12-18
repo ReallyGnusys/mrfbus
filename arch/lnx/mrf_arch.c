@@ -243,17 +243,18 @@ char buff[2048];
     ievent[i].data.u32 = i;
     ievent[i].events = EPOLLIN | EPOLLET;
 
-    epoll_ctl(efd, EPOLL_CTL_ADD, ifp->fd, &ievent[i]);
-    printf("I_F event added %d fd %d infd %d\n",i,ievent[i].data.fd,ifp->fd);
+    epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
+    printf("I_F event added %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
 
   // timer event
   ievent[NUM_INTERFACES].data.u32 = NUM_INTERFACES;
   ievent[NUM_INTERFACES].events = EPOLLIN | EPOLLET;
- 
+  // timer event must be enabled by system - do *not* enable here 
+  /*
   epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
   printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,timerfd);
-
+  */
   // internal cntrl pipe
   ievent[NUM_INTERFACES+1].data.u32 = NUM_INTERFACES+1;
   ievent[NUM_INTERFACES+1].events = EPOLLIN | EPOLLET;
@@ -276,7 +277,7 @@ char buff[2048];
      if (inif < NUM_INTERFACES){
        //it's an input stream
        
-       fd = mrf_if_ptr(inif)->fd;
+       fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
        printf("event on fd %d",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets

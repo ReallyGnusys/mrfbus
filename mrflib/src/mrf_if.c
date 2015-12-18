@@ -56,7 +56,7 @@ void mrf_if_init(){
     mif->status->state = MRF_ST_IDLE;
     fd = (*(mif->type->funcs.init))(i);
 #ifdef MRF_ARCH_lnx
-    mif->fd = fd; //needed for epoll
+    *(mif->fd) = fd; //needed for epoll
 #endif
     
   }
