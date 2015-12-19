@@ -46,6 +46,10 @@ int mrf_sack(uint8 bnum){
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
  if_ptr->status->state = MRF_ST_ACKDELAY;
+
+ mrf_debug("mrf_sack : exit, ackbuff is\n");
+ mrf_print_packet_header(if_ptr->ackbuff);
+
  mrf_tick_enable();
 }
 
@@ -408,7 +412,7 @@ void _mrf_tick(){
             mrf_debug("tick - send ack i_f %d  tc %d \n",i,_tick_count);
             mrf_print_packet_header(mif->ackbuff);
             mif->status->state = MRF_ST_ACK;
-            (*(mif->type->funcs.send))(i,(uint8 *)&(mif->ackbuff));
+            (*(mif->type->funcs.send))(i,(uint8 *)(mif->ackbuff));
           }
         }
 
