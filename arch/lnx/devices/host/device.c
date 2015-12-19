@@ -1,47 +1,18 @@
 #include "mrf_if.h"
-#include <time.h>
-#include <string.h>
-#include <pthread.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <termios.h>
-#include <stdio.h>
-#define SOCKET_DIR "/tmp/mrf_bus/"
-#define SPORT0 "/dev/ttyUSB0"
+#include "device.h"
+static IF_STATUS _if_status[NUM_INTERFACES];
 
-extern uint8 _mrfid;
+static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
 
-extern MRF_IF_TYPE usb_if_type;
-extern MRF_IF_TYPE lnx_if_type;
+extern const MRF_IF_TYPE mrf_uart_lnx_if;
 
-extern int _output_fd[];  // ugly
-extern int _input_fd[];
+extern const MRF_IF_TYPE mrf_pipe_lnx_if;
 
-int mrf_device_init(){
-  int i,tmp;
-  char sname[64];
+static ifd[NUM_INTERFACES]; // need fds for lnx i_f s
 
-  for ( i = 0 ; i < NUM_INTERFACES ; i++){
-
-    if ( i == 1) {
-      mrf_if_register(i,&usb_if_type);
-      _output_fd[i] = usb_open(SPORT0);
-      if(_output_fd[i] < 0 ){
-        printf("gotta prob initialising i_f %d using sport %s",i,SPORT0);
-        exit(-1);
-      }
-      else{
-        printf("initialised i_f %d using sport %s OK",i,SPORT0);
-      }
-    } else {
-      mrf_if_register(i,&lnx_if_type);
-      sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i);
-      tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-      printf("created pipe %s res %d",sname,tmp);
-      _input_fd[i] = open(sname,O_RDONLY | O_NONBLOCK);
-      _output_fd[i] = -1;
-      printf("opened pipe i = %d  %s fd = %d\n",i,sname,_input_fd[i]);
-    }
-  }
-}
+const MRF_IF _sys_ifs[] = {
+ [ USB0 ] =  { &_if_status[0], &mrf_uart_lnx_if, &_if_ackbuffs[0], &ifd[0]},
+ [ PIPE1 ] =  { &_if_status[1], &mrf_pipe_lnx_if, &_if_ackbuffs[1], &ifd[1]},
+ [ PIPE2 ] =  { &_if_status[2], &mrf_pipe_lnx_if, &_if_ackbuffs[2], &ifd[2]},
+ [ PIPE3 ] =  { &_if_status[3], &mrf_pipe_lnx_if, &_if_ackbuffs[3], &ifd[3]}
+};

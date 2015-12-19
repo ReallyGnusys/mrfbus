@@ -1,0 +1,15 @@
+dev=hostsim
+
+adds="0x00 0x01 0x02 0x20 0x2f"
+
+for add in $adds ; do
+  killall ${dev}_${add}
+done
+
+for add in $adds ; do
+  make DEVTYPE=${dev} MRFID=${add}
+done
+
+
+
+

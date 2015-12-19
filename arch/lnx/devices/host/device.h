@@ -3,13 +3,13 @@
 
 
 typedef  enum { USB0,
-     	        USB1,
-		USB2,
-		USB3,
-                CNTRL,
+     	        PIPE1,
+		PIPE2,
+		PIPE3,
                 NUM_INTERFACES} I_F;
 
 
+#define _MRF_BUFFS 16
 
 
 #endif
