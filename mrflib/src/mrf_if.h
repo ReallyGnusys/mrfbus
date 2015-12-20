@@ -74,6 +74,7 @@ typedef struct  {
 
 
 typedef struct  {
+  const uint8 *name;
   IF_STATUS *status;
   const MRF_IF_TYPE *type;
   MRF_PKT_HDR *ackbuff;

@@ -2,8 +2,8 @@
 #define __DEVICE_INCLUDED__
 
 
-typedef  enum { USB0,
-     	        PIPE1,
+typedef  enum { PIPE0,
+     	        USB0,
 		PIPE2,
 		PIPE3,
                 NUM_INTERFACES} I_F;

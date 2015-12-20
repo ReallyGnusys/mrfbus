@@ -186,7 +186,7 @@ char buff[2048];
   while(1){
    nfds = epoll_wait(efd, revent,NUM_INTERFACES+2 , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
-   //printf("nfds = %d\n",nfds);
+   printf("nfds = %d\n",nfds);
    
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
