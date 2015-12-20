@@ -7,6 +7,10 @@
 #include <fcntl.h>
 #include <termios.h>
 #include <stdio.h>
+#include <fcntl.h>
+#include <sys/epoll.h>
+#include <sys/stat.h>
+#include <sys/timerfd.h>
 #include <mrf_arch.h>
 #include <mrf_buff.h>
 #include <mrf_sys.h>
@@ -19,9 +23,6 @@ extern uint8 _mrfid;
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
-
-#define handle_error(msg)  \
-  do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
 
@@ -77,14 +78,6 @@ int is_hex_digit(uint8 dig){
   else
     return 0;
 }
-int hex_digit_to_int(uint8 dig){
-  if (( dig >= '0') && ( dig <= '9'))
-    return dig - '0';
-  else if(( dig >= 'A') && ( dig <= 'F'))
-    return 10 + dig - 'A';
-  else
-    return 0;
-}
 
 uint8 int_to_hex_digit(int in){
   
@@ -99,83 +92,15 @@ uint8 int_to_hex_digit(int in){
 
 
 
-uint8 *trim_trailing_space(uint8 *buff){
+void trim_trailing_space(uint8 *buff){
 
   uint8 *end  = buff + strlen(buff) - 1;
   while(end > buff && isspace(*end)) end--;
-
   // Write new null terminator
   *(end+1) = 0;
-
-  return buff;
-
-}
-uint8 hex_dig_str_to_int(uint8 *dig){
-  return 16*hex_digit_to_int(*dig) + hex_digit_to_int(*(dig+1));
-
-}
-void  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
-  int i;
-  for ( i = 0 ; i < len/2 ; i++)
-    mbuff[i] = hex_dig_str_to_int(&buffer[i*2]);
-}
-
-// named pipe uses ascii hex encoding 
-int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
-  int i;
-  for ( i = 0 ; i < len ; i++){
-    txbuff[i*2] = int_to_hex_digit(buffer[i]/16);
-    txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);    
-  }
-  return i*2;
 }
 
 
-
-int packet_received(I_F i_f,char *buffer,int len){
-  int i;
-  uint8 *mbuff; // mrf_buff
-  uint8 cbuff[64];
-  uint8 bind;
-  // sanity check packet
-  //printf("pr 1 : len %d\n",len);
-  if ( len > _MRF_BUFFLEN * 2)
-    return -1;
- 
-  // get rid of str terminator
-  if (len % 2){
-    mrf_debug("ALERT - odd length packet %d\n",len);
-    len = len -1;
-
-  }
-
-  for (i = 0 ; i < len ; i ++ )
-    {
-
-      if (is_hex_digit(buffer[i] == 0) ){
-        printf("dig %d ( %c ) not hex\n",i,buffer[i]); 
-        return -1;
-      }
-
-    }
-
-  if (len < sizeof(MRF_PKT_HDR) * 2){
-    printf("PACKET too short ( %d bytes )\n",len);
-  }
- 
-  bind = mrf_alloc_if(i_f);
-  mbuff = _mrf_buff_ptr(bind);
-  mrf_debug("\nmrf_arch PACKET RECIEVED IF = %d: mbuff = %p\n",i_f,mbuff);
-  if ( mbuff != NULL) {
-    copy_to_mbuff(buffer,len,mbuff);
-    //printf("\npkt copied\n");
-    //mrf_buff_loaded_if(i_f, mbuff);
-    mrf_buff_loaded(bind);
-  }
-  else {
-    printf("mrf_arch : packet_received - failed to allocate buffer!\n");
-  }
-}
 char buff[2048];
 
 #define TICK_DISABLE "tick_disable"
@@ -268,21 +193,34 @@ char buff[2048];
      inif = revent[i].data.u32; // data contains mrfbus i_f num
      if (inif < NUM_INTERFACES){
        //it's an input stream
-       
        fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
        printf("event on fd %d",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
-       trim_trailing_space(buff);
-       s = strlen(buff);
+       uint8 bind;
+       bind = mrf_alloc_if(inif);
 
-       if (s >=  sizeof(MRF_PKT_HDR)*2) { // min cntrl packet size (ascii hex coded)
-         //printf("infd event p_r next: read %d bytes = %s ,  inif = %d fd = %d \n",(int)s,buff,inif,_input_fd[inif]);         
-         packet_received(inif,buff,s);              
+       if (*(mrf_if_ptr(inif)->type->funcs.buff) != NULL){
+         //use interface method to copy to buff 
+         int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s,bind);
+         if ( rv != 0) {
+           mrf_debug("error arch lnx i_f %d buff function returned %d\n",inif,rv);
+           _mrf_buff_free(bind);
+         } else {
+           mrf_buff_loaded(bind);           
+         }                       
+       } else {
+         // probably mistake here to not have buff function defined..
+         // but assume buff contains mrf packet that needs straight copy
+         if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
+           mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);  
+             _mrf_buff_free(bind);
+         } else 
+           mrf_buff_loaded(bind);           
+
        }
-
      }
    
      else if (revent[i].data.u32 == NUM_INTERFACES){

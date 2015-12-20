@@ -1,8 +1,11 @@
+#include "mrf_sys.h"
+#include "mrf_debug.h"
+#include "mrf_uart.h"
 
-int mrf_uart_init_rx_state(UART_CSTATE *rxstate){
-  rxstate->state = S_PREAMBLE_0;
+int mrf_uart_init_rx_state(I_F i_f,UART_CSTATE *rxstate){
+  rxstate->state = S_START;
   rxstate->bindex = 0;
-  rxstate->bnum = mrf_alloc();
+  rxstate->bnum = mrf_alloc_if(i_f);
   if (rxstate->bnum == _MRF_BUFFS){
     mrf_debug("mrf_uart_init: failed to alloc buff!");
     rxstate->buff = NULL;
@@ -14,7 +17,7 @@ int mrf_uart_init_rx_state(UART_CSTATE *rxstate){
   return 0;
 }
 
-int mrf_uart_init_tx_state(UART_CSTATE *txstate){
+int mrf_uart_init_tx_state(I_F i_f,UART_CSTATE *txstate){
   txstate->state = S_IDLE;
   txstate->buff = NULL;
   txstate->bnum = 0;
@@ -31,7 +34,7 @@ int mrf_uart_init(I_F i_f, IF_STATE *state){
 // intr handler for uart rx
 void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
   switch (rxstate->state){
-  case  S_PREAMBLE_0:
+  case  S_START:
     if (rxbyte == _MRF_UART_PREAMBLE)
       rxstate->state = S_PREAMBLE_1;
     break;
@@ -39,7 +42,7 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     if (rxbyte == _MRF_UART_PREAMBLE)
       rxstate->state = S_LEN;
     else
-      rxstate->state = S_PREAMBLE_0;
+      rxstate->state = S_START;
     break;
   case  S_LEN:
     if ((rxbyte <= _MRF_BUFFLEN) && (rxbyte >= sizeof(MRF_PKT_HDR))){
@@ -47,7 +50,7 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->bindex = 0; 
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
-      rxstate->state = S_PREAMBLE_0;
+      rxstate->state = S_START;
     }
     break;
   case  S_ADDR:
@@ -55,7 +58,7 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->state = S_NETID;
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
-      rxstate->state = S_PREAMBLE_0;
+      rxstate->state = S_START;
     }
     break;
   case  S_NETID:
@@ -63,7 +66,7 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->state = S_HDR;
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
-      rxstate->state = S_PREAMBLE_0;
+      rxstate->state = S_START;
     }
     break;    
   case  S_DATA:
@@ -73,12 +76,12 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
 
     if (rxstate->bindex >= rxstate->buff[0]){
       // packet received
-      mrf_buff_loaded(_rx_bnum);
-      rxstate->state = S_PREAMBLE_0;
+      mrf_buff_loaded(rxstate->bnum);
+      rxstate->state = S_START;
     }
     break;    
   default :
-    rxstate->state = S_PREAMBLE_0;
+    rxstate->state = S_START;
   }
 
   //  UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
@@ -97,7 +100,7 @@ inline uint8 mrf_uart_tx_complete(UART_CSTATE *txstate){
 uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
   uint8 tmp;
   switch (txstate->state){
-  case  S_PREAMBLE_0:
+  case  S_START:
     txstate->state = S_PREAMBLE_1;
     return _MRF_UART_PREAMBLE;
   case  S_PREAMBLE_1:
@@ -133,7 +136,7 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
     (txstate->errors)++;
     return 0;
   default :
-    txstate->state = S_IDLE
+    txstate->state = S_IDLE;
   }
 }
 

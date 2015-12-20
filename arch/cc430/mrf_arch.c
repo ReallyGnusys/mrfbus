@@ -7,6 +7,14 @@ extern uint8 _mrfid;
 
 
 extern MRF_IF_TYPE rf_if_type;
+
+//FIXME shouldn't need putchar to make printf etc link. Shouldn't have printf
+
+int putchar(int c){
+}
+
+
+
 int rf_if_send_func(I_F i_f, uint8 *buff);
 
 int mrf_arch_init(){
@@ -29,7 +37,6 @@ int mrf_arch_init(){
   P3DIR = 0x00;
   // LCD1x9_Initialize();
  
-  mrf_device_init();
 
   _mrf_receive_enable();
   //rtc_ps0_init(DIV64,ps0_handler);

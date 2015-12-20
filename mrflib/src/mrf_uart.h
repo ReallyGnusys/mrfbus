@@ -1,6 +1,10 @@
 #ifndef _MRF_UART_INCLUDED_
 #define _MRF_UART_INCLUDED_
 
+#include "mrf_types.h"
+#include "mrf_if.h"
+
+#define _MRF_UART_PREAMBLE 0x55
   // uart line state
 typedef enum _rstate {
   S_IDLE       = 0,
@@ -27,5 +31,5 @@ typedef struct {
 
 int mrf_uart_init();
 void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate);
-
+int mrf_uart_to_buff(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum);
 #endif

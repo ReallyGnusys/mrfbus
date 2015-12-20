@@ -8,19 +8,15 @@
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(RF0,buff)
 
 #define mrf_alloc() mrf_alloc_if(RF0)
+int rf_if_send_func(I_F i_f, uint8 *buff);
+int mrf_rf_init(I_F i_f);
 
 const MRF_IF_TYPE mrf_rf_cc_if = {
  tx_del : 4,
- funcs : { send : rf_if_send_func
+ funcs : { send : rf_if_send_func,
            init : mrf_rf_init }
 };
 
-int rf_if_send_func(I_F i_f, uint8 *buff);
-
-const MRF_IF_TYPE mrf_rf_if_cc = {
- tx_del : 4,
- send_func : rf_if_send_func
-};
 
 
 int rf_if_send_func(I_F i_f, uint8 *buff){
@@ -84,7 +80,7 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     bnum = mrf_alloc();
 
     if ( bnum == _MRF_BUFFS){  // emergency buffer used to collect header + toks only
-      mif->status.stats.alloc_err++;
+      mif->status->stats.alloc_err++;
       lenerr = TRUE;
   
     }else {
@@ -138,14 +134,14 @@ RF1AIE &= ~BIT9;                    // Disable TX end-of-packet interrupt
 
 void mrf_rf_idle(I_F i_f){
   MRF_IF *ifp = mrf_if_ptr(i_f);
-  ifp->status.state = MRF_ST_IDLE;
+  ifp->status->state = MRF_ST_IDLE;
   Strobe( RF_SIDLE );
 
 }
 
 int _mrf_rf_tx_intr(I_F i_f){
   MRF_IF *ifp = mrf_if_ptr(i_f);
-  IF_STATE *if_state = &(ifp->status.state);
+  IF_STATE *if_state = &(ifp->status->state);
   xb_hw_disable_tx_eop();
 	// _dbg100(xbst);
         //  (*if_state) = XB_ST_IDLE;
@@ -153,7 +149,7 @@ int _mrf_rf_tx_intr(I_F i_f){
   if ((*if_state) ==  MRF_ST_TX){
     _mrf_receive_enable();
     // we're now waiting for SACK
-    ifp->status.state = MRF_ST_WAITSACK;    
+    ifp->status->state = MRF_ST_WAITSACK;    
   }
   else if((*if_state) ==  MRF_ST_ACK){ 
    if (mrf_if_can_sleep(i_f))
@@ -162,7 +158,7 @@ int _mrf_rf_tx_intr(I_F i_f){
       _mrf_receive_enable(); 	 
     }
   }else { // some cockup
-    ifp->status.stats.st_err ++;
+    ifp->status->stats.st_err ++;
   }
 
 }

@@ -4,18 +4,11 @@
 
 #define IQUEUE_DEPTH 8
 
+#include <stdlib.h>
+#define handle_error(msg)  \
+  do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <mrf_types.h>
-#include <sys/timerfd.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/epoll.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdint.h>        /* Definition of uint64_t */
+
+void trim_trailing_space(uint8 *buff);
 
 #endif
