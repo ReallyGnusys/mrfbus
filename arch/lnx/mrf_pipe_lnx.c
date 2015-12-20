@@ -5,6 +5,9 @@
 #include <mrf_debug.h>
 #include <mrf_arch.h>
 #include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <string.h>
 
 #define SOCKET_DIR "/tmp/mrf_bus/"
 

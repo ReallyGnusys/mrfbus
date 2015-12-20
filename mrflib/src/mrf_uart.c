@@ -30,9 +30,11 @@ int mrf_uart_init(I_F i_f, IF_STATE *state){
 
 }
 
+
+
 // binary packet data on serial ports 
 // intr handler for uart rx
-void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
+int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
   switch (rxstate->state){
   case  S_START:
     if (rxbyte == _MRF_UART_PREAMBLE)
@@ -47,7 +49,7 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
   case  S_LEN:
     if ((rxbyte <= _MRF_BUFFLEN) && (rxbyte >= sizeof(MRF_PKT_HDR))){
       rxstate->state = S_ADDR;
-      rxstate->bindex = 0; 
+      rxstate->bindex = 0;
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
       rxstate->state = S_START;
@@ -73,20 +75,38 @@ void mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     if(rxstate->bindex < rxstate->buff[0]){
       rxstate->buff[rxstate->bindex++] = rxbyte;
     }
-
     if (rxstate->bindex >= rxstate->buff[0]){
       // packet received
-      mrf_buff_loaded(rxstate->bnum);
+      //mrf_buff_loaded(rxstate->bnum);
       rxstate->state = S_START;
+      return 1;
     }
     break;    
   default :
     rxstate->state = S_START;
   }
-
+  return 0;
   //  UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
 
 }
+int mrf_uart_to_buff(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum){
+  UART_CSTATE rxstate;
+  uint8 i;
+  rxstate.state = S_START;
+  rxstate.bindex = 0;
+  rxstate.bnum = tobnum;
+  rxstate.buff = _mrf_buff_ptr(rxstate.bnum);
+  rxstate.errors = 0;  
+  for ( i = 0 ; i < inlen ; i++){
+    if(mrf_uart_rx_byte(inbuff[i], &rxstate)){
+      return 0;
+    }
+  }
+  return -1;
+}
+
+
+
 inline uint8 mrf_uart_tx_complete(UART_CSTATE *txstate){
   if(txstate->state == S_IDLE)
     return 1;

@@ -17,7 +17,7 @@ DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o ${MOBJ}/mrf_pipe_lnx.o ${MOBJ}/mrf_uart_lnx.o\
-	${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
+	 ${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
 #MOBJS := $(wildcard ${MOBJ}/*.o)
 #MOBJS = ${MOBJ}/*.o
 

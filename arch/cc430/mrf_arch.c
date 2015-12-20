@@ -15,7 +15,6 @@ int putchar(int c){
 
 
 
-int rf_if_send_func(I_F i_f, uint8 *buff);
 
 int mrf_arch_init(){
 
