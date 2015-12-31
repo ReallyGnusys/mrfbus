@@ -6,7 +6,6 @@
 extern uint8 _mrfid;
 
 
-extern MRF_IF_TYPE rf_if_type;
 
 //FIXME shouldn't need putchar to make printf etc link. Shouldn't have printf
 
@@ -52,10 +51,9 @@ int mrf_arch_init(){
   // xbus_init();
  // rtc_set(&time1);
   __bis_SR_register(GIE);
-
   // xb_receive_on();
  
- 
+  return 0;
 }
 
 /*

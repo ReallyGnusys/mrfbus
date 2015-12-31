@@ -74,12 +74,12 @@ typedef struct  {
 
 
 typedef struct  {
-  const uint8 *name;
   IF_STATUS *status;
   const MRF_IF_TYPE *type;
   MRF_PKT_HDR *ackbuff;
 #ifdef MRF_ARCH_lnx
   int *fd;  // fd used by lnx epoll
+  const char *name;
 #endif
 } MRF_IF;
 

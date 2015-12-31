@@ -11,10 +11,17 @@
 
 const MRF_PKT_DEVICE_INFO device_info  = {_DEVNAME_STR_ ,"1", GITSH };
 
-int mrf_init(){  
+int mrf_init(){
+#ifdef MRF_ARCH_lnx
   mrf_if_init();
   mrf_sys_init();
   return mrf_arch_init();
+#else
+  mrf_arch_init();
+  mrf_if_init();
+  mrf_sys_init();
+  return 0;
+#endif
 }
 
 /*

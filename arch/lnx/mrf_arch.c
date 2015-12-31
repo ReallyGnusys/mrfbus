@@ -11,6 +11,8 @@
 #include <sys/epoll.h>
 #include <sys/stat.h>
 #include <sys/timerfd.h>
+#include <signal.h>
+//mrfbus
 #include <mrf_arch.h>
 #include <mrf_buff.h>
 #include <mrf_sys.h>
@@ -56,6 +58,15 @@ static void print_elapsed_time(void)
 static pthread_t _sys_loop_pthread;
 
 static void *_sys_loop(void *arg);
+
+void sig_handler(int signum)
+{
+  printf("Received signal %d\n", signum);
+  if (signum == 9){
+    exit(0);
+  }
+}
+
 
 int mrf_arch_init(){
   
