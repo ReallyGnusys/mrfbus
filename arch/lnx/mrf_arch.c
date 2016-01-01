@@ -27,6 +27,33 @@ extern uint8 _mrfid;
 #define STR(s) #s
 
 
+uint8 _nibble2hex(uint8 nib){
+  nib = nib%16;
+  if(( 0 <= nib ) && ( nib < 10))
+    return '0' + nib;
+  else
+    return 'A' + (nib - 10);
+}
+
+void _mrf_print_hex_buff(uint8 *buff,uint16 len){
+ 
+  uint8 s[50];
+  uint8 i;
+  mrf_debug("print_hex_buff : len is %u buff:",len);
+  if (len > 16 ){
+    mrf_debug("try len < 16 - you had %d\n",len);
+    return;
+  }
+  for ( i=0; i<len ; i++){
+    s[i*2] = _nibble2hex(buff[i]/16);
+    s[i*2+1] = _nibble2hex(buff[i]%16);
+  }
+  s[i*2] = '\0';
+ 
+  //s[0] = '\0';
+  mrf_debug("%s\n",s);
+
+}
 
 
 

@@ -24,16 +24,16 @@ int mrf_uart_init_tx_state(I_F i_f,UART_CSTATE *txstate){
 
 }
 
+/*
 int mrf_uart_init(I_F i_f, IF_STATE *state){
-
-
-
 }
-
+*/
 
 
 // binary packet data on serial ports 
 // intr handler for uart rx
+
+
 int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
   switch (rxstate->state){
   case  S_START:
@@ -134,6 +134,7 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
       (txstate->bindex)++;
       return txstate->buff[0];
     } else {
+      mrf_debug("\nmrf_uart_tx_byte S_LEN got buff[0] %x\n",txstate->buff[0]);
       txstate->state  = S_CSUM_MS;
       (txstate->errors)++;
       return 0;

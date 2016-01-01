@@ -59,7 +59,9 @@ void rx_newpacket(){
   rxstate.bindex = 0;
 }
 
-
+uint8 _ubindex;
+#define _UBUFFLEN 16
+uint8 _ubuff[_UBUFFLEN];
 
 static int mrf_uart_init_cc(I_F i_f){
 
@@ -108,6 +110,7 @@ static int mrf_uart_init_cc(I_F i_f){
   
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   UCA0IE |= UCRXIE;        // enable RX interrupt 
+  _ubindex = 0; // dbg
  __bis_SR_register(GIE);
   return 0;
 }
@@ -127,8 +130,19 @@ static inline void _tx_byte(uint8 chr){
 }
 
 static uint8 last_rx;
+
+static volatile uint8 _db11;
+void dbg_break(uint8 rxb){
+  _db11 = rxb;
+}
+
 static uint8  _rx_byte(){
   last_rx = UCA0RXBUF;
+  if (_ubindex < _UBUFFLEN) {
+    _ubuff[_ubindex++] = last_rx;
+    if (_ubindex > 10)
+      dbg_break(last_rx);
+  }
   return last_rx;
 }
 
@@ -140,9 +154,11 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
   case 2:                                   // Vector 2 - RXIFG
     _uart_rx_int_cnt++;
     uint8 rxb = _rx_byte();
+    /*
     if(mrf_uart_rx_byte(rxb,&rxstate)){
       mrf_buff_loaded(rxstate.bnum);
     }
+    */
     UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
     break;
   case 4:                                   // Vector 4 - TXIFG
