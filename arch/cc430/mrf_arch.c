@@ -41,7 +41,9 @@ int mrf_arch_init(){
   //starttimer_aclk();
   // __delay_cycles(10000);
   //get_ta_value(&delay_timer);
- 
+  rtc_init();
+  rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
+
   //rtc_ps0_enable(ps0_handler);
 
 
@@ -71,10 +73,14 @@ int mrf_rtc_get(TIMEDATE *td){
 
 
 int mrf_tick_enable(){
-  rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
+  rtc_ps0_enable(_mrf_tick);
+  __bis_SR_register(GIE);
+
   return 0;
 
 }
 int mrf_tick_disable(){
+  rtc_ps0_disable();
+
   return 0;
 }

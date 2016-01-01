@@ -33,6 +33,16 @@ int mrf_uart_init(I_F i_f, IF_STATE *state){
 // binary packet data on serial ports 
 // intr handler for uart rx
 
+static uint8 _db22;
+void _dbg_last(uint8 code){
+  _db22 = code;
+}
+void _dbg_len(uint8 code){
+  _db22 = code;
+}
+void _dbg_wrongid(uint8 code){
+  _db22 = code;
+}
 
 int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
   switch (rxstate->state){
@@ -52,32 +62,31 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->bindex = 0;
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
+      _dbg_len(rxbyte);
       rxstate->state = S_START;
     }
     break;
   case  S_ADDR:
-    if (rxbyte == MRFID){
       rxstate->state = S_NETID;
       rxstate->buff[rxstate->bindex++] = rxbyte;
-    } else {
-      rxstate->state = S_START;
-    }
     break;
   case  S_NETID:
     if (rxbyte == MRFNET){
-      rxstate->state = S_HDR;
+      rxstate->state = S_DATA;
       rxstate->buff[rxstate->bindex++] = rxbyte;
     } else {
+      _dbg_wrongid(rxbyte);
       rxstate->state = S_START;
     }
     break;    
   case  S_DATA:
-    if(rxstate->bindex < rxstate->buff[0]){
+    if(rxstate->bindex < (rxstate->buff)[0]){
       rxstate->buff[rxstate->bindex++] = rxbyte;
     }
     if (rxstate->bindex >= rxstate->buff[0]){
       // packet received
       //mrf_buff_loaded(rxstate->bnum);
+      _dbg_last(0x0d);
       rxstate->state = S_START;
       return 1;
     }

@@ -154,19 +154,19 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
   case 2:                                   // Vector 2 - RXIFG
     _uart_rx_int_cnt++;
     uint8 rxb = _rx_byte();
-    /*
+   
     if(mrf_uart_rx_byte(rxb,&rxstate)){
       mrf_buff_loaded(rxstate.bnum);
     }
-    */
+
     UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
-    if (mrf_uart_tx_complete(txstate)){
+    if (mrf_uart_tx_complete(&txstate)){
       UCA0IE &= ~UCTXIE;  // disable this intr
     } else {
-      _tx_byte(mrf_uart_tx_byte(txstate));
+      _tx_byte(mrf_uart_tx_byte(&txstate));
       UCA0IE |= UCTXIE;  //re-enable this intr
     }
     break;
