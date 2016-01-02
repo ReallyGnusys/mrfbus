@@ -82,9 +82,6 @@ static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   for ( i = 0 ; i < _UBUFFLEN; i++)
     _tbuff[i] = 0;
   enable_tx_int();
-  if (( UCA0IE & UCTXIFG) == 0){
-    _tx_byte(mrf_uart_tx_byte(&txstate));
-  }
   return 0;
 }
 
