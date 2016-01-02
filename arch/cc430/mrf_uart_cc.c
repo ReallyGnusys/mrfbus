@@ -54,6 +54,15 @@ static int enable_tx_int(){
   return 0;
 }
 
+static void _tx_dbg(uint8 chr){
+  if (_tbindex < _UBUFFLEN) 
+    _tbuff[_tbindex++] = chr;
+}
+
+static inline void _tx_byte(uint8 chr){
+  _tx_dbg(chr);
+  UCA0TXBUF = chr;     
+}
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   //UART_CSTATE  *txstate =  (UART_CSTATE*)sp;
   // MRF_IF *mif = mrf_if_ptr(i_f);
@@ -73,6 +82,9 @@ static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   for ( i = 0 ; i < _UBUFFLEN; i++)
     _tbuff[i] = 0;
   enable_tx_int();
+  if (( UCA0IE & UCTXIFG) == 0){
+    _tx_byte(mrf_uart_tx_byte(&txstate));
+  }
   return 0;
 }
 
@@ -144,14 +156,7 @@ static int mrf_uart_init_cc(I_F i_f){
 int _uart_rx_int_cnt;
 int _uart_tx_int_cnt;
 
-static void _tx_dbg(uint8 chr){
-  if (_tbindex < _UBUFFLEN) 
-    _tbuff[_tbindex++] = chr;
-}
-static inline void _tx_byte(uint8 chr){
-  _tx_dbg(chr);
-  UCA0TXBUF = chr;     
-}
+
 
 static uint8 last_rx;
 
@@ -190,10 +195,13 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
+     _tx_byte(mrf_uart_tx_byte(&txstate));
 
     if (mrf_uart_tx_complete(&txstate) == 0)
-      _tx_byte(mrf_uart_tx_byte(&txstate));
-    UCA0IE |= UCTXIE;  //re-enable this int
+      UCA0IE |= UCTXIE;  //re-enable this int
+    else
+      UCA0IE &= ~UCTXIE; 
+
     /*
     if (mrf_uart_tx_complete(&txstate)){
       disable_tx_int();

@@ -68,6 +68,7 @@ int mrf_arch_main_loop(){
   return 0;
 }
 int mrf_rtc_get(TIMEDATE *td){
+  _rtc_get(td);
   return 0;
 }
 
