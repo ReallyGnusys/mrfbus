@@ -8,7 +8,7 @@
 #include "mrf_sys_cmds.h"
 
 #define _MRF_TX_TIMEOUT 10
-#define _MRF_MAX_RETRY 4
+#define _MRF_MAX_RETRY 0
 extern uint8 _mrfid;
 
 static IQUEUE _app_queue;

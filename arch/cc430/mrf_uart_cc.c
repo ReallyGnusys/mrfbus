@@ -37,21 +37,42 @@ static UART_CSTATE rxstate;
 static UART_CSTATE txstate;
 
 
+uint8 _ubindex;
+#define _UBUFFLEN 16
+uint8 _ubuff[_UBUFFLEN];
+uint8 _tbindex;
+uint8 _tbuff[_UBUFFLEN];
 
+static int disable_tx_int(){
+  UCA0IE &= ~UCTXIE;  // disable this intr    
+  return 0;
+}
+static int enable_tx_int(){
+  UCA0IE &= ~UCTXIE;  // disable this intr
+  UCA0IE |= UCTXIE;  //re-enable this intr
+  __bis_SR_register(GIE);
+  return 0;
+}
 
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   //UART_CSTATE  *txstate =  (UART_CSTATE*)sp;
   // MRF_IF *mif = mrf_if_ptr(i_f);
   if (txstate.state != S_IDLE) {
     mrf_debug("uart_if_send_func found if busy");
+    enable_tx_int();
     return -1;
   }
   _tx_rdy_cnt = 0;
   txstate.buff = buff;
   txstate.state = S_START;
   txstate.bindex = 0;
-  UCA0IE |= UCTXIE;         // enable TX ready interrupt
-  __bis_SR_register(GIE);
+
+  // debug 
+  _tbindex = 0;
+  int i;
+  for ( i = 0 ; i < _UBUFFLEN; i++)
+    _tbuff[i] = 0;
+  enable_tx_int();
   return 0;
 }
 
@@ -59,9 +80,7 @@ void rx_newpacket(){
   rxstate.bindex = 0;
 }
 
-uint8 _ubindex;
-#define _UBUFFLEN 16
-uint8 _ubuff[_UBUFFLEN];
+
 
 static int mrf_uart_init_cc(I_F i_f){
 
@@ -111,6 +130,7 @@ static int mrf_uart_init_cc(I_F i_f){
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   UCA0IE |= UCRXIE;        // enable RX interrupt 
   _ubindex = 0; // dbg
+  _tbindex = 0;
  __bis_SR_register(GIE);
   return 0;
 }
@@ -124,8 +144,12 @@ static int mrf_uart_init_cc(I_F i_f){
 int _uart_rx_int_cnt;
 int _uart_tx_int_cnt;
 
-
+static void _tx_dbg(uint8 chr){
+  if (_tbindex < _UBUFFLEN) 
+    _tbuff[_tbindex++] = chr;
+}
 static inline void _tx_byte(uint8 chr){
+  _tx_dbg(chr);
   UCA0TXBUF = chr;     
 }
 
@@ -146,6 +170,9 @@ static uint8  _rx_byte(){
   return last_rx;
 }
 
+
+
+
 interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
 {
   switch(UCA0IV)
@@ -163,12 +190,18 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
+
+    if (mrf_uart_tx_complete(&txstate) == 0)
+      _tx_byte(mrf_uart_tx_byte(&txstate));
+    UCA0IE |= UCTXIE;  //re-enable this int
+    /*
     if (mrf_uart_tx_complete(&txstate)){
-      UCA0IE &= ~UCTXIE;  // disable this intr
+      disable_tx_int();
     } else {
       _tx_byte(mrf_uart_tx_byte(&txstate));
-      UCA0IE |= UCTXIE;  //re-enable this intr
+      UCA0IE |= UCTXIE;  //re-enable this int
     }
+    */
     break;
   default: break;
   }  

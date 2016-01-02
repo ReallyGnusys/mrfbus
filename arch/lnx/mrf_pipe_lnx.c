@@ -16,7 +16,7 @@ extern uint8 _mrfid;
 
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
 static int _mrf_pipe_init_lnx(I_F i_f);
-static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum);
+static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen);
 
 const MRF_IF_TYPE mrf_pipe_lnx_if = {
  tx_del : 1,
@@ -32,17 +32,31 @@ const MRF_IF_TYPE mrf_pipe_lnx_if = {
 // lnx i_f opens fd for each write
 // usb keeps opened ( in output_fd ) 
 
-int _input_fd[NUM_INTERFACES+2];
+static int _input_fd[NUM_INTERFACES+2];
 
+static int _bnum[NUM_INTERFACES];
+
+static int _pipe_alloc_buff(I_F i_f){
+
+  _bnum[i_f] = mrf_alloc_if(i_f);
+  if ( _bnum[i_f] == _MRF_BUFFS){
+    printf("_pipe_alloc_buff houston,we have a prob - mrf_alloc_if returned %d\n", _bnum[i_f]);
+  }
+  else{
+    printf("_pipe_alloc_buff mrf_alloc_if returned %d\n", _bnum[i_f]);
+  }
+  return _bnum[i_f];
+}
 int _mrf_pipe_init_lnx(I_F i_f){
   int fd,tmp;
   char sname[64];
   sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d",sname,tmp);
+  printf("created pipe %s res %d\n",sname,tmp);
   fd = open(sname,O_RDONLY | O_NONBLOCK);
   printf("opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
+  _pipe_alloc_buff(i_f);
   return fd; // lnx arch needs it for epoll
 }
 
@@ -82,7 +96,7 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
 
 
 //convert raw i_f data to buffer data
-static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum){
+static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int i,len;
   trim_trailing_space(inbuff);
   len = strlen(inbuff);
@@ -107,8 +121,16 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum)
     printf("PACKET too short ( %d bytes )\n",len);
   }
 
-  uint8 *mbuff = _mrf_buff_ptr(tobnum);
-  return copy_to_mbuff(inbuff,len,mbuff);
+  uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
+  if ( copy_to_mbuff(inbuff,len,mbuff) == 0){
+    mrf_buff_loaded(_bnum[i_f]);
+     // need to alloc next buffer
+      _pipe_alloc_buff(i_f);
+      return 0;
+  } else {
+    printf("problem copying to buff...\n");
+    return -1;
+  }
   
 }
 

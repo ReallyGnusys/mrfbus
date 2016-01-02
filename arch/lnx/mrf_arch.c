@@ -202,7 +202,7 @@ char buff[2048];
     ievent[i].events = EPOLLIN | EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
-    printf("I_F event added %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
+    printf("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
 
   // timer event
@@ -229,29 +229,28 @@ char buff[2048];
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
      inif = revent[i].data.u32; // data contains mrfbus i_f num
+     mrf_debug("fd %i is i_f %d\n",i,inif);
      if (inif < NUM_INTERFACES){
        //it's an input stream
        fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
-       printf("event on fd %d",fd);
+       printf("event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
+       printf("read %d bytes\n",(int)s);
+       _mrf_print_hex_buff(buff,s);
        uint8 bind;
-       bind = mrf_alloc_if(inif);
+       //bind = mrf_alloc_if(inif);
 
        if (*(mrf_if_ptr(inif)->type->funcs.buff) != NULL){
          //use interface method to copy to buff 
-         int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s,bind);
-         if ( rv != 0) {
-           mrf_debug("error arch lnx i_f %d buff function returned %d\n",inif,rv);
-           _mrf_buff_free(bind);
-         } else {
-           mrf_buff_loaded(bind);           
-         }                       
+         int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s);
+         mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
+         printf("ERROR ERROR ERROR : lnx - no input/buff function\n\n");
          if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
            mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);  
              _mrf_buff_free(bind);

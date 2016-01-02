@@ -24,12 +24,13 @@
 
 static int _usb_if_send_func(I_F i_f, uint8 *buff);
 static int _mrf_uart_init_lnx(I_F i_f);
+static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen);
 
 const MRF_IF_TYPE mrf_uart_lnx_if = {
  tx_del : 4,
  funcs : { send : _usb_if_send_func,
            init : _mrf_uart_init_lnx,
-           buff : mrf_uart_to_buff
+           buff : _mrf_uart_input
   }
 };
 
@@ -37,6 +38,9 @@ const MRF_IF_TYPE mrf_uart_lnx_if = {
 #define MAX_UARTS 8
 static int _fd[MAX_UARTS];
 
+// keep RXSTATE in array;
+
+static UART_CSTATE rxstate[MAX_UARTS];
 
 int copy_to_txbuff(uint8 *buff, uint8 *dest){
   int i = 0;
@@ -51,6 +55,25 @@ int copy_to_txbuff(uint8 *buff, uint8 *dest){
 
   return i;
 
+}
+
+static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen){
+  uint8 i,rv;
+  UART_LSTATE stb,sta;
+  mrf_debug("_mrf_uart_input i_f %d inlen %d inbuff[0] %x\n",i_f,inlen,inbuff[0]);
+  for ( i = 0 ; i < inlen ; i++){
+    stb =  rxstate[i_f].state;
+    rv = mrf_uart_rx_byte(inbuff[i], &(rxstate[i_f]));
+    sta =  rxstate[i_f].state;
+    mrf_debug("i %d char %x stb %d sta %d rv %d\n",i,inbuff[i],stb,sta,rv);
+    if(rv){
+        mrf_debug("lnx_uart input - think we got a buffer");
+        mrf_buff_loaded(rxstate[i_f].bnum);
+        // need to alloc next buffer;
+        mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));
+      }
+  }
+  return i;
 }
 static int _usb_if_send_func(I_F i_f, uint8 *buff){
   char spath[64];
@@ -94,7 +117,8 @@ static struct termios _oldtio;
 
 int usb_open(const char *dev){
   struct termios newtio,chktio;
-  int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC); 
+  //int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC); 
+  int fd = open((char *)dev, O_RDWR); 
   if (fd < 0) {
     printf("failed to open %s\n",dev);
     perror(dev); 
@@ -113,7 +137,7 @@ int usb_open(const char *dev){
   newtio.c_lflag = 0;
  
   newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
-  newtio.c_cc[VMIN]     = 5;   /* blocking read until 5 chars received */
+  newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
 
   tcflush(fd, TCIFLUSH);
   int rv = tcsetattr(fd,TCSANOW,&newtio);  
@@ -148,5 +172,7 @@ static int _mrf_uart_init_lnx(I_F i_f){
   
   mrf_debug("opened %s fd %d for i_f %d\n",mif->name,fd,i_f);
   _fd[i_f] = fd;
+  mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));  
+
   return fd; // lnx arch needs it for epoll
 }

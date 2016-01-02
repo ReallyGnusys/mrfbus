@@ -30,7 +30,7 @@ typedef enum {
 
 typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buf);
 typedef int (*IF_INIT_FUNCPTR)(I_F i_f);
-typedef int (*IF_BUFF_FUNCPTR)(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum);
+typedef int (*IF_BUFF_FUNCPTR)(I_F i_f, uint8* inbuff, uint8 inlen);
 
 typedef struct {
   const IF_SEND_FUNCPTR send;
