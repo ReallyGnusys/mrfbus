@@ -13,7 +13,6 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   uint8 bn;
 
 
-
   IQUEUE *qp = &(ifp->status->txqueue);
 
   MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
@@ -54,13 +53,13 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_retry..doing nothing yet\n");
 
 }
+int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_resp\n");
+  _print_mrf_cmd(mrf_cmd_device_info);
 
-
-  // send ack
-  mrf_sack(bnum);
+  mrf_debug("mrf_task_resp L1\n");
 
   MRF_PKT_HDR *hdr1;
   // hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+0);
@@ -68,8 +67,15 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
 
+  mrf_debug("response type = %d\n",resp->type);
   // send a seg ack when we get resp
-  mrf_debug("Response to packet %s len %d usrc %02X  udest %02X\n",mrf_sys_cmds[resp->type].str,resp->rlen,hdr1->usrc,hdr1->udest);
+  _print_mrf_cmd(mrf_cmd_device_info);
+
+  mrf_debug("sending sack\n");
+   // send ack
+  mrf_sack(bnum);
+  mrf_debug("sack sent\n");
+  _print_mrf_cmd(mrf_cmd_device_info);
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -81,7 +87,7 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   }
   else if  (resp->type == mrf_cmd_if_status){
     IF_STATUS *if_status = (IF_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("IF STATUS : state %d rx_pkts %u tx_pkts %u tx_retries %u \n",if_status->state,if_status->stats.rx_pkts,if_status->stats.tx_pkts,if_status->stats.tx_retries);
+    mrf_debug("IF STATUS : state %d rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u \n",if_status->state,if_status->stats.rx_pkts,if_status->stats.tx_pkts,if_status->stats.tx_acks,if_status->stats.tx_retries);
   }  
   else if  (resp->type == mrf_cmd_get_time){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -171,8 +177,16 @@ MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_set_time exit\n");
-  mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
+  TIMEDATE *td,endtd;
+  mrf_debug("mrf_task_set_time entry\n");
+  td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  mrf_rtc_set(td);
+  
+  mrf_rtc_get(&endtd);
+
+  mrf_data_response( bnum,&endtd,sizeof(TIMEDATE));  
+
+  //mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;  
 
 }

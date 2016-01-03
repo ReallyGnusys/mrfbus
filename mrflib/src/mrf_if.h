@@ -54,6 +54,7 @@ enum{
 typedef struct  __attribute__ ((packed))  {
   uint16 rx_pkts;
   uint16 tx_pkts;
+  uint16 tx_acks;
   uint16 tx_overruns;
   uint16 tx_retries;  
   uint8  unexp_ack;  

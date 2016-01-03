@@ -47,7 +47,7 @@ void mrf_if_init(){
   for (i = 0 ; i < NUM_INTERFACES ; i++){
     mrf_debug("interface %d\n",i);
     MRF_IF *mif = mrf_if_ptr(i);
-    // rough zeroing of status data
+    // rough zeroing of status data including stats
     dptr = (uint8 *)mif->status;
     mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)

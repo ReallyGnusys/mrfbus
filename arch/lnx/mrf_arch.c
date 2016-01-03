@@ -26,6 +26,9 @@ extern uint8 _mrfid;
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
 
+//debug tmp
+extern const MRF_CMD const *mrf_sys_cmds;
+
 
 uint8 _nibble2hex(uint8 nib){
   nib = nib%16;
@@ -94,10 +97,22 @@ void sig_handler(int signum)
   }
 }
 
+int _print_mrf_cmd(MRF_CMD_CODE cmd){
+  mrf_debug("_print_mrf_cmd entry cmd %d\n",cmd);
+  mrf_debug("mrf_sys_cmds %p  &mrf_sys_cmds[0] %p \n",mrf_sys_cmds,&mrf_sys_cmds[0]);
+  if (cmd >= MRF_NUM_SYS_CMDS){
+    mrf_debug("cmd code too big %d\n",cmd);
+    return -1;
+  }
+  mrf_debug("cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
+  mrf_debug("cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
+}
 
 int mrf_arch_init(){
   
   // run io event loop in pthread
+  _print_mrf_cmd(mrf_cmd_device_info);
+  printf("mrf_arch_init entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
 
  if(pthread_create(&_sys_loop_pthread, NULL, _sys_loop, NULL)) {
 
@@ -105,6 +120,7 @@ int mrf_arch_init(){
    return -1;
 
 } 
+
  return 0;
 }
 
@@ -204,7 +220,7 @@ char buff[2048];
     epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
     printf("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
-
+ _print_mrf_cmd(mrf_cmd_device_info);
   // timer event
   ievent[NUM_INTERFACES].data.u32 = NUM_INTERFACES;
   ievent[NUM_INTERFACES].events = EPOLLIN | EPOLLET;
@@ -330,10 +346,12 @@ int mrf_rtc_get(TIMEDATE *td){
   return 0;
 }
 
-
 int mrf_rtc_set(TIMEDATE *td){
-
+  // don't set linux for now
+  return 0;
 }
+
+
 
 
 

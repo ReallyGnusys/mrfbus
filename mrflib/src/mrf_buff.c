@@ -25,7 +25,10 @@ void _mrf_buff_free(uint8 i){
 
 // this is where OS processes buffer
 int mrf_buff_loaded(uint8 bnum){
+  MRF_IF *ifp;
   if (bnum <  _MRF_BUFFS){
+    ifp = mrf_if_ptr( _mrf_buffst[bnum].owner);
+    ifp->status->stats.rx_pkts += 1;
     _mrf_buffst[bnum].state = LOADED;
     _mrf_process_buff(bnum);	
     return 0;
@@ -72,7 +75,7 @@ void _mrf_buff_print(){
 
 uint8 mrf_alloc_if(I_F i_f){
   uint8 i;
-  _mrf_buff_print();
+  // _mrf_buff_print();
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     if ( _mrf_buffst[i].state == FREE)
       {

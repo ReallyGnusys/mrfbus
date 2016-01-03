@@ -71,6 +71,10 @@ int mrf_rtc_get(TIMEDATE *td){
   _rtc_get(td);
   return 0;
 }
+int mrf_rtc_set(TIMEDATE *td){
+  _rtc_set(td);
+  return 0;
+}
 
 
 int mrf_tick_enable(){

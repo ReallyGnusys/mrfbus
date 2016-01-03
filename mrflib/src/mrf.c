@@ -10,9 +10,12 @@
 //#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
 
 const MRF_PKT_DEVICE_INFO device_info  = {_DEVNAME_STR_ ,"1", GITSH };
+int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 int mrf_init(){
 #ifdef MRF_ARCH_lnx
+  mrf_debug("mrf_init: entry\n");
+  _print_mrf_cmd(mrf_cmd_device_info);
   mrf_if_init();
   mrf_sys_init();
   return mrf_arch_init();

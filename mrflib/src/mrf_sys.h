@@ -62,17 +62,15 @@ typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , MRF_IF *ifp);
 /* constant flags */
 #define MRF_CFLG_NO_ACK 1   // send no ack when segment recipient
 #define MRF_CFLG_NO_RESP 2   // send no resp when final recipient
- 
-
-#define MRF_CFLG_INTR 2  // task is run in interrupt handler
+#define MRF_CFLG_INTR 4  // task is run in interrupt handler
 
 typedef struct {
-  const char *str;
+  const uint8 *str;
   const uint8 cflags;
   const uint8 req_size;
   const uint8 rsp_size;
-  void *data;
-  MRF_CMD_FUNC func;
+  const void *data;
+  const MRF_CMD_FUNC func;
 } MRF_CMD;
 #endif
 

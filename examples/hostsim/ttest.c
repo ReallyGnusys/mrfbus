@@ -19,6 +19,9 @@ const uint8 _mrfid = MRFID;
 int main(void){
   char buff[256];
   int i;
+  mrf_debug("\nmain entry\n");
+  _print_mrf_cmd(mrf_cmd_device_info);
+
   mrf_init();
   mrf_time(buff);
   //printf("MRF_TIME IS %s\n",buff);

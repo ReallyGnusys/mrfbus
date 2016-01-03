@@ -14,6 +14,7 @@
 extern uint8 _mrfid;
 
 
+
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
 static int _mrf_pipe_init_lnx(I_F i_f);
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen);
@@ -26,6 +27,7 @@ const MRF_IF_TYPE mrf_pipe_lnx_if = {
 };
 
 
+int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 
 // lnx i_f uses named pipes , usb uses tty
@@ -98,6 +100,9 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
 //convert raw i_f data to buffer data
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int i,len;
+  printf("_mrf_pipe_buff_lnx entry i_f %d len %d\n",i_f,inlen);
+  _print_mrf_cmd(mrf_cmd_device_info);
+
   trim_trailing_space(inbuff);
   len = strlen(inbuff);
   if (len % 2){
@@ -119,6 +124,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
   if (len < sizeof(MRF_PKT_HDR) * 2){
     printf("PACKET too short ( %d bytes )\n",len);
+    return -1;
   }
 
   uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
@@ -137,11 +143,11 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   char spath[64];
-  uint8 txbuff[_MRF_BUFFLEN];
+  uint8 txbuff[_MRF_BUFFLEN*2];
   int fd,bc,tb;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
-  printf("_mrf_pipe_send_lnx : sending..\n");
+  printf("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
   // rough hack to get up and down using correct sockets
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
@@ -164,6 +170,9 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
     printf(" %d\n",fd);
     perror("ERROR file open\n");
     return -1;
+  }
+  if(buff[0] > _MRF_BUFFLEN){
+    printf("\nGOT DANGER ERROR COMING\n");
   }
   tb = copy_to_txbuff(buff,buff[0],txbuff);
   bc = write(fd, txbuff,tb );

@@ -96,7 +96,7 @@ uint8 *mrf_response_buffer(uint8 bnum){
 
 }
 
-mrf_data_response(uint8 bnum,uint8 *data,uint8 len){
+int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len){
   int i;
   uint8 *dptr = mrf_response_buffer(bnum);
   for ( i = 0 ; i < len ; i++ )
@@ -112,7 +112,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
 
  MRF_ROUTE route;
- mrf_debug("\nmrf_data_response :  bnum %d  rlen %d\n",bnum,rlen);
+ mrf_debug("\nmrf_send_response :  bnum %d  rlen %d\n",bnum,rlen);
 
  // turning buffer around - deliver to usrc
 
@@ -139,7 +139,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
      resp->type = hdr->type;
      hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
      hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
-     mrf_debug("mrf_data_resp, responding - header follows");
+     mrf_debug("mrf_send_resp, responding - header follows\n");
      mrf_print_packet_header(hdr);
    }
 
@@ -151,10 +151,10 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
   uint8 type = hdr->type;
    mrf_debug("**************************************\n");
 
-   mrf_debug("PACKET %s\n",mrf_sys_cmds[hdr->type].str);
+   mrf_debug("PACKET %s  LEN %d \n",mrf_sys_cmds[hdr->type].str,hdr->length);
   
-   mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
-   mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
+   mrf_debug(" HSRC 0x%02X HDEST 0x%02X  LEN %02d  MSGID 0x%02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
+   mrf_debug(" USRC 0x%02X UDEST 0x%02X  NETID 0x%02X type 0x%02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
    mrf_debug("**************************************\n");
 }
 
@@ -175,13 +175,12 @@ void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
 
 int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
       mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
-      mrf_debug("cmd name %s  req size %d  rsp size %d\n",
-                cmd->str,cmd->req_size,cmd->rsp_size);
+      mrf_debug("cmd name %s  req size %d  rsp size %d cflags %x cmd->data %p\n",
+                cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
         mrf_debug("sending data response \n");
         mrf_data_response(bnum,cmd->data,cmd->rsp_size);
         return;
-
       }
       mrf_debug("pp l12\n");
       // check if command func defined
@@ -379,16 +378,15 @@ void _mrf_tick(){
       {
         if_busy = 1;
         if ((mif->status->acktimer) > 0 ){
- 
           mif->status->acktimer--;
           if((mif->status->acktimer) == 0){
             mrf_debug("tick - send ack i_f %d  tc %d \n",i,_tick_count);
             mrf_print_packet_header(mif->ackbuff);
             mif->status->state = MRF_ST_ACK;
+            mif->status->stats.tx_acks += 1;
             (*(mif->type->funcs.send))(i,(uint8 *)(mif->ackbuff));
           }
         }
-
       }
     else if (queue_data_avail(qp))
         {
@@ -416,7 +414,8 @@ void _mrf_tick(){
                 mrf_debug("tick - send buff %d i_f %d tc %d retry_count %d\n",
                           bnum,i,_tick_count,bs->retry_count);
                 mif->status->state = MRF_ST_TX;
-                (*((mif->type->funcs).send))(i,tb);
+                mif->status->stats.tx_pkts += 1;
+                (*(mif->type->funcs.send))(i,tb);
 
                 bs->state = TX;
                 mif->status->state = MRF_ST_WAITSACK;
