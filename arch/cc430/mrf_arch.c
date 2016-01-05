@@ -13,7 +13,10 @@ int putchar(int c){
 }
 
 
-
+int _print_mrf_cmd(MRF_CMD_CODE cmd){
+  // empty for cc
+  // should not be calling this in cross platform code.. only during debug.. 
+}
 
 int mrf_arch_init(){
 
