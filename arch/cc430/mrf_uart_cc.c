@@ -28,14 +28,10 @@ const MRF_IF_TYPE mrf_uart_cc_if = {
    }
 };
 
-
-
 static int _tx_rdy_cnt;
-
 
 static UART_CSTATE rxstate;
 static UART_CSTATE txstate;
-
 
 uint8 _ubindex;
 #define _UBUFFLEN 16

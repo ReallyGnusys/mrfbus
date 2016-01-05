@@ -85,9 +85,9 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     MRF_PKT_IF_INFO *if_inf = (MRF_PKT_IF_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("IF INFO  rx_pkts %u tx_pkts %u tx_retries %u \n",if_inf->rx_pkts,if_inf->tx_pkts,if_inf->tx_retries);
   }
-  else if  (resp->type == mrf_cmd_if_status){
-    IF_STATUS *if_status = (IF_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("IF STATUS : state %d rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u \n",if_status->state,if_status->stats.rx_pkts,if_status->stats.tx_pkts,if_status->stats.tx_acks,if_status->stats.tx_retries);
+  else if  (resp->type == mrf_cmd_if_stats){
+    IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("IF STATUS : rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u tx_overruns %u unexp_ack %u alloc_err %u st_err %u\n",if_stats->rx_pkts,if_stats->tx_pkts,if_stats->tx_acks,if_stats->tx_retries,if_stats->tx_overruns, if_stats->unexp_ack, if_stats->alloc_err, if_stats->st_err);
   }  
   else if  (resp->type == mrf_cmd_get_time){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -141,7 +141,7 @@ MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     i_f = mrf_if_ptr(i);
     info.tx_retries += i_f->status->stats.tx_retries;
     info.tx_pkts += i_f->status->stats.tx_pkts;
-    info.rx_pkts += i_f->status->stats.rx_pkts;    
+    info.rx_pkts += i_f->status->stats.rx_pkts;  
   }
   mrf_debug("mrf_task_if_info l1\n");
 
@@ -158,7 +158,7 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     return MRF_CMD_RES_ERROR;
   MRF_IF *i_f = mrf_if_ptr(streq->i_f);
 
-  mrf_data_response( bnum,(uint8 *)&i_f->status,sizeof(IF_STATUS));  
+  mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));  
   return MRF_CMD_RES_OK;
 
 }
