@@ -9,7 +9,7 @@
 
 #define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
 
-const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) ,"1", SYM_NAME(GITSH) };
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, SYM_NAME(GITSH), GITMOD };
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 int mrf_init(){

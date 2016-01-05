@@ -10,9 +10,9 @@ GITSH=$(shell git rev-parse HEAD)
 
 #ifeq ($(shell(git status | grep '^\s*modified')),"")
 ifeq ($(shell git status | grep '^\s*modified'),)
-  GITMOD=no
+  GITMOD=0
 else
-  GITMOD=yes
+  GITMOD=1
 endif
 
 BIN=bin/${ARCH}

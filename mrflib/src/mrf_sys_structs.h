@@ -49,9 +49,11 @@ typedef struct  __attribute__ ((packed))   {
 }MRF_PKT_IF_STAT_REQ;
 
 typedef struct  __attribute__ ((packed))   {
-  char dev_name[16];
-  char dev_version[6];
-  char mrfbus_version[8];
+  char dev_name[10];
+  uint8 mrfid;
+  uint8 mrfnet;
+  char mrfbus_version[40];
+  uint8 modified;
 } MRF_PKT_DEVICE_INFO;
 
 

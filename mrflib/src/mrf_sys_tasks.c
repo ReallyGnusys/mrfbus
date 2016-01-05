@@ -78,7 +78,8 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("DEVICE %s  version %s mrfbus version %s\n",dev_inf->dev_name,dev_inf->dev_version,dev_inf->mrfbus_version);
+    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X mrfbus version %s modified %u \n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->mrfnet,
+              dev_inf->mrfbus_version,dev_inf->modified);
   }
   else if  (resp->type == mrf_cmd_if_info){
     MRF_PKT_IF_INFO *if_inf = (MRF_PKT_IF_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
