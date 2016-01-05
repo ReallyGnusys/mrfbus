@@ -6,7 +6,14 @@ ARCH=lnx
 DEVTYPE=host
 MRFID=0x01
 MRFNET=0x25
-GITSH=\""$(git rev-parse HEAD)"\"
+GITSH=$(shell git rev-parse HEAD)
+
+ifeq ($(shell(git status | grep '^\s*modified')),'')
+  GITMOD=no
+else
+  GITMOD=yes
+endif
+
 BIN=bin/${ARCH}
 TARG=${BIN}/${DEVTYPE}_${MRFID}
 MOBJ=${MRFHOME}/mrflib/obj/${ARCH}/${DEVTYPE}
@@ -36,7 +43,7 @@ ${BIN}:
 	mkdir -p ${BIN}
 
 
-CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH} -g
+CCFLAGS=-DXBDEVNAME=${XBDEVNAME} -DSVN=${SVN} -I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I../net  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD} -g
 
 
 ${TARG} :

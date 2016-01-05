@@ -5,11 +5,11 @@
 #define SYM_NAME(name) _QUOTE_SYM_(name)
 #define _CONCAT_(A,B) # A ## B
 
-#define _DEVNAME_STR_  SYM_NAME(DEVTYPE)
+//#define _DEVNAME_STR_  SYM_NAME(DEVTYPE)
 
-//#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
+#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
 
-const MRF_PKT_DEVICE_INFO device_info  = {_DEVNAME_STR_ ,"1", GITSH };
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) ,"1", SYM_NAME(GITSH) };
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 int mrf_init(){

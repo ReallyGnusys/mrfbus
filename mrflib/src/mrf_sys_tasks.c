@@ -12,7 +12,6 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   uint8 bn;
 
-
   IQUEUE *qp = &(ifp->status->txqueue);
 
   MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
