@@ -8,7 +8,8 @@ MRFID=0x01
 MRFNET=0x25
 GITSH=$(shell git rev-parse HEAD)
 
-ifeq ($(shell(git status | grep '^\s*modified')),"")
+#ifeq ($(shell(git status | grep '^\s*modified')),"")
+ifeq ($(shell(git status | grep '^\s*modified')),)
   GITMOD=no
 else
   GITMOD=yes
