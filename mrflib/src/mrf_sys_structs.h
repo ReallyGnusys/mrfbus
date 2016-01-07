@@ -36,12 +36,13 @@ typedef struct  __attribute__ ((packed))   {
 
 typedef struct  __attribute__ ((packed))   {
   uint8 num_if;
+  uint8 buffs_total;
+  uint8 buffs_free;
   uint8 errors;
   uint16 tx_retries;
   uint32  rx_pkts;
   uint32 tx_pkts;
-
-} MRF_PKT_IF_INFO;
+} MRF_PKT_DEVICE_STATUS;
 
 typedef struct  __attribute__ ((packed))   {
   uint8 i_f;
@@ -51,7 +52,7 @@ typedef struct  __attribute__ ((packed))   {
 typedef struct  __attribute__ ((packed))   {
   char dev_name[10];
   uint8 mrfid;
-  uint8 mrfnet;
+  uint8 netid;
   char mrfbus_version[40];
   uint8 modified;
 } MRF_PKT_DEVICE_INFO;

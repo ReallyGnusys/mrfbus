@@ -38,7 +38,8 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
         queue_pop(qp);
         ifp->status->state = MRF_ST_RX;
         ifp->status->stats.tx_pkts++;
-        bs->state = FREE;
+        _mrf_buff_free(bn);
+        //bs->state = FREE;
         return;
         }
       else{
@@ -48,6 +49,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("i_f status %d da %d\n",ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
   mrf_debug("no ack 2\n");
 }
+
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_retry..doing nothing yet\n");
 
@@ -78,12 +80,13 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X mrfbus version %s modified %u \n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->mrfnet,
+    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X mrfbus version %s modified %u \n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->netid,
               dev_inf->mrfbus_version,dev_inf->modified);
   }
-  else if  (resp->type == mrf_cmd_if_info){
-    MRF_PKT_IF_INFO *if_inf = (MRF_PKT_IF_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("IF INFO  rx_pkts %u tx_pkts %u tx_retries %u \n",if_inf->rx_pkts,if_inf->tx_pkts,if_inf->tx_retries);
+  else if  (resp->type == mrf_cmd_device_status){
+    MRF_PKT_DEVICE_STATUS *if_inf = (MRF_PKT_DEVICE_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("DEVICE_STATUS  num_buffs %u free_buffs %u rx_pkts %u tx_pkts %u tx_retries %u \n",if_inf->buffs_total,
+              if_inf->buffs_free,if_inf->rx_pkts,if_inf->tx_pkts,if_inf->tx_retries);
   }
   else if  (resp->type == mrf_cmd_if_stats){
     IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -124,16 +127,17 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 }
 
-MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_if_info\n");
+MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  mrf_debug("mrf_task_device_status\n");
 
-  MRF_PKT_IF_INFO info;
+  MRF_PKT_DEVICE_STATUS info;
   info.num_if = NUM_INTERFACES;
   info.errors = 0;
   info.tx_retries = 0;
   info.tx_pkts = 0;
   info.rx_pkts = 0;
-
+  info.buffs_total = _MRF_BUFFS;
+  info.buffs_free  = mrf_buff_num_free();
   I_F i;
   uint32 rxp,txp;
   MRF_IF *i_f;
@@ -141,11 +145,11 @@ MRF_CMD_RES mrf_task_if_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     i_f = mrf_if_ptr(i);
     info.tx_retries += i_f->status->stats.tx_retries;
     info.tx_pkts += i_f->status->stats.tx_pkts;
-    info.rx_pkts += i_f->status->stats.rx_pkts;  
+    info.rx_pkts += i_f->status->stats.rx_pkts; 
   }
   mrf_debug("mrf_task_if_info l1\n");
 
-  mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_IF_INFO));  
+  mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_DEVICE_STATUS));  
   mrf_debug("mrf_task_if_info exit\n");
 
 }

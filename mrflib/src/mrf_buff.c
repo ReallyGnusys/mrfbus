@@ -73,6 +73,15 @@ void _mrf_buff_print(){
   }
 }
 
+uint8 mrf_buff_num_free(){
+  uint8 i,free = 0;
+  // _mrf_buff_print();
+  for ( i = 0 ; i < _MRF_BUFFS ; i++)
+    if ( _mrf_buffst[i].state == FREE)
+      free++;
+  return free;
+}
+
 uint8 mrf_alloc_if(I_F i_f){
   uint8 i;
   // _mrf_buff_print();

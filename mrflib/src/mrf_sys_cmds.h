@@ -7,7 +7,7 @@ typedef enum mrf_cmd_code
    mrf_cmd_retry = 1,
    mrf_cmd_resp = 2,
    mrf_cmd_device_info = 3,
-   mrf_cmd_if_info = 4,
+   mrf_cmd_device_status = 4,
    mrf_cmd_if_stats = 5,
    mrf_cmd_get_time = 6,
    mrf_cmd_set_time = 7,

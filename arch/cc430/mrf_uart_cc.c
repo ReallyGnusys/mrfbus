@@ -182,6 +182,8 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
    
     if(mrf_uart_rx_byte(rxb,&rxstate)){
       mrf_buff_loaded(rxstate.bnum);
+      // need to allocate next buffer
+      mrf_uart_init_rx_state(UART0,&rxstate);    // FIXME - hardcoded i_f
     }
 
     UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
