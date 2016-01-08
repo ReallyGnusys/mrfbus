@@ -22,12 +22,12 @@ include ${ARCHDIR}/Makefile.inc
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
-	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o
+	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o ${MOBJ}/device.o ${AOBJS}
 
-CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH}  -g
+CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} ${ACCFLAGS} -g
 
 
-ALL : ${BIN} ${OBJ} ${MOBJS} ${AOBJS} ${TARG}
+ALL : ${BIN} ${OBJ} ${MOBJS} ${TARG}
 
 
 clean : 
@@ -39,20 +39,20 @@ ${BIN}:
 	mkdir -p ${BIN}
 
 ${TARG} :
-	${GCC} ${CCFLAGS} main.c ${MOBJS} ${AOBJS} ${ACCFLAGS} -o ${TARG}
+	${GCC} ${CCFLAGS} main.c ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
 ${MOBJ}/%.o: ${MSRC}/%.c
 	mkdir -p ${MOBJ}
-	gcc  -c $(CCFLAGS) $< -o $@
+	${GCC}  -c $(CCFLAGS) $< -o $@
 
 
 ${MOBJ}/%.o: ${NET}/%.c
 	mkdir -p ${MOBJ}
-	gcc  -c $(CCFLAGS) $< -o $@
+	${GCC}  -c $(CCFLAGS) $< -o $@
 
 ${MOBJ}/%.o: ${ARCHDIR}/%.c
 	mkdir -p ${MOBJ}
-	gcc  -c $(CCFLAGS) $< -o $@
+	${GCC}  -c $(CCFLAGS) $< -o $@
 
 ${MOBJ}/%.o: ${DEVDIR}/%.c
 	mkdir -p ${MOBJ}
