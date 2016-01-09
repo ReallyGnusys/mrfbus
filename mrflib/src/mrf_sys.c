@@ -203,7 +203,7 @@ int _mrf_ex_buffer(uint8 bnum){
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   mrf_debug("_mrf_ex_buffer bnum %d\n",bnum);
   if(pkt->type < MRF_NUM_SYS_CMDS){
-    mrf_debug("packet type %d\n",mrf_sys_cmds[pkt->type]);
+    mrf_debug("packet type %d\n",pkt->type);
     const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
     return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
   }

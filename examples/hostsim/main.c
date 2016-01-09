@@ -7,8 +7,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
 
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
-
-  mrf_debug("mrf_task_usr_resp :  type = %d\n",resp->type);
+mrf_debug("mrf_task_usr_resp :  type = %d\n",resp->type);
   // send a seg ack when we get resp
 
 
@@ -52,10 +51,10 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     mrf_debug("hex buff follows:");
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
     mrf_debug(":end of hex");
-    */
+*/
   }  
+  _mrf_buff_free(bnum);
 
-  _mrf_buff_state(bnum)->state = FREE;
 }
 
 

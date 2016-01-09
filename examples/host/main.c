@@ -1,20 +1,10 @@
-/*
-#include <stdlib.h>
-#include <stdio.h>
-#include <mrf_types.h>
-#include <sys/timerfd.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/epoll.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdint.h>        //Definition of uint64_t 
-*/
 #include <mrf.h>
 
 const uint8 _mrfid = MRFID;
+
+MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  _mrf_buff_free(bnum);
+}
 
 int main(void){
   char buff[256];
