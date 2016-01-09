@@ -11,7 +11,8 @@
 #include <sys/types.h>
 #include <termios.h>
 #include <strings.h>
-
+#include <sys/ioctl.h>
+#include <linux/usbdevice_fs.h>
 // B115200 
 #define BAUDRATE B9600
 #ifdef LP_115200
@@ -128,6 +129,16 @@ int usb_open(const char *dev){
   tcgetattr(fd,&_oldtio); /* save current port settings */  
 
   printf("ispeed %d ospeed %d\n",cfgetispeed(&_oldtio),cfgetospeed(&_oldtio));
+
+  /*
+  int rc;
+  rc = ioctl(fd, USBDEVFS_RESET, 0);
+  if (rc < 0) {
+    perror("Error in ioctl");
+    return 1;
+  }
+  printf("Reset successful\n");
+  */
   bzero(&newtio, sizeof(newtio));
   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
   newtio.c_iflag = IGNPAR;

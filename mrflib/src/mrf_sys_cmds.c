@@ -15,7 +15,7 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_read_sensor ] = {"READ_SENSOR", 0                               , 0                          , 0                          ,  NULL          , mrf_task_read_sensor   },
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_task_test_1   },
   [ mrf_cmd_test_2      ] = {"TEST_2"     , 0                               , 0                          , sizeof(MRF_PKT_DBG_CHR32)  ,  NULL          , mrf_task_test_2   },
-	  
+  [ mrf_cmd_usr_resp    ] = {"USR_RESP"   ,                 MRF_CFLG_NO_RESP, 0                          , 0                          ,  NULL               , mrf_task_usr_resp     }
 };
 
 const uint16 mrf_num_cmds = (uint16)MRF_NUM_SYS_CMDS;  // FIXME -better to have user commands separate from sys

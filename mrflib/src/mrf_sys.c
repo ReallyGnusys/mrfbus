@@ -191,16 +191,23 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp)
       }
 }
 
+int mrf_app_queue_push(uint8 bnum){
+  return queue_push(&_app_queue,bnum);
+}
+
+
 int _mrf_ex_buffer(uint8 bnum){
   MRF_PKT_HDR *pkt;
   I_F owner = mrf_buff_owner(bnum);
   MRF_IF *ifp = mrf_if_ptr(owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
-  mrf_debug("_mrf_ex_buffer bnum %d",bnum);
+  mrf_debug("_mrf_ex_buffer bnum %d\n",bnum);
   if(pkt->type < MRF_NUM_SYS_CMDS){
+    mrf_debug("packet type %d\n",mrf_sys_cmds[pkt->type]);
     const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
     return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
   }
+  mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
   return -1;
 }
 
@@ -254,7 +261,8 @@ int _mrf_process_buff(uint8 bnum)
         mrf_debug("executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
-        int rv = queue_push(&_app_queue,bnum);
+
+        int rv = mrf_app_queue_push(bnum);
         if (rv == 0){
           mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
           if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){

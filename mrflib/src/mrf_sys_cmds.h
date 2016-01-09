@@ -14,11 +14,12 @@ typedef enum mrf_cmd_code
    mrf_cmd_sensor_data = 8,
    mrf_cmd_read_sensor = 9,
    mrf_cmd_test_1 = 10, 
-   mrf_cmd_test_2 = 11
+   mrf_cmd_test_2 = 11,
+   mrf_cmd_usr_resp = 12
  } MRF_CMD_CODE;
 
 
-#define MRF_NUM_SYS_CMDS 12
+#define MRF_NUM_SYS_CMDS 13
 
 
 #endif
