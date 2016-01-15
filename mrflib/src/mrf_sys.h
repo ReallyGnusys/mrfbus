@@ -82,6 +82,6 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 void mrf_print_packet_header(MRF_PKT_HDR *hdr);
 uint8 *mrf_response_buffer(uint8 bnum);
 int mrf_send_response(uint8 bnum,uint8 rlen);
-
+uint16 mrf_copy(void *src,void *dst, size_t nbytes);
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"

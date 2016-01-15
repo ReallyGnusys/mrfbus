@@ -367,6 +367,7 @@ int mrf_tick_enable(){
     return -1;
   }
   bc = write(fd, TICK_ENABLE,sizeof(TICK_ENABLE) );
+  close(fd);
 
 }
 
@@ -381,6 +382,6 @@ int mrf_tick_disable(){
     return -1;
   }
   bc = write(fd, TICK_DISABLE,sizeof(TICK_DISABLE) );
-
+  close(fd);
 }
 

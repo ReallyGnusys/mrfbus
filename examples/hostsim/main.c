@@ -34,6 +34,19 @@ mrf_debug("mrf_task_usr_resp :  type = %d\n",resp->type);
     mrf_debug(":end of hex");
     */
   }  
+  else if  (resp->type == mrf_cmd_buff_state){
+    MRF_PKT_BUFF_STATE *bst = (MRF_PKT_BUFF_STATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    char *bstnames[] = {"FREE","LOADING","LOADED","TXQUEUE","TX","APPIN"};
+    if (bst->id > (_MRF_BUFFS - 1))
+      mrf_debug("BUFF_STATE : got invalid id %u\n",bst->id);
+    else
+      mrf_debug("BUFF_STATE : buff %u state %s\n", bst->id, bstnames[bst->state.state]);
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+    */
+  }  
 
   else if  (resp->type == mrf_cmd_test_1){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -70,7 +83,7 @@ int main(void){
   //printf("MRF_TIME IS %s\n",buff);
   //return mrf_main_loop();
   while(1){
-    usleep(1000000);
+    usleep(100000);
     i = mrf_foreground();
   }
   

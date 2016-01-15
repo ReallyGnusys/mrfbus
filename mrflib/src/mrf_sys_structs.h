@@ -2,7 +2,9 @@
 #define __MRF_SYS_STRUCTS_INCL__
 
 #include <mrf_types.h>
+#include <device.h> // for I_F type
 //#include <mrf_if.h>
+
 #define MRF_ACK_FLAG_RETRY  1
 #define MRF_ACK_FLAG_DELIVERED 2
 
@@ -45,10 +47,12 @@ typedef struct  __attribute__ ((packed))   {
 } MRF_PKT_DEVICE_STATUS;
 
 typedef struct  __attribute__ ((packed))   {
-  uint8 i_f;
+  uint8 value;
+}MRF_PKT_UINT8;
 
-}MRF_PKT_IF_STAT_REQ;
 
+
+// 53 bytes
 typedef struct  __attribute__ ((packed))   {
   char dev_name[10];
   uint8 mrfid;
@@ -60,6 +64,27 @@ typedef struct  __attribute__ ((packed))   {
 
 typedef TIMEDATE MRF_PKT_TIMEDATE;
 typedef TIMEDATE MRF_TIMEDATE;
+
+typedef  enum { FREE,
+		LOADING, // allocated and being written by IF or app 
+		LOADED,  // loaded and awaiting classification
+		TXQUEUE, // loaded and requires forwarding via an interface ,
+                TX,  // currently being transmitted by I_F
+                APPIN  // loaded and requires processing by app
+} mrf_buff_state_t;
+
+typedef struct __attribute__ ((packed)){
+  mrf_buff_state_t state;
+  I_F owner;
+  uint16 tx_timer;
+  uint8 retry_count;
+} MRF_BUFF_STATE;
+
+
+typedef struct  __attribute__ ((packed))   {
+  uint8 id;
+  MRF_BUFF_STATE state;
+} MRF_PKT_BUFF_STATE;
 
 typedef struct __attribute__ ((packed)){
   uint32 rx_pkts;

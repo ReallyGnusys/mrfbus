@@ -11,7 +11,10 @@
 MRF_IF _sys_ifs[NUM_INTERFACES];
 
 inline MRF_IF *mrf_if_ptr(I_F i_f){
-  return &_sys_ifs[i_f];
+  if (i_f < NUM_INTERFACES)
+    return &_sys_ifs[i_f];
+  else
+    return (MRF_IF *)NULL;
 }
 
 int mrf_if_can_sleep(I_F i_f){

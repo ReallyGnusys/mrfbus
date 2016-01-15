@@ -82,8 +82,9 @@ static int  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
     mrf_debug("ALERT copy_to_mbuff - buffer oversized at %d\n",len);
     return -1;
   }
-  for ( i = 0 ; i < len/2 ; i++)
+  for ( i = 0 ; i < len/2 ; i++){
     mbuff[i] = hex_dig_str_to_int(&buffer[i*2]);
+  }
   return 0;
 }
 // named pipe uses ascii hex encoding 
@@ -101,7 +102,8 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int i,len;
   printf("_mrf_pipe_buff_lnx entry i_f %d len %d\n",i_f,inlen);
-  _print_mrf_cmd(mrf_cmd_device_info);
+  //_print_mrf_cmd(mrf_cmd_device_info);
+  printf("_mrf_pipe_buff_lnx about to trim_trailing_space\n");
 
   trim_trailing_space(inbuff);
   len = strlen(inbuff);
@@ -109,6 +111,8 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
     mrf_debug("ALERT - odd length packet %d\n",len);
     len = len - 1;
   }
+  printf("len is %d\n",len);
+  printf("%s\n",inbuff);
   // sanity checking gone bonkers
   if ( len > _MRF_BUFFLEN * 2){
     mrf_debug("ALERT - buffer oversized at %d\n",len);
@@ -128,16 +132,22 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   }
 
   uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
+  printf("about to copy to mbuff\n");
   if ( copy_to_mbuff(inbuff,len,mbuff) == 0){
+    printf("copied to mbuff i_f is %d , bnum is %d\n",i_f,_bnum[i_f]);
+
     mrf_buff_loaded(_bnum[i_f]);
+    printf("mbuff loaded!\n");
      // need to alloc next buffer
-      _pipe_alloc_buff(i_f);
-      return 0;
+    uint8 _bnum = _pipe_alloc_buff(i_f);
+    printf("_pipe_alloc_buff 'ed %d!\n",_bnum);
+    return 0;
   } else {
     printf("problem copying to buff...\n");
     return -1;
   }
   
+  printf("_mrf_pipe_buff_lnx exit\n");
 }
 
 

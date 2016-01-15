@@ -17,6 +17,14 @@ uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
 
+
+uint16 mrf_copy(void *src,void *dst, size_t nbytes){
+  uint16 i;
+  for ( i = 0 ; i < nbytes ; i++ ){
+    *((uint8 *)dst + i) =  *((uint8 *)src + i);
+  } 
+}
+
 int mrf_tx_bnum(I_F i_f,uint8 bnum){
   //mrf_debug("mrf_tx_buff : i_f %d  bnum %d\n",i_f,bnum);
   MRF_IF *if_ptr = mrf_if_ptr(i_f);
@@ -88,6 +96,7 @@ int mrf_retry(I_F i_f,uint8 bnum){
  if_ptr->ackbuff->usrc = _mrfid;
  if_ptr->ackbuff->msgid = hdr->msgid;
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
+ mrf_debug("mrf_retry : freeing initial buffer %d\n",bnum);
  _mrf_buff_free(bnum);
 }
 
@@ -175,7 +184,7 @@ void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
 
 int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
       mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
-      mrf_debug("cmd name %s  req size %d  rsp size %d cflags %x cmd->data %p\n",
+      mrf_debug("cmd name %s  req size %u  rsp size %u cflags %x cmd->data %p\n",
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
         mrf_debug("sending data response \n");

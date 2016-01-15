@@ -18,8 +18,6 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_PKT_HDR *txhdr; 
   MRF_BUFF_STATE *bs;
 
-  // clear buff state of ack buffer
-  _mrf_buff_state(bnum)->state = FREE;
 
   if ( ifp->status->state != MRF_ST_WAITSACK){  
     mrf_debug("mrf_task_ack: unexpected ack for i_f\n");
@@ -27,6 +25,10 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     return MRF_CMD_RES_ERROR;
   }
   mrf_debug("ack 1\n");
+  // clear buff state of ack buffer
+  mrf_debug("mrf_task_ack - buffer %d has been acked .. freeing\n",bnum);
+  //_mrf_buff_state(bnum)->state = FREE;
+  _mrf_buff_free(bnum);
   if (queue_data_avail(qp)){
       bn = queue_head(qp);
       bs = _mrf_buff_state(bn);
@@ -58,8 +60,8 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_resp\n");
-  _print_mrf_cmd(mrf_cmd_device_info);
-
+  _mrf_buff_print();
+  
   mrf_debug("mrf_task_resp L1\n");
 
 
@@ -104,17 +106,21 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
-  MRF_PKT_IF_STAT_REQ *streq = (MRF_PKT_IF_STAT_REQ *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
-  mrf_debug("mrf_task_if_status request for i_f %d\n",streq->i_f);
+  MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
+  mrf_debug("mrf_task_if_status request for i_f %d\n",streq->value);
 
-  if ( (streq->i_f) >= NUM_INTERFACES)
+  if ( (streq->value) >= NUM_INTERFACES)
     return MRF_CMD_RES_ERROR;
-  MRF_IF *i_f = mrf_if_ptr(streq->i_f);
+  MRF_IF *i_f = mrf_if_ptr(streq->value);
 
   mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));  
   return MRF_CMD_RES_OK;
 
 }
+
+
+
+
 MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   TIMEDATE td;
   mrf_rtc_get(&td);
@@ -143,6 +149,25 @@ MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;  
 
 }
+
+
+MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
+  mrf_debug("mrf_task_buff_state request for buffer %d\n",streq->value);
+
+  if ( (streq->value) >= _MRF_BUFFS)
+    return MRF_CMD_RES_ERROR;
+  MRF_PKT_BUFF_STATE buffst;
+  buffst.id = streq->value;
+  MRF_BUFF_STATE *bstp = _mrf_buff_state(streq->value);
+  mrf_copy( (void *)bstp,(void *)&buffst.state, sizeof(MRF_BUFF_STATE));
+  mrf_data_response( bnum,(uint8 *)&buffst,sizeof(MRF_PKT_BUFF_STATE));  
+  return MRF_CMD_RES_OK;
+
+}
+
+
 
 MRF_CMD_RES mrf_task_sensor_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_sensor_data exit\n");
