@@ -24,15 +24,19 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   if ( ifp->status->state != MRF_ST_WAITSACK){  
     mrf_debug("mrf_task_ack: unexpected ack for i_f\n");
     ifp->status->stats.unexp_ack++;
-    mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
   //_mrf_buff_state(bnum)->state = FREE;
-    _mrf_buff_free(bnum);
+    if (ackhdr->type == mrf_cmd_ack) {// don't free for resp
+      mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
+      _mrf_buff_free(bnum);
+    }
     return MRF_CMD_RES_ERROR;
   }
   mrf_debug("ack 1\n");
-  mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
+  if (ackhdr->type == mrf_cmd_ack) {// don't free for resp .. hmpff
+    mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
   //_mrf_buff_state(bnum)->state = FREE;
-  _mrf_buff_free(bnum);
+    _mrf_buff_free(bnum);
+  }
   // clear buff state of ack buffer
   if (queue_data_avail(qp)){
       bn = queue_head(qp);
