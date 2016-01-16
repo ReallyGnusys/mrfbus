@@ -16,9 +16,10 @@ static MRF_BUFF_STATE _mrf_buffst[_MRF_BUFFS];
 //extern const MRF_CMD const mrf_cmds[];
 void _mrf_buff_free(uint8 i){
   if (i < _MRF_BUFFS){
-    mrf_debug("_mrf_buff_free : free buff %d \n",i);
     _mrf_buffst[i].state = FREE;
-    _mrf_buffst[i].owner = NUM_INTERFACES;    
+    _mrf_buffst[i].owner = NUM_INTERFACES;   
+    mrf_debug("_mrf_buff_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
+
     return;
   }
   mrf_debug("_mrf_buff_free error buff num was %d\n",i);
@@ -51,7 +52,7 @@ void mrf_free(uint8* buff){
   for ( i = 0 ; i < _MRF_BUFFS ; i++)
     if(buff == &(_mrf_buff[i][0])){
       _mrf_buff_free(i);
-      mrf_debug("mrf_free : free buff %d \n",i);
+      mrf_debug("mrf_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
       return;
     }
   mrf_debug("ERROR : buff was not found or freed\n\n");

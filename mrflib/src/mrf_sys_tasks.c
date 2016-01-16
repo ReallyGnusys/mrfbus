@@ -19,16 +19,21 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_BUFF_STATE *bs;
 
 
+
+
   if ( ifp->status->state != MRF_ST_WAITSACK){  
     mrf_debug("mrf_task_ack: unexpected ack for i_f\n");
     ifp->status->stats.unexp_ack++;
+    mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
+  //_mrf_buff_state(bnum)->state = FREE;
+    _mrf_buff_free(bnum);
     return MRF_CMD_RES_ERROR;
   }
   mrf_debug("ack 1\n");
-  // clear buff state of ack buffer
-  mrf_debug("mrf_task_ack - buffer %d has been acked .. freeing\n",bnum);
+  mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
   //_mrf_buff_state(bnum)->state = FREE;
   _mrf_buff_free(bnum);
+  // clear buff state of ack buffer
   if (queue_data_avail(qp)){
       bn = queue_head(qp);
       bs = _mrf_buff_state(bn);
@@ -36,7 +41,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
       mrf_debug(" qhead is %d state %d\n",bn,bs->state);
       if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
         {
-        mrf_debug("acknowledge recieved buffer %d \n",bnum);
+        mrf_debug("acknowledge recieved for buffer %d \n",bn);
         queue_pop(qp);
         ifp->status->state = MRF_ST_RX;
         ifp->status->stats.tx_pkts++;
