@@ -57,9 +57,14 @@ typedef struct  __attribute__ ((packed))   {
   char dev_name[10];
   uint8 mrfid;
   uint8 netid;
+  uint8 num_buffs;
+  uint8 num_ifs;
+} MRF_PKT_DEVICE_INFO;
+
+typedef struct  __attribute__ ((packed))   {
   char mrfbus_version[40];
   uint8 modified;
-} MRF_PKT_DEVICE_INFO;
+} MRF_PKT_SYS_INFO;
 
 
 typedef TIMEDATE MRF_PKT_TIMEDATE;

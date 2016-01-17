@@ -13,13 +13,17 @@ mrf_debug("mrf_task_usr_resp :  type = %d\n",resp->type);
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X mrfbus version %s modified %u \n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->netid,
-              dev_inf->mrfbus_version,dev_inf->modified);
+    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X num_buffs %d num_ifs %d\n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->netid,
+              dev_inf->num_buffs,dev_inf->num_ifs);
   }
   else if  (resp->type == mrf_cmd_device_status){
     MRF_PKT_DEVICE_STATUS *if_inf = (MRF_PKT_DEVICE_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("DEVICE_STATUS  num_buffs %u free_buffs %u rx_pkts %u tx_pkts %u tx_retries %u \n",if_inf->buffs_total,
               if_inf->buffs_free,if_inf->rx_pkts,if_inf->tx_pkts,if_inf->tx_retries);
+  }
+  if (resp->type == mrf_cmd_sys_info){
+    MRF_PKT_SYS_INFO *dev_inf = (MRF_PKT_SYS_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("SYS INFO mrfbus version %s modified %u \n",dev_inf->mrfbus_version,dev_inf->modified);
   }
   else if  (resp->type == mrf_cmd_if_stats){
     IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
