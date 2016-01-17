@@ -9,6 +9,9 @@
 
 #define _MRF_TX_TIMEOUT 10
 #define _MRF_MAX_RETRY 0
+
+
+#define ACKTIMER_VAL 20   //FIXME prob needs to be i/f dependent
 extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
@@ -436,7 +439,7 @@ void _mrf_tick(){
 
                 bs->state = TX;
                 mif->status->state = MRF_ST_WAITSACK;
-                mif->status->acktimer = 10;
+                mif->status->acktimer = ACKTIMER_VAL;
                 bs->tx_timer = 0;
               }
             // queue_pop(qp);

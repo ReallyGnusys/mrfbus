@@ -35,10 +35,10 @@ int mrf_buff_loaded(uint8 bnum){
     printf("ifp = %p\n",ifp);
     ifp->status->stats.rx_pkts += 1;
     _mrf_buffst[bnum].state = LOADED;
-    _mrf_buff_print();
+    //_mrf_buff_print();
     _mrf_process_buff(bnum);
-    mrf_debug("mrf_buff_loaded exit buff state\n");
-    _mrf_buff_print();
+    mrf_debug("mrf_buff_loaded exit\n");
+    //_mrf_buff_print();
 
     return 0;
   } else {
@@ -113,7 +113,7 @@ uint8 mrf_buff_num_free(){
 uint8 mrf_alloc_if(I_F i_f){
   uint8 i;
   mrf_debug("mrf_alloc_if entry i_f %d\n",i_f);
-   _mrf_buff_print();
+  //_mrf_buff_print();
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     if ( _mrf_buffst[i].state == FREE)
       {
