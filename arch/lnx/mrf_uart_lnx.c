@@ -13,11 +13,11 @@
 #include <strings.h>
 #include <sys/ioctl.h>
 #include <linux/usbdevice_fs.h>
-// B115200 
-#define BAUDRATE B9600
-#ifdef LP_115200
-#undef LP_115200
-#endif
+#define BAUDRATE  B115200 
+//#define BAUDRATE B9600
+//#ifdef LP_115200
+//#undef LP_115200
+//#endif
 
 
 // FIXME bodge device names here for time being
