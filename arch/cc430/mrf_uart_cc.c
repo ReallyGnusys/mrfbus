@@ -13,9 +13,9 @@
 #define LP_115200
 //#define LP_9600
 
-#ifdef LP_115200
-#undef LP_115200
-#endif
+//#ifdef LP_115200
+//#undef LP_115200
+//#endif
 
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff);
 static int mrf_uart_init_cc(I_F i_f);
