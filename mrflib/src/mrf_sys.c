@@ -20,11 +20,23 @@ uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
 
-
+const MRF_CMD *mrf_cmd_ptr(uint8 type){
+  if (type >= MRF_NUM_SYS_CMDS)
+    return NULL;
+  return &mrf_sys_cmds[type];
+}
 uint16 mrf_copy(void *src,void *dst, size_t nbytes){
   uint16 i;
   for ( i = 0 ; i < nbytes ; i++ ){
     *((uint8 *)dst + i) =  *((uint8 *)src + i);
+  } 
+}
+uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
+  uint16 i;
+  for ( i = 0 ; i < nbytes ; i++ ){
+    *((uint8 *)dst + i) =  *((uint8 *)src + i);
+    if (*((uint8 *)src + i) == '\0')
+      break;
   } 
 }
 

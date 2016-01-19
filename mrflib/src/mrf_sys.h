@@ -65,7 +65,7 @@ typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , MRF_IF *ifp);
 #define MRF_CFLG_INTR 4  // task is run in interrupt handler
 
 typedef struct {
-  const uint8 *str;
+  const uint8 str[16];
   const uint8 cflags;
   const uint8 req_size;
   const uint8 rsp_size;
@@ -83,5 +83,8 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr);
 uint8 *mrf_response_buffer(uint8 bnum);
 int mrf_send_response(uint8 bnum,uint8 rlen);
 uint16 mrf_copy(void *src,void *dst, size_t nbytes);
+uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
+const MRF_CMD *mrf_cmd_ptr(uint8 type);
+
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"

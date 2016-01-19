@@ -176,6 +176,29 @@ MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 }
 
+MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
+  mrf_debug("mrf_task_cmd_info request for cmd %d\n",streq->value);
+
+  if ( (streq->value) >= MRF_NUM_SYS_CMDS)
+    return MRF_CMD_RES_ERROR;
+
+  MRF_PKT_CMD_INFO *cinfo = (MRF_PKT_CMD_INFO *)mrf_response_buffer(bnum);
+  const MRF_CMD * cmdp = mrf_cmd_ptr(streq->value);
+  mrf_debug("think cmdp->str is %s\n",cmdp->str);
+  cinfo->type = streq->value;
+  cinfo->cflags = cmdp->cflags;
+  cinfo->req_size = cmdp->req_size;
+  cinfo->rsp_size = cmdp->rsp_size;
+  mrf_scopy((void *)cmdp->str,(void *)cinfo->name,16); // FIXME should have some const for this
+  mrf_send_response(bnum,sizeof(MRF_PKT_CMD_INFO));
+
+  return MRF_CMD_RES_OK;
+
+}
+
+
 
 
 MRF_CMD_RES mrf_task_sensor_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){

@@ -4,9 +4,18 @@ MRFMAKE=$(dir $(realpath $(firstword $(MAKEFILE_LIST))))
 GITSH=$(shell cd ${MRFPATH}; git rev-parse HEAD)
 
 ifeq ($(shell  cd ${MRFPATH}; git status | grep '^\s*modified'),)
-  GITMOD=0
+	GITMOD=0
 else
-  GITMOD=1
+	GITMOD=1
+endif
+
+# BUILD is debug or prod
+BUILD ?= debug
+
+ifeq ($(BUILD),debug)
+	BFLAGS = -g
+else
+	BFLAGS = -O2
 endif
 
 
@@ -35,11 +44,10 @@ else
      MAIN := ${APPSRC}/main.c
 endif      
 
-CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} ${ACCFLAGS}  ${DEVCCFLAGS} -g
+CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${BFLAGS}
 
 
 ALL : ${BIN} ${OBJ} ${MOBJS} ${TARG}
-
 
 clean : 
 	rm -rf ${MOBJ}

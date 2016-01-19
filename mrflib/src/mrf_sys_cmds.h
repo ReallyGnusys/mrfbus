@@ -13,7 +13,7 @@ typedef enum mrf_cmd_code
    mrf_cmd_get_time = 7,
    mrf_cmd_set_time = 8,
    mrf_cmd_buff_state = 9,
-   mrf_cmd_read_sensor = 10,
+   mrf_cmd_cmd_info = 10,
    mrf_cmd_test_1 = 11, 
    mrf_cmd_test_2 = 12,
    mrf_cmd_usr_resp = 13,
