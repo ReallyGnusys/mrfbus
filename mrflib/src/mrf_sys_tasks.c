@@ -1,9 +1,7 @@
 #include <mrf_sys.h>
 //#include <stdio.h>
-#include <mrf_sys_cmds.h>
 #include <mrf_debug.h>
 
-extern const MRF_CMD const *mrf_sys_cmds;
 
 
 

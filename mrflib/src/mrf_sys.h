@@ -8,7 +8,7 @@
 #include "mrf_buff.h"
 
 #include "mrf_sys_cmds.h"
-/* xbus "protected" symbols , not for application use */
+
 
 #define FALSE 0
 #define TRUE  1
@@ -88,3 +88,7 @@ const MRF_CMD *mrf_cmd_ptr(uint8 type);
 
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"
+
+
+#include "mrf_app_tasks.h"
+#include "mrf_app_cmds.h"
