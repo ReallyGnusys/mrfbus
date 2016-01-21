@@ -3,8 +3,6 @@
 #include <mrf_debug.h>
 
 
-
-
 MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status->state);
 
@@ -102,8 +100,8 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   for ( i = 0 ; i < NUM_INTERFACES ; i++ ) {
     i_f = mrf_if_ptr(i);
     info.tx_retries += i_f->status->stats.tx_retries;
-    info.tx_pkts += i_f->status->stats.tx_pkts;
-    info.rx_pkts += i_f->status->stats.rx_pkts; 
+    info.tx_pkts    += i_f->status->stats.tx_pkts;
+    info.rx_pkts    += i_f->status->stats.rx_pkts; 
   }
   mrf_debug("mrf_task_if_info l1\n");
 
@@ -186,6 +184,30 @@ MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   const MRF_CMD * cmdp = mrf_cmd_ptr(streq->value);
   mrf_debug("think cmdp->str is %s\n",cmdp->str);
   cinfo->type = streq->value;
+  cinfo->cflags = cmdp->cflags;
+  cinfo->req_size = cmdp->req_size;
+  cinfo->rsp_size = cmdp->rsp_size;
+  mrf_scopy((void *)cmdp->str,(void *)cinfo->name,16); // FIXME should have some const for this
+  mrf_send_response(bnum,sizeof(MRF_PKT_CMD_INFO));
+
+  return MRF_CMD_RES_OK;
+
+}
+
+extern const MRF_CMD mrf_app_cmds[];
+
+MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
+  mrf_debug("mrf_task_app_cmd_info request for cmd %d\n",streq->value);
+
+  if ( (streq->value) >= MRF_NUM_APP_CMDS)
+    return MRF_CMD_RES_ERROR;
+
+  MRF_PKT_CMD_INFO *cinfo = (MRF_PKT_CMD_INFO *)mrf_response_buffer(bnum);
+  const MRF_CMD * cmdp = mrf_app_cmds + streq->value ;
+  mrf_debug("think cmdp->str is %s\n",cmdp->str);
+  cinfo->type   = streq->value + _MRF_APP_CMD_BASE;
   cinfo->cflags = cmdp->cflags;
   cinfo->req_size = cmdp->req_size;
   cinfo->rsp_size = cmdp->rsp_size;

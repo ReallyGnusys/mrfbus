@@ -16,6 +16,7 @@
 #define _MRF_BUFFLEN 64
 
 
+#define _MRF_APP_CMD_BASE 128   // app commands start at 128
 typedef struct {
   int len;
   int csumok;
@@ -85,6 +86,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen);
 uint16 mrf_copy(void *src,void *dst, size_t nbytes);
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
 const MRF_CMD *mrf_cmd_ptr(uint8 type);
+const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
 
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"

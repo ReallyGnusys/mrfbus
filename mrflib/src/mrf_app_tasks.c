@@ -7,5 +7,5 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_rtc_get(rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
   mrf_debug("mrf_app_task_test exit\n");
-  return MRF_CMD_RES_OK;  
+  return MRF_CMD_RES_OK;
 }

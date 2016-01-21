@@ -102,6 +102,12 @@ typedef struct  __attribute__ ((packed))   {
   uint8 rsp_size;
 } MRF_PKT_CMD_INFO;
 
+typedef struct  __attribute__ ((packed))   {
+  uint8 name[16];
+  uint8 num_cmds;
+} MRF_PKT_APP_INFO;
+
+
 typedef struct __attribute__ ((packed)){
   uint32 rx_pkts;
   uint32 tx_acks;

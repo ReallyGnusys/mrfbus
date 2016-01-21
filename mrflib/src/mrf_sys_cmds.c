@@ -2,6 +2,7 @@
 
 extern const MRF_PKT_DEVICE_INFO device_info;
 extern const MRF_PKT_SYS_INFO    sys_info;
+extern const MRF_PKT_APP_INFO app_info;
 
 const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_ack          ] = {"ACK"        , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_ack      },
@@ -15,6 +16,8 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_set_time    ] = {"SET_TIME"   , MRF_CFLG_INTR                   , sizeof(MRF_PKT_TIMEDATE)   , sizeof(MRF_PKT_TIMEDATE)   ,  NULL               , mrf_task_set_time   },
   [ mrf_cmd_buff_state ] = {"BUFF_STATE"  , MRF_CFLG_INTR                   , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_BUFF_STATE) ,  NULL               , mrf_task_buff_state }  ,
   [ mrf_cmd_cmd_info ] = {"CMD_INFO",  MRF_CFLG_INTR                        , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO),  NULL          , mrf_task_cmd_info   },
+  [ mrf_cmd_app_info ] = {"APP_INFO",  MRF_CFLG_INTR                        , 0                          , sizeof(MRF_PKT_APP_INFO),   (void*)&app_info, NULL},
+  [ mrf_cmd_app_cmd_info ] = {"APP_CMD_INFO",  MRF_CFLG_INTR                    , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO),  NULL          , mrf_task_app_cmd_info   },
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                               , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_task_test_1   },
   [ mrf_cmd_test_2      ] = {"TEST_2"     , 0                               , 0                          , sizeof(MRF_PKT_DBG_CHR32)  ,  NULL          , mrf_task_test_2   },
   [ mrf_cmd_usr_resp    ] = {"USR_RESP"   ,                 MRF_CFLG_NO_RESP, 0                          , 0                          ,  NULL               , mrf_task_usr_resp     }
