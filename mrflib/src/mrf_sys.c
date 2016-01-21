@@ -16,6 +16,7 @@ extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
 extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];
+extern const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS];
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
 }
@@ -172,29 +173,22 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
 
 void mrf_print_packet_header(MRF_PKT_HDR *hdr){
 
+  const uint8 *cname;
+  if (hdr->type >= _MRF_APP_CMD_BASE)
+    cname = mrf_app_cmds[hdr->type].str;
+  else
+    cname = mrf_sys_cmds[hdr->type].str;
+
   uint8 type = hdr->type;
    mrf_debug("**************************************\n");
 
-   mrf_debug("PACKET %s  LEN %d \n",mrf_sys_cmds[hdr->type].str,hdr->length);
+   mrf_debug("PACKET %s  LEN %d \n",cname,hdr->length);
   
    mrf_debug(" HSRC 0x%02X HDEST 0x%02X  LEN %02d  MSGID 0x%02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
    mrf_debug(" USRC 0x%02X UDEST 0x%02X  NETID 0x%02X type 0x%02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
    mrf_debug("**************************************\n");
 }
 
-
-void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F owner){
-  MRF_IF *ifp = mrf_if_ptr(owner);
-
-  uint8 type = hdr->type;
-   mrf_debug("**************************************\n");
-
-   mrf_debug("PACKET %s rx on I_F %d  state %d\n",mrf_sys_cmds[hdr->type].str,owner,ifp->status->state);
-  
-   mrf_debug(" HSRC %02X HDEST %02X  LEN %02X  MSGID %02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
-   mrf_debug(" USRC %02X UDEST %02X  NETID %02X type %02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
-   mrf_debug("**************************************\n");
-}
 
 
 int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
@@ -231,6 +225,13 @@ int _mrf_ex_buffer(uint8 bnum){
     const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
     return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
   }
+
+  uint8 app_cnum = pkt->type - _MRF_APP_CMD_BASE;
+  if(app_cnum < MRF_NUM_APP_CMDS){
+    mrf_debug("packet type %d\n",pkt->type);
+    const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_app_cmds[app_cnum]);
+    return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
+  }
   mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
   return -1;
 }
@@ -244,7 +245,7 @@ int _mrf_process_buff(uint8 bnum)
   I_F owner = mrf_buff_owner(bnum);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
-  _mrf_print_packet_header(pkt,owner);
+  mrf_print_packet_header(pkt);
 
   // check we are hdest 
   if ( pkt->hdest != _mrfid)
@@ -252,10 +253,6 @@ int _mrf_process_buff(uint8 bnum)
       mrf_debug("ERROR:  HDEST %02X is not us %02X - mrf_bus.pkt_error\n",pkt->hdest,_mrfid);
       return -1;
     }
-  if(type >= MRF_NUM_SYS_CMDS){
-    mrf_debug("unsupported packed type 0x%02X\n",pkt->type);
-    return -1;
-  }
 
   MRF_IF *ifp = mrf_if_ptr(owner);
   // don't count ack and retry
@@ -263,7 +260,19 @@ int _mrf_process_buff(uint8 bnum)
   // ifp->status->stats.rx_pkts++;
   
   // lookup command
-  const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
+  const MRF_CMD *cmd;
+  uint8 app_cnum = type - _MRF_APP_CMD_BASE;
+  if(type < MRF_NUM_SYS_CMDS){
+    cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
+  }
+  else if(app_cnum < MRF_NUM_APP_CMDS) {
+    cmd = (const MRF_CMD *) &(mrf_app_cmds[app_cnum]);
+  }
+  else  {
+    mrf_debug("unsupported packed type 0x%02X\n",pkt->type);
+    return -1;
+  }
+
   mrf_debug("looked up command %d %s\n",pkt->type,cmd->str);
  
   // begin desperate
