@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/timerfd.h>
 #include <signal.h>
+#include <stdlib.h>
 //mrfbus
 #include <mrf_arch.h>
 #include <mrf_buff.h>
@@ -29,6 +30,8 @@ extern uint8 _mrfid;
 //debug tmp
 extern const MRF_CMD const *mrf_sys_cmds;
 
+#define handle_error(msg)  \
+  do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 uint8 _nibble2hex(uint8 nib){
   nib = nib%16;
@@ -107,19 +110,22 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
   mrf_debug("cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
   mrf_debug("cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
 }
-
-int mrf_arch_init(){
+int mrf_arch_boot(){
+}
+int mrf_arch_run(){
   
   // run io event loop in pthread
   _print_mrf_cmd(mrf_cmd_device_info);
-  printf("mrf_arch_init entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
-
- if(pthread_create(&_sys_loop_pthread, NULL, _sys_loop, NULL)) {
-
-   printf("Error creating thread\n");
-   return -1;
-
-} 
+  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
+  (*_sys_loop)(NULL);
+    /*
+      // no pthread - just run mrf_foreground in main epoll loop
+      if(pthread_create(&_sys_loop_pthread, NULL, _sys_loop, NULL)) {
+      
+      printf("Error creating thread\n");
+      return -1;
+      } 
+    */
 
  return 0;
 }
@@ -307,19 +313,26 @@ char buff[2048];
 
 
        //printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
-       if ( s > 10){
 
-         if(strcmp(buff,TICK_ENABLE) == 0){
-           //printf("INTERNAL:tick_enable\n");
-           epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
-           //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
-         }
-         else if (strcmp(buff,TICK_DISABLE) == 0){
-           //printf("INTERNAL:tick_disable\n");
-           epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
-           //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-         }
-       }   
+       if(strcmp(buff,TICK_ENABLE) == 0){
+         //printf("INTERNAL:tick_enable\n");
+         epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
+         //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
+       }
+       else if (strcmp(buff,TICK_DISABLE) == 0){
+         //printf("INTERNAL:tick_disable\n");
+         epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
+         //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+       }
+       else if (strcmp(buff,"wake") == 0){
+         printf("got wakeup\n");
+         int i = mrf_foreground();
+         printf("ran %d foreground tasks\n",i);
+       }
+       else{
+         
+         printf("internal control unrecognised string %s\n",buff);
+       }
      }
    }
   }
@@ -352,10 +365,25 @@ int mrf_rtc_set(TIMEDATE *td){
 }
 
 
+int _write_internal_pipe(char *data, int len){
+  char sname[64];
+  int fd,bc,tb;
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
+  fd = open(sname, O_WRONLY);
+  if(fd == -1){
+    printf(" %d\n",fd);
+    perror("_write_internal_pipe ERROR sock open\n");
+    return -1;
+  }
+  bc = write(fd, data,len);
+  close(fd); 
+  return bc;
+}
 
 
 
 int mrf_tick_enable(){
+  /*
   char sname[64];
   int fd,bc,tb;
   mrf_debug("mrf_tick_enable arch lnx\n");
@@ -368,10 +396,13 @@ int mrf_tick_enable(){
   }
   bc = write(fd, TICK_ENABLE,sizeof(TICK_ENABLE) );
   close(fd);
-
+  */
+  int bc = _write_internal_pipe(TICK_ENABLE, sizeof(TICK_ENABLE) );
+  return bc;
 }
 
 int mrf_tick_disable(){
+  /*
   char sname[64];
   int fd,bc,tb;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
@@ -383,5 +414,15 @@ int mrf_tick_disable(){
   }
   bc = write(fd, TICK_DISABLE,sizeof(TICK_DISABLE) );
   close(fd);
+  */
+  return  _write_internal_pipe(TICK_DISABLE, sizeof(TICK_DISABLE) );
+
 }
 
+int mrf_wake(){
+  mrf_debug("mrf_wake..writing internal pipe\n");
+  return _write_internal_pipe("wake", sizeof("wake"));
+
+}
+int mrf_sleep(){
+}

@@ -17,27 +17,15 @@ const MRF_PKT_SYS_INFO sys_info        = { (const uint8)MRF_NUM_SYS_CMDS, SYM_NA
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 int mrf_init(){
-#ifdef MRF_ARCH_lnx
-  mrf_debug("mrf_init: entry\n");
-  _print_mrf_cmd(mrf_cmd_device_info);
+
+  mrf_arch_boot();
   mrf_if_init();
   mrf_sys_init();
-  mrf_debug("if and sys init..\n");
-  _mrf_buff_print();
-  return mrf_arch_init();
-#else
-  mrf_arch_init();
-  mrf_if_init();
-  mrf_sys_init();
-  return 0;
-#endif
+  mrf_arch_run();
+  return 0; // unreachable
 }
 
-/*
-int mrf_main_loop(){
-  return mrf_arch_main_loop();
-}
-*/
+
 int mrf_time(char *buff){
   TIMEDATE td;
   mrf_rtc_get(&td);

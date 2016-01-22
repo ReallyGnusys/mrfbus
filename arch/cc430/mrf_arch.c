@@ -18,7 +18,7 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
   // should not be calling this in cross platform code.. only during debug.. 
 }
 
-int mrf_arch_init(){
+int mrf_arch_boot(){
 
    int i,j,on;
   WDTCTL = WDTPW + WDTHOLD; 
@@ -67,7 +67,11 @@ void putchar(char c){
 
 */
 
-int mrf_arch_main_loop(){
+int mrf_arch_run(){
+  int i;
+  while(1){
+    i = mrf_foreground();
+  }
   return 0;
 }
 int mrf_rtc_get(TIMEDATE *td){

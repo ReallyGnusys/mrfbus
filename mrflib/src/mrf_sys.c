@@ -210,7 +210,16 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp)
 }
 
 int mrf_app_queue_push(uint8 bnum){
-  return queue_push(&_app_queue,bnum);
+  int rv = queue_push(&_app_queue,bnum);
+  
+  if ( rv == 0) {
+    mrf_debug("queue pushed.. waking\n");
+    mrf_wake();
+  }
+  else{
+    mrf_debug("prob pushing on queue - rv = %d\n",rv);
+  }
+  return rv;
 }
 
 
@@ -235,7 +244,23 @@ int _mrf_ex_buffer(uint8 bnum){
   mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
   return -1;
 }
+const MRF_CMD * _mrf_cmd(uint8 type){
+  /*return mrf cmd for type hdr param*/
+    // lookup command
+  const MRF_CMD *cmd;
+  uint8 app_cnum = type - _MRF_APP_CMD_BASE;
+  if(type < MRF_NUM_SYS_CMDS){
+    return &(mrf_sys_cmds[type]);
+  }
+  else if(app_cnum < MRF_NUM_APP_CMDS) {
+    return &(mrf_app_cmds[app_cnum]);
+  }
+  else  {
+    mrf_debug("unsupported packed type 0x%02X\n",type);
+    return NULL;
+  }
 
+}
 int _mrf_process_buff(uint8 bnum)
 {
   uint8 len;
@@ -260,16 +285,10 @@ int _mrf_process_buff(uint8 bnum)
   // ifp->status->stats.rx_pkts++;
   
   // lookup command
-  const MRF_CMD *cmd;
-  uint8 app_cnum = type - _MRF_APP_CMD_BASE;
-  if(type < MRF_NUM_SYS_CMDS){
-    cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
-  }
-  else if(app_cnum < MRF_NUM_APP_CMDS) {
-    cmd = (const MRF_CMD *) &(mrf_app_cmds[app_cnum]);
-  }
-  else  {
-    mrf_debug("unsupported packed type 0x%02X\n",pkt->type);
+  const MRF_CMD *cmd = _mrf_cmd(type);
+  
+  if(cmd == NULL){
+    mrf_debug("big trouble 29339\n");
     return -1;
   }
 
@@ -294,6 +313,7 @@ int _mrf_process_buff(uint8 bnum)
         mrf_debug("executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
+        mrf_debug("pushing to app queue");
 
         int rv = mrf_app_queue_push(bnum);
         if (rv == 0){
@@ -438,6 +458,10 @@ void _mrf_tick(){
           if_busy = 1;
 
           bs = _mrf_buff_state(bnum);
+          MRF_PKT_HDR *pkt;
+          pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+          const MRF_CMD *cmd = _mrf_cmd(pkt->type);
+
           mrf_debug("\nmrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d tx_timer %d  tc %d\n",
                     i,bnum,bs->state,bs->tx_timer,_tick_count);
      
@@ -458,9 +482,18 @@ void _mrf_tick(){
                 mif->status->stats.tx_pkts += 1;
                 (*(mif->type->funcs.send))(i,tb);
 
-                bs->state = TX;
-                mif->status->state = MRF_ST_WAITSACK;
-                mif->status->acktimer = ACKTIMER_VAL;
+
+                if (cmd->cflags & MRF_CFLG_NO_ACK) {
+                  //bs->state = TX;
+                  mif->status->state = MRF_ST_RX; // FIXME what is this if state really about?
+                  _mrf_buff_free(bnum);
+                  queue_pop(qp);
+
+                } else {
+                  bs->state = TX;
+                  mif->status->state = MRF_ST_WAITSACK;
+                  mif->status->acktimer = ACKTIMER_VAL;
+                }
                 bs->tx_timer = 0;
               }
             // queue_pop(qp);

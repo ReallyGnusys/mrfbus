@@ -2,7 +2,7 @@
 #define __IQUEUE_INCLUDED__
 
 #include "mrf_types.h"
-#include "mrf_arch.h"  // for 
+#include "device.h"  // for IQUEUE_DEPTH
 
 //typedef struct volatile {
 typedef struct  {

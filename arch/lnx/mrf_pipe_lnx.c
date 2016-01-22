@@ -97,6 +97,8 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
   return i*2;
 }
 
+// from mrf_arch.c (lnx)
+void trim_trailing_space(uint8 *buff);
 
 //convert raw i_f data to buffer data
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){

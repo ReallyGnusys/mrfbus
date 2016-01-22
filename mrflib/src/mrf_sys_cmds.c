@@ -7,7 +7,7 @@ extern const MRF_PKT_APP_INFO app_info;
 const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_ack          ] = {"ACK"        , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_ack      },
   [ mrf_cmd_retry        ] = {"RETRY"      , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_retry      },
-  [ mrf_cmd_resp         ] = {"RESP"       , MRF_CFLG_INTR | MRF_CFLG_NO_RESP, 0                          , 0                          ,  NULL               , mrf_task_resp     },
+  [ mrf_cmd_resp         ] = {"RESP"       , MRF_CFLG_INTR |  MRF_CFLG_NO_ACK | MRF_CFLG_NO_RESP, 0                          , 0                          ,  NULL               , mrf_task_resp     },
   [ mrf_cmd_device_info  ] = {"DEVICE_INFO", MRF_CFLG_INTR                   , 0                          , sizeof(MRF_PKT_DEVICE_INFO),  (void*)&device_info, NULL },
   [ mrf_cmd_device_status] = {"DEVICE_STATUS"    , MRF_CFLG_INTR             , 0                          , sizeof(MRF_PKT_DEVICE_STATUS)    ,  NULL               , mrf_task_device_status },
   [ mrf_cmd_sys_info  ]    = {"SYS_INFO"   , MRF_CFLG_INTR                , 0                          , sizeof(MRF_PKT_SYS_INFO),  (void*)&sys_info, NULL },

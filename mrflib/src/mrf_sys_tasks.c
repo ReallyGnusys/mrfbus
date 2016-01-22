@@ -70,13 +70,12 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_resp L1\n");
 
 
-  mrf_debug("sending sack\n");
+  // mrf_debug("sending sack\n");
    // send ack
-  mrf_sack(bnum);
+  //mrf_sack(bnum);
 
 
-  mrf_debug("sack sent\n");
-
+  mrf_debug("pushing to app queue as MRF_CMD_USR_RESP\n");
   // now put in application queue as MRF_CMD_USR_RESP
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
   hdr1->type = mrf_cmd_usr_resp;
