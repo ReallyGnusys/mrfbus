@@ -96,3 +96,12 @@ int mrf_tick_disable(){
 
   return 0;
 }
+int  mrf_wake()  {
+  // clear LPM3 on reti
+  __bic_SR_register(LPM3_bits);
+
+}
+int mrf_sleep(){
+  __bis_SR_register(LPM3_bits  + GIE);
+
+}
