@@ -92,5 +92,5 @@ const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
 #include "mrf_sys_cmds.h"
 
 
-#include "mrf_app_tasks.h"
+#include "mrf_app.h"
 #include "mrf_app_cmds.h"

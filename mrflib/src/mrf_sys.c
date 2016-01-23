@@ -26,6 +26,27 @@ const MRF_CMD *mrf_cmd_ptr(uint8 type){
     return NULL;
   return &mrf_sys_cmds[type];
 }
+
+
+const MRF_CMD * _mrf_cmd(uint8 type){
+  /*return mrf cmd for type hdr param*/
+    // lookup command
+  const MRF_CMD *cmd;
+  uint8 app_cnum = type - _MRF_APP_CMD_BASE;
+  if(type < MRF_NUM_SYS_CMDS){
+    return &(mrf_sys_cmds[type]);
+  }
+  else if(app_cnum < MRF_NUM_APP_CMDS) {
+    return &(mrf_app_cmds[app_cnum]);
+  }
+  else  {
+    mrf_debug("unsupported packed type 0x%02X\n",type);
+    return NULL;
+  }
+
+}
+
+
 uint16 mrf_copy(void *src,void *dst, size_t nbytes){
   uint16 i;
   for ( i = 0 ; i < nbytes ; i++ ){
@@ -229,6 +250,12 @@ int _mrf_ex_buffer(uint8 bnum){
   MRF_IF *ifp = mrf_if_ptr(owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   mrf_debug("_mrf_ex_buffer bnum %d\n",bnum);
+  const MRF_CMD *cmd =  _mrf_cmd(pkt->type);
+  
+  if (cmd == NULL){
+    mrf_debug("_mrf_ex_buffer cmd was null..abort (pkt->type was %d)\n",pkt->type);
+  }
+  
   if(pkt->type < MRF_NUM_SYS_CMDS){
     mrf_debug("packet type %d\n",pkt->type);
     const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
@@ -244,23 +271,10 @@ int _mrf_ex_buffer(uint8 bnum){
   mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
   return -1;
 }
-const MRF_CMD * _mrf_cmd(uint8 type){
-  /*return mrf cmd for type hdr param*/
-    // lookup command
-  const MRF_CMD *cmd;
-  uint8 app_cnum = type - _MRF_APP_CMD_BASE;
-  if(type < MRF_NUM_SYS_CMDS){
-    return &(mrf_sys_cmds[type]);
-  }
-  else if(app_cnum < MRF_NUM_APP_CMDS) {
-    return &(mrf_app_cmds[app_cnum]);
-  }
-  else  {
-    mrf_debug("unsupported packed type 0x%02X\n",type);
-    return NULL;
-  }
 
-}
+
+
+
 int _mrf_process_buff(uint8 bnum)
 {
   uint8 len;
@@ -370,7 +384,7 @@ int mrf_foreground(){
     mrf_debug("appq data available\n");
     bnum = queue_pop(&_app_queue);
     mrf_debug("got bnum %d\n",bnum);
-    _mrf_ex_buffer(bnum);
+    rv = _mrf_ex_buffer(bnum);
     mrf_debug("rv was %d",rv);
     cnt++;
   }

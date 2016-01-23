@@ -18,13 +18,16 @@ else
 	BFLAGS = -O2
 endif
 
+APP ?= default
+
 
 MSRC=${MRFHOME}/mrflib/src
 
 MOBJ=${MRFMAKE}obj
 
 BIN=${MRFMAKE}bin
-APPSRC=${MRFMAKE}src
+#APPSRC=${MRFMAKE}src
+APPSRC=${MRFHOME}/apps/${APP}
 
 TARG=${BIN}/${DEVTYPE}_${MRFID}
 NET=${MRFMAKE}../net
@@ -36,23 +39,21 @@ include ${DEVDIR}/Makefile.inc
 
 
 
-ifeq (,$(wildcard ${APPSRC}/mrf_app_tasks.c))
-     APP_TASKS=${MSRC}/mrf_app_tasks.c
-else
-     APP_TASKS=${APPSRC}/mrf_app_tasks.c
-endif      
+#ifeq (,$(wildcard ${APPSRC}/mrf_app_tasks.c))
+#     APP_TASKS=${MSRC}/mrf_app_tasks.c
+#else
+#     APP_TASKS=${APPSRC}/mrf_app_tasks.c
+#endif      
 
-ifeq (,$(wildcard ${APPSRC}/mrf_app_cmds.c))
-     APP_CMDS=${MSRC}/mrf_app_cmds.c
-else
-     APP_CMDS=${APPSRC}/mrf_app_cmds.c
-     APPINCL=-I${APPSRC}
-endif      
+APP_CMDS=${APPSRC}/mrf_app_cmds.c
+APPINCL=-I${APPSRC}
+
+
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
 	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o \
-	${MOBJ}/device.o  ${MOBJ}/mrf_app_tasks.o ${MOBJ}/mrf_app_cmds.o ${AOBJS}
+	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS}
 
 ifeq (,$(wildcard ${APPSRC}/main.c))
      MAIN := ${MSRC}/main.c
@@ -76,9 +77,10 @@ ${BIN}:
 ${TARG} :
 	${GCC} ${CCFLAGS} ${MAIN} ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
-${MOBJ}/mrf_app_tasks.o: ${APP_TASKS}
+${MOBJ}/mrf_app.o: ${APPSRC}/mrf_app.c
 	mkdir -p ${MOBJ}
-	${GCC}  -c $(CCFLAGS) ${APP_TASKS} -o $@
+	${GCC}  -c $(CCFLAGS) ${APPSRC}/mrf_app.c -o $@
+
 
 ${MOBJ}/mrf_app_cmds.o: ${APP_CMDS}
 	mkdir -p ${MOBJ}

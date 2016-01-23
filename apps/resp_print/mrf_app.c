@@ -1,9 +1,11 @@
-#include <mrf.h>
+#include "mrf_sys.h"
+#include <mrf_debug.h>
 
-const uint8 _mrfid = MRFID;
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-
+  /*
+    prints response packets
+  */
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
 
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
@@ -94,29 +96,19 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     mrf_debug(":end of hex");
     */
   }  
-
   _mrf_buff_free(bnum);
 
 }
 
 
 
-int main(void){
-  char buff[256];
-  int i;
-  mrf_debug("\nmain entry\n");
-  _print_mrf_cmd(mrf_cmd_device_info);
 
-  mrf_init();
-  /*
-  mrf_time(buff);
-  //printf("MRF_TIME IS %s\n",buff);
-  //return mrf_main_loop();
-  while(1){
-    usleep(100000);
-    i = mrf_foreground();
-  }
-  */
+
+MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  mrf_debug("mrf_app_task_test entry\n");
+  uint8 *rbuff = mrf_response_buffer(bnum);
+  mrf_rtc_get(rbuff);
+  mrf_send_response(bnum,sizeof(TIMEDATE));
+  mrf_debug("mrf_app_task_test exit\n");
+  return MRF_CMD_RES_OK;
 }
-
-

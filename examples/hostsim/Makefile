@@ -6,5 +6,5 @@ ARCH=lnx
 DEVTYPE=hostsim
 MRFID=0x00
 MRFNET=0x25
-
+APP=resp_print
 include ${MRFHOME}/Makefile.inc
