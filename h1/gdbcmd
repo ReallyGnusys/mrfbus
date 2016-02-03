@@ -1,3 +1,0 @@
-symbol-file bin
-target remote daisy:2000
-
