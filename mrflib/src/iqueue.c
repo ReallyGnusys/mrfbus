@@ -50,7 +50,18 @@ int queue_push(IQUEUE *q, uint8 data){
 }
 
 
-uint8 queue_pop(IQUEUE *q){
+int16 queue_pop(IQUEUE *q){
+  if (queue_data_avail(q) == 0){
+    q->pop_errors++;
+    return -1;
+  }
+  int16 data = (int16)queue_head(q);
+  q->qop = (q->qop + 1) % IQUEUE_DEPTH;
+  return data;
+}
+
+
+uint8 queue_pop_old(IQUEUE *q){
   uint8 data;
   if (queue_data_avail(q) == 0){
     q->pop_errors++;

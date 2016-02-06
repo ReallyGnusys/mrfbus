@@ -382,7 +382,7 @@ int mrf_foreground(){
   int rv,cnt = 0;
   while(queue_data_avail(&_app_queue)){
     mrf_debug("appq data available\n");
-    bnum = queue_pop(&_app_queue);
+    bnum = (uint8)queue_pop(&_app_queue);
     mrf_debug("got bnum %d\n",bnum);
     rv = _mrf_ex_buffer(bnum);
     mrf_debug("rv was %d",rv);
