@@ -87,6 +87,7 @@ uint16 mrf_copy(void *src,void *dst, size_t nbytes);
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
 const MRF_CMD *mrf_cmd_ptr(uint8 type);
 const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
+int mrf_app_init();
 
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"

@@ -21,6 +21,7 @@ int mrf_init(){
   mrf_arch_boot();
   mrf_if_init();
   mrf_sys_init();
+  mrf_app_init();
   mrf_arch_run();
   return 0; // unreachable
 }

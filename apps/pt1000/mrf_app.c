@@ -2,6 +2,10 @@
 #include <mrf_debug.h>
 
 
+int mrf_app_init(){
+
+}
+
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   _mrf_buff_free(bnum);
 }
