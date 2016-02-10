@@ -1,7 +1,9 @@
 #include "mrf_sys.h"
 #include <mrf_debug.h>
+volatile int dbg22;
 
 int mrf_app_init(){
+  dbg22 = 101; 
 
 }
 

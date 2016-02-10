@@ -8,6 +8,7 @@
 #include "device.h"
 #include "mrf_buff.h"
 
+int __attribute__ ((constructor)) mrf_spi_init_cc() ;  // seems futile to expect init to be called automatically
 
 int _spi_rx_int_cnt;
 int _spi_tx_int_cnt;
@@ -59,7 +60,7 @@ static inline void _tx_byte(uint8 chr){
 
 
 
-static int mrf_spi_init_cc(){
+int  __attribute__ ((constructor)) mrf_spi_init_cc(){
 
   _spi_rx_int_cnt = 0;
   _spi_tx_int_cnt = 0;
@@ -86,7 +87,9 @@ static int mrf_spi_init_cc(){
 }
 
 
-
+void _init(){
+  mrf_spi_init_cc();
+}
 static uint8 last_rx;
 
 

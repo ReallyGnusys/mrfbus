@@ -1,9 +1,13 @@
 #include "mrf_sys.h"
 #include <mrf_debug.h>
+int mrf_spi_init_cc() ;  // seems futile to expect init to be called automatically
 
+
+volatile int dbg22;
 
 int mrf_app_init(){
-
+  dbg22 = 101; 
+  mrf_spi_init_cc();
 }
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
