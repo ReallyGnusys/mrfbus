@@ -8,7 +8,7 @@
 #include "device.h"
 #include "mrf_buff.h"
 
-int __attribute__ ((constructor)) mrf_spi_init_cc() ;  // seems futile to expect init to be called automatically
+int __attribute__ ((constructor)) mrf_spi_init() ;  // seems futile to expect init to be called automatically
 
 int _spi_rx_int_cnt;
 int _spi_tx_int_cnt;
@@ -31,13 +31,13 @@ static int _enable_spi_rx_int(){
 }
 
 
-int spi_tx(uint8 tx_byte){
+int mrf_spi_tx(uint8 tx_byte){
   int rv = queue_push(&_spi_tx_queue,tx_byte);
   _enable_spi_tx_int();
   return rv;
 }
 
-uint8 spi_rx(){
+uint8 mrf_spi_rx(){
   // block and enter LPM3 until rx byte received 
   while(!queue_data_avail(&_spi_rx_queue)){
     _enable_spi_rx_int();
@@ -46,6 +46,13 @@ uint8 spi_rx(){
   return (uint8)queue_pop(&_spi_rx_queue);
 }
 
+int mrf_spi_flush_rx(){
+  return queue_flush(&_spi_rx_queue);
+}
+
+int mrf_spi_data_avail(){
+  return queue_data_avail(&_spi_rx_queue);
+}
 
 static int disable_tx_int(){
   UCB0IE &= ~UCTXIE;  // disable this intr    
@@ -60,7 +67,7 @@ static inline void _tx_byte(uint8 chr){
 
 
 
-int  __attribute__ ((constructor)) mrf_spi_init_cc(){
+int  __attribute__ ((constructor)) mrf_spi_init(){
 
   _spi_rx_int_cnt = 0;
   _spi_tx_int_cnt = 0;
@@ -87,9 +94,6 @@ int  __attribute__ ((constructor)) mrf_spi_init_cc(){
 }
 
 
-void _init(){
-  mrf_spi_init_cc();
-}
 static uint8 last_rx;
 
 

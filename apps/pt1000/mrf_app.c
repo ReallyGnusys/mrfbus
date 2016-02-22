@@ -1,13 +1,35 @@
 #include "mrf_sys.h"
 #include <mrf_debug.h>
-int mrf_spi_init_cc() ;  // seems futile to expect init to be called automatically
 
+
+#include "mrf_spi.h"
+#include  <msp430.h>
+#include "mrf_pinmacros.h"
+
+#define _START_PORT P2
+#define _START_BIT  1
+/*
+#define I2CSDAOUT P2OUT
+#define I2CSDAIN P2IN
+#define I2CSDADIR P2DIR
+#define I2CSDABIT  BIT1
+#define I2CSDAREN P2REN
+#define I2CSDASEL P2SEL
+
+*/
 
 volatile int dbg22;
 
+int ads1148_init(){
+  PINHIGH(START);
+  OUTPUTPIN(START);
+
+}
+
+
 int mrf_app_init(){
   dbg22 = 101; 
-  mrf_spi_init_cc();
+  mrf_spi_init();
 }
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
@@ -23,6 +45,4 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_task_test exit\n");
   return MRF_CMD_RES_OK;
 }
-
-
 

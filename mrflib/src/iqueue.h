@@ -19,4 +19,5 @@ int queue_full(IQUEUE *q);
 int queue_data_avail(IQUEUE *q);
 int queue_push(IQUEUE *q, uint8 data);
 int16 queue_pop(IQUEUE *q);
+int queue_flush(IQUEUE *q);
 #endif
