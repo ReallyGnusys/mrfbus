@@ -6,6 +6,7 @@
 #include  <msp430.h>
 #include "mrf_pinmacros.h"
 
+// all gpio pins to
 #define _MR_PORT P2
 #define _MR_BIT  0
 
@@ -20,6 +21,8 @@
 #define _RESET_PORT P2
 #define _RESET_BIT  3
 
+#define _DRDY_PORT P2
+#define _DRDY_BIT 4
 
 /*
 #define I2CSDAOUT P2OUT
@@ -74,14 +77,23 @@ uint8 ads1148_write(uint8 reg,uint8 data){
 }
 
 int ads1148_init(){
+  // start output
   PINHIGH(START);
   OUTPUTPIN(START);
+  // cs output
   PINHIGH(CS);
   OUTPUTPIN(CS);
+  //reset output
   PINHIGH(RESET);
   OUTPUTPIN(RESET);
+
+  // MR output
   PINHIGH(MR);
   OUTPUTPIN(MR);
+
+  // DRDY INPUT
+  INPUTPIN(DRDY);
+
   __delay_cycles(10);
   PINLOW(RESET);
   PINLOW(MR);

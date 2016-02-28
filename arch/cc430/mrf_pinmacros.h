@@ -28,7 +28,8 @@
 #define DIRREG(signame) _CONCAT(_PORT_MACRO(signame),DIR)
 
 
-#define OUTPUTPIN(signame)  DIRREG(signame) |= BITNAME(signame)
+#define OUTPUTPIN(signame)  DIRREG(signame) |= BITNAME(signame) ; SELREG(signame) &= ~ BITNAME(signame)
+#define INPUTPIN(signame)  DIRREG(signame) &= BITNAME(signame) ; SELREG(signame) &= ~ BITNAME(signame)
 #define PINLOW(signame)   OUTREG(signame) &= ~ BITNAME(signame)
 #define PINHIGH(signame)  OUTREG(signame) |= BITNAME(signame)
 
