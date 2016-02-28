@@ -10,7 +10,14 @@
 
 #define BITNAME(signame) _CONCAT(BIT,_BIT_MACRO(signame))
 
-#undef OUT  // need to override OUT definition in cc430f5137.h "
+
+#ifdef OUT
+ #define _OUT_DEF_SAVE OUT
+ #undef OUT  // need to override OUT definition in cc430f5137.h "
+#else
+ #undef _OUT_DEF_SAVE
+#endif
+
 
 //#define OUT OUT
 // msp430 I/O control regs
@@ -24,5 +31,8 @@
 #define OUTPUTPIN(signame)  DIRREG(signame) |= BITNAME(signame)
 #define PINLOW(signame)   OUTREG(signame) &= ~ BITNAME(signame)
 #define PINHIGH(signame)  OUTREG(signame) |= BITNAME(signame)
+
+
+
 
 #endif

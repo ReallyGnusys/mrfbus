@@ -50,6 +50,11 @@ typedef struct  __attribute__ ((packed))   {
   uint8 value;
 }MRF_PKT_UINT8;
 
+typedef struct  __attribute__ ((packed))   {
+  uint8 d0;
+  uint8 d1;
+}MRF_PKT_UINT8_2;
+
 
 
 // 53 bytes
