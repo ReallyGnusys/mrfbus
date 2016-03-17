@@ -6,7 +6,9 @@
 #include  <msp430.h>
 #include "mrf_pinmacros.h"
 
-// all gpio pins to
+// all gpio pins to TI EVM 
+
+
 #define _MR_PORT P2
 #define _MR_BIT  0
 
@@ -24,15 +26,6 @@
 #define _DRDY_PORT P2
 #define _DRDY_BIT 4
 
-/*
-#define I2CSDAOUT P2OUT
-#define I2CSDAIN P2IN
-#define I2CSDADIR P2DIR
-#define I2CSDABIT  BIT1
-#define I2CSDAREN P2REN
-#define I2CSDASEL P2SEL
-
-*/
 
 volatile int dbg22;
 
