@@ -19,7 +19,7 @@
 #include <mrf_if.h>
 #include <mrf_route.h>
 #include <mrf_debug.h>
-#define SOCKET_DIR "/tmp/mrf_bus/"
+#include <mrf_arch.h>
 
 extern uint8 _mrfid;
 
@@ -109,22 +109,33 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
   mrf_debug("cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
   mrf_debug("cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
 }
+
+
+static MRF_APP_CALLBACK app_callback;
+
+static int app_callback_fd;
+
+
+int mrf_arch_app_callback(int fd, MRF_APP_CALLBACK callback){
+  // allow mrf_app_init to set fd and callback to add to epoll loop
+  app_callback_fd = fd;
+  app_callback    = callback;
+
+  return 0;
+
+}
 int mrf_arch_boot(){
+  // allow mrf_app_init to set fd and callback to add to epoll loop
+  app_callback = NULL;
+  app_callback_fd = -1;
+  
+  
 }
 int mrf_arch_run(){
   
-  // run io event loop in pthread
   _print_mrf_cmd(mrf_cmd_device_info);
   printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
   (*_sys_loop)(NULL);
-    /*
-      // no pthread - just run mrf_foreground in main epoll loop
-      if(pthread_create(&_sys_loop_pthread, NULL, _sys_loop, NULL)) {
-      
-      printf("Error creating thread\n");
-      return -1;
-      } 
-    */
 
  return 0;
 }
@@ -172,7 +183,10 @@ char buff[2048];
   uint64_t exp, tot_exp; 
   int timerfd,intfd,fd , i, tmp;
   ssize_t s;
-  struct epoll_event revent[NUM_INTERFACES + 2];
+  // input events for each i_f + one for timer tick plus optional app fifo
+  struct epoll_event ievent[NUM_INTERFACES + 3];
+
+  struct epoll_event revent[NUM_INTERFACES + 3];
   int nfds;
   uint32 inif;
   char sname[64];
@@ -210,8 +224,6 @@ char buff[2048];
 
   struct epoll_event fevent,tevent;
 
-  // input events for each i_f + one for timer tick
-  struct epoll_event ievent[NUM_INTERFACES + 2];
 
   // devices must have been initialised - we're getting fds from _sys_if
   // lnx arch drivers must set an fd for input stream
@@ -241,9 +253,22 @@ char buff[2048];
   printf("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
 
 
+  // add appl pipe if initialised by appl
+  int app_event = 0;
+  int num_fds = NUM_INTERFACES+2;
+  if ( app_callback != NULL ){
+    num_fds = NUM_INTERFACES+3;
+    app_event = 1;
+    mrf_debug("adding epoll for app fifo %d\n",app_callback_fd); 
+    ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
+    ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
+    epoll_ctl(efd, EPOLL_CTL_ADD, app_callback_fd , &ievent[NUM_INTERFACES+2]);
+    printf("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,app_callback_fd);
+  }
+  
 
   while(1){
-   nfds = epoll_wait(efd, revent,NUM_INTERFACES+2 , -1);
+   nfds = epoll_wait(efd, revent,num_fds , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
    printf("nfds = %d\n",nfds);
    
@@ -331,6 +356,13 @@ char buff[2048];
        else{
          
          printf("internal control unrecognised string %s\n",buff);
+       }
+     } else if (revent[i].data.u32 == NUM_INTERFACES+2){
+       // app fifo
+
+       printf("app fifo event\n");
+       if (app_callback != NULL ){
+         (*(app_callback))(app_callback_fd);
        }
      }
    }

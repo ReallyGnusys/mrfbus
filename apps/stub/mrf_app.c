@@ -1,8 +1,39 @@
 #include "mrf_sys.h"
 #include <mrf_debug.h>
 
+#include "mrf_arch.h"
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+extern uint8 _mrfid;
+static char buff[2048];
+static MRF_CMD_RES _appl_fifo_callback(int fd){
+  ssize_t s;
+
+  mrf_debug("fifo callback for fd %d\\n",fd);
+  printf("event on fd %d\n",fd);
+  s = read(fd, buff, 1024); // FIXME need to handle multiple packets
+  buff[s] = 0;
+
+  printf("read %d bytes\n",(int)s);
+  _mrf_print_hex_buff(buff,s);
+  
+}
+
 int mrf_app_init(){
+  char sname[64];
+  int appfd,tmp;
   mrf_debug("mrf_app_init stub");
+  // need to open input application pipe
+
+  sprintf(sname,"%s%d-app",SOCKET_DIR,_mrfid);
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d",sname,tmp);
+  appfd = open(sname,O_RDONLY | O_NONBLOCK);
+  printf("opened pipe %s fd = %d\n",sname,appfd);
+  mrf_arch_app_callback(appfd,_appl_fifo_callback);
 }
 
 
