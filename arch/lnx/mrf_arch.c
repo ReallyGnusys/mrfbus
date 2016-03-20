@@ -1,7 +1,6 @@
 #include "mrf.h"
 #include <time.h>
 #include <string.h>
-#include <pthread.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -88,7 +87,7 @@ static void print_elapsed_time(void)
   printf("%d.%03d: ", secs, (nsecs + 500000) / 1000000);
 }
 
-static pthread_t _sys_loop_pthread;
+//static pthread_t _sys_loop_pthread;
 
 static void *_sys_loop(void *arg);
 
@@ -383,40 +382,12 @@ int _write_internal_pipe(char *data, int len){
 
 
 int mrf_tick_enable(){
-  /*
-  char sname[64];
-  int fd,bc,tb;
-  mrf_debug("mrf_tick_enable arch lnx\n");
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
-  fd = open(sname, O_WRONLY);
-  if(fd == -1){
-    printf(" %d\n",fd);
-    perror("mrf_tick_enable ERROR sock open\n");
-    return -1;
-  }
-  bc = write(fd, TICK_ENABLE,sizeof(TICK_ENABLE) );
-  close(fd);
-  */
   int bc = _write_internal_pipe(TICK_ENABLE, sizeof(TICK_ENABLE) );
   return bc;
 }
 
 int mrf_tick_disable(){
-  /*
-  char sname[64];
-  int fd,bc,tb;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
-  fd = open(sname, O_WRONLY);
-  if(fd == -1){
-    printf(" %d\n",fd);
-    perror("mrf_tick_enable ERROR sock open\n");
-    return -1;
-  }
-  bc = write(fd, TICK_DISABLE,sizeof(TICK_DISABLE) );
-  close(fd);
-  */
   return  _write_internal_pipe(TICK_DISABLE, sizeof(TICK_DISABLE) );
-
 }
 
 int mrf_wake(){
