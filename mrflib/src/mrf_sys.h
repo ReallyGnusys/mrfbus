@@ -6,7 +6,6 @@
 #include "device.h"
 #include "mrf_if.h"
 #include "mrf_buff.h"
-
 #include "mrf_sys_cmds.h"
 
 
@@ -36,6 +35,7 @@ typedef enum {
   MRF_CMD_RES_RETRY,
   MRF_CMD_RES_OK,
   MRF_CMD_RES_IGNORE,
+  MRF_CMD_RES_WARN,
   MRF_CMD_RES_ERROR
 } MRF_CMD_RES;
 //#define MRF_CMD_RES int

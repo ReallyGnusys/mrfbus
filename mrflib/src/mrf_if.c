@@ -99,8 +99,6 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
       mrf_tick_enable();
       //mrf_debug("mrf_if_tx_queue OK\n");
       return 0;
-      
-    
   }
   else {
   // fall through if no space in queue

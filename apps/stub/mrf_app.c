@@ -7,19 +7,56 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#include "mrf_route.h"
+
 extern uint8 _mrfid;
-static char buff[2048];
+static uint8 buff[2048];
 static MRF_CMD_RES _appl_fifo_callback(int fd){
   ssize_t s;
 
-  mrf_debug("fifo callback for fd %d\\n",fd);
+  mrf_debug("fifo callback for fd %d\n",fd);
   printf("event on fd %d\n",fd);
-  s = read(fd, buff, 1024); // FIXME need to handle multiple packets
+  s = read(fd, (char *)buff, 1024); // FIXME need to handle multiple packets
   buff[s] = 0;
 
   printf("read %d bytes\n",(int)s);
   _mrf_print_hex_buff(buff,s);
+
+  if ( s < 4){
+    mrf_debug("len too small to take seriously\n");
+    return MRF_CMD_RES_WARN;
+  }
   
+  uint8 len = buff[0];
+
+  if (s != len){
+    mrf_debug("not credible input\n");
+    return MRF_CMD_RES_WARN;
+  }
+  uint8 bnum = mrf_alloc_if(NUM_INTERFACES);
+  mrf_debug("allocated buffer number %u\n",bnum);
+
+  if (bnum >= _MRF_BUFFS){
+    mrf_debug("no buffs left\n");
+    return MRF_CMD_RES_ERROR;
+  }
+  MRF_PKT_HDR *pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+  
+  pkt->udest = buff[1];
+  pkt->type = buff[2];
+  MRF_ROUTE route;
+  mrf_nexthop(&route,_mrfid,pkt->udest);
+  pkt->hdest = route.relay;
+  pkt->hsrc = _mrfid;
+  pkt->usrc = _mrfid;
+  pkt->length = sizeof(MRF_PKT_HDR);
+  if( mrf_if_tx_queue(route.i_f,bnum) == -1) {// then outgoing queue full - need to retry
+    mrf_debug("looking dodgy sending packet\n");
+    mrf_retry(route.i_f,bnum);
+  } else {
+    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d\n",pkt->udest,route.relay,route.i_f);  
+  }
+
 }
 
 int mrf_app_init(){

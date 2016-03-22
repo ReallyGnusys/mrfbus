@@ -329,12 +329,10 @@ char buff[2048];
      else if (revent[i].data.u32 == NUM_INTERFACES+1){
        // internal cntrl
 
- 
        s = read(intfd, buff, 1024);
        buff[s] = 0;
        trim_trailing_space(buff);
        s = strlen(buff);
-
 
        //printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
 
