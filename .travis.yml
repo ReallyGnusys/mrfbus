@@ -1,7 +1,6 @@
 addons:
-  apt:
-    packages:
-    - msp430-gcc
+  packages:
+    - gcc-msp430
 
 
 script:
