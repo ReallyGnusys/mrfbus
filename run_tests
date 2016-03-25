@@ -1,0 +1,47 @@
+#!/bin/bash
+
+#start mrfbus instances
+TMP=/tmp/mrf_bus
+LOGDIR=${TMP}/log
+#
+
+stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+h01_pid=$!
+echo $h01_pid
+
+stdbuf -oL examples/hostsim/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
+h02_pid=$!
+
+stdbuf -oL examples/hostsim/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
+h20_pid=$!
+
+
+stdbuf -oL examples/hostsim/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
+h2f_pid=$!
+
+stdbuf -oL  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
+stub_pid=$!
+
+# make sure everyone is up
+
+sleep 1
+
+# run stubtst
+
+python land/stubtst.py
+
+sleep 1
+
+
+# tidy up
+
+kill $h01_pid || true
+kill $h02_pid || true
+kill $h20_pid || true
+kill $h2f_pid || true
+kill $stub_pid || true
+
+
+
+
+

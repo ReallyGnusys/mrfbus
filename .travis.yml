@@ -1,0 +1,9 @@
+addons:
+  apt:
+    packages:
+    - msp430-gcc
+
+
+script:
+  make tests
+  ./run_tests
