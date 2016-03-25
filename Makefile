@@ -17,5 +17,5 @@ BUILD:
 
 
 BUILDCC:
-	cd examples/usbrf && make
-	cd examples/pt1000usb && make
+	cd examples/usbrf && make clean && make
+	cd examples/pt1000usb && make clean && make
