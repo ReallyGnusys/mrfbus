@@ -1,5 +1,6 @@
 **mrfbus** is a framework for building ultra low-power microcontroller network applications
 
+[![Build Status](https://travis-ci.org/ReallyGnusys/mrfbus.svg?branch=master)](https://travis-ci.org/ReallyGnusys/mrfbus)
 
 ## FAQ
 
