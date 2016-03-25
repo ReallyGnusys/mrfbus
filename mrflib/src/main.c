@@ -21,6 +21,11 @@
 
 const uint8 _mrfid = MRFID;
 
+#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
+
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
+const MRF_PKT_SYS_INFO sys_info        = { (const uint8)MRF_NUM_SYS_CMDS, SYM_NAME(GITSH), GITMOD , SYM_NAME(MRFBLD) };
+
 
 int main(void){
   mrf_init();  

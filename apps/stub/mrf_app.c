@@ -77,19 +77,29 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   }
 
 }
+static int _outfd;
 
 int mrf_app_init(){
   char sname[64];
-  int appfd,tmp;
-  mrf_debug("mrf_app_init stub");
+  int appfd, tmp;
+  mrf_debug("mrf_app_init stub\n");
   // need to open input application pipe
 
-  sprintf(sname,"%s%d-app",SOCKET_DIR,_mrfid);
+  sprintf(sname,"%s%d-app-in",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d",sname,tmp);
+  printf("created pipe %s res %d\n",sname,tmp);
   appfd = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe %s fd = %d\n",sname,appfd);
+  printf("opened pipe %s fd = %d\n\n",sname,appfd);
   mrf_arch_app_callback(appfd,_appl_fifo_callback);
+
+  // open output application pipe
+
+  sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d\n",sname,tmp);
+  _outfd = open(sname,O_WRONLY);
+  printf("opened out pipe %s fd = %d\n",sname,_outfd);
+
 }
 
 
@@ -187,10 +197,13 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     mrf_debug(":end of hex");
     */
   }  
+
+  uint8 *btr = _mrf_buff_ptr(bnum)+ 0L;
+  
+
   _mrf_buff_free(bnum);
 
 }
-
 
 
 

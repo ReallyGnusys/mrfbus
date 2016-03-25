@@ -20,6 +20,11 @@
 #ifndef __MRF_SYS_INCLUDED__
 #define __MRF_SYS_INCLUDED__
 
+#define _QUOTE_SYM_(SYM)  #SYM
+#define SYM_NAME(name) _QUOTE_SYM_(name)
+
+#define _CONCAT_(A,B) # A ## B
+
 #include "mrf_types.h"
 #include "mrf_sys_structs.h"
 #include "device.h"

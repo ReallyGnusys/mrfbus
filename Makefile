@@ -12,7 +12,11 @@ ${LOGDIR}:
 	mkdir -p ${LOGDIR}
 
 BUILD:
-	cd examples/hostsim && make clean && make MRFID=0x01 && make MRFID=0x02 && make MRFID=0x20 && make MRFID=0x2f
+	cd examples/hostsim && make clean
+	cd examples/hostsim && make MRFID=0x01
+	cd examples/hostsim && make MRFID=0x02
+	cd examples/hostsim && make MRFID=0x20
+	cd examples/hostsim && make MRFID=0x2f
 	cd examples/stub && make clean && make
 
 

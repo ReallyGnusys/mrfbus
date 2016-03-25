@@ -14,16 +14,24 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-
+import os
 
 class StubIf(object):
     def __init__(self):
-        self.app_fifo = open("/tmp/mrf_bus/0-app","w")
+        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         print "StubIf.__init__  opened app_fifo "
-
-
+        self.app_out_fifo = open("/tmp/mrf_bus/0-app-out", "r")
+        print "exit constructor"
+        """
+    def read(self):
+        buff = bytearray(256)
+        try:
+            buffer = os.read(self.app_ouf_fifo,256)
+        except:
+        """
     def cmd(self,dest,cmd_code,dstruct=None):
 
+        
         if dest > 255:
             print "dest > 255"
             return -1
@@ -55,7 +63,7 @@ if __name__ == "__main__":
 
     si = StubIf()
     #rv = si.cmd(1,3)
-    rv = si.cmd(2,3)
+    rv = si.cmd(0x20,3)
     if rv == -1:
         print "error -1"
 
