@@ -1,6 +1,10 @@
+language: c
+
+
 addons:
-  packages:
-    - gcc-msp430
+  apt:
+    packages:
+      - gcc-msp430
 
 
 script:
