@@ -32,7 +32,7 @@ python land/stubtst.py
 
 sleep 1
 
-
+tail -n 10 ${LOGDIR}/stub.log
 # tidy up
 
 kill $h01_pid || true
