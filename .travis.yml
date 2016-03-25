@@ -8,5 +8,5 @@ addons:
       - msp430-libc
 
 script:
-  make tests
-  ./run_tests
+  - make tests
+  - ./run_tests
