@@ -59,11 +59,8 @@ class StubIf(object):
                    
 
 if __name__ == "__main__":
-    print "hello from main"
-
     si = StubIf()
-    #rv = si.cmd(1,3)
-    rv = si.cmd(0x20,3)
+    rv = si.cmd(0x2f,3)
     if rv == -1:
         print "error -1"
 
