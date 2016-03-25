@@ -20,10 +20,6 @@
 #include <mrf.h>
 #include <stdio.h>
 
-
-//#define _DEVNAME_STR_  SYM_NAME(DEVTYPE)
-
-
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 int mrf_init(){
@@ -42,5 +38,3 @@ int mrf_time(char *buff){
   mrf_rtc_get(&td);
   return sprintf(buff,"%02d:%02d:%02d %02d-%02d-%04d",td.hour,td.min,td.sec,td.day,td.mon,td.year+2000);
 }
-
-
