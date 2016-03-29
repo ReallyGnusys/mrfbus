@@ -48,7 +48,7 @@ if [ -z "$(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')" ] 
   echo "failed to detect response"
  false
 else
- echo "detected expected response"
+ echo "detected expected response : $(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')"
  true
 fi
 
