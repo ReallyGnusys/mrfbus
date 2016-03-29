@@ -42,11 +42,13 @@ kill $h2f_pid || true
 kill $stub_pid || true
 
 
+sleep 1
+
 if [ -z "$(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')" ] ; then
   echo "failed to detect response"
  false
 else
- echo "detected response expected"
+ echo "detected expected response"
  true
 fi
 
