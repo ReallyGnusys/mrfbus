@@ -51,18 +51,6 @@ class PktHeader(MrfStruct):
         ("msgid", c_uint8)
     ]
 
-class PktHeader(MrfStruct):
-    _fields_ = [
-        ("length", c_uint8),
-        ("hdest", c_uint8),
-        ("netid", c_uint8),
-        ("udest", c_uint8),
-        ("type", c_uint8),
-        ("hsrc", c_uint8),
-        ("usrc", c_uint8),
-        ("msgid", c_uint8)
-    ]
-
 class PktResp(MrfStruct):
     _fields_ = [
         ("type", c_uint8),
