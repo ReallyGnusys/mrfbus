@@ -24,9 +24,6 @@
 #include <device.h> // for I_F type
 //#include <mrf_if.h>
 
-#define MRF_ACK_FLAG_RETRY  1
-#define MRF_ACK_FLAG_DELIVERED 2
-
 
 typedef struct  __attribute__ ((packed)) {
   uint8 length;  // packet length

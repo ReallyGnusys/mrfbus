@@ -83,6 +83,7 @@ int mrf_app_init(){
   char sname[64];
   int appfd, tmp;
   mrf_debug("mrf_app_init stub\n");
+
   // need to open input application pipe
 
   sprintf(sname,"%s%d-app-in",SOCKET_DIR,_mrfid);
@@ -100,6 +101,33 @@ int mrf_app_init(){
   _outfd = open(sname,O_WRONLY);
   printf("opened out pipe %s fd = %d\n",sname,_outfd);
 
+  
+
+}
+
+int response_to_app(bnum){
+  char sname[64];
+  int outfd;
+  uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
+  uint8 len = buff[0];
+  sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
+  outfd = open(sname, O_WRONLY | O_NONBLOCK);
+
+  printf("response_to_app : bnum %d opened out pipe %s fd = %d\n", bnum, sname, outfd);
+  if (outfd == -1 ){
+    mrf_debug("failed to open fd = %d\n",outfd);
+    return -1;
+  }
+ if(len > _MRF_BUFFLEN){
+   mrf_debug("error - length is bonkers %u\n",len);
+   return -1;
+ }
+ int bc = write(outfd, buff,len );
+
+
+ mrf_debug("wrote %d bytes to outpipe %s\n",bc,sname);
+ close(outfd);
+ return 0;
 }
 
 
@@ -197,10 +225,11 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     mrf_debug(":end of hex");
     */
   }  
-
-  uint8 *btr = _mrf_buff_ptr(bnum)+ 0L;
   
-
+  // squirt complete response packet to higher level app
+  mrf_debug("about to send response\n");
+  int rc = response_to_app(bnum);
+  mrf_debug("send response.. I think rc %d\n",rc);
   _mrf_buff_free(bnum);
 
 }
