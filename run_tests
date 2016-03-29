@@ -42,7 +42,8 @@ kill $h2f_pid || true
 kill $stub_pid || true
 
 
-[ -z "$(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')" ] && exit -1
+[ -z "$(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')" ] && echo "failed to detect response" && false
+
 
 
 
