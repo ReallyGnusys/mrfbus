@@ -20,13 +20,13 @@ import Queue
 import time
 
 from mrf_structs import PktHeader
-
+MRFBUFFLEN = 128
 
 class rx_thread(threading.Thread):
     """
         A thread class to read stub output
     """
-   
+
     def __init__ (self, stub_out_fifo_path,q):
         self.stub_out_fifo_path = stub_out_fifo_path
         self.q = q
@@ -39,18 +39,11 @@ class rx_thread(threading.Thread):
     def stop(self):
         self._stop = True
     def run(self):
-        hdr = PktHeader()
         while True:
-            #print "rx_thread.run , calling read"
-            
             try:
-                resp = os.read(self.app_out_fifo, 8)
+                resp = os.read(self.app_out_fifo, MRFBUFFLEN)
                 print "rx_thread.read got something, length is %d"%len(resp)
-            
-                if len(resp) == len(hdr):
-                    hdr.load(bytes(resp))
-                    print "got hdr %s"%str(hdr)
-                    self.q.put(resp)
+                self.q.put(resp)
             except:
                 if self._stop:
                     return
@@ -66,12 +59,10 @@ class StubIf(object):
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         print "StubIf.__init__  opened app_fifo "
         outfname = "/tmp/mrf_bus/0-app-out"
-
  
 
     def cmd(self,dest,cmd_code,dstruct=None):
 
-        
         if dest > 255:
             print "dest > 255"
             return -1
@@ -105,9 +96,15 @@ class StubIf(object):
         while self.q.empty():
             time.sleep(0.1)
         resp = self.q.get()
+
+        hdr = PktHeader()
+
         print "got response..%s"%str(resp)
-        
-        
+        if len(resp) >= len(hdr):
+            hdr.load(bytes(resp)[0:len(hdr)-1])
+            print "got hdr %s"%str(hdr)
+
+
         print "exit cmd"
         self.rx_thread.join(0.1)
         print "join might have timeout out"
