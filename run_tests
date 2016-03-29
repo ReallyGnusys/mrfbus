@@ -34,7 +34,7 @@ sleep 1
 
 tail -n 20 ${LOGDIR}/stub.log
 # tidy up
-
+sleep 1
 kill $h01_pid || true
 kill $h02_pid || true
 kill $h20_pid || true
