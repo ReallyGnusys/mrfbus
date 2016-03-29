@@ -19,7 +19,7 @@ import threading
 import Queue
 import time
 
-from mrf_structs import PktHeader
+from mrf_structs import PktHeader, MrfSysCmds
 MRFBUFFLEN = 128
 
 class rx_thread(threading.Thread):
@@ -103,8 +103,25 @@ class StubIf(object):
         if len(resp) >= len(hdr):
             hdr.load(bytes(resp)[0:len(hdr)-1])
             print "got hdr %s"%str(hdr)
+            if hdr.type in MrfSysCmds.keys():
+                print "yes aye... we have decoded a command .. %s"%MrfSysCmds[hdr.type]['name']
+                if MrfSysCmds[hdr.type]['param'] and MrfSysCmds[hdr.type]['name'] == 'USR_RESP':  # testing aye
+                    print "got param... %s"%str(MrfSysCmds[hdr.type]['param'])
+                    param = MrfSysCmds[hdr.type]['param']()
+                    param.load(bytes(resp)[len(hdr):len(hdr)+len(param)-1])
+                    print param
+                    print "type is %d"%param.type
+                    if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
+                        print "got resp type %s"%MrfSysCmds[param.type]['resp']
+                        respobj = MrfSysCmds[param.type]['resp']()
+                        respobj.load(bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj) - 1 ])
+                        print respobj
+                        devname =  "".join(chr(i) for i in respobj.dev_name)
 
-
+                        print "Device name is %s"%devname
+                        print "total is %s"%bytearray(resp)
+                        buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
+                        print "resp : %s"%buffhex
         print "exit cmd"
         self.rx_thread.join(0.1)
         print "join might have timeout out"
