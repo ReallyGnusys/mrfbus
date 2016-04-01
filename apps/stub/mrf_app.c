@@ -126,6 +126,7 @@ int response_to_app(bnum){
 
 
  mrf_debug("wrote %d bytes to outpipe %s\n",bc,sname);
+ _mrf_print_hex_buff(buff,len);
  close(outfd);
  return 0;
 }
@@ -138,8 +139,11 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
 
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
-  mrf_debug("mrf_task_usr_resp :  type = %d\n",resp->type);
-  // send a seg ack when we get resp
+
+  uint8 *buff = (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
+
+  mrf_debug("mrf_task_usr_resp : bnum %u type = %u rlen %u msgid %u\n",bnum,resp->type,resp->rlen,resp->msgid);
+  _mrf_print_hex_buff(buff,buff[0]);
 
   if (resp->type == mrf_cmd_device_info){
     MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));

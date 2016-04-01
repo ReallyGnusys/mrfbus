@@ -10,7 +10,13 @@ class MrfStruct(BigEndianStructure):
     def __repr__(self):
         s = ''
         for field in self._fields_:
-            s += "%s %s\n"%(field[0],str(getattr(self,field[0])))
+            att = getattr(self,field[0])
+            print "type att = %s"%str(type(att))
+            if str(type(att)) == "<class 'mrf_structs.c_ubyte_Array_8'>":  #FIXME!
+                atts = "%s"%str(att)
+            else:
+                atts = "%x"%int(att)
+            s += "%s %s\n"%(field[0],atts)
         return s
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))

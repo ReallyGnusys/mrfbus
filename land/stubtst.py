@@ -60,6 +60,8 @@ class StubIf(object):
         print "StubIf.__init__  opened app_fifo "
         outfname = "/tmp/mrf_bus/0-app-out"
  
+    def bin2hex(self,buff):
+        return ''.join('{:02x}'.format(x) for x in bytearray(buff))
 
     def cmd(self,dest,cmd_code,dstruct=None):
 
@@ -98,30 +100,35 @@ class StubIf(object):
         resp = self.q.get()
 
         hdr = PktHeader()
-
-        print "got response..%s"%str(resp)
+        print "len PktHeader is %d"%len(hdr)
+        #buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
+        print "got response..%s"%self.bin2hex(resp)
         if len(resp) >= len(hdr):
-            hdr.load(bytes(resp)[0:len(hdr)-1])
+            hdr_data = bytes(resp)[0:len(hdr)]
+            print "length hdr_data is %d"%len(hdr_data)
+            print "hdr_data is %s"%self.bin2hex(hdr_data)
+            hdr.load(bytes(resp)[0:len(hdr)])
             print "got hdr %s"%str(hdr)
             if hdr.type in MrfSysCmds.keys():
                 print "yes aye... we have decoded a command .. %s"%MrfSysCmds[hdr.type]['name']
                 if MrfSysCmds[hdr.type]['param'] and MrfSysCmds[hdr.type]['name'] == 'USR_RESP':  # testing aye
-                    print "got param... %s"%str(MrfSysCmds[hdr.type]['param'])
                     param = MrfSysCmds[hdr.type]['param']()
-                    param.load(bytes(resp)[len(hdr):len(hdr)+len(param)-1])
+                    print "got param... %s len %d"%(str(MrfSysCmds[hdr.type]['param']),len(param))
+                    param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
+                    print "param_data is %s"%self.bin2hex(param_data)
+                    param.load(param_data)
                     print param
                     print "type is %d"%param.type
                     if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
                         print "got resp type %s"%MrfSysCmds[param.type]['resp']
                         respobj = MrfSysCmds[param.type]['resp']()
-                        respobj.load(bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj) - 1 ])
+                        respobj.load(bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj) ])
                         print respobj
                         devname =  "".join(chr(i) for i in respobj.dev_name)
 
                         print "Device name is %s"%devname
                         print "total is %s"%bytearray(resp)
-                        buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
-                        print "resp : %s"%buffhex
+                        
         print "exit cmd"
         self.rx_thread.join(0.1)
         print "join might have timeout out"

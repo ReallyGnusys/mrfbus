@@ -83,7 +83,7 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_task_resp\n");
+  mrf_debug("mrf_task_resp cmdcode %u bnum %u\n",cmd,bnum);
   _mrf_buff_print();
   
   mrf_debug("mrf_task_resp L1\n");
@@ -96,7 +96,10 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   mrf_debug("pushing to app queue as MRF_CMD_USR_RESP\n");
   // now put in application queue as MRF_CMD_USR_RESP
+  
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
+  MRF_PKT_RESP *rsp1 = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+ sizeof(MRF_PKT_HDR));
+  mrf_debug("resp->rlen %u resp->type %u resp->msgid %u\n",rsp1->rlen,rsp1->type,rsp1->msgid);
   hdr1->type = mrf_cmd_usr_resp;
   mrf_app_queue_push(bnum);
 }

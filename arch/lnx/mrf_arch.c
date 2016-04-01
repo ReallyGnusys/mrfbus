@@ -61,11 +61,11 @@ uint8 _nibble2hex(uint8 nib){
 
 void _mrf_print_hex_buff(uint8 *buff,uint16 len){
  
-  uint8 s[50];
+  uint8 s[_MRF_BUFFLEN*2 + 2];
   uint8 i;
   mrf_debug("print_hex_buff : len is %u buff:",len);
-  if (len > 16 ){
-    mrf_debug("try len < 16 - you had %d\n",len);
+  if (len >  _MRF_BUFFLEN){
+    mrf_debug("try len <= %u - you had %d\n",_MRF_BUFFLEN,len);
     return;
   }
   for ( i=0; i<len ; i++){

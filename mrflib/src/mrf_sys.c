@@ -175,7 +175,6 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len){
 int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
-
  MRF_ROUTE route;
  mrf_debug("\nmrf_send_response :  bnum %d  rlen %d\n",bnum,rlen);
 
@@ -200,12 +199,13 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
      hdr->usrc = _mrfid;
      hdr->hsrc = _mrfid;
 
-     resp-> rlen = rlen;
+     resp->rlen = rlen;
      resp->type = hdr->type;
      hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
      hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
-     mrf_debug("mrf_send_resp, responding - header follows\n");
+     mrf_debug("mrf_send_resp, responding - header follows(1)\n");
      mrf_print_packet_header(hdr);
+     mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
    }
 
  return 0;
