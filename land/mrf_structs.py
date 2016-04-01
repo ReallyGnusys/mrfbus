@@ -7,17 +7,41 @@ class MrfStruct(LittleEndianStructure):
     def __len__(self):
         return sizeof(self)
 
+    def attstr(self,att):
+        if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
+            atts =  "".join(chr(i) for i in att)
+        else:
+            atts = "0x%x"%int(att)
+        return atts
     def __repr__(self):
         s = ''
         for field in self._fields_:
             att = getattr(self,field[0])
+
+            atts = self.attstr(att)
+            """
             if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
                 atts =  "".join(chr(i) for i in att)
                 #atts = "%s"%str(att)
             else:
                 atts = "0x%x"%int(att)
+            """
             s += "%s %s\n"%(field[0],atts)
         return s
+    def __eq__(self,other):
+        for field in self._fields_:
+            att = getattr(self,field[0])
+            oatt = getattr(other,field[0])
+            atts = self.attstr(att)
+            oatts = self.attstr(oatt)
+            if atts != oatts:
+                print "cmp attname %s failed us %s other %s"%(field[0],atts,oatts)
+                return False
+        return True
+
+    def __ne__(self,other):
+        return not self.__eq__(other)
+
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)

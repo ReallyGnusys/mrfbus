@@ -18,9 +18,10 @@ import os
 import threading
 import Queue
 import time
-
-from mrf_structs import PktHeader, MrfSysCmds
+import sys
+from mrf_structs import PktHeader,PktDeviceInfo, MrfSysCmds
 MRFBUFFLEN = 128
+import ctypes
 
 class rx_thread(threading.Thread):
     """
@@ -69,7 +70,6 @@ class StubIf(object):
             print "dest > 255"
             return -1
 
-        print "cmd .. clearing q .."
         while not self.q.empty():
             self.q.get()
 
@@ -91,54 +91,95 @@ class StubIf(object):
         msg[3] = csum
         self.app_fifo.write(msg)
         self.app_fifo.flush()
-        print "wrote msg %s"%repr(msg)
-        
-        print "going to wait for q now..."
-
+        return 0
+    def response(self,timeout = 1.0):
+        elapsed = 0.0
+        tinc = 0.1
         while self.q.empty():
-            time.sleep(0.1)
+            time.sleep(tinc)
+            elapsed += tinc
+            if elapsed >= timeout:
+                print "response timed out"
+                return None
         resp = self.q.get()
 
         hdr = PktHeader()
-        print "len PktHeader is %d"%len(hdr)
         #buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
-        print "got response..%s"%self.bin2hex(resp)
+        #print "got response..%s"%self.bin2hex(resp)
         if len(resp) >= len(hdr):
             hdr_data = bytes(resp)[0:len(hdr)]
-            print "length hdr_data is %d"%len(hdr_data)
-            print "hdr_data is %s"%self.bin2hex(hdr_data)
             hdr.load(bytes(resp)[0:len(hdr)])
-            print "got hdr %s"%str(hdr)
             if hdr.type in MrfSysCmds.keys():
-                print "yes aye... we have decoded a command .. %s"%MrfSysCmds[hdr.type]['name']
                 if MrfSysCmds[hdr.type]['param'] and MrfSysCmds[hdr.type]['name'] == 'USR_RESP':  # testing aye
                     param = MrfSysCmds[hdr.type]['param']()
-                    print "got param... %s len %d"%(str(MrfSysCmds[hdr.type]['param']),len(param))
                     param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-                    print "param_data is %s"%self.bin2hex(param_data)
                     param.load(param_data)
-                    print param
-                    print "type is %d"%param.type
                     if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
                         respobj = MrfSysCmds[param.type]['resp']()
-                        print "got resp type %s length %d"%(MrfSysCmds[param.type]['resp'],len(respobj))
                         respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                        print "respdat is %s"%self.bin2hex(respdat)
                         respobj.load(respdat)
-                        print respobj
-                        devname =  "".join(chr(i) for i in respobj.dev_name)
-
-                        print "Device name is %s"%devname
+                        return respobj
+            return None
                         
-        print "exit cmd"
+    def quit(self):
         self.rx_thread.join(0.1)
         print "join might have timeout out"
         self.rx_thread.stop()
 
+    def cmd_test(self,dest,cmd_code,expected,dstruct=None):
+        rv = self.cmd(dest,cmd_code)
+        if (rv != 0):
+            return rv
+        rsp = self.response()
+
+        print "received %s"%repr(rsp)
+        print "expected %s"%repr(expected)        
+        if rsp != expected:
+            print "ERROR "
+            print "cmd_test failed"
+            return -1
+        else:
+            print "cmd_test passed"
+            return 0
 if __name__ == "__main__":
     si = StubIf()
-    rv = si.cmd(0x2f,3)
-    if rv == -1:
-        print "error -1"
-    
 
+    try:
+        ccode = 3
+
+
+        exp = PktDeviceInfo()
+
+
+
+        exp.netid = 0x25
+        exp.num_buffs = 0x10
+        exp.num_ifs = 0x4
+        #setattr(exp,'dev_name','hostsim')
+        exp.dev_name = (ctypes.c_uint8*10)(*(bytearray('hostsim')))
+
+        for dest in [ 0x01, 0x2,0x20, 0x2f]:
+            exp.mrfid = dest
+
+            rv = si.cmd_test(dest,ccode,exp,dstruct=None)
+            if rv != 0:
+                print "error rv was %d"%rv
+                sys.exit(-1)
+        
+        """
+        rv = si.cmd(0x2f,3)
+        rsp = si.response()
+        print "got rsp %s"%repr(rsp)
+        if rv == -1:
+            print "error -1"
+        """
+
+    except Exception as inst:
+        print "exception...doh!"
+        print type(inst)     # the exception instance
+        print inst.args      # arguments stored in .args
+        print inst           # __str__ allows args to be printed directly
+
+    si.quit()
+
+    sys.exit(0)
