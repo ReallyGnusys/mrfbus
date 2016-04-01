@@ -1,7 +1,7 @@
 from ctypes import *
 
 
-class MrfStruct(BigEndianStructure):
+class MrfStruct(LittleEndianStructure):
     def fromstr(self, string):
         memmove(addressof(self), string, sizeof(self))
     def __len__(self):
@@ -11,11 +11,11 @@ class MrfStruct(BigEndianStructure):
         s = ''
         for field in self._fields_:
             att = getattr(self,field[0])
-            print "type att = %s"%str(type(att))
-            if str(type(att)) == "<class 'mrf_structs.c_ubyte_Array_8'>":  #FIXME!
-                atts = "%s"%str(att)
+            if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
+                atts =  "".join(chr(i) for i in att)
+                #atts = "%s"%str(att)
             else:
-                atts = "%x"%int(att)
+                atts = "0x%x"%int(att)
             s += "%s %s\n"%(field[0],atts)
         return s
     def load(self, bytes):
@@ -65,7 +65,7 @@ class PktResp(MrfStruct):
     ]
 class PktDeviceInfo(MrfStruct):
     _fields_ = [
-        ("dev_name", c_uint8*8),
+        ("dev_name", c_uint8*10),
         ("mrfid", c_uint8),
         ("netid", c_uint8),
         ("num_buffs", c_uint8),

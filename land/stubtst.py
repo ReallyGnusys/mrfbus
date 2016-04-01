@@ -42,7 +42,7 @@ class rx_thread(threading.Thread):
         while True:
             try:
                 resp = os.read(self.app_out_fifo, MRFBUFFLEN)
-                print "rx_thread.read got something, length is %d"%len(resp)
+                #print "rx_thread.read got something, length is %d"%len(resp)
                 self.q.put(resp)
             except:
                 if self._stop:
@@ -120,14 +120,15 @@ class StubIf(object):
                     print param
                     print "type is %d"%param.type
                     if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
-                        print "got resp type %s"%MrfSysCmds[param.type]['resp']
                         respobj = MrfSysCmds[param.type]['resp']()
-                        respobj.load(bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj) ])
+                        print "got resp type %s length %d"%(MrfSysCmds[param.type]['resp'],len(respobj))
+                        respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
+                        print "respdat is %s"%self.bin2hex(respdat)
+                        respobj.load(respdat)
                         print respobj
                         devname =  "".join(chr(i) for i in respobj.dev_name)
 
                         print "Device name is %s"%devname
-                        print "total is %s"%bytearray(resp)
                         
         print "exit cmd"
         self.rx_thread.join(0.1)
