@@ -117,7 +117,7 @@ uint8 mrf_nexthop(MRF_ROUTE *route,uint8 us,uint8 dest){
   }
   else if (us == 1){
     //printf("us 1 : bd %d MUL %d \n",branch(dest),SNETSZ/0x10);
-    route->i_f = ( branch(dest) * 0x10/SNETSZ ) ; 
+    route->i_f = ( branch(dest) * 0x10/SNETSZ ) %  NUM_INTERFACES; 
     route->relay = branch(dest);
     return route->relay;
   }    

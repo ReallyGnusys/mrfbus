@@ -99,7 +99,6 @@ class StubIf(object):
             time.sleep(tinc)
             elapsed += tinc
             if elapsed >= timeout:
-                print "response timed out"
                 return None
         resp = self.q.get()
 
@@ -157,13 +156,35 @@ class StubIf(object):
                 print "error rv was %d"%rv
                 return rv
         return 0
-        
+
+    def discover_devices(self):
+        devs = []
+        cmd_code = 3
+        for dest in range(1,0x30):
+            rv = self.cmd(dest,cmd_code)
+            rsp = self.response(0.2)
+            if type(rsp) == type(PktDeviceInfo()):
+                devs.append(rsp)
+                print "found one at dest %x"%dest
+            else:
+                print "not found at dest %x"%dest
+        return devs
+
 if __name__ == "__main__":
     si = StubIf()
 
     try:
-        rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
-        
+        if False:
+            rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
+        else:
+            devs = si.discover_devices()
+            print "got %d devices"%len(devs)
+            for dev in devs:
+                print dev
+
+            if len(devs) == 4:
+                print "All devices detected"
+                rv = 0
         if rv != 0:
             print "tests failed"
             si.quit()

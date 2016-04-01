@@ -299,8 +299,8 @@ int _mrf_process_buff(uint8 bnum)
   uint8 len;
   MRF_PKT_HDR *pkt;
   uint8 type;
-  mrf_debug("_mrf_process_buff: processing buff number %d our _mrfid = %X \n",bnum,_mrfid);
   I_F owner = mrf_buff_owner(bnum);
+  mrf_debug("_mrf_process_buff: processing buff number %d our _mrfid = %X owner i_f %d \n",bnum,_mrfid, owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
   mrf_print_packet_header(pkt);
@@ -368,6 +368,7 @@ int _mrf_process_buff(uint8 bnum)
     mrf_nexthop(&route,_mrfid,pkt->udest);
     MRF_IF *ifp = mrf_if_ptr(route.i_f);
 
+    mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
     if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
       mrf_sack(bnum);   
     }
