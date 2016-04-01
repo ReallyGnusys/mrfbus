@@ -199,7 +199,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
     printf(" %d\n",fd);
-    perror("ERROR file open\n");
+    printf("ERROR file open\n");
     return -1;
   }
   if(buff[0] > _MRF_BUFFLEN){
