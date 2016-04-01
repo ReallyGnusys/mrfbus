@@ -141,17 +141,9 @@ class StubIf(object):
         else:
             print "cmd_test passed"
             return 0
-if __name__ == "__main__":
-    si = StubIf()
-
-    try:
+    def check_device_infos(self,dests):
         ccode = 3
-
-
         exp = PktDeviceInfo()
-
-
-
         exp.netid = 0x25
         exp.num_buffs = 0x10
         exp.num_ifs = 0x4
@@ -160,11 +152,27 @@ if __name__ == "__main__":
 
         for dest in [ 0x01, 0x2,0x20, 0x2f]:
             exp.mrfid = dest
-
-            rv = si.cmd_test(dest,ccode,exp,dstruct=None)
+            rv = self.cmd_test(dest,ccode,exp,dstruct=None)
             if rv != 0:
                 print "error rv was %d"%rv
-                sys.exit(-1)
+                return rv
+        return 0
+        
+if __name__ == "__main__":
+    si = StubIf()
+
+    try:
+        rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
+        
+        if rv != 0:
+            print "tests failed"
+            si.quit()
+
+            sys.exit(-1)
+
+        else:
+            print "All tests passed"
+            
         
         """
         rv = si.cmd(0x2f,3)
