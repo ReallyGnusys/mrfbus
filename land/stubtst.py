@@ -74,7 +74,7 @@ class StubIf(object):
             self.q.get()
 
         mlen = 4
-        if False and dstruct:
+        if dstruct:
             mlen += len(dstruct)
         if mlen > 64:
             print "mlen = %d"%mlen
@@ -83,12 +83,19 @@ class StubIf(object):
         msg[0] = mlen
         msg[1] = dest
         msg[2] = cmd_code
-    
+        
+        n = 3
+        if dstruct:
+            dbytes = dstruct.dump()
+            for b in dbytes:
+                msg[ n ] =  b
+                n += 1
+
         csum = 0
-        for i in xrange(mlen):
+        for i in xrange(mlen -1):
             csum += int(msg[i])
         csum = csum % 256
-        msg[3] = csum
+        msg[mlen - 1] = csum
         self.app_fifo.write(msg)
         self.app_fifo.flush()
         return 0
@@ -175,7 +182,10 @@ if __name__ == "__main__":
 
     try:
         if False:
-            rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
+            #rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
+            rv = si.cmd(0x1,11)
+            resp = si.response(0.2)
+            print "got resp %s"%repr(resp)
         else:
             devs = si.discover_devices()
             print "got %d devices"%len(devs)

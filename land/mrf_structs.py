@@ -96,6 +96,48 @@ class PktDeviceInfo(MrfStruct):
         ("num_ifs", c_uint8)
     ]
 
+class PktDeviceStatus(MrfStruct):
+    _fields_ = [
+        ("num_if", c_uint8),
+        ("buffs_total", c_uint8),
+        ("buffs_free", c_uint8),
+        ("errors", c_uint8),
+        ("tx_retries", c_uint16),
+        ("rx_pkts", c_uint32),
+        ("tx_pkts", c_uint32)
+    ]
+
+class PktSysInfo(MrfStruct):
+    _fields_ = [
+        ("num_cmds", c_uint8),
+        ("mrfbus_version", c_uint8*40),
+        ("modified", c_uint8),
+        ("build", c_uint8*8)
+    ]
+
+class PktAppInfo(MrfStruct):
+    _fields_ = [
+        ("name", c_uint8*16),
+        ("num_cmds", c_uint8)
+    ]
+class PktUint8(MrfStruct):
+    _fields_ = [
+        ("value", c_uint8)
+    ]
+
+class PktIfStats(MrfStruct):
+    _fields_ = [
+        ("rx_pkts", c_uint16),
+        ("tx_pkts", c_uint16),
+        ("tx_acks", c_uint16),
+        ("tx_overruns", c_uint16),
+        ("tx_retries", c_uint16),
+        ("unexp_ack", c_uint8),
+        ("alloc_err", c_uint8),
+        ("st_err", c_uint8)
+    ]
+
+
 MrfSysCmds = {
     0 : {
         'name' : "ACK",
@@ -107,6 +149,28 @@ MrfSysCmds = {
         'param': None,
         'resp': PktDeviceInfo
     },
+    4 :  {
+        'name' : "DEVICE_STATUS",
+        'param': None,
+        'resp': PktDeviceStatus
+    },
+    5 :  {
+        'name' : "SYS_INFO",
+        'param': None,
+        'resp': PktSysInfo
+    },
+    6 :  {
+        'name' : "IF_STATS",
+        'param': PktUint8,
+        'resp': PktIfStats
+    },
+    11 :  {
+        'name' : "APP_INFO",
+        'param': None,
+        'resp': PktAppInfo
+    },
+
+
     15 : {
         'name' : "USR_RESP",
         'param': PktResp,

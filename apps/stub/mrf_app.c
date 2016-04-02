@@ -30,9 +30,11 @@
 
 extern uint8 _mrfid;
 static uint8 buff[2048];
+
+
 static MRF_CMD_RES _appl_fifo_callback(int fd){
   ssize_t s;
-
+  uint8 i;
   mrf_debug("fifo callback for fd %d\n",fd);
   printf("event on fd %d\n",fd);
   s = read(fd, (char *)buff, 1024); // FIXME need to handle multiple packets
@@ -42,16 +44,32 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   _mrf_print_hex_buff(buff,s);
 
   if ( s < 4){
-    mrf_debug("len too small to take seriously\n");
+    mrf_debug("ignoring pkt with len too small \n");
     return MRF_CMD_RES_WARN;
   }
   
   uint8 len = buff[0];
-
+  
+    
+  
   if (s != len){
-    mrf_debug("not credible input\n");
+    mrf_debug("not credible input buff[0] %u should be same as message length %u \n",len,(unsigned int)s);
     return MRF_CMD_RES_WARN;
   }
+
+  uint8 csum = 0;
+
+  for (i = 0 ; i < len-1 ; i++)
+    csum += buff[i];
+  
+  mrf_debug("calculated csum %u  received csum %u\n",csum,buff[s-1]);
+
+  if ( csum != buff[s-1]) {
+    mrf_debug("packet checksum error, discarding\n");
+    return MRF_CMD_RES_WARN;
+
+  }
+
   uint8 bnum = mrf_alloc_if(NUM_INTERFACES);
   mrf_debug("allocated buffer number %u\n",bnum);
 
