@@ -139,11 +139,7 @@ class PktIfStats(MrfStruct):
 
 
 MrfSysCmds = {
-    0 : {
-        'name' : "ACK",
-        'param': None,
-        'resp' : None
-    },
+
     3 :  {
         'name' : "DEVICE_INFO",
         'param': None,

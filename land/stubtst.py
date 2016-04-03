@@ -19,7 +19,8 @@ import threading
 import Queue
 import time
 import sys
-from mrf_structs import PktHeader,PktDeviceInfo, MrfSysCmds
+import traceback
+from mrf_structs import PktHeader,PktDeviceInfo, PktUint8,MrfSysCmds
 MRFBUFFLEN = 128
 import ctypes
 
@@ -68,6 +69,28 @@ class StubIf(object):
 
         if dest > 255:
             print "dest > 255"
+            return -1
+
+
+        if cmd_code in MrfSysCmds.keys():
+            paramtype = MrfSysCmds[cmd_code]['param']
+
+            print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
+        else:
+            print "unrecognised cmd_code %d"%cmd_code
+            return -1
+            
+         
+        if type(dstruct) == type(None) and type(paramtype) != type(None):
+            print "No param sent , expected %s"%type(paramtype)
+            return -1
+        
+        if type(paramtype) == type(None) and type(dstruct) != type(None):
+            print "Param sent ( type %s ) but None expected"%type(dstruct)
+            return -1
+
+        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
+            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
             return -1
 
         while not self.q.empty():
@@ -129,7 +152,6 @@ class StubIf(object):
                         
     def quit(self):
         self.rx_thread.join(0.1)
-        print "join might have timeout out"
         self.rx_thread.stop()
 
     def cmd_test(self,dest,cmd_code,expected,dstruct=None):
@@ -183,7 +205,10 @@ if __name__ == "__main__":
     try:
         if False:
             #rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
-            rv = si.cmd(0x1,11)
+            param1 = PktUint8()
+            param1.value = 0
+
+            rv = si.cmd(0x1,6,dstruct=param1)
             resp = si.response(0.2)
             print "got resp %s"%repr(resp)
         else:
@@ -218,6 +243,7 @@ if __name__ == "__main__":
         print type(inst)     # the exception instance
         print inst.args      # arguments stored in .args
         print inst           # __str__ allows args to be printed directly
+        traceback.print_exc(file=sys.stdout)
 
     si.quit()
 
