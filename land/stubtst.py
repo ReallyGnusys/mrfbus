@@ -20,157 +20,25 @@ import Queue
 import time
 import sys
 import traceback
-from mrf_structs import PktHeader,PktDeviceInfo, PktUint8,MrfSysCmds
+from mrf_structs import *
 MRFBUFFLEN = 128
 import ctypes
 
-class rx_thread(threading.Thread):
-    """
-        A thread class to read stub output
-    """
+from teststub import StubIf
 
-    def __init__ (self, stub_out_fifo_path,q):
-        self.stub_out_fifo_path = stub_out_fifo_path
-        self.q = q
-        print "rx_thread.init: stub_out_fifo_path = %s"%self.stub_out_fifo_path
-        self.app_out_fifo = os.open(self.stub_out_fifo_path, os.O_RDONLY | os.O_NONBLOCK)
-        print "rx_thread app_out_fifo type is %s"%type(self.app_out_fifo)
-        self._stop = False
-        threading.Thread.__init__ (self)
-   
-    def stop(self):
-        self._stop = True
-    def run(self):
-        while True:
-            try:
-                resp = os.read(self.app_out_fifo, MRFBUFFLEN)
-                #print "rx_thread.read got something, length is %d"%len(resp)
-                self.q.put(resp)
-            except:
-                if self._stop:
-                    return
+import unittest
 
+class StubTestCase(unittest.TestCase):
+    def setUp(self):
+        self.stub = StubIf()
 
-class StubIf(object):
-    def __init__(self):
-        self.q = Queue.Queue()
-        self.stub_out_pipe_path = "/tmp/mrf_bus/0-app-out"
+    def tearDown(self):
+        self.stub.quit()
+
+class TestMrfBus(StubTestCase):
         
-        self.rx_thread = rx_thread(self.stub_out_pipe_path, self.q)
-        self.rx_thread.start()
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
-        print "StubIf.__init__  opened app_fifo "
-        outfname = "/tmp/mrf_bus/0-app-out"
- 
-    def bin2hex(self,buff):
-        return ''.join('{:02x}'.format(x) for x in bytearray(buff))
-
-    def cmd(self,dest,cmd_code,dstruct=None):
-
-        if dest > 255:
-            print "dest > 255"
-            return -1
-
-
-        if cmd_code in MrfSysCmds.keys():
-            paramtype = MrfSysCmds[cmd_code]['param']
-
-            print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
-        else:
-            print "unrecognised cmd_code %d"%cmd_code
-            return -1
-            
-         
-        if type(dstruct) == type(None) and type(paramtype) != type(None):
-            print "No param sent , expected %s"%type(paramtype)
-            return -1
-        
-        if type(paramtype) == type(None) and type(dstruct) != type(None):
-            print "Param sent ( type %s ) but None expected"%type(dstruct)
-            return -1
-
-        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
-            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
-            return -1
-
-        while not self.q.empty():
-            self.q.get()
-
-        mlen = 4
-        if dstruct:
-            mlen += len(dstruct)
-        if mlen > 64:
-            print "mlen = %d"%mlen
-            return -1
-        msg = bytearray(mlen)
-        msg[0] = mlen
-        msg[1] = dest
-        msg[2] = cmd_code
-        
-        n = 3
-        if dstruct:
-            dbytes = dstruct.dump()
-            for b in dbytes:
-                msg[ n ] =  b
-                n += 1
-
-        csum = 0
-        for i in xrange(mlen -1):
-            csum += int(msg[i])
-        csum = csum % 256
-        msg[mlen - 1] = csum
-        self.app_fifo.write(msg)
-        self.app_fifo.flush()
-        return 0
-    def response(self,timeout = 1.0):
-        elapsed = 0.0
-        tinc = 0.1
-        while self.q.empty():
-            time.sleep(tinc)
-            elapsed += tinc
-            if elapsed >= timeout:
-                return None
-        resp = self.q.get()
-
-        hdr = PktHeader()
-        #buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
-        #print "got response..%s"%self.bin2hex(resp)
-        if len(resp) >= len(hdr):
-            hdr_data = bytes(resp)[0:len(hdr)]
-            hdr.load(bytes(resp)[0:len(hdr)])
-            if hdr.type in MrfSysCmds.keys():
-                if MrfSysCmds[hdr.type]['param'] and MrfSysCmds[hdr.type]['name'] == 'USR_RESP':  # testing aye
-                    param = MrfSysCmds[hdr.type]['param']()
-                    param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-                    param.load(param_data)
-                    if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
-                        respobj = MrfSysCmds[param.type]['resp']()
-                        respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                        respobj.load(respdat)
-                        return respobj
-            return None
-                        
-    def quit(self):
-        self.rx_thread.join(0.1)
-        self.rx_thread.stop()
-
-    def cmd_test(self,dest,cmd_code,expected,dstruct=None):
-        rv = self.cmd(dest,cmd_code)
-        if (rv != 0):
-            return rv
-        rsp = self.response()
-
-        print "received %s"%repr(rsp)
-        print "expected %s"%repr(expected)        
-        if rsp != expected:
-            print "ERROR "
-            print "cmd_test failed"
-            return -1
-        else:
-            print "cmd_test passed"
-            return 0
-    def check_device_infos(self,dests):
-        ccode = 3
+    def test_device_infos(self,dests = [ 0x01, 0x2,0x20, 0x2f] ):
+        ccode = mrf_cmd_device_info
         exp = PktDeviceInfo()
         exp.netid = 0x25
         exp.num_buffs = 0x10
@@ -178,73 +46,29 @@ class StubIf(object):
         #setattr(exp,'dev_name','hostsim')
         exp.dev_name = (ctypes.c_uint8*10)(*(bytearray('hostsim')))
 
-        for dest in [ 0x01, 0x2,0x20, 0x2f]:
+        for dest in dests:
             exp.mrfid = dest
-            rv = self.cmd_test(dest,ccode,exp,dstruct=None)
-            if rv != 0:
-                print "error rv was %d"%rv
-                return rv
-        return 0
+            rv = self.stub.cmd_test(dest,ccode,exp,dstruct=None)
+            self.assertEqual(rv,0)
+ 
 
-    def discover_devices(self):
+    def test_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
         devs = []
-        cmd_code = 3
+        cmd_code = mrf_cmd_device_info
         for dest in range(1,0x30):
-            rv = self.cmd(dest,cmd_code)
-            rsp = self.response(0.2)
+            rv = self.stub.cmd(dest,cmd_code)
+            rsp = self.stub.response(0.2)
             if type(rsp) == type(PktDeviceInfo()):
                 devs.append(rsp)
                 print "found one at dest %x"%dest
             else:
                 print "not found at dest %x"%dest
-        return devs
+
+        self.assertEqual(len(devs),len(dests))
+
+        for dev in devs:
+            print dev
+            self.assertTrue(dev.mrfid in dests)
 
 if __name__ == "__main__":
-    si = StubIf()
-
-    try:
-        if False:
-            #rv = si.check_device_infos( [ 0x01, 0x2,0x20, 0x2f] )
-            param1 = PktUint8()
-            param1.value = 0
-
-            rv = si.cmd(0x1,6,dstruct=param1)
-            resp = si.response(0.2)
-            print "got resp %s"%repr(resp)
-        else:
-            devs = si.discover_devices()
-            print "got %d devices"%len(devs)
-            for dev in devs:
-                print dev
-
-            if len(devs) == 4:
-                print "All devices detected"
-                rv = 0
-        if rv != 0:
-            print "tests failed"
-            si.quit()
-
-            sys.exit(-1)
-
-        else:
-            print "All tests passed"
-            
-        
-        """
-        rv = si.cmd(0x2f,3)
-        rsp = si.response()
-        print "got rsp %s"%repr(rsp)
-        if rv == -1:
-            print "error -1"
-        """
-
-    except Exception as inst:
-        print "exception...doh!"
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst           # __str__ allows args to be printed directly
-        traceback.print_exc(file=sys.stdout)
-
-    si.quit()
-
-    sys.exit(0)
+    unittest.main()
