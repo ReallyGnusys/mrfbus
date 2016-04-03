@@ -11,7 +11,7 @@ class MrfStruct(LittleEndianStructure):
         if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
             atts =  "".join(chr(i) for i in att)
         else:
-            atts = "0x%x"%int(att)
+            atts = "%d"%int(att)
         return atts
     def __repr__(self):
         s = ''
@@ -24,7 +24,7 @@ class MrfStruct(LittleEndianStructure):
                 atts =  "".join(chr(i) for i in att)
                 #atts = "%s"%str(att)
             else:
-                atts = "0x%x"%int(att)
+                atts = "%d"%int(att)
             """
             s += "%s %s\n"%(field[0],atts)
         return s
@@ -42,11 +42,23 @@ class MrfStruct(LittleEndianStructure):
     def __ne__(self,other):
         return not self.__eq__(other)
 
+    def tbd_unmunge(self):
+        print "mungeabletype is %s"%type(c_uint())
+        for field in self._fields_:
+            att = getattr(self,field[0])
+            attype = field[1]
+            print "got att %s  type %s"%(field[0],type(attype()))
+            if type(attype()) == type(c_uint()):
+                print "its for munging"
+                nattr = att >> 16 + ((att & 0xffff) << 16)
+                setattr(self,field[0],nattr)
+        print repr(self)
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
     def dump(self):
         return buffer(self)[:]
+
 
 # FIXME should be able to generate core command set arg and return templates from C here
 mrf_cmd_ack = 0
@@ -103,6 +115,7 @@ class PktDeviceStatus(MrfStruct):
         ("buffs_free", c_uint8),
         ("errors", c_uint8),
         ("tx_retries", c_uint16),
+        ("pad2", c_uint16),
         ("rx_pkts", c_uint32),
         ("tx_pkts", c_uint32)
     ]

@@ -340,8 +340,9 @@ int _mrf_process_buff(uint8 bnum)
   // check if we are udest
 
   if ( pkt->udest == _mrfid){
-      if(type >= mrf_cmd_resp)
-        ifp->status->stats.rx_pkts++;     
+    //if(type >= mrf_cmd_resp)
+    //   ifp->status->stats.rx_pkts++;     // FIXME this is already incremented in mrf_buff_loaded, we need a separate stat
+    // for command packets executed by us
       if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
         mrf_debug("executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 

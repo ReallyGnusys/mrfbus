@@ -30,29 +30,8 @@ sleep 1
 
 python land/stubtst.py
 
-sleep 1
-
-tail -n 20 ${LOGDIR}/stub.log
-# tidy up
-sleep 1
-kill $h01_pid || true
-kill $h02_pid || true
-kill $h20_pid || true
-kill $h2f_pid || true
-kill $stub_pid || true
 
 
-sleep 1
-
-checkresponse=$(tail -n 20 ${LOGDIR}/stub.log | grep 'DEVICE hostsim MRFID 0x2F')
-
-if [ -z "${checkresponse}" ] ; then
-  echo "failed to detect response"
-  false
-else
-  echo "detected expected response : ${checkresponse}"
-  true
-fi
 
 
 
