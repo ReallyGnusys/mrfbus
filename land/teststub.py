@@ -162,8 +162,8 @@ class StubIf(object):
             return rv
         rsp = self.response()
 
-        print "received %s"%repr(rsp)
-        print "expected %s"%repr(expected)        
+        print "received:\n %s"%repr(rsp)
+        print "expected:\n %s"%repr(expected)        
         if rsp != expected:
             print "ERROR "
             print "cmd_test failed"

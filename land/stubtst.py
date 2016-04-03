@@ -31,7 +31,7 @@ import unittest
 
 class StubTestCase(unittest.TestCase):
     def setUp(self):
-        self.timeout = 0.2
+        self.timeout = 0.4
         self.stub = StubIf()
 
     def tearDown(self):
@@ -93,12 +93,13 @@ class TestMrfBus(StubTestCase):
         
         self.assertEqual(ever,rver)
 
+    @unittest.skip("temp disabled - too long")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
         devs = []
         cmd_code = mrf_cmd_device_info
         for dest in range(1,0x30):
             rv = self.stub.cmd(dest,cmd_code)
-            rsp = self.stub.response(0.2)
+            rsp = self.stub.response(timeout=self.timeout)
             if type(rsp) == type(PktDeviceInfo()):
                 devs.append(rsp)
                 print "found device at dest %x"%dest
@@ -121,6 +122,11 @@ class TestMrfBus(StubTestCase):
     def test02_device_tests(self,dests =  [ 0x01, 0x2,0x20, 0x2f]):
         for dest in dests:
             self.device_tests(dest)
+
+    def test03_device_tests_repeat(self):
+        for i in xrange(10):
+            self.test02_device_tests()
+
 
 if __name__ == "__main__":
     unittest.main()

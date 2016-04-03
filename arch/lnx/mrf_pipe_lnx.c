@@ -207,5 +207,6 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   }
   tb = copy_to_txbuff(buff,buff[0],txbuff);
   bc = write(fd, txbuff,tb );
+  close(fd);
   //printf("bc = %d  fd = %d\n",bc,fd);
 }
