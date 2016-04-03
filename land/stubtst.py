@@ -93,24 +93,7 @@ class TestMrfBus(StubTestCase):
         
         self.assertEqual(ever,rver)
 
-
-    @unittest.skip("temp disabled")
-    def test_device_infos(self,dests = [ 0x01, 0x2,0x20, 0x2f] ):
-        ccode = mrf_cmd_device_info
-        exp = PktDeviceInfo()
-        exp.netid = 0x25
-        exp.num_buffs = 0x10
-        exp.num_ifs = 0x4
-        #setattr(exp,'dev_name','hostsim')
-        exp.dev_name = (ctypes.c_uint8*10)(*(bytearray('hostsim')))
-
-        for dest in dests:
-            exp.mrfid = dest
-            rv = self.stub.cmd_test(dest,ccode,exp,dstruct=None)
-            self.assertEqual(rv,0)
- 
-    @unittest.skip("temp disabled")
-    def test_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
+    def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
         devs = []
         cmd_code = mrf_cmd_device_info
         for dest in range(1,0x30):
@@ -118,9 +101,8 @@ class TestMrfBus(StubTestCase):
             rsp = self.stub.response(0.2)
             if type(rsp) == type(PktDeviceInfo()):
                 devs.append(rsp)
-                print "found one at dest %x"%dest
-            else:
-                print "not found at dest %x"%dest
+                print "found device at dest %x"%dest
+                print repr(rsp)
 
         self.assertEqual(len(devs),len(dests))
         found = []
@@ -130,11 +112,13 @@ class TestMrfBus(StubTestCase):
             self.assertTrue(dev.mrfid not in found)
             found.append(dev.mrfid)
 
+
     def device_tests(self,dest):
         self.dev_info_test(dest)
         self.dev_status_test(dest)
         self.sys_info_test(dest)
-    def test_devices(self,dests =  [ 0x01, 0x2,0x20, 0x2f]):
+
+    def test02_device_tests(self,dests =  [ 0x01, 0x2,0x20, 0x2f]):
         for dest in dests:
             self.device_tests(dest)
 

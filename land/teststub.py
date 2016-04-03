@@ -74,7 +74,7 @@ class StubIf(object):
         if cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cmd_code]['param']
 
-            print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
+            #print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
         else:
             print "unrecognised cmd_code %d"%cmd_code
             return -1
