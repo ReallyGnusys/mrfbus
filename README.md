@@ -21,13 +21,17 @@ To simplify deployment of ultra low power microcontroller applications networked
 
 [TI CC430F5137](http://www.ti.com/product/CC430F5137)
 
-### Why not use contiki? ###
+### Why is it better than something I can lash up from a blinking LED example program in a weekend? ###
 
-There appears no support for CC430F5137. 
+MRFBUS provides a multi-hop message delivery service and a core command set for all devices.  All MRFBUS devices are capable of routing packets across interfaces, so mixed microcontroller networks using UART and RF segments can be quickly deployed. 
 
-Contiki is a much more fully featured OS with IP network and filesystem support. MRFBUS is intended to connect ultra lightweight sensor and actuator devices to a linux host with minimum fuss, rather than make the devices directly accessible to the wider IP network. MRFBUS provides it's own network to handle delivery of messages across multiple hops as well as an execution framework to support development of low power, high reliability motes.
+Some effort has been made to separate the system code from application code as well as to organise h/w dependent code in a consistent way. 
+
+Linux devices can participate in MRFBUS networks, enabling higher level applications to access MRFBUS devices from the wider network.
 
 The default MRFBUS app compiles into less than 16K of ROM for a CC430F5137.
+
+The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread. Most of the code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment.
 
 ### What does the default MRFBUS app do?
 
