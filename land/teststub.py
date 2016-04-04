@@ -20,8 +20,10 @@ import time
 import sys
 import traceback
 from mrf_structs import *
-MRFBUFFLEN = 128
 import ctypes
+import unittest
+
+
 
 class rx_thread(threading.Thread):
     """
@@ -172,3 +174,11 @@ class StubIf(object):
             print "cmd_test passed"
             return 0
 
+
+class StubTestCase(unittest.TestCase):
+    def setUp(self):
+        self.timeout = 0.4
+        self.stub = StubIf()
+
+    def tearDown(self):
+        self.stub.quit()
