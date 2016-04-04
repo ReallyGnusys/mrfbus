@@ -25,17 +25,10 @@ from mrf_structs import *
 MRFBUFFLEN = 128
 import ctypes
 
-from teststub import StubIf
+from teststub import StubTestCase
 
 import unittest
 
-class StubTestCase(unittest.TestCase):
-    def setUp(self):
-        self.timeout = 0.4
-        self.stub = StubIf()
-
-    def tearDown(self):
-        self.stub.quit()
 
 class TestMrfBus(StubTestCase):
 

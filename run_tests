@@ -28,7 +28,7 @@ sleep 1
 
 # run stubtst
 
-python land/stubtst.py
+python land/core_tests.py
 
 
 
