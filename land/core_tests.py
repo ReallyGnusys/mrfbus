@@ -51,7 +51,7 @@ class TestMrfBus(StubTestCase):
         self.stub.cmd(dest,ccode)
         resp = self.stub.response(timeout=self.timeout)
         
-        print "dev_status_test : dest 0x%u , received :\n%s"%(dest,repr(resp))
+        print "dev_status_test : dest %u , received :\n%s"%(dest,repr(resp))
 
         self.assertEqual(type(PktDeviceStatus()),type(resp))
         # assumes this is  linux hostsim 
