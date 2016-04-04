@@ -55,9 +55,9 @@ class TestMrfBus(StubTestCase):
 
         self.assertEqual(type(PktDeviceStatus()),type(resp))
         # assumes this is  linux hostsim 
-        self.assertEqual(resp.num_if,4)
-        self.assertEqual(resp.buffs_total,0x10)
-        self.assertEqual(resp.errors,0)
+        self.assertEqual(resp.num_if, 4)
+        self.assertEqual(resp.buffs_total, 0x10)
+        self.assertEqual(resp.errors, 0)
 
         ## check rx tx pkts increment
         rxp = resp.rx_pkts
