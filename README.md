@@ -23,13 +23,13 @@ To simplify deployment of ultra low power microcontroller applications networked
 
 ### Why is it better than something I can lash up from a blinking LED example program in a weekend? ###
 
-MRFBUS provides a multi-hop message delivery service and a core command set for all devices.  All MRFBUS devices are capable of routing packets across interfaces, so mixed microcontroller networks using UART and RF segments can be quickly deployed. 
+MRFBUS provides a multi-hop message delivery service with automatic retries spanning RF, uart and unix fifo channels.  All MRFBUS devices are capable of routing packets across interfaces, so mixed microcontroller networks using UART and RF segments can be quickly deployed. 
 
 Some effort has been made to separate the system code from application code as well as to organise h/w dependent code in a consistent way. 
 
 Linux devices can participate in MRFBUS networks, enabling higher level applications to access MRFBUS devices from the wider network.
 
-The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread.  Most of the code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment. 
+The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread that uses minimal CPU time.  Most code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment. 
 
 ### What does the default MRFBUS app do?
 
