@@ -29,9 +29,7 @@ Some effort has been made to separate the system code from application code as w
 
 Linux devices can participate in MRFBUS networks, enabling higher level applications to access MRFBUS devices from the wider network.
 
-The default MRFBUS app compiles into less than 16K of ROM for a CC430F5137.
-
-The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread. Most of the code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment.
+The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread.  Most of the code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment. 
 
 ### What does the default MRFBUS app do?
 
@@ -41,6 +39,8 @@ The core MRFBUS command set supports network mapping and debug by higher level a
 It allows an application to determine essential information about a mote and it's functions.
 Provides network settime and gettime implementations for clock synchronisation.
 Each MRFBUS device participates in message routing over the network by default. All devices can route messages between interfaces.
+
+The default MRFBUS app compiles into less than 16K of ROM for a CC430F5137.
 
 
 ### How does it interface with linux?
