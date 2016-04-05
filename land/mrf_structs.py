@@ -60,24 +60,6 @@ class MrfStruct(LittleEndianStructure):
         return buffer(self)[:]
 
 
-# FIXME should be able to generate core command set arg and return templates from C here
-mrf_cmd_ack = 0
-mrf_cmd_retry = 1
-mrf_cmd_resp = 2
-mrf_cmd_device_info = 3
-mrf_cmd_device_status = 4
-mrf_cmd_sys_info = 5
-mrf_cmd_if_stats = 6
-mrf_cmd_get_time = 7
-mrf_cmd_set_time = 8
-mrf_cmd_buff_state = 9
-mrf_cmd_cmd_info = 10
-mrf_cmd_app_info = 11
-mrf_cmd_app_cmd_info = 12
-mrf_cmd_test_1 = 13 
-mrf_cmd_test_2 = 14
-mrf_cmd_usr_resp = 15
-MRF_NUM_SYS_CMDS = 16
 
 
 # constants from somewhere..
@@ -133,6 +115,16 @@ class PktSysInfo(MrfStruct):
         ("build", c_uint8*8)
     ]
 
+
+class PktCmdInfo(MrfStruct):
+    _fields_ = [
+        ("type", c_uint8),
+        ("name",c_uint8*16),
+        ("cflags", c_uint8),
+        ("req_size", c_uint8),
+        ("rsp_size", c_uint8)
+        ]
+
 class PktAppInfo(MrfStruct):
     _fields_ = [
         ("name", c_uint8*16),
@@ -155,10 +147,28 @@ class PktIfStats(MrfStruct):
         ("st_err", c_uint8)
     ]
 
+# FIXME should be able to generate core command set arg and return templates from C here
+mrf_cmd_ack = 0
+mrf_cmd_retry = 1
+mrf_cmd_resp = 2
+mrf_cmd_device_info = 3
+mrf_cmd_device_status = 4
+mrf_cmd_sys_info = 5
+mrf_cmd_if_stats = 6
+mrf_cmd_get_time = 7
+mrf_cmd_set_time = 8
+mrf_cmd_buff_state = 9
+mrf_cmd_cmd_info = 10
+mrf_cmd_app_info = 11
+mrf_cmd_app_cmd_info = 12
+mrf_cmd_test_1 = 13 
+mrf_cmd_test_2 = 14
+mrf_cmd_usr_resp = 15
+MRF_NUM_SYS_CMDS = 16
 
 MrfSysCmds = {
 
-    3 :  {
+    mrf_cmd_device_info :  {
         'name' : "DEVICE_INFO",
         'param': None,
         'resp': PktDeviceInfo
@@ -178,6 +188,7 @@ MrfSysCmds = {
         'param': PktUint8,
         'resp': PktIfStats
     },
+
     11 :  {
         'name' : "APP_INFO",
         'param': None,

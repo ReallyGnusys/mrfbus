@@ -34,6 +34,9 @@ class TestMrfBus(StubTestCase):
 
 
     def dev_info_test(self,dest):
+        print "*********************************"
+        print "* device info test (dest 0x%02x)"%dest
+        print "*********************************"
         ccode = mrf_cmd_device_info
         exp = PktDeviceInfo()
         exp.netid = 0x25
@@ -46,6 +49,9 @@ class TestMrfBus(StubTestCase):
         self.assertEqual(rv,0)
         
     def dev_status_test(self,dest):
+        print "**********************"
+        print "* device status test (dest 0x%02x)"%dest
+        print "**********************"
         ccode = mrf_cmd_device_status
 
         self.stub.cmd(dest,ccode)
@@ -69,6 +75,9 @@ class TestMrfBus(StubTestCase):
         self.assertEqual(resp.rx_pkts, rxp+1)
         self.assertEqual(resp.tx_pkts, txp+1)
     def sys_info_test(self,dest):
+        print "**********************"
+        print "* sys info test   (dest 0x%02x)"%dest
+        print "**********************"
         gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
@@ -77,6 +86,9 @@ class TestMrfBus(StubTestCase):
         print "got resp %s"%repr(resp)
         self.assertEqual(type(PktSysInfo()),type(resp))
 
+
+        self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
+        ## long winded faff to check git hash 
         exp = PktSysInfo()
         exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
         att1 = getattr(exp,'mrfbus_version')
@@ -85,6 +97,27 @@ class TestMrfBus(StubTestCase):
         rver = resp.attstr(att1)
         
         self.assertEqual(ever,rver)
+
+
+    def app_sys_cmd_test(self,dest):
+        print "**********************"
+        print "* app sys cmd test (dest 0x%02x)"%dest
+        print "**********************"
+        ccode = mrf_cmd_app_info
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktAppInfo()),type(resp))
+       
+    def app_info_test(self,dest):
+        print "**********************"
+        print "* app info test (dest 0x%02x)"%dest
+        print "**********************"
+        ccode = mrf_cmd_app_info
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktAppInfo()),type(resp))
 
     @unittest.skip("temp disabled - too long")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
@@ -111,6 +144,7 @@ class TestMrfBus(StubTestCase):
         self.dev_info_test(dest)
         self.dev_status_test(dest)
         self.sys_info_test(dest)
+        self.app_info_test(dest)
 
     def test02_device_tests(self,dests =  [ 0x01, 0x2,0x20, 0x2f]):
         for dest in dests:

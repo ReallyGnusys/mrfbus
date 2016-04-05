@@ -28,8 +28,6 @@ import ctypes
 from teststub import StubIf
 
 
-
-
 class TestMrfBus():
 
     def __init__(self):
@@ -37,7 +35,7 @@ class TestMrfBus():
         self.stub = StubIf()
 
     def assertEqual(self,a,b):
-        return True
+        return a == b
     def assertTrue(self,a):
         return a
 
@@ -94,6 +92,17 @@ class TestMrfBus():
         
         self.assertEqual(ever,rver)
 
+
+    def app_info_test(self,dest):
+        gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
+
+        ccode = mrf_cmd_sys_info
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp %s"%repr(resp)
+        self.assertEqual(type(PktSysInfo()),type(resp))
+
+
     def test01_discover_devices(self,dests = [0x2]):
         devs = []
         cmd_code = mrf_cmd_device_info
@@ -116,8 +125,8 @@ class TestMrfBus():
 
     def device_tests(self,dest):
         self.dev_info_test(dest)
-        #self.dev_status_test(dest)
-        #self.sys_info_test(dest)
+        self.dev_status_test(dest)
+        self.sys_info_test(dest)
 
     def test02_device_tests(self,dests =  [0x2]):
         for dest in dests:
@@ -128,11 +137,16 @@ class TestMrfBus():
 
 
 if __name__ == "__main__":
-
     tst = TestMrfBus()
-
-    tst.dev_info_test(0x2)
-    tst.dev_status_test(0x2)
-    tst.sys_info_test(0x2)
+    try:
+        tst.dev_info_test(0x2)
+        tst.dev_status_test(0x2)
+        tst.sys_info_test(0x2)
+        tst.test03_device_tests_repeat()
+    except Exception as inst:
+        print "exception...doh!"
+        print type(inst)     # the exception instance
+        print inst.args      # arguments stored in .args
+        print inst           # __str__ allows args to be printed directly
+        traceback.print_exc(file=sys.stdout)
     tst.stub.quit()
-    #unittest.main()
