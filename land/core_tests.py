@@ -77,7 +77,7 @@ class DeviceTestCase(StubTestCase):
         
         self.assertEqual(resp.rx_pkts, rxp+1)
         self.assertEqual(resp.tx_pkts, txp+1)
-    def sys_info_test(self,dest):
+    def sys_info_test(self,dest,checkgit=True):
         print "**********************"
         print "* sys info test   (dest 0x%02x)"%dest
         print "**********************"
@@ -99,7 +99,8 @@ class DeviceTestCase(StubTestCase):
         att1 = getattr(resp,'mrfbus_version')
         rver = resp.attstr(att1)
         
-        self.assertEqual(ever,rver)
+        if checkgit:
+            self.assertEqual(ever,rver)
 
         ccode = mrf_cmd_cmd_info   # eyup
         paramstr = PktUint8()

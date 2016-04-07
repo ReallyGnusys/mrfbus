@@ -45,7 +45,7 @@ class TestPt1000(DeviceTestCase):
 
         self.dev_info_test(self.dest)
         self.dev_status_test(self.dest)
-        self.sys_info_test(self.dest)
+        self.sys_info_test(self.dest,checkgit=False)
 
 if __name__ == "__main__":
     unittest.main()
