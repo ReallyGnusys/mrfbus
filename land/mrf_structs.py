@@ -9,7 +9,12 @@ class MrfStruct(LittleEndianStructure):
 
     def attstr(self,att):
         if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
-            atts =  "".join(chr(i) for i in att)
+            atts = ""
+            for i in att:
+                if i != 0:
+                    atts += "%c"%chr(i)
+                else:
+                    break
         else:
             atts = "%d"%int(att)
         return atts
@@ -109,17 +114,17 @@ class PktDeviceStatus(MrfStruct):
 
 class PktSysInfo(MrfStruct):
     _fields_ = [
-        ("num_cmds", c_uint8),
         ("mrfbus_version", c_uint8*40),
-        ("modified", c_uint8),
-        ("build", c_uint8*8)
+        ("build", c_uint8*8),
+        ("num_cmds", c_uint8),
+        ("modified", c_uint8)
     ]
 
 
 class PktCmdInfo(MrfStruct):
     _fields_ = [
-        ("type", c_uint8),
         ("name",c_uint8*16),
+        ("type", c_uint8),
         ("cflags", c_uint8),
         ("req_size", c_uint8),
         ("rsp_size", c_uint8)
@@ -173,30 +178,34 @@ MrfSysCmds = {
         'param': None,
         'resp': PktDeviceInfo
     },
-    4 :  {
+    mrf_cmd_device_status :  {
         'name' : "DEVICE_STATUS",
         'param': None,
         'resp': PktDeviceStatus
     },
-    5 :  {
+    mrf_cmd_sys_info :  {
         'name' : "SYS_INFO",
         'param': None,
         'resp': PktSysInfo
     },
-    6 :  {
+    mrf_cmd_if_stats :  {
         'name' : "IF_STATS",
         'param': PktUint8,
         'resp': PktIfStats
     },
-
-    11 :  {
+    mrf_cmd_cmd_info: {
+        'name' : "APP_INFO",
+        'param': PktUint8,
+        'resp': PktCmdInfo
+    },
+    mrf_cmd_app_info :  {
         'name' : "APP_INFO",
         'param': None,
         'resp': PktAppInfo
     },
 
 
-    15 : {
+    mrf_cmd_usr_resp : {
         'name' : "USR_RESP",
         'param': PktResp,
         'resp' : None        

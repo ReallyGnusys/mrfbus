@@ -83,7 +83,7 @@ class TestMrfBus(StubTestCase):
         ccode = mrf_cmd_sys_info
         self.stub.cmd(dest,ccode)
         resp = self.stub.response(timeout=self.timeout)
-        print "got resp %s"%repr(resp)
+        print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktSysInfo()),type(resp))
 
 
@@ -98,6 +98,15 @@ class TestMrfBus(StubTestCase):
         
         self.assertEqual(ever,rver)
 
+        ccode = mrf_cmd_cmd_info   # eyup
+        
+        paramstr = PktUint8()
+        for cmdnum in xrange(MRF_NUM_SYS_CMDS): # oooer!
+            paramstr.value = cmdnum
+            print "trying to get cmd info for cmd %d"%cmdnum
+            self.stub.cmd(dest,ccode,dstruct=paramstr)
+            resp = self.stub.response(timeout=self.timeout)
+            print "got resp:\n%s"%str(resp)
 
     def app_sys_cmd_test(self,dest):
         print "**********************"
@@ -146,10 +155,11 @@ class TestMrfBus(StubTestCase):
         self.sys_info_test(dest)
         self.app_info_test(dest)
 
-    def test02_device_tests(self,dests =  [ 0x01, 0x2,0x20, 0x2f]):
+    def test02_device_tests(self, dests=[ 0x01, 0x2,0x20, 0x2f ] ):
         for dest in dests:
             self.device_tests(dest)
 
+    @unittest.skip("temp disabled - too long")
     def test03_device_tests_repeat(self):
         for i in xrange(10):
             self.test02_device_tests()

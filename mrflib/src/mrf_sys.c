@@ -74,9 +74,11 @@ uint16 mrf_copy(void *src,void *dst, size_t nbytes){
 }
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
   uint16 i;
+  uint8 sc;
   for ( i = 0 ; i < nbytes ; i++ ){
-    *((uint8 *)dst + i) =  *((uint8 *)src + i);
-    if (*((uint8 *)src + i) == '\0')
+    sc = *((uint8 *)src + i);
+    *((uint8 *)dst + i) =  sc;
+    if (sc == '\0')
       break;
   } 
 }

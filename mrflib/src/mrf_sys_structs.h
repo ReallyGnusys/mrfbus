@@ -84,10 +84,11 @@ typedef struct  __attribute__ ((packed))   {
 } MRF_PKT_DEVICE_INFO;
 
 typedef struct  __attribute__ ((packed))   {
-  uint8 num_cmds;
   char  mrfbus_version[40];
-  uint8 modified;
   char  build[8];
+  uint8 num_cmds;
+  uint8 modified;
+
 } MRF_PKT_SYS_INFO;
 
 
@@ -117,8 +118,8 @@ typedef struct  __attribute__ ((packed))   {
 } MRF_PKT_BUFF_STATE;
 
 typedef struct  __attribute__ ((packed))   {
-  uint8 type;
   uint8 name[16];
+  uint8 type;
   uint8 cflags;
   uint8 req_size;
   uint8 rsp_size;

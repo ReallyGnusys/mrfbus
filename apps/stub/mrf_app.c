@@ -131,6 +131,7 @@ int mrf_app_init(){
 }
 
 int response_to_app(bnum){
+  // just squirt the raw buffer to python app via fifo
   char sname[64];
   int outfd;
   uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
@@ -167,7 +168,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   uint8 *buff = (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
 
-  mrf_debug("mrf_task_usr_resp : bnum %u type = %u rlen %u msgid %u\n",bnum,resp->type,resp->rlen,resp->msgid);
+  mrf_debug("mrf_task_usr_resp (stub) : bnum %u type = %u rlen %u msgid %u\n",bnum,resp->type,resp->rlen,resp->msgid);
   _mrf_print_hex_buff(buff,buff[0]);
 
   if (resp->type == mrf_cmd_device_info){
