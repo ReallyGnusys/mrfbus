@@ -28,7 +28,7 @@ from teststub import StubTestCase
 import unittest
 
 
-class TestMrfBus(StubTestCase):
+class DeviceTestCase(StubTestCase):
 
 
     def dev_info_test(self,dest):
@@ -135,6 +135,9 @@ class TestMrfBus(StubTestCase):
             resp = self.stub.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
 
+
+class TestMrfBus(DeviceTestCase):
+
         
     @unittest.skip("temp disabled - too long")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
@@ -171,6 +174,7 @@ class TestMrfBus(StubTestCase):
     def test03_device_tests_repeat(self):
         for i in xrange(10):
             self.test02_device_tests()
+
 
 
 if __name__ == "__main__":
