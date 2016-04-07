@@ -97,7 +97,6 @@ class TestMrfBus(StubTestCase):
         self.assertEqual(ever,rver)
 
         ccode = mrf_cmd_cmd_info   # eyup
-        
         paramstr = PktUint8()
         for cmdnum in xrange(MRF_NUM_SYS_CMDS): # oooer!
             paramstr.value = cmdnum
@@ -105,16 +104,17 @@ class TestMrfBus(StubTestCase):
             self.stub.cmd(dest,ccode,dstruct=paramstr)
             resp = self.stub.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
+            self.assertEqual(type(PktCmdInfo()),type(resp))
 
-    def app_sys_cmd_test(self,dest):
+    def get_time_test(self,dest):
         print "**********************"
-        print "* app sys cmd test (dest 0x%02x)"%dest
+        print "* get time test (dest 0x%02x)"%dest
         print "**********************"
-        ccode = mrf_cmd_app_info
+        ccode = mrf_cmd_get_time
         self.stub.cmd(dest,ccode)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktAppInfo()),type(resp))
+        self.assertEqual(type(PktTimeDate()),type(resp))
        
     def app_info_test(self,dest):
         print "**********************"
@@ -125,7 +125,17 @@ class TestMrfBus(StubTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktAppInfo()),type(resp))
+        num_cmds = resp.num_cmds
+        ccode = mrf_cmd_app_cmd_info   # eyup
+        paramstr = PktUint8()
+        for cmdnum in xrange(num_cmds): # oooer!
+            paramstr.value = cmdnum
+            print "trying to get app cmd info for cmd %d"%cmdnum
+            self.stub.cmd(dest,ccode,dstruct=paramstr)
+            resp = self.stub.response(timeout=self.timeout)
+            print "got resp:\n%s"%str(resp)
 
+        
     @unittest.skip("temp disabled - too long")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
         devs = []
@@ -152,7 +162,7 @@ class TestMrfBus(StubTestCase):
         self.dev_status_test(dest)
         self.sys_info_test(dest)
         self.app_info_test(dest)
-
+        self.get_time_test(dest)
     def test02_device_tests(self, dests=[ 0x01, 0x2,0x20, 0x2f ] ):
         for dest in dests:
             self.device_tests(dest)

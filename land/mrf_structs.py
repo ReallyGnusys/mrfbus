@@ -113,6 +113,17 @@ class PktSysInfo(MrfStruct):
         ("modified", c_uint8)
     ]
 
+class PktTimeDate(MrfStruct):
+    _fields_ = [
+        ("sec",c_uint8),
+        ("min", c_uint8),
+        ("hour", c_uint8),
+        ("day", c_uint8),
+        ("mon", c_uint8),
+        ("year", c_uint8)
+        ]
+    def __repr__(self):
+        return "%02d:%02d:%02d %d/%d/%d"%(self.hour,self.min,self.sec,self.day,self.mon+1,self.year+2000)
 
 class PktCmdInfo(MrfStruct):
     _fields_ = [
@@ -164,6 +175,7 @@ mrf_cmd_test_2 = 14
 mrf_cmd_usr_resp = 15
 MRF_NUM_SYS_CMDS = 16
 
+
 MrfSysCmds = {
 
     mrf_cmd_device_info :  {
@@ -186,8 +198,13 @@ MrfSysCmds = {
         'param': PktUint8,
         'resp': PktIfStats
     },
+    mrf_cmd_get_time : {
+        'name' : "GET_TIME",
+        'param': None,
+        'resp': PktTimeDate   
+    },
     mrf_cmd_cmd_info: {
-        'name' : "APP_INFO",
+        'name' : "CMD_INFO",
         'param': PktUint8,
         'resp': PktCmdInfo
     },
@@ -196,7 +213,11 @@ MrfSysCmds = {
         'param': None,
         'resp': PktAppInfo
     },
-
+    mrf_cmd_app_cmd_info: {
+        'name' : "APP_CMD_INFO",
+        'param': PktUint8,
+        'resp': PktCmdInfo
+    },
 
     mrf_cmd_usr_resp : {
         'name' : "USR_RESP",
