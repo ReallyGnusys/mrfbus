@@ -24,13 +24,6 @@ class MrfStruct(LittleEndianStructure):
             att = getattr(self,field[0])
 
             atts = self.attstr(att)
-            """
-            if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
-                atts =  "".join(chr(i) for i in att)
-                #atts = "%s"%str(att)
-            else:
-                atts = "%d"%int(att)
-            """
             s += "%s %s\n"%(field[0],atts)
         return s
     def __eq__(self,other):
