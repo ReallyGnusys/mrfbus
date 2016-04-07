@@ -30,6 +30,11 @@ import unittest
 
 class DeviceTestCase(StubTestCase):
 
+    def setUp(self):
+        StubTestCase.setUp(self)
+        self.devname = 'hostsim'
+        self.num_ifs = 4
+        self.num_buffs = 16
 
     def dev_info_test(self,dest):
         print "*********************************"
@@ -38,10 +43,10 @@ class DeviceTestCase(StubTestCase):
         ccode = mrf_cmd_device_info
         exp = PktDeviceInfo()
         exp.netid = 0x25
-        exp.num_buffs = 0x10
-        exp.num_ifs = 0x4
+        exp.num_buffs = self.num_buffs
+        exp.num_ifs = self.num_ifs
         #setattr(exp,'dev_name','hostsim')
-        exp.dev_name = (ctypes.c_uint8*10)(*(bytearray('hostsim')))
+        exp.dev_name = (ctypes.c_uint8*10)(*(bytearray(self.devname)))
         exp.mrfid = dest
         rv = self.stub.cmd_test(dest,ccode,exp,dstruct=None)
         self.assertEqual(rv,0)
@@ -59,8 +64,8 @@ class DeviceTestCase(StubTestCase):
 
         self.assertEqual(type(PktDeviceStatus()),type(resp))
         # assumes this is  linux hostsim 
-        self.assertEqual(resp.num_if, 4)
-        self.assertEqual(resp.buffs_total, 0x10)
+        self.assertEqual(resp.num_if, self.num_ifs)
+        self.assertEqual(resp.buffs_total, self.num_buffs)
         self.assertEqual(resp.errors, 0)
 
         ## check rx tx pkts increment
@@ -134,7 +139,12 @@ class DeviceTestCase(StubTestCase):
             self.stub.cmd(dest,ccode,dstruct=paramstr)
             resp = self.stub.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
-
+    def device_tests(self,dest):
+        self.dev_info_test(dest)
+        self.dev_status_test(dest)
+        self.sys_info_test(dest)
+        self.app_info_test(dest)
+        self.get_time_test(dest)
 
 class TestMrfBus(DeviceTestCase):
 
@@ -160,12 +170,7 @@ class TestMrfBus(DeviceTestCase):
             found.append(dev.mrfid)
 
 
-    def device_tests(self,dest):
-        self.dev_info_test(dest)
-        self.dev_status_test(dest)
-        self.sys_info_test(dest)
-        self.app_info_test(dest)
-        self.get_time_test(dest)
+
     def test02_device_tests(self, dests=[ 0x01, 0x2,0x20, 0x2f ] ):
         for dest in dests:
             self.device_tests(dest)

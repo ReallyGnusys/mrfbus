@@ -86,6 +86,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
   pkt->usrc = _mrfid;
+  pkt->netid = MRFNET;
   // copy and payload bytes
   uint8 *payload = (uint8 *)pkt + sizeof(MRF_PKT_HDR);
   pkt->length = sizeof(MRF_PKT_HDR);
@@ -94,6 +95,8 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
     payload[i - 3] = buff[i];
     pkt->length++;
   }
+  mrf_debug("_appl_fifo_callback : trying to send packet with header:\n");
+  mrf_print_packet_header(pkt);
   if( mrf_if_tx_queue(route.i_f,bnum) == -1) {// then outgoing queue full - need to retry
     mrf_debug("looking dodgy sending packet\n");
     mrf_retry(route.i_f,bnum);
