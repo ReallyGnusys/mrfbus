@@ -62,6 +62,7 @@ class StubIf(object):
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         print "StubIf.__init__  opened app_fifo "
         outfname = "/tmp/mrf_bus/0-app-out"
+        self.app_cmds = {}  # need to override in some ugly way to allow app command testing for now
  
     def bin2hex(self,buff):
         return ''.join('{:02x}'.format(x) for x in bytearray(buff))
@@ -77,6 +78,8 @@ class StubIf(object):
             paramtype = MrfSysCmds[cmd_code]['param']
 
             #print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
+        elif cmd_code in self.app_cmds.keys():
+            paramtype = self.app_cmds[cmd_code]['param']
         else:
             print "unrecognised cmd_code %d"%cmd_code
             return -1

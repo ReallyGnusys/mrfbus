@@ -1,12 +1,16 @@
 
 TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
+HOSTFIFO=${TMP}/1-0-in
 
-tests: ${TMP} ${LOGDIR} BUILD BUILDCC
+tests: ${TMP} ${HOSTFIFO} ${LOGDIR} BUILD BUILDCC
 
 
 ${TMP}:
 	mkdir ${TMP}
+
+${HOSTFIFO}:
+	mkfifo -m 600 ${HOSTFIFO}
 
 ${LOGDIR}:
 	mkdir -p ${LOGDIR}

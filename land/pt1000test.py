@@ -1,3 +1,5 @@
+
+
 #!/usr/bin/env python
 '''  Copyright (c) 2012-16 Gnusys Ltd
 
@@ -28,7 +30,20 @@ import ctypes
 
 from core_tests import DeviceTestCase
 
+## some app commands for the time being here.. ideally would be auto discovered codes
 
+mrf_cmd_spi_read = 129
+
+
+Pt1000AppCmds = {
+
+   mrf_cmd_spi_read : {
+
+       'name'  : "SPI_READ",
+       'param' : PktUint8,
+       'resp'  : PktUint8
+   }
+}
 class TestPt1000(DeviceTestCase):
     def setUp(self):
         DeviceTestCase.setUp(self)
@@ -37,12 +52,24 @@ class TestPt1000(DeviceTestCase):
         self.num_buffs = 8
         self.timeout = 0.6
         self.dest =0x02
+        self.stub.app_cmds = Pt1000AppCmds
 
+    def read_spi_test(self,dest, addr = 0):
+        print "**********************"
+        print "* read_spi test addr = %d (dest 0x%02x)"%(addr,dest)
+        print "**********************"
+        ccode = mrf_cmd_spi_read
+        paramstr = PktUint8()
+        paramstr.value = addr
 
-
+        self.stub.cmd(dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktUint8()),type(resp))
 
     def test01_device_tests(self):
-
+        #self.read_spi_test(self.dest)
+        #return
         self.dev_info_test(self.dest)
         self.dev_status_test(self.dest)
         self.sys_info_test(self.dest,checkgit=False)
