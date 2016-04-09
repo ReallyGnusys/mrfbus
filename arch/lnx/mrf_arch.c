@@ -399,7 +399,7 @@ int mrf_rtc_get(TIMEDATE *td){
   mrf_debug("\nyear is %u mon %u day %u hour %u min %u sec %u ",
          tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
   td->year = tm.tm_year - 100;  // mrf bus years start at 2000
-  td->mon = tm.tm_mon;
+  td->mon = tm.tm_mon + 1;  // matches cc RTC output months 1 - 12
   td->day = tm.tm_mday;
   td->hour = tm.tm_hour;  
   td->min = tm.tm_min;

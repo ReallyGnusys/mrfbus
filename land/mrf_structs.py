@@ -123,7 +123,7 @@ class PktTimeDate(MrfStruct):
         ("year", c_uint8)
         ]
     def __repr__(self):
-        return "%02d:%02d:%02d %d/%d/%d"%(self.hour,self.min,self.sec,self.day,self.mon+1,self.year+2000)
+        return "%02d:%02d:%02d %d/%d/%d"%(self.hour,self.min,self.sec,self.day,self.mon,self.year+2000)
 
 class PktCmdInfo(MrfStruct):
     _fields_ = [
