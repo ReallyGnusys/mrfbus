@@ -54,21 +54,27 @@ class TestPt1000(DeviceTestCase):
         self.dest =0x02
         self.stub.app_cmds = Pt1000AppCmds
 
-    def read_spi_test(self,dest, addr = 0):
+    def read_spi_test(self, addr = 0):
         print "**********************"
-        print "* read_spi test addr = %d (dest 0x%02x)"%(addr,dest)
+        print "* read_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
         print "**********************"
         ccode = mrf_cmd_spi_read
         paramstr = PktUint8()
         paramstr.value = addr
 
-        self.stub.cmd(dest,ccode,dstruct=paramstr)
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
 
     def test01_device_tests(self):
-        #self.read_spi_test(self.dest)
+        self.read_spi_test()
+        return
+        ccode = mrf_cmd_device_status
+        self.stub.cmd(self.dest,ccode)
+        sresp = self.stub.response(timeout=self.timeout)
+        print "device_status at start of test:\n"
+        print sresp
         #return
         self.dev_info_test(self.dest)
         self.dev_status_test(self.dest)
@@ -76,6 +82,16 @@ class TestPt1000(DeviceTestCase):
         self.app_info_test(self.dest)
         self.get_time_test(self.dest)
 
+
+        print "device_status at start of test:\n"
+        print sresp       
+        self.stub.cmd(self.dest,ccode)
+        fresp = self.stub.response(timeout=self.timeout)
+        print "device_status at end of test:\n"
+        print fresp
+    def skipped_test02_burnin(self):
+        for i in xrange(200):
+            self.test01_device_tests()
 if __name__ == "__main__":
     unittest.main()
     """

@@ -213,11 +213,13 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  return 0;
 }
 
+static const uint8 _appcname[] = "APP_CMD";
+
 void mrf_print_packet_header(MRF_PKT_HDR *hdr){
 
   const uint8 *cname;
   if (hdr->type >= _MRF_APP_CMD_BASE)
-    cname = mrf_app_cmds[hdr->type].str;
+    cname = _appcname;
   else
     cname = mrf_sys_cmds[hdr->type].str;
 

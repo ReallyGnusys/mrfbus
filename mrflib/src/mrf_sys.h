@@ -104,7 +104,7 @@ typedef struct {
 
 
 int _mrf_process_packet(I_F owner,uint8 bnum);
-void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F i_f);
+//void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F i_f);
 void _mrf_tick();
 void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 void mrf_print_packet_header(MRF_PKT_HDR *hdr);

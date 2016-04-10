@@ -107,8 +107,8 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   //UCB0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
   
   UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
-  UCB0IE |= UCRXIE;        // enable RX interrupt 
- __bis_SR_register(GIE);
+  _enable_spi_rx_int();
+
   return 0;
 }
 
@@ -122,8 +122,6 @@ static uint8  _rx_byte(){
   last_rx = UCB0RXBUF;
   return queue_push(&_spi_rx_queue,last_rx);
 }
-
-
 
 
 interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
