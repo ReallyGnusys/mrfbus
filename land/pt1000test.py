@@ -89,17 +89,14 @@ class TestPt1000(DeviceTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
-
         val = resp.value
-
         print "address %d , read value %d"%(addr,val)
 
         ccode = mrf_cmd_spi_write
         paramstr = PktUint8_2()
         paramstr.value[0] = addr
         paramstr.value[1] = val
-        
-        
+
         print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
         self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         
@@ -110,7 +107,6 @@ class TestPt1000(DeviceTestCase):
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
         print "**********************"
         ccode = mrf_cmd_app_test
-
         self.stub.cmd(self.dest,ccode)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
@@ -118,7 +114,6 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_device_tests(self):
-
         ccode = mrf_cmd_device_status
         self.stub.cmd(self.dest,ccode)
         sresp = self.stub.response(timeout=self.timeout)
@@ -139,6 +134,7 @@ class TestPt1000(DeviceTestCase):
         fresp = self.stub.response(timeout=self.timeout)
         print "device_status at end of test:\n"
         print fresp
+
     def skipped_test02_burnin(self):
         for i in xrange(200):
             self.test01_device_tests()
