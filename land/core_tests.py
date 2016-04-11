@@ -28,6 +28,21 @@ from teststub import StubTestCase
 import unittest
 
 
+## default app def for sanity checking
+
+mrf_cmd_app_test = 128
+
+
+DefaultAppCmds = {
+
+    mrf_cmd_app_test : {
+       'name'  : "APP_TEST",
+       'param' : None,
+       'resp'  : PktTimeDate
+   }
+}
+
+
 class DeviceTestCase(StubTestCase):
 
     def setUp(self):

@@ -28,37 +28,35 @@ import unittest
 MRFBUFFLEN = 128
 import ctypes
 
-from core_tests import DeviceTestCase
+from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
 ## some app commands for the time being here.. ideally would be auto discovered codes
 
 mrf_cmd_spi_read = 129
+mrf_cmd_spi_write = 130
 
 
 Pt1000AppCmds = {
-
-   mrf_cmd_spi_read : {
-
-       'name'  : "SPI_READ",
-       'param' : PktUint8,
-       'resp'  : PktUint8
-   }
-}
-
-## default app def for sanity checking
-
-mrf_cmd_app_test = 128
-
-
-DefaultAppCmds = {
-
     mrf_cmd_app_test : {
+        'name'  : "APP_TEST",
+        'param' : None,
+        'resp'  : PktTimeDate
+    },
+    mrf_cmd_spi_read : {
+        
+        'name'  : "SPI_READ",
+        'param' : PktUint8,
+        'resp'  : PktUint8
+    },
+    mrf_cmd_spi_write : {
+        
+        'name'  : "SPI_WRITE",
+        'param' : PktUint8_2,
+        'resp'  : None
+    }
 
-       'name'  : "APP_TEST",
-       'param' : None,
-       'resp'  : PktTimeDate
-   }
 }
+
 
 
 class TestPt1000(DeviceTestCase):
@@ -92,6 +90,21 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
 
+        val = resp.value
+
+        print "address %d , read value %d"%(addr,val)
+
+        ccode = mrf_cmd_spi_write
+        paramstr = PktUint8_2()
+        paramstr.value[0] = addr
+        paramstr.value[1] = val
+        
+        
+        print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        
+        print "wrote spi write"
+        
     def host_app_test(self, addr = 0):
         print "**********************"
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -105,9 +118,7 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_device_tests(self):
-        #self.host_app_test()
-        #self.read_spi_test()
-        #return
+
         ccode = mrf_cmd_device_status
         self.stub.cmd(self.dest,ccode)
         sresp = self.stub.response(timeout=self.timeout)
@@ -120,6 +131,7 @@ class TestPt1000(DeviceTestCase):
         self.app_info_test(self.dest)
         self.get_time_test(self.dest)
 
+        self.read_spi_test()
 
         print "device_status at start of test:\n"
         print sresp       

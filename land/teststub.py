@@ -80,7 +80,7 @@ class StubIf(object):
             #print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
         elif cmd_code in self.app_cmds.keys():
             paramtype = self.app_cmds[cmd_code]['param']
-            print "got app command - cmd_code %d  paramtype %s"%(cmd_code,type(paramtype))
+            print "got app command - cmd_code %d  paramtype %s"%(cmd_code,type(paramtype()))
         else:
             print "unrecognised cmd_code %d"%cmd_code
             return -1

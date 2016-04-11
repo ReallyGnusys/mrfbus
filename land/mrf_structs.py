@@ -143,7 +143,10 @@ class PktUint8(MrfStruct):
     _fields_ = [
         ("value", c_uint8)
     ]
-
+class PktUint8_2(MrfStruct):
+    _fields_ = [
+        ("value", c_uint8*2)
+    ]
 class PktIfStats(MrfStruct):
     _fields_ = [
         ("rx_pkts", c_uint16),
