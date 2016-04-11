@@ -142,20 +142,7 @@ class TestPt1000(DeviceTestCase):
     def skipped_test02_burnin(self):
         for i in xrange(200):
             self.test01_device_tests()
+
+
 if __name__ == "__main__":
     unittest.main()
-    """
-    tst = TestMrfBus()
-    try:
-        tst.dev_info_test(0x2)
-        tst.dev_status_test(0x2)
-        tst.sys_info_test(0x2)
-        tst.test03_device_tests_repeat()
-    except Exception as inst:
-        print "exception...doh!"
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst           # __str__ allows args to be printed directly
-        traceback.print_exc(file=sys.stdout)
-    tst.stub.quit()
-    """
