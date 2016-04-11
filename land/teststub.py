@@ -139,7 +139,7 @@ class StubIf(object):
 
         hdr = PktHeader()
         #buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
-        print "got response..%s"%self.bin2hex(resp)
+        #print "got response..%s"%self.bin2hex(resp)
         if len(resp) >= len(hdr):
             hdr_data = bytes(resp)[0:len(hdr)]
             hdr.load(bytes(resp)[0:len(hdr)])
