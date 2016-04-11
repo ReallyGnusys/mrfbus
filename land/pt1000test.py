@@ -44,7 +44,32 @@ Pt1000AppCmds = {
        'resp'  : PktUint8
    }
 }
+
+## default app def for sanity checking
+
+mrf_cmd_app_test = 128
+
+
+DefaultAppCmds = {
+
+    mrf_cmd_app_test : {
+
+       'name'  : "APP_TEST",
+       'param' : None,
+       'resp'  : PktTimeDate
+   }
+}
+
+
 class TestPt1000(DeviceTestCase):
+    def host_test(self):
+        self.devname = 'hostsim'
+        self.num_ifs = 4
+        self.num_buffs = 16
+        self.timeout = 0.6
+        self.dest =0x01
+        self.stub.app_cmds = DefaultAppCmds
+   
     def setUp(self):
         DeviceTestCase.setUp(self)
         self.devname = 'usbrf'
@@ -53,7 +78,7 @@ class TestPt1000(DeviceTestCase):
         self.timeout = 0.6
         self.dest =0x02
         self.stub.app_cmds = Pt1000AppCmds
-
+        #self.host_test()
     def read_spi_test(self, addr = 0):
         print "**********************"
         print "* read_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -67,9 +92,22 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
 
+    def host_app_test(self, addr = 0):
+        print "**********************"
+        print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
+        print "**********************"
+        ccode = mrf_cmd_app_test
+
+        self.stub.cmd(self.dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktTimeDate()),type(resp))
+
+    
     def test01_device_tests(self):
-        self.read_spi_test()
-        return
+        #self.host_app_test()
+        #self.read_spi_test()
+        #return
         ccode = mrf_cmd_device_status
         self.stub.cmd(self.dest,ccode)
         sresp = self.stub.response(timeout=self.timeout)

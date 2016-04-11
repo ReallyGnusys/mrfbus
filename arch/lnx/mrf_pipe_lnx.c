@@ -113,7 +113,9 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
     txbuff[i*2] = int_to_hex_digit(buffer[i]/16);
     txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);    
   }
-  return i*2;
+  txbuff[i*2] = '\0';
+
+  return i*2 + 1;
 }
 
 // from mrf_arch.c (lnx)
@@ -180,6 +182,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
   printf("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
+  
   // rough hack to get up and down using correct sockets
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
     sknum = 0;
@@ -205,7 +208,10 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   if(buff[0] > _MRF_BUFFLEN){
     printf("\nGOT DANGER ERROR COMING\n");
   }
+  printf("copying to tx_buffer .. len %d\n",buff[0]);
   tb = copy_to_txbuff(buff,buff[0],txbuff);
+  printf("copied to tx_buffer .. len %d\n",tb);
+
   bc = write(fd, txbuff,tb );
   close(fd);
   //printf("bc = %d  fd = %d\n",bc,fd);

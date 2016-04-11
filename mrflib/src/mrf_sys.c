@@ -65,6 +65,30 @@ const MRF_CMD * _mrf_cmd(uint8 type){
 
 }
 
+int needs_ack(uint8 type){
+  // FIXME app cmds are always considered ack
+  if(type < MRF_NUM_SYS_CMDS){
+    return ((mrf_sys_cmds[type].cflags & MRF_CFLG_NO_ACK) == 0);
+  }
+  if(type >=  _MRF_APP_CMD_BASE){
+    return 1;
+  }
+  return 0;
+}
+
+int valid_cmd(uint8 type){
+  // token effort to check validity
+  if(type < MRF_NUM_SYS_CMDS){
+    return 1;
+  }
+  if(type >=  _MRF_APP_CMD_BASE){
+    return 1;
+  }
+  return 0;
+
+}
+
+
 
 uint16 mrf_copy(void *src,void *dst, size_t nbytes){
   uint16 i;
@@ -277,11 +301,16 @@ int _mrf_ex_buffer(uint8 bnum){
   
   if (cmd == NULL){
     mrf_debug("_mrf_ex_buffer cmd was null..abort (pkt->type was %d)\n",pkt->type);
+    return -1;
   }
   
+  mrf_debug("packet type %d\n",pkt->type);
+  return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
+
+  /*
   if(pkt->type < MRF_NUM_SYS_CMDS){
     mrf_debug("packet type %d\n",pkt->type);
-    const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
+    //const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
     return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
   }
 
@@ -293,6 +322,7 @@ int _mrf_ex_buffer(uint8 bnum){
   }
   mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
   return -1;
+  */
 }
 
 
@@ -321,21 +351,12 @@ int _mrf_process_buff(uint8 bnum)
   //  if(type < mrf_cmd_resp)
   // ifp->status->stats.rx_pkts++;
   
-  // lookup command
-  const MRF_CMD *cmd = _mrf_cmd(type);
-  
-  if(cmd == NULL){
-    mrf_debug("big trouble 29339\n");
-    return -1;
-  }
 
-  mrf_debug("looked up command %d %s\n",pkt->type,cmd->str);
- 
   // begin desperate
   
   // a response can substitute for an ack - if usrc and hsrc are same
   if (((pkt->type) == mrf_cmd_resp) && ((pkt->usrc) == (pkt->hsrc))){
-    // act like we received and ack
+    // act like we received an ack
       mrf_debug("got resp_should count as ack \n");
       mrf_task_ack(pkt->type,bnum,ifp);
   }
@@ -344,6 +365,18 @@ int _mrf_process_buff(uint8 bnum)
   // check if we are udest
 
   if ( pkt->udest == _mrfid){
+
+      // lookup command
+    const MRF_CMD *cmd = _mrf_cmd(type);
+  
+    if(cmd == NULL){
+      mrf_debug("big trouble 29339 - we got a packet but don't recognise type %d\n",type);
+      return -1;
+    }
+
+    mrf_debug("looked up command %d %s\n",pkt->type,cmd->str);
+ 
+
     //if(type >= mrf_cmd_resp)
     //   ifp->status->stats.rx_pkts++;     // FIXME this is already incremented in mrf_buff_loaded, we need a separate stat
     // for command packets executed by us
@@ -366,7 +399,7 @@ int _mrf_process_buff(uint8 bnum)
         }
  
       }
-  } else {
+  } else if ( valid_cmd(pkt->type)) {
     //otherwise send segment ack then forward on network
     MRF_ROUTE route;
  
@@ -374,7 +407,8 @@ int _mrf_process_buff(uint8 bnum)
     MRF_IF *ifp = mrf_if_ptr(route.i_f);
 
     mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
-    if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+    //if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+    if(needs_ack(pkt->type)){
       mrf_sack(bnum);   
     }
     if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
@@ -499,7 +533,6 @@ void _mrf_tick(){
           bs = _mrf_buff_state(bnum);
           MRF_PKT_HDR *pkt;
           pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
-          const MRF_CMD *cmd = _mrf_cmd(pkt->type);
 
           mrf_debug("\nmrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d tx_timer %d  tc %d\n",
                     i,bnum,bs->state,bs->tx_timer,_tick_count);
@@ -521,8 +554,9 @@ void _mrf_tick(){
                 mif->status->stats.tx_pkts += 1;
                 (*(mif->type->funcs.send))(i,tb);
 
+                //const MRF_CMD *cmd = _mrf_cmd(pkt->type);
 
-                if (cmd->cflags & MRF_CFLG_NO_ACK) {
+                if (!needs_ack(pkt->type)){   //cmd->cflags & MRF_CFLG_NO_ACK) {
                   //bs->state = TX;
                   mif->status->state = MRF_ST_RX; // FIXME what is this if state really about?
                   _mrf_buff_free(bnum);

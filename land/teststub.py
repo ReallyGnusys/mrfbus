@@ -80,6 +80,7 @@ class StubIf(object):
             #print "cmd %s for destination 0x%x  param is %s"%( MrfSysCmds[cmd_code]['name'],  dest, type(paramtype))
         elif cmd_code in self.app_cmds.keys():
             paramtype = self.app_cmds[cmd_code]['param']
+            print "got app command - cmd_code %d  paramtype %s"%(cmd_code,type(paramtype))
         else:
             print "unrecognised cmd_code %d"%cmd_code
             return -1
@@ -138,7 +139,7 @@ class StubIf(object):
 
         hdr = PktHeader()
         #buffhex =  ''.join('{:02x}'.format(x) for x in bytearray(resp))
-        #print "got response..%s"%self.bin2hex(resp)
+        print "got response..%s"%self.bin2hex(resp)
         if len(resp) >= len(hdr):
             hdr_data = bytes(resp)[0:len(hdr)]
             hdr.load(bytes(resp)[0:len(hdr)])
@@ -152,6 +153,15 @@ class StubIf(object):
                         respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                         respobj.load(respdat)
                         return respobj
+                    elif param.type in self.app_cmds.keys() and self.app_cmds[param.type]['resp']:
+                        respobj = self.app_cmds[param.type]['resp']()
+                        respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
+                        respobj.load(respdat)
+                        return respobj
+                    else:
+                        print "got param type %d "%param.type
+            else:
+                print "got hdr.type %d"%hdr.type
             return None
                         
     def quit(self):
@@ -184,4 +194,5 @@ class StubTestCase(unittest.TestCase):
         self.stub = StubIf()
 
     def tearDown(self):
+        print "StubTestCase.tearDown"
         self.stub.quit()
