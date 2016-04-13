@@ -98,11 +98,22 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   mrf_spi_tx(b1);
   mrf_spi_tx(0); // 1 byte
   mrf_spi_tx(data);
-
+  while(mrf_spi_tx_data_avail()){ // FIXME
+    __delay_cycles(10);  
+  }
   mrf_spi_flush_rx();
 
 }
 
+#define NUM_ADC_INPUTS 7
+static int set_input(int channel){
+  if ( channel > NUM_ADC_INPUTS){
+    return -1;
+  }
+  ads1148_write(MUX0_OFFS, (channel << 3) | 0x7 );
+  ads1148_write(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
+ 
+}
 
 int ads1148_config(){
   // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
@@ -111,8 +122,13 @@ int ads1148_config(){
   // A ratiometric measurement process is used , generating REF voltage 
   // from in series Rref across REFP and REFN
   
+  set_input(0);
+  ads1148_write(VBIAS_OFFS, 0 );
+  ads1148_write(MUX1_OFFS,  ( 1 << 5) | ( 0 << 3) ); // VREF ON, ADC ref is REF0 pin pair
+  ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
+  ads1148_write(IDAC0_OFFS,  6 );  // 1mA IDAC current
+  ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
 
-  
 
 }
 
@@ -142,12 +158,16 @@ int ads1148_init(){
   PINHIGH(MR);
   __delay_cycles(10);
   mrf_spi_flush_rx();
+
+  ads1148_config();
 }
 
 
 int mrf_app_init(){
+  
   dbg22 = 101; 
   mrf_spi_init();
+  ads1148_init();
 }
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){

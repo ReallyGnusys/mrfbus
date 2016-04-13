@@ -56,6 +56,11 @@ int mrf_spi_tx(uint8 tx_byte){
   return rv;
 }
 
+int mrf_spi_tx_data_avail(){
+  return queue_data_avail(&_spi_tx_queue);
+
+}
+
 uint8 mrf_spi_rx(){
   // block and enter LPM3 until rx byte received 
   while(!queue_data_avail(&_spi_rx_queue)){

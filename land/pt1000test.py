@@ -142,7 +142,7 @@ class TestPt1000(DeviceTestCase):
         print "device_status at end of test:\n"
         print fresp
         """
-    def test02_burnin(self):
+    def skipped_test02_burnin(self):
         for i in xrange(100):
             self.test01_device_tests()
 
