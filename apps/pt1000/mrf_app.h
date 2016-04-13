@@ -27,6 +27,9 @@ typedef struct  __attribute__ ((packed))   {
   uint16 spi_tx_int_cnt; 
   uint16 spi_rx_bytes;
   uint16 spi_tx_bytes; 
+  uint16 spi_rx_queue_level;
+  uint16 spi_tx_queue_level;
+  
 
 } MRF_PKT_SPI_DEBUG;
 

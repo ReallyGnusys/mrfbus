@@ -26,4 +26,6 @@ int mrf_spi_flush_rx();
 int mrf_spi_init();
 int mrf_spi_data_avail();  // rx data
 int mrf_spi_tx_data_avail();
+int mrf_spi_tx_queue_items();
+int mrf_spi_rx_queue_items();
 #endif

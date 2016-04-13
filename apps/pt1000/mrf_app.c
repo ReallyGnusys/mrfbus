@@ -220,6 +220,9 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   pkt.spi_tx_int_cnt = _spi_tx_int_cnt;
   pkt.spi_rx_bytes = _spi_rx_bytes;
   pkt.spi_tx_bytes = _spi_tx_bytes;
+  pkt.spi_rx_queue_level = (uint16)mrf_spi_rx_queue_items();
+  pkt.spi_tx_queue_level = (uint16)mrf_spi_tx_queue_items();
+
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 

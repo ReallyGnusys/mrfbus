@@ -38,7 +38,9 @@ class PktSpiDebug(MrfStruct):
         ("spi_rx_int_cnt", c_uint16),
         ("spi_tx_int_cnt", c_uint16),
         ("spi_rx_bytes", c_uint16),
-        ("spi_tx_bytes", c_uint16)
+        ("spi_tx_bytes", c_uint16),
+        ("spi_rx_queue_level", c_uint16),
+        ("spi_tx_queue_level", c_uint16)
     ]
 
 
@@ -120,6 +122,7 @@ class TestPt1000(DeviceTestCase):
         
         print "wrote spi write"
         
+    
     def host_app_test(self, addr = 0):
         print "**********************"
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -149,6 +152,11 @@ class TestPt1000(DeviceTestCase):
         print "device_status at start of test:\n"
         print sresp
         time.sleep(0.1)  # FIXME!
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
+
         self.stub.cmd(self.dest,ccode)
         fresp = self.stub.response(timeout=self.timeout)
         print "device_status at end of test:\n"

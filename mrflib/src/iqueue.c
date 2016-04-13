@@ -33,13 +33,17 @@ void queue_init(IQUEUE *q){
 
 }
 
-int queue_flush(IQUEUE *q){
+int queue_items(IQUEUE *q){
   int items;
 
   if (q->qop > q->qip)
     items = q->qop - q->qip;
   else
     items = (IQUEUE_DEPTH + q->qop) -  q->qip;
+  return items;
+}
+int queue_flush(IQUEUE *q){
+  int items = queue_items(q);
   
   q->qop = 0;
   q->qip = 0;
