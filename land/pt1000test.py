@@ -30,10 +30,21 @@ import ctypes
 
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
-## some app commands for the time being here.. ideally would be auto discovered codes
+
+## some app commands and structs for the time being here.. ideally would be auto discovered codes
+
+class PktSpiDebug(MrfStruct):
+    _fields_ = [
+        ("spi_rx_int_cnt", c_uint16),
+        ("spi_tx_int_cnt", c_uint16),
+        ("spi_rx_bytes", c_uint16),
+        ("spi_tx_bytes", c_uint16)
+    ]
+
 
 mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
+mrf_cmd_spi_debug = 131
 
 
 Pt1000AppCmds = {
@@ -53,6 +64,12 @@ Pt1000AppCmds = {
         'name'  : "SPI_WRITE",
         'param' : PktUint8_2,
         'resp'  : None
+    },
+    mrf_cmd_spi_debug : {
+        
+        'name'  : "SPI_DEBUG",
+        'param' : None,
+        'resp'  : PktSpiDebug
     }
 
 }

@@ -127,6 +127,8 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_DEVICE_STATUS));  
   mrf_debug("mrf_task_if_info exit\n");
+  return MRF_CMD_RES_OK;
+
 
 }
 MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){

@@ -19,8 +19,17 @@
 
 #ifndef __MRF_APP_INCLUDED__
 #define __MRF_APP_INCLUDED__
-/* default app , no new pkts defined 
- */
+
+// define APP specific packets
+
+typedef struct  __attribute__ ((packed))   {
+  uint16 spi_rx_int_cnt;
+  uint16 spi_tx_int_cnt; 
+  uint16 spi_rx_bytes;
+  uint16 spi_tx_bytes; 
+
+} MRF_PKT_SPI_DEBUG;
+
 
 /* mrf_app_task_test
    returns current MRF_PKT_TIMEDATE 
@@ -29,5 +38,6 @@ int mrf_spi_init_cc()  __attribute__ ((constructor));
 MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
+MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 
 #endif

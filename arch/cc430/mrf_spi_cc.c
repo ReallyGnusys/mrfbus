@@ -29,8 +29,10 @@
 
 int __attribute__ ((constructor)) mrf_spi_init() ;  // seems futile to expect init to be called automatically
 
-int _spi_rx_int_cnt;
-int _spi_tx_int_cnt;
+uint16 _spi_rx_int_cnt;
+uint16 _spi_tx_int_cnt;
+uint16 _spi_tx_bytes;
+uint16 _spi_rx_bytes;
 
 
 static IQUEUE _spi_rx_queue,_spi_tx_queue;
@@ -85,9 +87,6 @@ static int disable_tx_int(){
 
 
 
-static inline void _tx_byte(uint8 chr){
-  UCB0TXBUF = chr;     
-}
 
 
 
@@ -95,7 +94,10 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
 
   _spi_rx_int_cnt = 0;
   _spi_tx_int_cnt = 0;
-
+  
+  _spi_rx_bytes = 0;
+  _spi_tx_bytes = 0;
+ 
   queue_init(&_spi_rx_queue);
   queue_init(&_spi_tx_queue);
   
@@ -137,7 +139,8 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
   case 2:                                   // Vector 2 - RXIFG
     _spi_rx_int_cnt++;
     _rx_byte();
-    __bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
+    _spi_rx_bytes += 1;
+   __bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
     UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
     break;
   case 4:                                   // Vector 4 - TXIFG
@@ -145,6 +148,8 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     if(queue_data_avail(&_spi_tx_queue)){
         uint8 txchr = (uint8)queue_pop(&_spi_tx_queue);
         UCB0TXBUF = txchr;
+        _spi_tx_bytes += 1;
+
         if(queue_data_avail(&_spi_tx_queue)) // re-enable this intr
           UCB0IE |= UCTXIE;  //re-enable this int
         else
