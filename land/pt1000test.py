@@ -76,6 +76,7 @@ class TestPt1000(DeviceTestCase):
         self.timeout = 0.6
         self.dest =0x02
         self.stub.app_cmds = Pt1000AppCmds
+        self.checkgit = False
         #self.host_test()
     def read_spi_test(self, addr = 0):
         print "**********************"
@@ -122,21 +123,27 @@ class TestPt1000(DeviceTestCase):
         #return
         self.dev_info_test(self.dest)
         self.dev_status_test(self.dest)
-        self.sys_info_test(self.dest,checkgit=False)
+        self.sys_info_test(self.dest)
         self.app_info_test(self.dest)
         self.get_time_test(self.dest)
 
         self.read_spi_test()
-
+        
         print "device_status at start of test:\n"
-        print sresp       
+        print sresp
+        time.sleep(0.1)  # FIXME!
         self.stub.cmd(self.dest,ccode)
         fresp = self.stub.response(timeout=self.timeout)
         print "device_status at end of test:\n"
         print fresp
-
-    def skipped_test02_burnin(self):
-        for i in xrange(200):
+        """
+        self.stub.cmd(self.dest,ccode)
+        fresp = self.stub.response(timeout=self.timeout)
+        print "device_status at end of test:\n"
+        print fresp
+        """
+    def test02_burnin(self):
+        for i in xrange(100):
             self.test01_device_tests()
 
 

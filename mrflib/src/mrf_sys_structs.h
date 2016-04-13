@@ -53,14 +53,16 @@ typedef struct  __attribute__ ((packed))   {
 } MRF_PKT_RESP;
 
 typedef struct  __attribute__ ((packed))   {
+  /*
   uint8 num_if;
   uint8 buffs_total;
+  */
   uint8 buffs_free;
   uint8 errors;
   uint16 tx_retries;
-  uint16 pad2;
   uint32 rx_pkts;
   uint32 tx_pkts;
+  uint32 tick_count;
 } MRF_PKT_DEVICE_STATUS;
 
 typedef struct  __attribute__ ((packed))   {

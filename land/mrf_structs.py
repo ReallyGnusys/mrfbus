@@ -95,14 +95,16 @@ class PktDeviceInfo(MrfStruct):
 
 class PktDeviceStatus(MrfStruct):
     _fields_ = [
-        ("num_if", c_uint8),
-        ("buffs_total", c_uint8),
+        #("num_if", c_uint8),
+        #("buffs_total", c_uint8),
         ("buffs_free", c_uint8),
         ("errors", c_uint8),
         ("tx_retries", c_uint16),
-        ("pad2", c_uint16),
+        #("pad2", c_uint16),
         ("rx_pkts", c_uint32),
-        ("tx_pkts", c_uint32)
+        ("tx_pkts", c_uint32),
+        ("tick_count", c_uint32)
+
     ]
 
 class PktSysInfo(MrfStruct):
@@ -149,12 +151,12 @@ class PktUint8_2(MrfStruct):
     ]
 class PktIfStats(MrfStruct):
     _fields_ = [
-        ("rx_pkts", c_uint16),
-        ("tx_pkts", c_uint16),
-        ("tx_acks", c_uint16),
+        ("rx_pkts", c_uint32),
+        ("tx_pkts", c_uint32),
+        ("tx_acks", c_uint32),
         ("tx_overruns", c_uint16),
         ("tx_retries", c_uint16),
-        ("unexp_ack", c_uint8),
+        ("unexp_ack", c_uint16),
         ("alloc_err", c_uint8),
         ("st_err", c_uint8)
     ]

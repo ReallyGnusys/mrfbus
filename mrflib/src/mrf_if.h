@@ -71,12 +71,12 @@ enum{
 #define MRF_IF_QL 4
 
 typedef struct  __attribute__ ((packed))  {
-  uint16 rx_pkts;
-  uint16 tx_pkts;
-  uint16 tx_acks;
+  uint32 rx_pkts;
+  uint32 tx_pkts;
+  uint32 tx_acks;
   uint16 tx_overruns;
   uint16 tx_retries;  
-  uint8  unexp_ack;  
+  uint16  unexp_ack;  
   uint8  alloc_err;
   uint8  st_err;
 } IF_STATS;

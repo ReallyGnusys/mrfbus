@@ -101,17 +101,19 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_app_queue_push(bnum);
 }
 
+extern int _tick_count;
 MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_device_status\n");
 
   MRF_PKT_DEVICE_STATUS info;
-  info.num_if = NUM_INTERFACES;
+  //info.num_if = NUM_INTERFACES;
   info.errors = 0;
   info.tx_retries = 0;
   info.tx_pkts = 0;
   info.rx_pkts = 0;
-  info.buffs_total = _MRF_BUFFS;
+  //info.buffs_total = _MRF_BUFFS;
   info.buffs_free  = mrf_buff_num_free();
+  info.tick_count = _tick_count;
   I_F i;
   uint32 rxp,txp;
   MRF_IF *i_f;

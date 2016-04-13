@@ -50,6 +50,7 @@ class DeviceTestCase(StubTestCase):
         self.devname = 'hostsim'
         self.num_ifs = 4
         self.num_buffs = 16
+        self.checkgit = True
 
     def dev_info_test(self,dest):
         print "*********************************"
@@ -79,8 +80,6 @@ class DeviceTestCase(StubTestCase):
 
         self.assertEqual(type(PktDeviceStatus()),type(resp))
         # assumes this is  linux hostsim 
-        self.assertEqual(resp.num_if, self.num_ifs)
-        self.assertEqual(resp.buffs_total, self.num_buffs)
         self.assertEqual(resp.errors, 0)
 
         ## check rx tx pkts increment
@@ -92,7 +91,7 @@ class DeviceTestCase(StubTestCase):
         
         self.assertEqual(resp.rx_pkts, rxp+1)
         self.assertEqual(resp.tx_pkts, txp+1)
-    def sys_info_test(self,dest,checkgit=True):
+    def sys_info_test(self,dest):
         print "**********************"
         print "* sys info test   (dest 0x%02x)"%dest
         print "**********************"
@@ -114,7 +113,8 @@ class DeviceTestCase(StubTestCase):
         att1 = getattr(resp,'mrfbus_version')
         rver = resp.attstr(att1)
         
-        if checkgit:
+        if self.checkgit:
+            print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
             self.assertEqual(ever,rver)
 
         ccode = mrf_cmd_cmd_info   # eyup

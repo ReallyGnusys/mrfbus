@@ -45,6 +45,21 @@
 #define _DRDY_PORT P2
 #define _DRDY_BIT 4
 
+// ADS1148 reg offsets
+
+#define MUX0_OFFS    0
+#define VBIAS_OFFS   1
+#define MUX1_OFFS    2
+#define SYS0_OFFS    3
+#define IDAC0_OFFS   0xa
+#define IDAC1_OFFS   0xb
+#define GPIOCFG_OFFS 0xc
+#define GPIODIR_OFFS 0xd
+
+
+
+
+
 
 volatile int dbg22;
 
@@ -85,6 +100,19 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   mrf_spi_tx(data);
 
   mrf_spi_flush_rx();
+
+}
+
+
+int ads1148_config(){
+  // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
+  // commoned to AIN7 
+  // positive connections of RTDs are connected to AIN0-AIN6
+  // A ratiometric measurement process is used , generating REF voltage 
+  // from in series Rref across REFP and REFN
+  
+
+  
 
 }
 
