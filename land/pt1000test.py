@@ -156,6 +156,11 @@ class TestPt1000(DeviceTestCase):
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
+        time.sleep(0.2)
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
 
         self.stub.cmd(self.dest,ccode)
         fresp = self.stub.response(timeout=self.timeout)
