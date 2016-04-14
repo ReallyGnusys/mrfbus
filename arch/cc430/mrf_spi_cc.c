@@ -155,10 +155,7 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
         uint8 txchr = (uint8)queue_pop(&_spi_tx_queue);
         UCB0TXBUF = txchr;
         _spi_tx_bytes += 1;
-    }
-    UCB0IE |= UCTXIE;  //re-enable this int
-
-        /*
+    
         if(queue_data_avail(&_spi_tx_queue)) // re-enable this intr
           UCB0IE |= UCTXIE;  //re-enable this int
         else
@@ -166,7 +163,6 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     } else {
       UCB0IE &= ~UCTXIE; 
     }
-        */
     break;
   default: break;
   }  
