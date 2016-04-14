@@ -24,7 +24,6 @@
 //circular uint8 buffer
 
 void queue_init(IQUEUE *q){
-  int i;
   q->qip = 0;
   q->qop = 0;
   //q->items = 0;
