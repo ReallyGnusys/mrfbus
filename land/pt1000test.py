@@ -40,7 +40,11 @@ class PktSpiDebug(MrfStruct):
         ("spi_rx_bytes", c_uint16),
         ("spi_tx_bytes", c_uint16),
         ("spi_rx_queue_level", c_uint16),
-        ("spi_tx_queue_level", c_uint16)
+        ("spi_tx_queue_level", c_uint16),
+        ("spi_tx_queue_data_avail", c_uint8),
+        ("spi_rx_queue_data_avail", c_uint8),
+        ("pad2",  c_unit16)
+
     ]
 
 
@@ -101,6 +105,9 @@ class TestPt1000(DeviceTestCase):
         print "**********************"
         print "* read_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
         print "**********************"
+
+        
+
         ccode = mrf_cmd_spi_read
         paramstr = PktUint8()
         paramstr.value = addr
@@ -146,6 +153,12 @@ class TestPt1000(DeviceTestCase):
         self.sys_info_test(self.dest)
         self.app_info_test(self.dest)
         self.get_time_test(self.dest)
+
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
+
 
         self.read_spi_test()
         
