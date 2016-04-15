@@ -163,6 +163,7 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     } else {
       UCB0IE &= ~UCTXIE; 
     }
+    UCB0IE |= UCTXIE;  //re-enable this int
     break;
   default: break;
   }  
