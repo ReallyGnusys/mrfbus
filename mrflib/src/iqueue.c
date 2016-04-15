@@ -35,10 +35,10 @@ void queue_init(IQUEUE *q){
 int queue_items(IQUEUE *q){
   int items;
 
-  if (q->qop > q->qip)
+  if (q->qop >= q->qip)
     items = q->qop - q->qip;
   else
-    items = (IQUEUE_DEPTH + q->qop) -  q->qip;
+    items = (IQUEUE_DEPTH*2 + q->qop) -  q->qip;
   return items;
 }
 int queue_flush(IQUEUE *q){
@@ -52,7 +52,8 @@ int queue_flush(IQUEUE *q){
 }
 
 int queue_full(IQUEUE *q){
-  return ((q->qip+1) % IQUEUE_DEPTH) == q->qop;
+  return ( queue_items(q) >= IQUEUE_DEPTH);  
+  //return ((q->qip+1) % (IQUEUE_DEPTH*2)) == q->qop;
 }
 
 int queue_data_avail(IQUEUE *q){
@@ -61,16 +62,16 @@ int queue_data_avail(IQUEUE *q){
 
 // returns elem for entry qop
 static uint8 _q_elem(IQUEUE *q, uint8 index){
-  return q->buffer[q->qop ];
+  return q->buffer[q->qop % IQUEUE_DEPTH];
 }
 
 // sets elem for entry qip
 static void _q_elem_set(IQUEUE *q, uint8 val){
-  q->buffer[q->qip] = val;
+  q->buffer[q->qip % IQUEUE_DEPTH] = val;
 }
 
 uint8 queue_head(IQUEUE *q){
-  return q->buffer[q->qop];
+  return q->buffer[q->qop % IQUEUE_DEPTH];
 }
 
 
@@ -81,7 +82,7 @@ int queue_push(IQUEUE *q, uint8 data){
     return -1;
   }
   _q_elem_set(q,data);  
-  q->qip = (q->qip + 1) % IQUEUE_DEPTH;
+  q->qip = (q->qip + 1) % (IQUEUE_DEPTH * 2);
   q->items++;
   return 0;
 }
@@ -93,7 +94,7 @@ int16 queue_pop(IQUEUE *q){
     return -1;
   }
   int16 data = (int16)queue_head(q);
-  q->qop = (q->qop + 1) % IQUEUE_DEPTH;
+  q->qop = (q->qop + 1) % (IQUEUE_DEPTH * 2);
   return data;
 }
 

@@ -43,7 +43,7 @@ class PktSpiDebug(MrfStruct):
         ("spi_tx_queue_level", c_uint16),
         ("spi_tx_queue_data_avail", c_uint8),
         ("spi_rx_queue_data_avail", c_uint8),
-        ("pad2",  c_unit16)
+        ("pad2",  c_uint16)
 
     ]
 
@@ -158,9 +158,18 @@ class TestPt1000(DeviceTestCase):
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
-
-
-        self.read_spi_test()
+        """
+        try:
+            self.read_spi_test()
+        except:
+            print "oops exception"
+        """
+        
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
+   
         
         print "device_status at start of test:\n"
         print sresp
