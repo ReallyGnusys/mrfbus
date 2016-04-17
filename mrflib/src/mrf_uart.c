@@ -80,7 +80,10 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->state = S_ADDR;
       rxstate->bindex = 0;
       rxstate->buff[rxstate->bindex++] = rxbyte;
-    } else {
+    } 
+
+    else if (rxbyte != _MRF_UART_PREAMBLE){ // FIXME slight bodge that relies on preamble being reject above 
+      
       _dbg_len(rxbyte);
       rxstate->state = S_START;
     }

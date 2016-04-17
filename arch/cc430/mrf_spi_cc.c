@@ -85,6 +85,13 @@ static int disable_tx_int(){
   return 0;
 }
 
+IQUEUE *mrf_spi_tx_queue(){
+  return &_spi_tx_queue;
+}
+
+IQUEUE *mrf_spi_rx_queue(){
+  return &_spi_tx_queue;
+}
 
 int mrf_spi_tx_queue_items(){
   return queue_items(&_spi_tx_queue);

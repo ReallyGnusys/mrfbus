@@ -31,6 +31,17 @@ typedef struct  __attribute__ ((packed))   {
   uint16 spi_tx_queue_level;
   uint8  spi_tx_queue_data_avail;
   uint8  spi_rx_queue_data_avail;
+  uint8  rxq_qip;
+  uint8  rxq_qop;
+  uint8  rxq_items;
+  uint8  rxq_push_errors;
+  uint8  rxq_pop_errors;
+  uint8  txq_qip;
+  uint8  txq_qop;
+  uint8  txq_items;
+  uint8  txq_push_errors;
+  uint8  txq_pop_errors;
+
   uint16 pad2;
 
 

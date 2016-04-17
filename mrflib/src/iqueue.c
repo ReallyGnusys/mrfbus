@@ -95,6 +95,7 @@ int16 queue_pop(IQUEUE *q){
   }
   int16 data = (int16)queue_head(q);
   q->qop = (q->qop + 1) % (IQUEUE_DEPTH * 2);
+  q->items--;
   return data;
 }
 

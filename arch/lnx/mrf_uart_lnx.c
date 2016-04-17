@@ -81,7 +81,7 @@ static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen){
   uint8 i,rv;
   UART_LSTATE stb,sta;
   mrf_debug("_mrf_uart_input i_f %d inlen %d inbuff[0] %x\n",i_f,inlen,inbuff[0]);
-  rxstate[i_f].state = S_START; // FIXME ideally the state would already be this
+  //rxstate[i_f].state = S_START; // FIXME ideally the state would already be this
   for ( i = 0 ; i < inlen ; i++){
     stb =  rxstate[i_f].state;
     rv = mrf_uart_rx_byte(inbuff[i], &(rxstate[i_f]));
