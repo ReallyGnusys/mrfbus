@@ -26,7 +26,7 @@
 void queue_init(IQUEUE *q){
   q->qip = 0;
   q->qop = 0;
-  //q->items = 0;
+  q->items = 0;  // FIXME kind of pointless ..
   q->push_errors = 0;
   q->pop_errors = 0;
 
@@ -38,7 +38,7 @@ int queue_items(IQUEUE *q){
   if (q->qip >= q->qop)
     items = q->qip - q->qop;
   else
-    items = (IQUEUE_DEPTH*2 + q->qop) -  q->qip;
+    items = (IQUEUE_DEPTH*2 + q->qip) -  q->qop;
   return items;
 }
 int queue_flush(IQUEUE *q){

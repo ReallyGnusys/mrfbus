@@ -51,7 +51,7 @@ int mrf_buff_loaded(uint8 bnum){
   if (bnum <  _MRF_BUFFS){
     mrf_debug("mrf_buff_loaded bnum entry  %u owner %u\n",bnum, _mrf_buffst[bnum].owner);
     ifp = mrf_if_ptr( _mrf_buffst[bnum].owner);
-    printf("ifp = %p\n",ifp);
+    mrf_debug("ifp = %p\n",ifp);
     ifp->status->stats.rx_pkts += 1;
     _mrf_buffst[bnum].state = LOADED;
     //_mrf_buff_print();

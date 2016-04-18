@@ -3,7 +3,7 @@ TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
 HOSTFIFO=${TMP}/1-0-in
 
-tests: ${TMP} ${HOSTFIFO} ${LOGDIR} BUILD BUILDCC
+tests: ${TMP} ${HOSTFIFO} ${LOGDIR} BUILD BUILDCC QTEST
 
 
 ${TMP}:
@@ -30,3 +30,6 @@ BUILD:
 BUILDCC:
 	cd examples/usbrf && make clean && make
 	cd examples/pt1000usb && make clean && make
+
+QTEST:
+	cd tests/iqueue && make clean && make
