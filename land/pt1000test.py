@@ -196,7 +196,7 @@ class TestPt1000(DeviceTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
 
-        #self.read_spi_test()
+        self.read_spi_test()
         """
         try:
             #self.read_spi_test()
