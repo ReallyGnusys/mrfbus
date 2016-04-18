@@ -239,6 +239,9 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   pkt.txq_push_errors = spi_tx_q->push_errors;
   pkt.txq_pop_errors = spi_tx_q->pop_errors;
 
+  pkt.ucb0_ifg = UCB0IFG;
+  pkt.ucb0_ie = UCB0IE;
+
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 
 

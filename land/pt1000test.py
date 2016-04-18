@@ -52,7 +52,10 @@ class PktSpiDebug(MrfStruct):
         ("spi_txq_qop", c_uint8),
         ("spi_txq_items", c_uint8),
         ("spi_txq_push_errors", c_uint8),
-        ("spi_txq_pop_errors", c_uint8)
+        ("spi_txq_pop_errors", c_uint8),
+        ("ucb0_ifg", c_uint8),
+        ("ucb0_ie", c_uint8)
+        
     ]
 
 
