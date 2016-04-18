@@ -90,7 +90,7 @@ IQUEUE *mrf_spi_tx_queue(){
 }
 
 IQUEUE *mrf_spi_rx_queue(){
-  return &_spi_tx_queue;
+  return &_spi_rx_queue;
 }
 
 int mrf_spi_tx_queue_items(){
