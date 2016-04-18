@@ -107,13 +107,17 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   mrf_spi_flush_rx();
 
   mrf_spi_tx(b1);
+  __delay_cycles(10);  
   mrf_spi_tx(0); // 1 byte
+  __delay_cycles(10);  
   mrf_spi_tx(data);
-  /*
+  __delay_cycles(10);  
+ 
+ 
   while(mrf_spi_tx_data_avail()){ // FIXME
     __delay_cycles(10);  
   }
-  */
+  
   mrf_spi_flush_rx();
 
 }
@@ -213,7 +217,8 @@ MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_read_spi entry bnum %d\n",bnum);
   MRF_PKT_UINT8_2 *data = (MRF_PKT_UINT8_2 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   ads1148_write(data->d0,data->d1);
-  mrf_send_response(bnum,0);
+  //mrf_send_response(bnum,0);
+  _mrf_buff_free(bnum);
   mrf_debug("mrf_app_task_app_write_spi exit\n");
   return MRF_CMD_RES_OK;
 }

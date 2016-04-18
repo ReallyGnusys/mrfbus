@@ -63,7 +63,6 @@ int _start_spi_tx(){
       return 0;
     UCB0TXBUF = (uint8)qdata;
     _spi_tx_bytes += 1;
-
   }
 
 }
