@@ -43,7 +43,9 @@ typedef struct  __attribute__ ((packed))   {
   uint8  txq_pop_errors;
   uint8  ucb0_ifg;
   uint8  ucb0_ie;
-
+  uint8  ucb0_cntrl0;
+  uint8  ucb0_cntrl1;
+  uint8  ucb0_stat;
 
   //uint16 pad2;
 

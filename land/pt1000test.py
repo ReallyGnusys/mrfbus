@@ -54,8 +54,12 @@ class PktSpiDebug(MrfStruct):
         ("spi_txq_push_errors", c_uint8),
         ("spi_txq_pop_errors", c_uint8),
         ("ucb0_ifg", c_uint8),
-        ("ucb0_ie", c_uint8)
-        
+        ("ucb0_ie", c_uint8),
+        ("ucb0_cntrl0", c_uint8),
+        ("ucb0_cntrl1", c_uint8),
+        ("ucb0_stat", c_uint8),
+
+       
     ]
 
 
@@ -169,6 +173,17 @@ class TestPt1000(DeviceTestCase):
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
+
+        """
+        addr = 0
+        ccode = mrf_cmd_spi_read
+        paramstr = PktUint8()
+        paramstr.value = addr
+
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        """
         """
         try:
             self.read_spi_test()

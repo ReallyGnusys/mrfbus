@@ -241,6 +241,10 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   pkt.ucb0_ifg = UCB0IFG;
   pkt.ucb0_ie = UCB0IE;
+  pkt.ucb0_cntrl0 = UCB0CTL0;
+  pkt.ucb0_cntrl1 = UCB0CTL1;
+  pkt.ucb0_stat = UCB0STAT;
+
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 

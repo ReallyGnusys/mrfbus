@@ -38,7 +38,7 @@ uint16 _spi_rx_bytes;
 static IQUEUE _spi_rx_queue,_spi_tx_queue;
 
 static int _enable_spi_tx_int(){
-  UCB0IE &= ~UCTXIE;  // disable this intr
+  //UCB0IE &= ~UCTXIE;  // disable this intr
   UCB0IE |= UCTXIE;  //re-enable this intr
   __bis_SR_register(GIE);
   return 0;
@@ -162,15 +162,16 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
         uint8 txchr = (uint8)queue_pop(&_spi_tx_queue);
         UCB0TXBUF = txchr;
         _spi_tx_bytes += 1;
-    
+        /*
         if(queue_data_avail(&_spi_tx_queue)) // re-enable this intr
           UCB0IE |= UCTXIE;  //re-enable this int
         else
           UCB0IE &= ~UCTXIE; 
+        */
     } else {
       UCB0IE &= ~UCTXIE; 
     }
-    UCB0IE |= UCTXIE;  //re-enable this int
+    //UCB0IE |= UCTXIE;  //re-enable this int
     break;
   default: break;
   }  
