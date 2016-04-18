@@ -44,6 +44,7 @@ int queue_items(IQUEUE *q){
 int queue_flush(IQUEUE *q){
   int items = queue_items(q);
   
+  q->items = 0;  //FIXME shouldn't need this field - use function above 
   q->qop = 0;
   q->qip = 0;
   

@@ -116,6 +116,12 @@ class TestPt1000(DeviceTestCase):
         self.stub.app_cmds = Pt1000AppCmds
         self.checkgit = False
         #self.host_test()
+
+    def spi_debug(self):
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp   
     def read_spi_test(self, addr = 0):
         print "**********************"
         print "* read_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -143,8 +149,15 @@ class TestPt1000(DeviceTestCase):
         self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         
         print "wrote spi write"
+
+        ccode = mrf_cmd_spi_read
+        paramstr = PktUint8()
+        paramstr.value = addr
         
-    
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktUint8()),type(resp))
     def host_app_test(self, addr = 0):
         print "**********************"
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -157,6 +170,7 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_device_tests(self):
+
         ccode = mrf_cmd_device_status
         self.stub.cmd(self.dest,ccode)
         sresp = self.stub.response(timeout=self.timeout)
@@ -168,13 +182,11 @@ class TestPt1000(DeviceTestCase):
         self.sys_info_test(self.dest)
         self.app_info_test(self.dest)
         self.get_time_test(self.dest)
-
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
 
-        """
         addr = 0
         ccode = mrf_cmd_spi_read
         paramstr = PktUint8()
@@ -183,19 +195,22 @@ class TestPt1000(DeviceTestCase):
         self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        """
+
+        #self.read_spi_test()
         """
         try:
-            self.read_spi_test()
+            #self.read_spi_test()
+            self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+            resp = self.stub.response(timeout=self.timeout)
+            print "got resp:\n%s"%repr(resp)
         except:
             print "oops exception"
         """
-        
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
-   
+        return 0
         
         print "device_status at start of test:\n"
         print sresp
