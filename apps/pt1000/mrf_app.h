@@ -29,8 +29,8 @@ typedef struct  __attribute__ ((packed))   {
   uint16 spi_tx_bytes; 
   uint16 spi_rx_queue_level;
   uint16 spi_tx_queue_level;
-  uint8  spi_tx_queue_data_avail;
   uint8  spi_rx_queue_data_avail;
+  uint8  spi_tx_queue_data_avail;
   uint8  rxq_qip;
   uint8  rxq_qop;
   uint8  rxq_items;

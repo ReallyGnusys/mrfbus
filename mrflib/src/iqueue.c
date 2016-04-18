@@ -35,8 +35,8 @@ void queue_init(IQUEUE *q){
 int queue_items(IQUEUE *q){
   int items;
 
-  if (q->qop >= q->qip)
-    items = q->qop - q->qip;
+  if (q->qip >= q->qop)
+    items = q->qip - q->qop;
   else
     items = (IQUEUE_DEPTH*2 + q->qop) -  q->qip;
   return items;
