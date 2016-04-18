@@ -71,6 +71,10 @@ void debfunc(uint8 data){
 }
 
 uint8 ads1148_read(uint8 reg){
+
+  while(mrf_spi_tx_data_avail()){  // block until queue cleared
+    __delay_cycles(50);
+  }
   _rxcnt = 0 ;
   uint8 b1 = 0x20 + ( reg & 0xf );
   PINLOW(CS);
@@ -89,6 +93,10 @@ uint8 ads1148_read(uint8 reg){
   return b1;
 }
 uint8 ads1148_write(uint8 reg,uint8 data){
+
+  while(mrf_spi_tx_data_avail()){  // block until queue cleared
+    __delay_cycles(50);
+  }
   _rxcnt = 0 ;
   uint8 b1 = 0x40 + ( reg & 0xf );
   PINLOW(CS);

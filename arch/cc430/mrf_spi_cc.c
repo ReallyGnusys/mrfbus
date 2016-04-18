@@ -69,6 +69,8 @@ int _start_spi_tx(){
 }
 int mrf_spi_tx(uint8 tx_byte){
   int rv = queue_push(&_spi_tx_queue,tx_byte);
+  if (rv == -1 )
+    return -1;
   _enable_spi_tx_int();
   _start_spi_tx();
   return rv;
