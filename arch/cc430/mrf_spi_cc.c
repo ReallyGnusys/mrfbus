@@ -35,7 +35,7 @@ uint16 _spi_tx_bytes;
 uint16 _spi_rx_bytes;
 
 
-static IQUEUE _spi_rx_queue,_spi_tx_queue;
+static  IQUEUE _spi_rx_queue,_spi_tx_queue;
 
 static int _enable_spi_tx_int(){
   //UCB0IE &= ~UCTXIE;  // disable this intr
@@ -51,10 +51,26 @@ static int _enable_spi_rx_int(){
   return 0;
 }
 
+int _start_spi_tx(){
 
+  if (!queue_data_avail(&_spi_tx_queue))
+    return 0;
+
+  if ((UCB0STAT & 1) == 0){ // UCB0 is idle
+
+    int16 qdata = queue_pop(&_spi_tx_queue);
+    if (qdata == -1)
+      return 0;
+    UCB0TXBUF = (uint8)qdata;
+    _spi_tx_bytes += 1;
+
+  }
+
+}
 int mrf_spi_tx(uint8 tx_byte){
   int rv = queue_push(&_spi_tx_queue,tx_byte);
   _enable_spi_tx_int();
+  _start_spi_tx();
   return rv;
 }
 
