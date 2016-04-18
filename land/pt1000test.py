@@ -43,8 +43,16 @@ class PktSpiDebug(MrfStruct):
         ("spi_tx_queue_level", c_uint16),
         ("spi_tx_queue_data_avail", c_uint8),
         ("spi_rx_queue_data_avail", c_uint8),
-        ("pad2",  c_uint16)
-
+        ("spi_rxq_qip", c_uint8),
+        ("spi_rxq_qop", c_uint8),
+        ("spi_rxq_items", c_uint8),
+        ("spi_rxq_push_errors", c_uint8),
+        ("spi_rxq_pop_errors", c_uint8),
+        ("spi_txq_qip", c_uint8),
+        ("spi_txq_qop", c_uint8),
+        ("spi_txq_items", c_uint8),
+        ("spi_txq_push_errors", c_uint8),
+        ("spi_txq_pop_errors", c_uint8)
     ]
 
 

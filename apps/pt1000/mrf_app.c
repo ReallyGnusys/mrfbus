@@ -224,7 +224,20 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   pkt.spi_tx_queue_level = (uint16)mrf_spi_tx_queue_items();
   pkt.spi_tx_queue_data_avail = (uint8)mrf_spi_tx_data_avail();
   pkt.spi_rx_queue_data_avail = (uint8)mrf_spi_data_avail();
-  pkt.pad2 = 0x55;
+  
+  IQUEUE *spi_rx_q = mrf_spi_rx_queue();
+  pkt.rxq_qip = spi_rx_q->qip;
+  pkt.rxq_qop = spi_rx_q->qop;
+  pkt.rxq_items = spi_rx_q->items;
+  pkt.rxq_push_errors = spi_rx_q->push_errors;
+  pkt.rxq_pop_errors = spi_rx_q->pop_errors;
+
+  IQUEUE *spi_tx_q = mrf_spi_tx_queue();
+  pkt.txq_qip = spi_tx_q->qip;
+  pkt.txq_qop = spi_tx_q->qop;
+  pkt.txq_items = spi_tx_q->items;
+  pkt.txq_push_errors = spi_tx_q->push_errors;
+  pkt.txq_pop_errors = spi_tx_q->pop_errors;
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 

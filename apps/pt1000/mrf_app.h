@@ -42,7 +42,7 @@ typedef struct  __attribute__ ((packed))   {
   uint8  txq_push_errors;
   uint8  txq_pop_errors;
 
-  uint16 pad2;
+  //uint16 pad2;
 
 
 } MRF_PKT_SPI_DEBUG;
