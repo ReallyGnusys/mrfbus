@@ -47,5 +47,33 @@ int main(void){
       print_qinf(&q);
     }
   }
+
+
+  //try overflow
+  
+  for (item = 0 ; item < IQUEUE_DEPTH*2 ; item ++){
+    printf("pushing item %d\n",item);
+    queue_push(&q,item);
+    print_qinf(&q);  
+  }
+  if ( IQUEUE_DEPTH != q.push_errors){
+        printf("unexpected push_errors got %d expected %d\n", q.push_errors,IQUEUE_DEPTH);
+        return -1;
+  }
+
+  // try underflow
+
+  uint8 qitem;
+  for (item = 0 ; item < IQUEUE_DEPTH*2 ; item ++){
+    printf("popping item %d\n",item);
+    qitem = queue_pop(&q);
+    print_qinf(&q);  
+  }
+  if ( IQUEUE_DEPTH != q.pop_errors){
+        printf("unexpected pop_errors got %d expected %d\n", q.pop_errors,IQUEUE_DEPTH);
+        return -1;
+  }
+
+
   return 0;
 }
