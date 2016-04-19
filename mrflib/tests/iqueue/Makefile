@@ -1,4 +1,4 @@
-MRFHOME=../..
+MRFHOME=../../..
 ARCH=lnx
 #ARCH=cc430  this won't work because wrong gcc and ld above - see dir usbrf etc for working makefile
 DEVTYPE=hostsim

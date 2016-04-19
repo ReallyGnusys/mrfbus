@@ -32,4 +32,4 @@ BUILDCC:
 	cd examples/pt1000usb && make clean && make
 
 QTEST:
-	cd tests/iqueue && make clean && make
+	cd mrflib/tests/iqueue && make clean && make

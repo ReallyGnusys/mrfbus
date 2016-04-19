@@ -214,7 +214,7 @@ MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
-  mrf_debug("mrf_app_read_spi entry bnum %d\n",bnum);
+  mrf_debug("mrf_app_spi_write entry bnum %d\n",bnum);
   MRF_PKT_UINT8_2 *data = (MRF_PKT_UINT8_2 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   ads1148_write(data->d0,data->d1);
   //mrf_send_response(bnum,0);

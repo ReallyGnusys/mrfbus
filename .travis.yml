@@ -9,5 +9,5 @@ addons:
 
 script:
   - make tests
-  - ./tests/iqueue/test_01
+  - ./mrflib/tests/iqueue/test_01
   - ./run_tests
