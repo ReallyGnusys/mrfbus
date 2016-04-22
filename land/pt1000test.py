@@ -170,9 +170,15 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_device_tests(self):
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
 
-        ccode = mrf_cmd_device_status
-        self.stub.cmd(self.dest,ccode)
+        return
+
+        mrf_cmd_device_status
+        self.stub.cmd(self.dest,mrf_cmd_device_status)
         sresp = self.stub.response(timeout=self.timeout)
         print "device_status at start of test:\n"
         print sresp
@@ -188,15 +194,14 @@ class TestPt1000(DeviceTestCase):
         print dresp
 
         addr = 0
-        ccode = mrf_cmd_spi_read
         paramstr = PktUint8()
         paramstr.value = addr
 
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-
         self.read_spi_test()
+
         """
         try:
             #self.read_spi_test()
@@ -206,26 +211,18 @@ class TestPt1000(DeviceTestCase):
         except:
             print "oops exception"
         """
+
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
-        return 0
         
         print "device_status at start of test:\n"
         print sresp
         time.sleep(0.1)  # FIXME!
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
-        print "spi debug:\n"
-        print dresp
-        time.sleep(0.2)
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
-        print "spi debug:\n"
-        print dresp
 
-        self.stub.cmd(self.dest,ccode)
+        self.stub.cmd(self.dest, mrf_cmd_device_status)
+
         fresp = self.stub.response(timeout=self.timeout)
         print "device_status at end of test:\n"
         print fresp

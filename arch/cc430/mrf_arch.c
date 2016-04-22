@@ -24,6 +24,16 @@
 
 extern uint8 _mrfid;
 
+uint16 _at_sp;
+uint16 _at_sp_1;
+
+
+inline void mrf_intr_entry(){
+  uint16 sp;
+  asm("mov r1, %0": [sp] "=r" (sp):);
+  _at_sp = *(uint16 *)sp;
+  _at_sp_1 = *(uint16 *)(sp+2);
+}
 
 
 //FIXME shouldn't need putchar to make printf etc link. Shouldn't have printf
