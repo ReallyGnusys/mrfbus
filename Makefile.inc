@@ -40,6 +40,7 @@ APP ?= default
 MSRC=${MRFHOME}/mrflib/src
 
 MOBJ=${MRFMAKE}obj
+LSTD=${MRFMAKE}lst
 
 BIN=${MRFMAKE}bin
 #APPSRC=${MRFMAKE}src
@@ -73,7 +74,7 @@ endif
 CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${BFLAGS}
 
 
-ALL : ${BIN} ${OBJ} ${MOBJS} ${TARG}
+ALL : ${BIN} ${MOBJ} ${MOBJS} ${TARG}
 
 clean : 
 	rm -rf ${MOBJ}
@@ -83,36 +84,33 @@ clean :
 ${BIN}:
 	mkdir -p ${BIN}
 
+${MOBJ}:
+	mkdir -p ${MOBJ}
+
 ${TARG} :
 	${GCC} ${CCFLAGS} ${MAIN} ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
 ${MOBJ}/mrf_app.o: ${APPSRC}/mrf_app.c
-	mkdir -p ${MOBJ}
 	${GCC}  -c $(CCFLAGS) ${APPSRC}/mrf_app.c -o $@
 
 
 ${MOBJ}/mrf_app_cmds.o: ${APP_CMDS}
-	mkdir -p ${MOBJ}
 	${GCC}  -c $(CCFLAGS) ${APP_CMDS} -o $@
 
 
 
 
 ${MOBJ}/%.o: ${MSRC}/%.c
-	mkdir -p ${MOBJ}
 	${GCC}  -c $(CCFLAGS) $< -o $@
 
 
 ${MOBJ}/%.o: ${NET}/%.c
-	mkdir -p ${MOBJ}
 	${GCC}  -c $(CCFLAGS) $< -o $@
 
 ${MOBJ}/%.o: ${ARCHDIR}/%.c
-	mkdir -p ${MOBJ}
 	${GCC}  -c $(CCFLAGS) $< -o $@
 
 ${MOBJ}/%.o: ${DEVDIR}/%.c
-	mkdir -p ${MOBJ}
 	$(GCC)  -c $(CCFLAGS) $< -o $@
 
 
