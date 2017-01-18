@@ -57,14 +57,11 @@
 #define GPIODIR_OFFS 0xd
 
 
-
-
-
-
 volatile int dbg22;
 
 volatile uint8 dbg_u8;
 volatile uint8 _rxcnt;
+
 void debfunc(uint8 data){
   dbg_u8 = data;
   _rxcnt += 1;
@@ -230,7 +227,8 @@ extern uint16 _spi_tx_bytes;
 
 MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_spi_debug entry bnum %d\n",bnum);
-  MRF_PKT_SPI_DEBUG pkt;
+  MRF_PKT_SPI_DEBUG pkt;  // FIXME why not get pointer to buffer and cast to MRF_PKT_SPI_DEBUG?
+  // e.g. MRF_PKT_SPI_DEBUG  *pkt = (MRF_PKT_SPI_DEBUG *)mrf_response_buffer(bnum); 
 
   pkt.spi_rx_int_cnt = _spi_rx_int_cnt;
   pkt.spi_tx_int_cnt = _spi_tx_int_cnt;
