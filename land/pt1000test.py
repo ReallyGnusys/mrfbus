@@ -204,9 +204,11 @@ class TestPt1000(DeviceTestCase):
             
         err_tot = 0
         errs = {}
+        chks = 0
         for loop in xrange(100):
             print "check loop %d"%loop
-            for addr in xrange(0xf):        
+            for addr in xrange(0xf):
+                chks = chks + 1
                 paramstr.value = addr
                 self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
                 resp = self.stub.response(timeout=self.timeout)
@@ -218,7 +220,7 @@ class TestPt1000(DeviceTestCase):
                     #print "addr %d errs %d"%(addr,errs[addr])
                     print "ERROR reg %02d expected %02x got %02x"%(addr,regvals[addr],resp.value)
                     
-        print "loops %d err_tot %d"%(loop,err_tot)
+        print "loops %d err_tot %d out of %d device reads"%(loop,err_tot,chks)
 
         nks = errs.keys()
         nks.sort()
