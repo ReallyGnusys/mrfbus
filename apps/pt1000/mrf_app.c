@@ -185,10 +185,10 @@ int ads1148_init(){
   __delay_cycles(10);
 //PINLOW(RESET);
   PINLOW(MR);
-  __delay_cycles(10);
+  __delay_cycles(100);
 //PINHIGH(RESET);
   PINHIGH(MR);
-  __delay_cycles(10);
+  __delay_cycles(1000);
   mrf_spi_flush_rx();
 
   ads1148_config();

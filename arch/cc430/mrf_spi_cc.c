@@ -143,7 +143,13 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   
   // should be about 115 kb copied from uart
   UCB0CTL1 |= UCSSEL__SMCLK;
-  UCB0BRW =   72;                // 
+  //UCB0BRW =   72;                // 
+  //UCB0BRW =   72;//
+
+  UCB0BRW =   36;// stab in dark seems good
+
+
+  
   //UCB0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
   
   UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
@@ -152,7 +158,7 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   return 0;
 }
 
-
+ 
 static uint8 last_rx;
 
 
@@ -184,6 +190,7 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
         uint8 txchr = (uint8)queue_pop(&_spi_tx_queue);
         UCB0TXBUF = txchr;
         _spi_tx_bytes += 1;
+
         /*
         if(queue_data_avail(&_spi_tx_queue)) // re-enable this intr
           UCB0IE |= UCTXIE;  //re-enable this int

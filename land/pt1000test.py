@@ -204,7 +204,7 @@ class TestPt1000(DeviceTestCase):
             
         err_tot = 0
         errs = {}
-        for loop in xrange(10):
+        for loop in xrange(100):
             print "check loop %d"%loop
             for addr in xrange(0xf):        
                 paramstr.value = addr
@@ -216,7 +216,7 @@ class TestPt1000(DeviceTestCase):
                         errs[addr] = 0
                     errs[addr] = errs[addr] +  1
                     #print "addr %d errs %d"%(addr,errs[addr])
-                    print "ERROR reg %d expected %02x got %02x"%(addr,regvals[addr],resp.value)
+                    print "ERROR reg %02d expected %02x got %02x"%(addr,regvals[addr],resp.value)
                     
         print "loops %d err_tot %d"%(loop,err_tot)
 
