@@ -136,7 +136,28 @@ class DeviceTestCase(StubTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
-       
+
+    def set_time_test(self,dest,ref):
+        print "**********************"
+        print "* set time test (dest 0x%02x)"%dest
+        print "**********************"
+        ccode = mrf_cmd_get_time
+        self.stub.cmd(ref,ccode)
+        reftime = self.stub.response(timeout=self.timeout)
+        print "ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime))
+        self.assertEqual(type(PktTimeDate()),type(reftime))
+
+        self.stub.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+
+        
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktTimeDate()),type(resp))
+
+        
     def app_info_test(self,dest):
         print "**********************"
         print "* app info test (dest 0x%02x)"%dest

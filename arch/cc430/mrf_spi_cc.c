@@ -33,7 +33,7 @@ uint16 _spi_rx_int_cnt;
 uint16 _spi_tx_int_cnt;
 uint16 _spi_tx_bytes;
 uint16 _spi_rx_bytes;
-
+uint16 _spi_rxov_err;
 
 static  IQUEUE _spi_rx_queue,_spi_tx_queue;
 
@@ -127,16 +127,19 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   
   _spi_rx_bytes = 0;
   _spi_tx_bytes = 0;
- 
+  _spi_rxov_err = 0;
   queue_init(&_spi_rx_queue);
   queue_init(&_spi_tx_queue);
   
   //
   UCB0CTL1 |= UCSWRST;                      // **Put state machine in reset**
 
-  P1SEL |= BIT2 + BIT3 + BIT7 ; // spi function
+  P1DIR |= BIT3 + BIT4 ; // spi MOSI and CLK outputs
+  
+  P1SEL |= BIT2 + BIT3 + BIT4; // spi function. shouldn't need STE +  BIT7 ; // spi function
 
-  UCB0CTL0 = UCMODE_0 + UCMST + UCMSB;
+  
+  UCB0CTL0 = UCMODE_0 + UCMST + UCMSB; // + UCSYNC + UCCKPH;
   
   // should be about 115 kb copied from uart
   UCB0CTL1 |= UCSSEL__SMCLK;
@@ -156,6 +159,8 @@ static uint8 last_rx;
 static uint8  _rx_byte(){
   // called in intr handler below
   // just read byte from RXBUF and push to queue
+  if ( UCB0STAT & UCOE )
+    _spi_rxov_err++;
   last_rx = UCB0RXBUF;
   return queue_push(&_spi_rx_queue,last_rx);
 }

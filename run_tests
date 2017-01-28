@@ -31,6 +31,14 @@ sleep 1
 python land/core_tests.py
 
 
+sleep 1
+
+kill $h01_pid $h02_pid $h20_pid $h2f_pid $stub_pid
+
+sleep 1
+
+echo "run_tests adios at $(date)"
+
 
 
 

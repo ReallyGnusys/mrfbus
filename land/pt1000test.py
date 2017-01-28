@@ -1,5 +1,3 @@
-
-
 #!/usr/bin/env python
 '''  Copyright (c) 2012-16 Gnusys Ltd
 
@@ -21,6 +19,7 @@ import threading
 import Queue
 import subprocess
 import time
+from copy import copy
 import sys
 import traceback
 from mrf_structs import *
@@ -39,6 +38,7 @@ class PktSpiDebug(MrfStruct):
         ("spi_tx_int_cnt", c_uint16),
         ("spi_rx_bytes", c_uint16),
         ("spi_tx_bytes", c_uint16),
+        ("spi_rxov", c_uint16),
         ("spi_rx_queue_level", c_uint16),
         ("spi_tx_queue_level", c_uint16),
         ("spi_rx_queue_data_avail", c_uint8),
@@ -105,7 +105,7 @@ class TestPt1000(DeviceTestCase):
         self.timeout = 0.6
         self.dest =0x01
         self.stub.app_cmds = DefaultAppCmds
-   
+
     def setUp(self):
         DeviceTestCase.setUp(self)
         self.devname = 'usbrf'
@@ -113,7 +113,10 @@ class TestPt1000(DeviceTestCase):
         self.num_buffs = 8
         self.timeout = 0.6
         self.dest =0x02
-        self.stub.app_cmds = Pt1000AppCmds
+        self.host= 0x01
+        #self.stub.app_cmds = Pt1000AppCmds
+        self.stub.app_cmds = copy(MrfSysCmds)
+        self.stub.app_cmds.update(Pt1000AppCmds)
         self.checkgit = False
         #self.host_test()
 
@@ -170,30 +173,72 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_device_tests(self):
+
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
 
+        if False:
+            self.get_time_test(self.host)
+            self.set_time_test(self.dest,self.host)
+        
+        
+            self.dev_info_test(self.dest)
+            self.dev_status_test(self.dest)
+            self.sys_info_test(self.dest)
+            self.app_info_test(self.dest)
+
+            self.get_time_test(self.dest)
+    
+            return
+
+        regvals = {}
+        paramstr = PktUint8()
+        for addr in xrange(0xf):        
+            paramstr.value = addr
+            self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+            resp = self.stub.response(timeout=self.timeout)            
+            print "reg %x :  %02x"%(addr, resp.value)
+            regvals[addr] = resp.value
+            
+        err_tot = 0
+        errs = {}
+        for loop in xrange(10):
+            print "check loop %d"%loop
+            for addr in xrange(0xf):        
+                paramstr.value = addr
+                self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+                resp = self.stub.response(timeout=self.timeout)
+                if resp.value != regvals[addr]:
+                    err_tot += 1
+                    if not errs.has_key(addr):
+                        errs[addr] = 0
+                    errs[addr] = errs[addr] +  1
+                    #print "addr %d errs %d"%(addr,errs[addr])
+                    print "ERROR reg %d expected %02x got %02x"%(addr,regvals[addr],resp.value)
+                    
+        print "loops %d err_tot %d"%(loop,err_tot)
+
+        nks = errs.keys()
+        nks.sort()
+        print "keys %s"%repr(nks)
+        for ky in nks:
+            print "reg %d  errors %d"%(ky,errs[ky])
+            
+        #for addr in xrange(0xf):
+        #    print "reg %x : %s"%(addr,regvals[addr])
+
+
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
+        
         return
+        #self.read_spi_test()
 
-        mrf_cmd_device_status
-        self.stub.cmd(self.dest,mrf_cmd_device_status)
-        sresp = self.stub.response(timeout=self.timeout)
-        print "device_status at start of test:\n"
-        print sresp
-        #return
-        self.dev_info_test(self.dest)
-        self.dev_status_test(self.dest)
-        self.sys_info_test(self.dest)
-        self.app_info_test(self.dest)
-        self.get_time_test(self.dest)
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
-        print "spi debug:\n"
-        print dresp
-
-        addr = 0
+        addr = 7
         paramstr = PktUint8()
         paramstr.value = addr
 
@@ -201,6 +246,18 @@ class TestPt1000(DeviceTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.read_spi_test()
+
+
+        
+        
+
+        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.stub.response(timeout=self.timeout)
+        print "spi debug:\n"
+        print dresp
+
+        
+        return
 
         """
         try:
@@ -216,7 +273,11 @@ class TestPt1000(DeviceTestCase):
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
-        
+
+
+        return
+
+    
         print "device_status at start of test:\n"
         print sresp
         time.sleep(0.1)  # FIXME!

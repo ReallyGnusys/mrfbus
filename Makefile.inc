@@ -47,6 +47,8 @@ BIN=${MRFMAKE}bin
 APPSRC=${MRFHOME}/apps/${APP}
 
 TARG=${BIN}/${DEVTYPE}_${MRFID}
+LST=${LSTD}/${DEVTYPE}_${MRFID}.lst
+
 NET=${MRFMAKE}../net
 ARCHDIR=${MRFHOME}/arch/${ARCH}
 DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
@@ -74,7 +76,7 @@ endif
 CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${BFLAGS}
 
 
-ALL : ${BIN} ${MOBJ} ${MOBJS} ${TARG}
+ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${TARG} ${LST}
 
 clean : 
 	rm -rf ${MOBJ}
@@ -87,8 +89,20 @@ ${BIN}:
 ${MOBJ}:
 	mkdir -p ${MOBJ}
 
+list: ${LST}
+	${OD} ${TARG} > ${LST}
+
+${LSTD}:
+	mkdir -p ${LSTD}
+
+
+
 ${TARG} :
 	${GCC} ${CCFLAGS} ${MAIN} ${MOBJS} ${ALDFLAGS} -o ${TARG}
+
+${LST}: ${TARG}
+	${OD} ${TARG} > ${LST}
+
 
 ${MOBJ}/mrf_app.o: ${APPSRC}/mrf_app.c
 	${GCC}  -c $(CCFLAGS) ${APPSRC}/mrf_app.c -o $@

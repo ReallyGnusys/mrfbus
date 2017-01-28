@@ -212,6 +212,11 @@ MrfSysCmds = {
         'param': None,
         'resp': PktTimeDate   
     },
+    mrf_cmd_set_time : {
+        'name' : "SET_TIME",
+        'param': PktTimeDate,
+        'resp': PktTimeDate   
+    },
     mrf_cmd_cmd_info: {
         'name' : "CMD_INFO",
         'param': PktUint8,

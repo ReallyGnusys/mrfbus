@@ -38,12 +38,22 @@
 #define _CS_PORT P2
 #define _CS_BIT  2
 
-
-#define _RESET_PORT P2
-#define _RESET_BIT  3
+//#define _RESET_PORT P2
+//#define _RESET_BIT  3
 
 #define _DRDY_PORT P2
 #define _DRDY_BIT 4
+
+
+#define _SCLK_PORT P1
+#define _SCLK_BIT 4
+
+#define _SDAO_PORT P1
+#define _SDAO_BIT 3
+
+#define _SDAI_PORT P1
+#define _SDAI_BIT 3
+
 
 // ADS1148 reg offsets
 
@@ -67,6 +77,13 @@ void debfunc(uint8 data){
   _rxcnt += 1;
 }
 
+
+volatile static __attribute__((noinline)) uint8 toggle_cs() {
+  PINLOW(CS);
+  PINHIGH(CS);
+}
+
+
 uint8 ads1148_read(uint8 reg){
   /*
   while(mrf_spi_tx_data_avail()){  // block until queue cleared
@@ -75,6 +92,7 @@ uint8 ads1148_read(uint8 reg){
   */
   _rxcnt = 0 ;
   uint8 b1 = 0x20 + ( reg & 0xf );
+//toggle_cs();
   PINLOW(CS);
   __delay_cycles(10);
   mrf_spi_flush_rx();
@@ -154,8 +172,8 @@ int ads1148_init(){
   PINHIGH(CS);
   OUTPUTPIN(CS);
   //reset output
-  PINHIGH(RESET);
-  OUTPUTPIN(RESET);
+  //PINHIGH(RESET);
+  //OUTPUTPIN(RESET);
 
   // MR output
   PINHIGH(MR);
@@ -165,10 +183,10 @@ int ads1148_init(){
   INPUTPIN(DRDY);
 
   __delay_cycles(10);
-  PINLOW(RESET);
+//PINLOW(RESET);
   PINLOW(MR);
   __delay_cycles(10);
-  PINHIGH(RESET);
+//PINHIGH(RESET);
   PINHIGH(MR);
   __delay_cycles(10);
   mrf_spi_flush_rx();
@@ -200,6 +218,8 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  //toggle_cs();
   mrf_debug("mrf_app_read_spi entry bnum %d\n",bnum);
   MRF_PKT_UINT8 *data = (MRF_PKT_UINT8 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   uint8 rd = ads1148_read(data->value);
@@ -224,6 +244,7 @@ extern uint16 _spi_rx_int_cnt;
 extern uint16 _spi_tx_int_cnt;
 extern uint16 _spi_rx_bytes;
 extern uint16 _spi_tx_bytes;
+extern uint16 _spi_rxov_err;
 
 MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_spi_debug entry bnum %d\n",bnum);
@@ -234,6 +255,7 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   pkt.spi_tx_int_cnt = _spi_tx_int_cnt;
   pkt.spi_rx_bytes = _spi_rx_bytes;
   pkt.spi_tx_bytes = _spi_tx_bytes;
+  pkt.spi_rxov_err = _spi_rxov_err;
   pkt.spi_rx_queue_level = (uint16)mrf_spi_rx_queue_items();
   pkt.spi_tx_queue_level = (uint16)mrf_spi_tx_queue_items();
   pkt.spi_rx_queue_data_avail = (uint8)mrf_spi_data_avail();
