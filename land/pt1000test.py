@@ -269,7 +269,7 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
-    def skipped_test01a_read_config(self):
+    def test01a_read_config(self):
         
         paramstr = PktUint8()
         regvals = {}
@@ -313,7 +313,7 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         return resp.value
     
-    def test05a_read_adc(self):
+    def skipped_test05a_read_adc(self):
         for i in xrange(10):
             self.read_adc()
         
