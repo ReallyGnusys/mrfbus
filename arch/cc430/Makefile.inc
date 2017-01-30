@@ -21,7 +21,7 @@ LD=msp430-ld
 OD=msp430-objdump -dt
 
 AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${MOBJ}/RfRegSettings.o \
-	${MOBJ}/mrf_uart_cc.o  ${MOBJ}/rtc.o
+	${MOBJ}/mrf_uart_cc.o  ${MOBJ}/rtc.o ${MOBJ}/mrf_debug.o 
 
 ifdef MRF_SPI_B
       ${MOBJ}/mrf_spi_cc.o

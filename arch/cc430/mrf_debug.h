@@ -20,8 +20,11 @@
 #ifndef __MRF_DEBUG_INCLUDED__
 #define __MRF_DEBUG_INCLUDED__
 
+#include <stdarg.h>
 
-#define mrf_debug(args...) 
+#define mrf_debug(format, ...) mrf_cc_debug( format, ## __VA_ARGS__ )
+
+int mrf_cc_debug( const char *fmt, ...);
 
 
 #endif

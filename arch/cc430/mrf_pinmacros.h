@@ -46,6 +46,7 @@
 #define SELREG(signame) _CONCAT(_PORT_MACRO(signame),SEL)
 #define DIRREG(signame) _CONCAT(_PORT_MACRO(signame),DIR)
 
+#define INPUTVAL(signame) ((INREG(signame) & BITNAME(signame)) != 0)
 
 #define OUTPUTPIN(signame)  DIRREG(signame) |= BITNAME(signame) ; SELREG(signame) &= (~BITNAME(signame))
 #define INPUTPIN(signame)  DIRREG(signame) &= (~BITNAME(signame)) ; SELREG(signame) &= (~BITNAME(signame))

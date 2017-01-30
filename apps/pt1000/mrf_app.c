@@ -83,6 +83,54 @@ volatile static __attribute__((noinline)) uint8 toggle_cs() {
   PINHIGH(CS);
 }
 
+uint8 _dbg_rxdata[4];
+
+uint16 ads1148_data(){
+  /*
+  while(mrf_spi_tx_data_avail()){  // block until queue cleared
+    __delay_cycles(50);
+  }
+  */
+  uint8  b1 = 0x12;  // read data once
+  uint16 rv = 0 ;
+  uint16 lc = 0;
+  uint8  i = 0;
+  _rxcnt = 0 ;
+  PINHIGH(START);  // leave continuous sampling
+//toggle_cs();
+  PINLOW(CS);
+  __delay_cycles(10);
+  mrf_spi_flush_rx(); 
+  /*  
+  while((lc < 100) && (INPUTVAL(DRDY))){
+    lc++;
+    __delay_cycles(10);
+    
+  }
+  */
+  //if (lc == 100){
+  //  return 0xeeee;
+  //}
+  mrf_spi_tx(b1);
+  mrf_spi_tx(0xff); // NOP
+  mrf_spi_tx(0xff); // NOP
+  b1 = mrf_spi_rx();  // discard first
+  _dbg_rxdata[i++] = b1;
+  debfunc(b1);
+  b1 = mrf_spi_rx();  // get second - msb of result
+  rv += (b1 << 8);
+  _dbg_rxdata[i++] = b1;
+  debfunc(b1);
+  b1 = mrf_spi_rx();  // get third  - lsb of result
+  rv += b1;
+  _dbg_rxdata[i++] = b1;
+
+  
+  //PINLOW(START);  // leave continuous sampling
+  PINHIGH(CS);
+
+  return rv;
+}
 
 uint8 ads1148_read(uint8 reg){
   /*
@@ -106,6 +154,8 @@ uint8 ads1148_read(uint8 reg){
     b1 = mrf_spi_rx();
     debfunc(b1);
   }
+  PINHIGH(CS);
+
   return b1;
 }
 uint8 ads1148_write(uint8 reg,uint8 data){
@@ -117,6 +167,8 @@ uint8 ads1148_write(uint8 reg,uint8 data){
 
   _rxcnt = 0 ;
   uint8 b1 = 0x40 + ( reg & 0xf );
+  //PINLOW(START);  // stop sampling during reconfig
+
   PINLOW(CS);
   __delay_cycles(10);
   mrf_spi_flush_rx();
@@ -134,7 +186,8 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   }
   
   mrf_spi_flush_rx();
-
+  PINHIGH(CS);
+  return 0;
 }
 
 #define NUM_ADC_INPUTS 7
@@ -143,6 +196,7 @@ static int set_input(int channel){
     return -1;
   }
   ads1148_write(MUX0_OFFS, (channel << 3) | 0x7 );
+  ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
  
 }
@@ -154,19 +208,19 @@ int ads1148_config(){
   // A ratiometric measurement process is used , generating REF voltage 
   // from in series Rref across REFP and REFN
   
-  set_input(0);
   ads1148_write(VBIAS_OFFS, 0 );
   ads1148_write(MUX1_OFFS,  ( 1 << 5) | ( 0 << 3) ); // VREF ON, ADC ref is REF0 pin pair
   ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
   ads1148_write(IDAC0_OFFS,  6 );  // 1mA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
+  set_input(0);
 
 
 }
 
 int ads1148_init(){
   // start output
-  PINHIGH(START);
+  PINLOW(START);
   OUTPUTPIN(START);
   // cs output
   PINHIGH(CS);
@@ -187,9 +241,11 @@ int ads1148_init(){
   PINLOW(MR);
   __delay_cycles(100);
 //PINHIGH(RESET);
-  PINHIGH(MR);
+  PINHIGH(MR);  
   __delay_cycles(1000);
+  
   mrf_spi_flush_rx();
+  PINHIGH(START);
 
   ads1148_config();
 }
@@ -229,6 +285,20 @@ MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_task_app_read_spi exit\n");
   return MRF_CMD_RES_OK;
 }
+
+
+MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  //toggle_cs();
+  mrf_debug("mrf_app_spi_data entry bnum %d\n",bnum);
+  uint16 rd = ads1148_data();
+  MRF_PKT_UINT16 *rbuff = (MRF_PKT_UINT16 *)mrf_response_buffer(bnum);
+  rbuff->value  = rd;
+  mrf_send_response(bnum,sizeof(MRF_PKT_UINT16));
+  mrf_debug("mrf_app_spi_data exit\n");
+  return MRF_CMD_RES_OK;
+}
+
 
 MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_spi_write entry bnum %d\n",bnum);

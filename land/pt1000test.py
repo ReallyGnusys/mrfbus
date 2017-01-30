@@ -66,6 +66,7 @@ class PktSpiDebug(MrfStruct):
 mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
 mrf_cmd_spi_debug = 131
+mrf_cmd_spi_data  = 132
 
 
 Pt1000AppCmds = {
@@ -91,7 +92,12 @@ Pt1000AppCmds = {
         'name'  : "SPI_DEBUG",
         'param' : None,
         'resp'  : PktSpiDebug
-    }
+    },
+    mrf_cmd_spi_data : {
+        'name'  : "SPI_DATA",
+        'param' : None,
+        'resp'  : PktUint16
+    },
 
 }
 
@@ -124,29 +130,106 @@ class TestPt1000(DeviceTestCase):
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
         print "spi debug:\n"
-        print dresp   
-    def read_spi_test(self, addr = 0):
-        print "**********************"
-        print "* read_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
-        print "**********************"
+        print dresp
 
+    def default_values(self):
+        ccode = mrf_cmd_spi_write
+        paramstr = PktUint8_2()
+        paramstr.value[0] = 0
+        paramstr.value[1] = 1
+
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         
+        print "set default val 01"
 
+    def write_verify(self,addr,val,mask):
+        ccode = mrf_cmd_spi_write
+        paramstr = PktUint8_2()
+        paramstr.value[0] = addr
+        paramstr.value[1] = val
+
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        
+        print "wrote spi addr %02x val %02x"%(addr,val)
+
+        ccode = mrf_cmd_spi_read
+        paramstr = PktUint8()
+        paramstr.value = addr
+        
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "address %02x , read value %s"%(addr,repr(resp))
+        
+        #print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktUint8()),type(resp))
+        print "address %02x , read value %02x"%(addr,resp.value)
+
+        self.assertEqual(val,resp.value & mask)
+        
+    def configure_dev(self):
+        rvs = { 0   : [7,0xff] , # pos input ain0, neg input ain7
+                1   : [0,0xff],  # select ref 0
+                2   : [(1 << 5) ,0xff],  # normal operation
+                3   : [0,0xff] , # default
+                0xa : [4,0x0f],  # 500uA ref
+                0xb : [0x0f,0xff] # dac0 to ain0
+        }
+        print  "Configuring ADS1148 over SPI"
+        ras = copy(rvs.keys())
+        ras.sort()
+        print "reg addresses %s"%repr(ras)
+        for addr in ras:
+            print "writing reg %02x val %02x vmask %02x"%(addr,rvs[addr][0],rvs[addr][1])
+            self.write_verify(addr,rvs[addr][0],rvs[addr][1])
+        
+    def read_write_spi_test(self, addr = 0):
+        self.default_values()
+        print "**********************"
+        print "* read_write_spi test addr = %d (dest 0x%02x)"%(addr,self.dest)
+        print "**********************"
+        
         ccode = mrf_cmd_spi_read
         paramstr = PktUint8()
         paramstr.value = addr
 
         self.stub.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.stub.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
+        #print "read addr %d : %s"%(addr,repr(resp))
+        oval = resp.value
+        print "address %d , read value %d"%(addr,oval)
         self.assertEqual(type(PktUint8()),type(resp))
-        val = resp.value
-        print "address %d , read value %d"%(addr,val)
 
+
+        tval = 0xfe
+
+        
         ccode = mrf_cmd_spi_write
         paramstr = PktUint8_2()
         paramstr.value[0] = addr
-        paramstr.value[1] = val
+        paramstr.value[1] = tval
+
+        print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        
+        print "wrote spi write val %02x"%tval
+
+        ccode = mrf_cmd_spi_read
+        paramstr = PktUint8()
+        paramstr.value = addr
+        
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "address %d , read value %d"%(addr,resp.value)
+        
+        #print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktUint8()),type(resp))
+        self.assertEqual(tval,resp.value)
+
+        # restore orig value
+        ccode = mrf_cmd_spi_write
+        paramstr = PktUint8_2()
+        paramstr.value[0] = addr
+        paramstr.value[1] = oval
 
         print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
         self.stub.cmd(self.dest,ccode,dstruct=paramstr)
@@ -161,6 +244,21 @@ class TestPt1000(DeviceTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
+        self.assertEqual(oval,resp.value)
+
+        
+
+    def if_status(self,i_f=0):
+        paramstr = PktUint8()
+        paramstr.value = i_f
+        ccode = mrf_cmd_if_stats
+        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktIfStats()),type(resp))
+        
+        
+
     def host_app_test(self, addr = 0):
         print "**********************"
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
@@ -171,8 +269,63 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
+    def skipped_test01a_read_config(self):
+        
+        paramstr = PktUint8()
+        regvals = {}
+        for addr in xrange(0xf):        
+            paramstr.value = addr
+            self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+            resp = self.stub.response(timeout=self.timeout)            
+            print "reg %x :  %02x"%(addr, resp.value)
+            regvals[addr] = resp.value
+
+        
+    def test01_core_tests(self):
+        self.get_time_test(self.host)
+        return
+        self.app_info_test(self.dest)
+
+        return
+        if True:
+            self.get_time_test(self.host)
+            self.set_time_test(self.dest,self.host)
+        
+        
+            self.dev_info_test(self.dest)
+            self.dev_status_test(self.dest)
+            self.sys_info_test(self.dest)
+            self.app_info_test(self.dest)
+
+            self.get_time_test(self.dest)
     
-    def test01_device_tests(self):
+            return
+
+    def skipped_test04_configure(self):
+        self.configure_dev()
+        #self.read_adc()
+
+    def read_adc(self):
+        print "read_adc"
+        ccode = mrf_cmd_spi_data
+        self.stub.cmd(self.dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        return resp.value
+    
+    def test05a_read_adc(self):
+        for i in xrange(10):
+            self.read_adc()
+        
+    def skipped_test02a_spi_write_test(self):
+        self.if_status()
+        self.read_write_spi_test()
+        self.if_status()
+        #rparamstr = PktUint8()
+        #wparamstr = PktUint8_2()
+        
+        
+    def skipped_test03_device_read_tests(self):
 
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
@@ -205,8 +358,8 @@ class TestPt1000(DeviceTestCase):
         err_tot = 0
         errs = {}
         chks = 0
-        for loop in xrange(100):
-            print "check loop %d"%loop
+        for loop in xrange(1):
+            print "check loop %d  checks %d errors %d"%(loop,chks,err_tot)
             for addr in xrange(0xf):
                 chks = chks + 1
                 paramstr.value = addr
@@ -219,6 +372,8 @@ class TestPt1000(DeviceTestCase):
                     errs[addr] = errs[addr] +  1
                     #print "addr %d errs %d"%(addr,errs[addr])
                     print "ERROR reg %02d expected %02x got %02x"%(addr,regvals[addr],resp.value)
+                self.assertEqual(resp.value, regvals[addr])
+
                     
         print "loops %d err_tot %d out of %d device reads"%(loop,err_tot,chks)
 
@@ -228,9 +383,6 @@ class TestPt1000(DeviceTestCase):
         for ky in nks:
             print "reg %d  errors %d"%(ky,errs[ky])
             
-        #for addr in xrange(0xf):
-        #    print "reg %x : %s"%(addr,regvals[addr])
-
 
         self.stub.cmd(self.dest,mrf_cmd_spi_debug)
         dresp = self.stub.response(timeout=self.timeout)
@@ -238,63 +390,7 @@ class TestPt1000(DeviceTestCase):
         print dresp
         
         return
-        #self.read_spi_test()
 
-        addr = 7
-        paramstr = PktUint8()
-        paramstr.value = addr
-
-        self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
-        self.read_spi_test()
-
-
-        
-        
-
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
-        print "spi debug:\n"
-        print dresp
-
-        
-        return
-
-        """
-        try:
-            #self.read_spi_test()
-            self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-            resp = self.stub.response(timeout=self.timeout)
-            print "got resp:\n%s"%repr(resp)
-        except:
-            print "oops exception"
-        """
-
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
-        print "spi debug:\n"
-        print dresp
-
-
-        return
-
-    
-        print "device_status at start of test:\n"
-        print sresp
-        time.sleep(0.1)  # FIXME!
-
-        self.stub.cmd(self.dest, mrf_cmd_device_status)
-
-        fresp = self.stub.response(timeout=self.timeout)
-        print "device_status at end of test:\n"
-        print fresp
-        """
-        self.stub.cmd(self.dest,ccode)
-        fresp = self.stub.response(timeout=self.timeout)
-        print "device_status at end of test:\n"
-        print fresp
-        """
     def skipped_test02_burnin(self):
         for i in xrange(100):
             self.test01_device_tests()
