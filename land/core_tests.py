@@ -66,16 +66,18 @@ class DeviceTestCase(StubTestCase):
         exp.mrfid = dest
         rv = self.stub.cmd_test(dest,ccode,exp,dstruct=None)
         self.assertEqual(rv,0)
-        
+
+    def dev_status(self,dest):
+        ccode = mrf_cmd_device_status
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        return resp
+    
     def dev_status_test(self,dest):
         print "**********************"
         print "* device status test (dest 0x%02x)"%dest
         print "**********************"
-        ccode = mrf_cmd_device_status
-
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
-        
+        resp = self.dev_status(dest)
         print "dev_status_test : dest %u , received :\n%s"%(dest,repr(resp))
 
         self.assertEqual(type(PktDeviceStatus()),type(resp))
@@ -86,14 +88,40 @@ class DeviceTestCase(StubTestCase):
         rxp = resp.rx_pkts
         txp = resp.tx_pkts
 
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
-        
+        resp = self.dev_status(dest)
+                
         self.assertEqual(resp.rx_pkts, rxp+1)
         self.assertEqual(resp.tx_pkts, txp+1)
     def sys_info_test(self,dest):
         print "**********************"
         print "* sys info test   (dest 0x%02x)"%dest
+        print "**********************"
+        gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
+
+        ccode = mrf_cmd_sys_info
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktSysInfo()),type(resp))
+
+
+        self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
+        ## long winded faff to check git hash 
+        exp = PktSysInfo()
+        exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
+        att1 = getattr(exp,'mrfbus_version')
+        ever = exp.attstr(att1)
+        att1 = getattr(resp,'mrfbus_version')
+        rver = resp.attstr(att1)
+        
+        if self.checkgit:
+            print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
+            self.assertEqual(ever,rver)
+
+
+    def sys_cmd_info_test(self,dest):
+        print "**********************"
+        print "* sys cmd info test   (dest 0x%02x)"%dest
         print "**********************"
         gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
@@ -126,7 +154,7 @@ class DeviceTestCase(StubTestCase):
             resp = self.stub.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
             self.assertEqual(type(PktCmdInfo()),type(resp))
-
+            
     def get_time_test(self,dest):
         print "**********************"
         print "* get time test (dest 0x%02x)"%dest
@@ -167,6 +195,16 @@ class DeviceTestCase(StubTestCase):
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktAppInfo()),type(resp))
+            
+    def app_cmd_info_test(self,dest):
+        print "**********************"
+        print "* app cmd info test (dest 0x%02x)"%dest
+        print "**********************"
+        ccode = mrf_cmd_app_info
+        self.stub.cmd(dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "got resp:\n%s"%repr(resp)
+        self.assertEqual(type(PktAppInfo()),type(resp))
         num_cmds = resp.num_cmds
         ccode = mrf_cmd_app_cmd_info   # eyup
         paramstr = PktUint8()
@@ -176,11 +214,15 @@ class DeviceTestCase(StubTestCase):
             self.stub.cmd(dest,ccode,dstruct=paramstr)
             resp = self.stub.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
+
+
     def device_tests(self,dest):
         self.dev_info_test(dest)
         self.dev_status_test(dest)
         self.sys_info_test(dest)
+        self.sys_cmd_info_test(dest)
         self.app_info_test(dest)
+        self.app_cmd_info_test(dest)
         self.get_time_test(dest)
 
 class TestMrfBus(DeviceTestCase):

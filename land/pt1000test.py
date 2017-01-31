@@ -30,6 +30,26 @@ import ctypes
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
 
+## Resistance and RTD calcs 
+from math import *
+
+def GetPlatinumRTD(R):
+   A=3.9083e-3
+   B=-5.775e-7
+   R0 = 1000.0
+   R=R/R0
+   T=0.0-A
+   T = T +  sqrt((A*A) - 4.0 * B * (1.0 - R))
+   T = T/ (2.0 * B)
+   return T
+
+def eval_rx(n,ref=3560.0):  # must subtract series 47 ohm on outputs
+    return (n*ref/((2**15)-1)) - 47.0
+
+def eval_temp(n):
+    return(GetPlatinumRTD(eval_rx(n)))
+
+
 ## some app commands and structs for the time being here.. ideally would be auto discovered codes
 
 class PktSpiDebug(MrfStruct):
@@ -67,6 +87,7 @@ mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
 mrf_cmd_spi_debug = 131
 mrf_cmd_spi_data  = 132
+mrf_cmd_config_adc  = 133
 
 
 Pt1000AppCmds = {
@@ -97,6 +118,11 @@ Pt1000AppCmds = {
         'name'  : "SPI_DATA",
         'param' : None,
         'resp'  : PktUint16
+    },
+    mrf_cmd_config_adc : {
+        'name'  : "CONFIG_ADC",
+        'param' : None,
+        'resp'  : None
     },
 
 }
@@ -269,7 +295,7 @@ class TestPt1000(DeviceTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
-    def test01a_read_config(self):
+    def skipped_test01a_read_config(self):
         
         paramstr = PktUint8()
         regvals = {}
@@ -280,7 +306,12 @@ class TestPt1000(DeviceTestCase):
             print "reg %x :  %02x"%(addr, resp.value)
             regvals[addr] = resp.value
 
-        
+    def test001_dev_id_tests(self):
+        self.dev_info_test(self.dest)
+        self.sys_info_test(self.dest)
+        self.app_info_test(self.dest)
+
+    
     def test01_core_tests(self):
         self.get_time_test(self.host)
         return
@@ -300,9 +331,15 @@ class TestPt1000(DeviceTestCase):
             self.get_time_test(self.dest)
     
             return
-
+    def config_cmd(self):
+        print "Sending mrf_cmd_config_adc"
+        ccode = mrf_cmd_config_adc
+        self.stub.cmd(self.dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        
     def skipped_test04_configure(self):
-        self.configure_dev()
+        self.config_cmd()
+        #self.configure_dev()
         #self.read_adc()
 
     def read_adc(self):
@@ -311,12 +348,17 @@ class TestPt1000(DeviceTestCase):
         self.stub.cmd(self.dest,ccode)
         resp = self.stub.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
+        
         return resp.value
     
-    def skipped_test05a_read_adc(self):
+    def test05a_read_adc(self):
+        ds = self.dev_status(self.dest)
+        print "Initial device status:\n %s",repr(ds)
         for i in xrange(10):
-            self.read_adc()
-        
+            rv = self.read_adc()
+            res = eval_rx(rv)
+            temp = eval_temp(rv)
+            print "ADC %d  res %.1f temp = %.2f"%(rv,res,temp)
     def skipped_test02a_spi_write_test(self):
         self.if_status()
         self.read_write_spi_test()

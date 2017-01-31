@@ -63,5 +63,6 @@ MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
+MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 
 #endif

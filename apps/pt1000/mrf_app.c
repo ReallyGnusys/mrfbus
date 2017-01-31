@@ -187,6 +187,7 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   
   mrf_spi_flush_rx();
   PINHIGH(CS);
+  __delay_cycles(10);  
   return 0;
 }
 
@@ -196,7 +197,7 @@ static int set_input(int channel){
     return -1;
   }
   ads1148_write(MUX0_OFFS, (channel << 3) | 0x7 );
-  ads1148_write(IDAC0_OFFS, 4 ); // 500uA
+  //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
  
 }
@@ -211,7 +212,7 @@ int ads1148_config(){
   ads1148_write(VBIAS_OFFS, 0 );
   ads1148_write(MUX1_OFFS,  ( 1 << 5) | ( 0 << 3) ); // VREF ON, ADC ref is REF0 pin pair
   ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
-  ads1148_write(IDAC0_OFFS,  6 );  // 1mA IDAC current
+  ads1148_write(IDAC0_OFFS,  4 );  // 500uA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
   set_input(0);
 
@@ -247,7 +248,15 @@ int ads1148_init(){
   mrf_spi_flush_rx();
   PINHIGH(START);
 
+  int i,j;
+  for (i = 0; i < 1000 ; i++)  
+    for (j = 0; j < 100 ; j++)  
+      __delay_cycles(1000); // need to wait 16ms
+
   ads1148_config();
+  __delay_cycles(100);
+  ads1148_config();  // temp desperation
+  
 }
 
 
@@ -309,6 +318,19 @@ MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_task_app_write_spi exit\n");
   return MRF_CMD_RES_OK;
 }
+
+
+MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  mrf_debug("mrf_app_config_adc entry bnum %d\n",bnum);
+  ads1148_config();
+  //mrf_send_response(bnum,0);
+  _mrf_buff_free(bnum);
+  mrf_debug("mrf_app_config_adc exit\n");
+  return MRF_CMD_RES_OK;
+}
+
+
+
 
 extern uint16 _spi_rx_int_cnt;
 extern uint16 _spi_tx_int_cnt;

@@ -27,7 +27,8 @@ typedef enum mrf_app_cmd_code
    mrf_app_cmd_spi_write = 2,
    mrf_app_cmd_spi_debug = 3,
    mrf_app_cmd_spi_data  = 4,
-   MRF_NUM_APP_CMDS = 5
+   mrf_app_cmd_config_adc  = 5,
+   MRF_NUM_APP_CMDS = 6
  } MRF_APP_CMD_CODE;
 
 #endif
