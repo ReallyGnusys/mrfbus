@@ -254,7 +254,7 @@ class TestMrfBus(DeviceTestCase):
         for dest in dests:
             self.device_tests(dest)
 
-    @unittest.skip("temp disabled - too long")
+    #@unittest.skip("temp disabled - too long")
     def test03_device_tests_repeat(self):
         for i in xrange(10):
             self.test02_device_tests()
