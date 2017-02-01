@@ -258,7 +258,7 @@ int ads1148_init(){
 
   int i,j;
   for (i = 0; i < 1000 ; i++)  
-    for (j = 0; j < 100 ; j++)  
+    for (j = 0; j < 7 ; j++)  
       __delay_cycles(1000); // need to wait 16ms
 
   ads1148_config();
