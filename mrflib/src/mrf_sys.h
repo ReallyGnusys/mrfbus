@@ -31,7 +31,7 @@
 #include "mrf_if.h"
 #include "mrf_buff.h"
 #include "mrf_sys_cmds.h"
-
+#include "iqueue.h"
 
 #define FALSE 0
 #define TRUE  1
@@ -115,6 +115,22 @@ uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
 const MRF_CMD *mrf_cmd_ptr(uint8 type);
 const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
 int mrf_app_init();
+// these are defined in arch  but here is prototype
+int mrf_arch_boot();
+int mrf_arch_run();
+int mrf_tick_enable();
+int mrf_tick_disable();
+int mrf_wake();
+// end arch
+void mrf_sys_init();
+int _mrf_buff_forward(uint8 bnum);
+int _mrf_process_buff(uint8 bnum);
+int mrf_foreground();
+int mrf_app_queue_push(uint8 bnum);
+int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len);
+int mrf_rtc_set(TIMEDATE *td);
+int mrf_rtc_get(TIMEDATE *td);
+int mrf_retry(I_F i_f,uint8 bnum);
 
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"
@@ -122,3 +138,4 @@ int mrf_app_init();
 
 #include "mrf_app.h"
 #include "mrf_app_cmds.h"
+#include "iqueue.h"

@@ -63,7 +63,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
         ifp->status->stats.tx_pkts++;
         _mrf_buff_free(bn);
         //bs->state = FREE;
-        return;
+        return MRF_CMD_RES_OK;
         }
       else{
         mrf_debug("no ack 1\n");
@@ -71,6 +71,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   }
   mrf_debug("i_f status %d da %d\n",ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
   mrf_debug("no ack 2\n");
+  return MRF_CMD_RES_OK;
 }
 
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
@@ -158,7 +159,7 @@ MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   _mrf_print_hex_buff((uint8 *)&td,sizeof(TIMEDATE));
   mrf_debug(":end of hex");
   */
-  mrf_data_response( bnum,&td,sizeof(TIMEDATE));  
+  mrf_data_response( bnum,(uint8 *)&td,sizeof(TIMEDATE));  
   return MRF_CMD_RES_OK;
 }
 
@@ -168,7 +169,7 @@ MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   mrf_rtc_set(td);
   mrf_rtc_get(&endtd);
-  mrf_data_response( bnum,&endtd,sizeof(TIMEDATE));  
+  mrf_data_response( bnum,(uint8 *)&endtd,sizeof(TIMEDATE));  
   //mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;
 }
@@ -232,7 +233,7 @@ MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_task_test_1 entry\n");
-  uint8 *rbuff = mrf_response_buffer(bnum);
+  TIMEDATE *rbuff = (TIMEDATE *)mrf_response_buffer(bnum);
   mrf_rtc_get(rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
   mrf_debug("mrf_task_test_1 exit\n");

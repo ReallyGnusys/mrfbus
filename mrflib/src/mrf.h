@@ -43,5 +43,7 @@ int mrf_tick_disable();
 
 int mrf_time(char *buff);
 
+int mrf_wake();
+
 int mrf_app_init() __attribute__ ((constructor));
 #endif

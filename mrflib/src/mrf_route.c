@@ -62,7 +62,7 @@ uint8 mrf_cell_relay(uint8 addr){
 #endif
 }
 
-uint8 order(addr){
+uint8 order(uint8 addr){
   if(addr ==0)
     return 0;
   if (addr == 1)    // host

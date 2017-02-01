@@ -271,14 +271,14 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp)
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
         mrf_debug("sending data response \n");
         mrf_data_response(bnum,cmd->data,cmd->rsp_size);
-        return;
+        return 0;
       }
       mrf_debug("pp l12\n");
       // check if command func defined
       if(cmd->func != NULL){
         mrf_debug("executing cmd func\n");
         (*(cmd->func))(pkt->type,bnum,ifp);
-        return;
+        return 0;
       }
 }
 
@@ -406,31 +406,53 @@ int _mrf_process_buff(uint8 bnum)
       }
   } else if ( valid_cmd(pkt->type)) {
     //otherwise send segment ack then forward on network
-    MRF_ROUTE route;
- 
-    mrf_nexthop(&route,_mrfid,pkt->udest);
-    MRF_IF *ifp = mrf_if_ptr(route.i_f);
-
-    mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
     //if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
     if(needs_ack(pkt->type)){
       mrf_sack(bnum);   
     }
+    
+    MRF_ROUTE route;
+    mrf_nexthop(&route,_mrfid,pkt->udest);
+    MRF_IF *ifp = mrf_if_ptr(route.i_f);
+    pkt->hdest = route.relay;
+    pkt->hsrc = _mrfid;
+
+    mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
+
     if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
       mrf_retry(route.i_f,bnum);
     else{
 
-      mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);
-    
-      pkt->hdest = route.relay;
-      pkt->hsrc = _mrfid;
-  
+      mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
     }
   }
   
 }
 
+int _mrf_buff_forward(uint8 bnum){
+  MRF_PKT_HDR *pkt;
+  uint8 type;
+  mrf_debug("mrf_buff_forward: processing buff number %d our _mrfid = %X  \n",bnum,_mrfid);
+  pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+  type = pkt->type;
 
+  MRF_ROUTE route;
+  mrf_nexthop(&route,_mrfid,pkt->udest);
+  MRF_IF *ifp = mrf_if_ptr(route.i_f);
+  pkt->hdest = route.relay;
+  pkt->hsrc = _mrfid;
+
+  mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
+
+  if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
+    mrf_retry(route.i_f,bnum);
+  else{
+
+    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
+  }
+
+  
+}
 
 int _tick_count;
 

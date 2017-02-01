@@ -31,6 +31,8 @@
 #include <sys/timerfd.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <unistd.h>
 //mrfbus
 #include <mrf_arch.h>
 #include <mrf_buff.h>

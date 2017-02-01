@@ -25,6 +25,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "mrf_route.h"
 
@@ -133,7 +134,7 @@ int mrf_app_init(){
 
 }
 
-int response_to_app(bnum){
+int response_to_app(uint8 bnum){
   // just squirt the raw buffer to python app via fifo
   char sname[64];
   int outfd;
@@ -272,7 +273,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_task_test entry\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
-  mrf_rtc_get(rbuff);
+  mrf_rtc_get((TIMEDATE *)rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
   mrf_debug("mrf_app_task_test exit\n");
   return MRF_CMD_RES_OK;

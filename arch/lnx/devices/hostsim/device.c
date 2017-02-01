@@ -25,7 +25,7 @@ static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
 
 extern const MRF_IF_TYPE mrf_pipe_lnx_if;
 
-static ifd[NUM_INTERFACES]; // need fds for lnx i_f s
+static int ifd[NUM_INTERFACES]; // need fds for lnx i_f s
 
 const MRF_IF _sys_ifs[] = {
  [ PIPE0 ] =  { &_if_status[0], &mrf_pipe_lnx_if, &_if_ackbuffs[0], &ifd[0], "PIPE0"},
