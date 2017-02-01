@@ -27,6 +27,10 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   _mrf_buff_free(bnum);
 }
 
+MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  _mrf_buff_free(bnum);
+}
+
 
 MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   mrf_debug("mrf_app_task_test entry\n");

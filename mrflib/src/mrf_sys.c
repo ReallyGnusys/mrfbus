@@ -330,6 +330,30 @@ int _mrf_ex_buffer(uint8 bnum){
   */
 }
 
+int _mrf_buff_forward(uint8 bnum){
+  MRF_PKT_HDR *pkt;
+  uint8 type;
+  mrf_debug("mrf_buff_forward: processing buff number %d our _mrfid = %X  \n",bnum,_mrfid);
+  pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+  type = pkt->type;
+
+  MRF_ROUTE route;
+  mrf_nexthop(&route,_mrfid,pkt->udest);
+  MRF_IF *ifp = mrf_if_ptr(route.i_f);
+  pkt->hdest = route.relay;
+  pkt->hsrc = _mrfid;
+
+  mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
+
+  if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
+    mrf_retry(route.i_f,bnum);
+  else{
+
+    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
+  }
+
+  
+}
 
 
 
@@ -374,7 +398,8 @@ int _mrf_process_buff(uint8 bnum)
       // lookup command
     const MRF_CMD *cmd = _mrf_cmd(type);
   
-    if(cmd == NULL){
+    if(cmd == NULL){  // how to manage packets that don't execute - i.e. unsolicited datagrams from sensors, that don't have any meaning in our app. For stub/hub applications we need to pass them to python regardless.
+
       mrf_debug("big trouble 29339 - we got a packet but don't recognise type %d\n",type);
       return -1;
     }
@@ -410,7 +435,8 @@ int _mrf_process_buff(uint8 bnum)
     if(needs_ack(pkt->type)){
       mrf_sack(bnum);   
     }
-    
+    return _mrf_buff_forward(bnum);
+    /*
     MRF_ROUTE route;
     mrf_nexthop(&route,_mrfid,pkt->udest);
     MRF_IF *ifp = mrf_if_ptr(route.i_f);
@@ -425,34 +451,11 @@ int _mrf_process_buff(uint8 bnum)
 
       mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
     }
+    */
   }
   
 }
 
-int _mrf_buff_forward(uint8 bnum){
-  MRF_PKT_HDR *pkt;
-  uint8 type;
-  mrf_debug("mrf_buff_forward: processing buff number %d our _mrfid = %X  \n",bnum,_mrfid);
-  pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
-  type = pkt->type;
-
-  MRF_ROUTE route;
-  mrf_nexthop(&route,_mrfid,pkt->udest);
-  MRF_IF *ifp = mrf_if_ptr(route.i_f);
-  pkt->hdest = route.relay;
-  pkt->hsrc = _mrfid;
-
-  mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
-
-  if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
-    mrf_retry(route.i_f,bnum);
-  else{
-
-    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
-  }
-
-  
-}
 
 int _tick_count;
 

@@ -26,6 +26,9 @@ int mrf_app_init(){
 
 }
 
+MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+  _mrf_buff_free(bnum);
+}
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   /*
@@ -102,9 +105,9 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
     mrf_debug(":end of hex");
     */
   }  
-  else if  (resp->type == mrf_cmd_test_2){
-    char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("TEST_2 : %s \n",buff);
+  else if  (resp->type == mrf_cmd_usr_struct){
+    //char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("USR_STRUCT : fixme for output \n");
     /*
     mrf_debug("hex buff follows:");
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
