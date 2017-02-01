@@ -85,6 +85,14 @@ volatile static __attribute__((noinline)) uint8 toggle_cs() {
 
 uint8 _dbg_rxdata[4];
 
+// these must retain ability to be tweaked - so non constant
+
+// all units in milliohms
+static uint32_t _ref_r;  // the resistor value between ref+ and ref
+static uint32_t _ref_i;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
+
+
+
 uint16 ads1148_data(){
   /*
   while(mrf_spi_tx_data_avail()){  // block until queue cleared
@@ -262,7 +270,9 @@ int ads1148_init(){
 
 int mrf_app_init(){
   
-  dbg22 = 101; 
+  dbg22 = 101;
+  _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
+  _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
   mrf_spi_init();
   ads1148_init();
 }
@@ -330,6 +340,33 @@ MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
+uint32_t eval_milliohms(uint16_t adc){
+  uint64_t rv = (uint64_t)adc * (uint64_t)_ref_r;
+  rv /= (uint64_t)32767;
+  rv -= _ref_i;
+  return (uint32_t)rv;
+}
+
+MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+
+  //toggle_cs();
+  mrf_debug("mrf_app_read_state entry bnum %d\n",bnum);
+  uint16 rd = ads1148_data();
+  
+  MRF_PKT_PT1000_STATE *state = (MRF_PKT_PT1000_STATE *)mrf_response_buffer(bnum);
+  mrf_rtc_get(&((*state).td));
+  uint8 ch;
+  for (ch = 0 ; ch < MAX_RTDS ; ch++)
+    (*state).milliohms[ch] = 0;
+  (*state).ref_r   = _ref_r;
+  (*state).ref_i   = _ref_i;
+  (*state).relay_cmd   = 0;
+  (*state).relay_state = 0;
+  (*state).milliohms[0]= eval_milliohms(rd);  // temp  
+  mrf_send_response(bnum,sizeof(MRF_PKT_PT1000_STATE));
+  mrf_debug("mrf_app_read_state exit\n");
+  return MRF_CMD_RES_OK;
+}
 
 
 extern uint16 _spi_rx_int_cnt;

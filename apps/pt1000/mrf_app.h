@@ -47,12 +47,22 @@ typedef struct  __attribute__ ((packed))   {
   uint8  ucb0_cntrl0;
   uint8  ucb0_cntrl1;
   uint8  ucb0_stat;
-
   //uint16 pad2;
-
 
 } MRF_PKT_SPI_DEBUG;
 
+#define MAX_RTDS 7
+
+typedef struct  __attribute__ ((packed))   {
+  TIMEDATE td;
+  uint8 relay_cmd;  // 8 bit emergency masks for request and ideally a validated check below
+  uint8 relay_state;
+  uint32 milliohms[MAX_RTDS];  // channels
+  uint32 ref_r;
+  uint32 ref_i;
+} MRF_PKT_PT1000_STATE;
+  
+  
 
 /* mrf_app_task_test
    returns current MRF_PKT_TIMEDATE 
@@ -64,5 +74,8 @@ MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
 MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
+MRF_CMD_RES mrf_app_read_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
+
+MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp); // read ptd device state
 
 #endif

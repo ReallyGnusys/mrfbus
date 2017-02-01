@@ -8,6 +8,7 @@ class MrfStruct(LittleEndianStructure):
         return sizeof(self)
 
     def attstr(self,att):
+        #return "%s"%repr(att)
         if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
             atts = ""
             for i in att:
@@ -15,6 +16,13 @@ class MrfStruct(LittleEndianStructure):
                     atts += "%c"%chr(i)
                 else:
                     break
+        elif str(type(att)).find('c_uint_Array') > -1:  #FIXME! 
+            atts = "["
+            for i in att:
+                atts += "%u,"%int(i)
+                
+        elif str(type(att)).find('PktTimeDate') > -1:  #FIXME!
+            atts  = "%s"%repr(att)
         else:
             atts = "%d"%int(att)
         return atts

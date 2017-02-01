@@ -23,14 +23,14 @@ from mrf_structs import *
 import ctypes
 import unittest
 
-
+import signal
 
 class rx_thread(threading.Thread):
     """
         A thread class to read stub output
     """
 
-    def __init__ (self, stub_out_fifo_path,q):
+    def __init__ (self, stub_out_fifo_path,q):        
         self.stub_out_fifo_path = stub_out_fifo_path
         self.q = q
         print "rx_thread.init: stub_out_fifo_path = %s"%self.stub_out_fifo_path
@@ -54,6 +54,7 @@ class rx_thread(threading.Thread):
 
 class StubIf(object):
     def __init__(self):
+
         self.q = Queue.Queue()
         self.stub_out_pipe_path = "/tmp/mrf_bus/0-app-out"
         
@@ -190,6 +191,13 @@ class StubIf(object):
 
 class StubTestCase(unittest.TestCase):
     def setUp(self):
+        def exit_nicely(signum,frame):
+            signal.signal(signal.SIGINT, self.original_sigint)
+            print "CTRL-C pressed , quitting"
+            self.tearDown()            
+        self.original_sigint = signal.getsignal(signal.SIGINT)
+        signal.signal(signal.SIGINT, exit_nicely)
+        #unittest.installHandler()
         self.timeout = 0.4
         self.stub = StubIf()
 

@@ -28,6 +28,7 @@ const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
   [ mrf_app_cmd_spi_debug ] = {"SPI_DEBUG" , 0  , 0                        , sizeof(MRF_PKT_SPI_DEBUG) ,  NULL  , mrf_app_spi_debug  },
   [ mrf_app_cmd_spi_data  ] = {"SPI_DATA"  , 0  , 0                        , sizeof(MRF_PKT_UINT16)    ,  NULL  , mrf_app_spi_data   },
   [ mrf_app_cmd_config_adc  ] = {"CONFIG_ADC"  , 0  , 0                        , 0    ,  NULL  , mrf_app_config_adc   },
+  [ mrf_app_cmd_read_state  ] = {"READ_STATE"  , 0  , 0    , sizeof(MRF_PKT_PT1000_STATE)     ,  NULL  , mrf_app_read_state   },
 };
 
 

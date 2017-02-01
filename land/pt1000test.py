@@ -46,6 +46,10 @@ def GetPlatinumRTD(R):
 def eval_rx(n,ref=3560.0):  # must subtract series 47 ohm on outputs
     return (n*ref/((2**15)-1)) - 47.0
 
+def eval_rxm(n,ref=3560000):  # must subtract series 47 ohm on outputs
+    return (n*ref/((2**15)-1)) - 47000
+
+
 def eval_temp(n):
     return(GetPlatinumRTD(eval_rx(n)))
 
@@ -82,12 +86,25 @@ class PktSpiDebug(MrfStruct):
        
     ]
 
+MAX_RTDS = 7
 
+class PktPt1000State(MrfStruct):
+    _fields_ = [
+        ("td",PktTimeDate),
+        ("relay_cmd", c_uint8),
+        ("relay_state", c_uint8),
+        ("milliohms", c_uint32*MAX_RTDS),
+        ("ref_r",c_uint32),
+        ("ref_i",c_uint32),
+        ]
+
+    
 mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
 mrf_cmd_spi_debug = 131
 mrf_cmd_spi_data  = 132
 mrf_cmd_config_adc  = 133
+mrf_cmd_read_state  = 134
 
 
 Pt1000AppCmds = {
@@ -123,6 +140,11 @@ Pt1000AppCmds = {
         'name'  : "CONFIG_ADC",
         'param' : None,
         'resp'  : None
+    },
+    mrf_cmd_read_state : {
+        'name'  : "READ_STATE",
+        'param' : None,
+        'resp'  : PktPt1000State
     },
 
 }
@@ -313,7 +335,8 @@ class TestPt1000(DeviceTestCase):
 
     
     def test01_core_tests(self):
-        self.get_time_test(self.host)
+        self.set_time_test(self.dest,self.host)
+        #self.get_time_test(self.host)
         return
         self.app_info_test(self.dest)
 
@@ -343,22 +366,38 @@ class TestPt1000(DeviceTestCase):
         #self.read_adc()
 
     def read_adc(self):
-        print "read_adc"
         ccode = mrf_cmd_spi_data
         self.stub.cmd(self.dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
-        
+        resp = self.stub.response(timeout=self.timeout)        
         return resp.value
     
     def test05a_read_adc(self):
         ds = self.dev_status(self.dest)
         print "Initial device status:\n %s",repr(ds)
-        for i in xrange(10):
+        for i in xrange(5):
             rv = self.read_adc()
             res = eval_rx(rv)
             temp = eval_temp(rv)
             print "ADC %d  res %.1f temp = %.2f"%(rv,res,temp)
+            
+    def skipped_test05b_read_continuous(self):
+        while True:
+            rv = self.read_adc()
+            if rv == None:
+                continue
+            res = eval_rx(rv)
+            temp = eval_temp(rv)
+            print "ADC %d  res %.1f temp = %.2f"%(rv,res,temp)
+            time.sleep(1)
+
+    def test05c_read_state(self):
+        print "READ STATE"
+        ccode = mrf_cmd_read_state
+        self.stub.cmd(self.dest,ccode)
+        resp = self.stub.response(timeout=self.timeout)
+        print "resp %s"%repr(resp)
+
+        
     def skipped_test02a_spi_write_test(self):
         self.if_status()
         self.read_write_spi_test()
