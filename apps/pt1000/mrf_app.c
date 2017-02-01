@@ -256,8 +256,9 @@ int ads1148_init(){
   mrf_spi_flush_rx();
   PINHIGH(START);
 
-  int i;
+  int i,j;
   for (i = 0; i < 1000 ; i++)  
+    for (j = 0; j < 2 ; j++)  
       __delay_cycles(1000); // need to wait 16ms
 
   ads1148_config();
