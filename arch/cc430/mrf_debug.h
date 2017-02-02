@@ -22,9 +22,11 @@
 
 #include <stdarg.h>
 
-#define mrf_debug(format, ...) mrf_cc_debug( format, ## __VA_ARGS__ )
+//#define mrf_debug(format, ...) mrf_cc_debug( format, ## __VA_ARGS__ )
 
-int mrf_cc_debug( const char *fmt, ...);
+#define mrf_debug(format, ...)
+
+//int mrf_cc_debug( const char *fmt, ...);
 
 
 #endif

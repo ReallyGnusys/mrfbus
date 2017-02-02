@@ -48,6 +48,7 @@ APPSRC=${MRFHOME}/apps/${APP}
 
 TARG=${BIN}/${DEVTYPE}_${MRFID}
 LST=${LSTD}/${DEVTYPE}_${MRFID}.lst
+SIZEREP=${LSTD}/${DEVTYPE}_${MRFID}.size
 
 NET=${MRFMAKE}../net
 ARCHDIR=${MRFHOME}/arch/${ARCH}
@@ -76,7 +77,7 @@ endif
 CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${BFLAGS}
 
 
-ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${TARG} ${LST}
+ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${TARG} ${LST} ${SIZEREP}
 
 clean : 
 	rm -rf ${MOBJ}
@@ -89,8 +90,6 @@ ${BIN}:
 ${MOBJ}:
 	mkdir -p ${MOBJ}
 
-list: ${LST}
-	${OD} ${TARG} > ${LST}
 
 ${LSTD}:
 	mkdir -p ${LSTD}
@@ -103,6 +102,9 @@ ${TARG} :
 ${LST}: ${TARG}
 	${OD} ${TARG} > ${LST}
 
+${SIZEREP}: ${TARG}
+	${SIZE} ${TARG} > ${SIZEREP}
+	cat ${SIZEREP}
 
 ${MOBJ}/mrf_app.o: ${APPSRC}/mrf_app.c
 	${GCC}  -c $(CCFLAGS) ${APPSRC}/mrf_app.c -o $@

@@ -18,7 +18,7 @@
 ******************************************************************************/
 
 
-#include "rtc.h"
+#include "rtc_arch.h"
 
 #define RTC_YEAR0  2000
 #define RTC_MAXYEAR 255
@@ -467,6 +467,8 @@ interrupt(RTC_VECTOR) RTC_ISR()
       ReadTime.year =  _y16_to_y8(RTCYEAR);
       ReadFlag = 0;
     }
+    (*_rtc_rdy_handler)();
+
     break;
   case RTC_RTCAIFG:
     AlarmFlag = 1;

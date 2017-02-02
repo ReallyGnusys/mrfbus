@@ -87,6 +87,14 @@ typedef MRF_CMD_RES (*MRF_APP_CALLBACK)(int fd);
 #define MRF_VFLAG_MASK   (MRF_VFLG_PAYLOAD | MRF_VFLG_INITF | MRF_VFLAG_SEND )
 #define MRF_CODE_MASK   ~MRF_VFLAG_MASK
 
+/* application signals are generated using reserved set of buffer numbers
+   starting from MRF_BNUM_SIGNAL_BASE at the top of the bnum 8 bit space
+*/
+
+#define MRF_NUM_SIGNALS  32
+#define MRF_BNUM_SIGNAL_BASE (256 - MRF_NUM_SIGNALS)
+
+
 /* constant flags */
 #define MRF_CFLG_NO_ACK 1   // send no ack when segment recipient
 #define MRF_CFLG_NO_RESP 2   // send no resp when final recipient
@@ -110,11 +118,15 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 void mrf_print_packet_header(MRF_PKT_HDR *hdr);
 uint8 *mrf_response_buffer(uint8 bnum);
 int mrf_send_response(uint8 bnum,uint8 rlen);
+int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len);
 uint16 mrf_copy(void *src,void *dst, size_t nbytes);
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
 const MRF_CMD *mrf_cmd_ptr(uint8 type);
 const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
+// these must be defined by every application
 int mrf_app_init();
+int signal_handler(uint8 signal);
+
 // these are defined in arch  but here is prototype
 int mrf_arch_boot();
 int mrf_arch_run();

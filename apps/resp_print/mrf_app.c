@@ -26,6 +26,11 @@ int mrf_app_init(){
 
 }
 
+int signal_handler(uint8 signal){
+  return 0;
+}
+
+
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   _mrf_buff_free(bnum);
 }

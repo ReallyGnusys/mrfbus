@@ -200,6 +200,54 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len){
 
   return mrf_send_response(bnum, len);
 }
+//FIXME way too much near identical code in different functions around here
+
+int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
+  uint8 bnum;
+  int i;
+  if ((bnum == mrf_alloc_if(NUM_INTERFACES)) == _MRF_BUFFS){
+    return -1;
+  }
+  
+  uint8 *dptr = mrf_response_buffer(bnum);
+  for (i = 0 ; i < len ; i++ )
+    *(dptr + i) = data[i];
+
+ MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+ MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+ MRF_ROUTE route;
+ mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
+
+ // turning buffer around - deliver to usrc
+
+ mrf_nexthop(&route,_mrfid,dest);
+
+ MRF_IF *ifp = mrf_if_ptr(route.i_f);
+
+ if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
+   // FIXME this should increment an error stat at least , maybe leave to calling app
+   _mrf_buff_free(bnum);
+   return -1;
+   
+ }
+ else
+   {
+     hdr->udest = dest; 
+     hdr->hdest = route.relay;
+     hdr->usrc = _mrfid;
+     hdr->hsrc = _mrfid;
+
+     resp->rlen = len;
+     resp->type = code;
+     hdr->type = mrf_cmd_usr_struct; //_mrf_response_type(hdr->type);
+     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+     mrf_debug("mrf_send_resp, responding - header follows(1)\n");
+     mrf_print_packet_header(hdr);
+     mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
+   }
+
+ return 0;  
+}
 
 
 
@@ -330,6 +378,7 @@ int _mrf_ex_buffer(uint8 bnum){
   */
 }
 
+// FIXME lots of duplicated code here wrt. data_response / ex packet - need to clean this up
 int _mrf_buff_forward(uint8 bnum){
   MRF_PKT_HDR *pkt;
   uint8 type;
@@ -342,7 +391,7 @@ int _mrf_buff_forward(uint8 bnum){
   MRF_IF *ifp = mrf_if_ptr(route.i_f);
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
-
+  pkt->netid = MRFNET;  // what are we going to use this for?
   mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
 
   if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
@@ -468,9 +517,14 @@ int mrf_foreground(){
   int rv,cnt = 0;
   while(queue_data_avail(&_app_queue)){
     mrf_debug("appq data available\n");
+
     bnum = (uint8)queue_pop(&_app_queue);
     mrf_debug("got bnum %d\n",bnum);
-    rv = _mrf_ex_buffer(bnum);
+
+    if (bnum >= MRF_BNUM_SIGNAL_BASE)
+      rv = signal_handler(MRF_BNUM_SIGNAL_BASE - bnum);
+    else
+      rv = _mrf_ex_buffer(bnum);
     mrf_debug("rv was %d",rv);
     cnt++;
   }

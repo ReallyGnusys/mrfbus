@@ -20,7 +20,7 @@
 #include <mrf_sys.h>
 #include  <msp430.h>
 #include <legacymsp430.h>
-#include <rtc.h>
+#include <rtc_arch.h>
 
 extern uint8 _mrfid;
 

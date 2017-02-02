@@ -267,14 +267,74 @@ int ads1148_init(){
   
 }
 
+uint32_t eval_milliohms(uint16_t adc){
+  uint64_t rv = (uint64_t)adc * (uint64_t)_ref_r;
+  rv /= (uint64_t)32767;
+  rv -= _ref_i;
+  return (uint32_t)rv;
+}
+
+
+int build_state(MRF_PKT_PT1000_STATE *state){
+
+  uint16 rd = ads1148_data();
+  
+  mrf_rtc_get(&((*state).td));
+  uint8 ch;
+  for (ch = 0 ; ch < MAX_RTDS ; ch++)
+    (*state).milliohms[ch] = 0;
+  (*state).ref_r   = _ref_r;
+  (*state).ref_i   = _ref_i;
+  (*state).relay_cmd   = 0;
+  (*state).relay_state = 0;
+  (*state).milliohms[0]= eval_milliohms(rd);  // temp  
+
+}
+
+
+
+#define APP_SIG_SECOND  0
+static int _tick_cnt;
+static int _tick_err_cnt;
+int tick_task(){
+  _tick_cnt++;
+  return 0;
+  MRF_PKT_PT1000_STATE state; 
+  build_state(&state);
+
+  mrf_send_structure(0, mrf_app_cmd_read_state,  (uint8 *)&state, sizeof(MRF_PKT_PT1000_STATE));
+  return 0;
+  
+}
+
+
+// this is run by mrf_foreground - so a foreground task
+int signal_handler(uint8 signal){
+
+  if (signal == APP_SIG_SECOND)
+    return tick_task();
+  
+}
+
+
+// each second do this.. in interrupt handler
+void on_second(){
+  // push signal code to app queue
+  mrf_app_queue_push(MRF_BNUM_SIGNAL_BASE + APP_SIG_SECOND);
+
+}
 
 int mrf_app_init(){
   
   dbg22 = 101;
+  _tick_cnt = 0;
+  _tick_err_cnt = 0;
   _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
   mrf_spi_init();
   ads1148_init();
+
+  rtc_rdy_enable(on_second);
 }
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
@@ -343,29 +403,14 @@ MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-uint32_t eval_milliohms(uint16_t adc){
-  uint64_t rv = (uint64_t)adc * (uint64_t)_ref_r;
-  rv /= (uint64_t)32767;
-  rv -= _ref_i;
-  return (uint32_t)rv;
-}
+
 
 MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
   //toggle_cs();
   mrf_debug("mrf_app_read_state entry bnum %d\n",bnum);
-  uint16 rd = ads1148_data();
-  
   MRF_PKT_PT1000_STATE *state = (MRF_PKT_PT1000_STATE *)mrf_response_buffer(bnum);
-  mrf_rtc_get(&((*state).td));
-  uint8 ch;
-  for (ch = 0 ; ch < MAX_RTDS ; ch++)
-    (*state).milliohms[ch] = 0;
-  (*state).ref_r   = _ref_r;
-  (*state).ref_i   = _ref_i;
-  (*state).relay_cmd   = 0;
-  (*state).relay_state = 0;
-  (*state).milliohms[0]= eval_milliohms(rd);  // temp  
+  build_state(state);
   mrf_send_response(bnum,sizeof(MRF_PKT_PT1000_STATE));
   mrf_debug("mrf_app_read_state exit\n");
   return MRF_CMD_RES_OK;

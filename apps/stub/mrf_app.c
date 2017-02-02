@@ -32,6 +32,9 @@
 extern uint8 _mrfid;
 static uint8 buff[2048];
 
+int signal_handler(uint8 signal){
+  return 0;
+}
 
 static MRF_CMD_RES _appl_fifo_callback(int fd){
   ssize_t s;

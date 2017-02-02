@@ -22,8 +22,8 @@
 #include  <msp430.h>
 #include <legacymsp430.h>
 #include "cc430f5137.h"
-#include "g430_types.h"
-#include "xb_sys_structs.h"
+#include "mrf_types.h"
+#include "mrf_sys_structs.h"
 
 void rtc_init(void);
 int rtc_get(TIMEDATE *td);

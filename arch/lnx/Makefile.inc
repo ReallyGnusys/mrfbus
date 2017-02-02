@@ -18,5 +18,6 @@
 GCC=gcc
 LD=ld
 OD=objdump -dt
+SIZE=size
 AOBJS=${MOBJ}/mrf_pipe_lnx.o ${MOBJ}/mrf_uart_lnx.o
 ALDFLAGS=-lrt
