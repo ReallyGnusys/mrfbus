@@ -106,7 +106,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   }
 
 }
-static int _outfd;
+static int _outfd,_outfds;  // file descs for output pipes - response and structure
 
 int mrf_app_init(){
   char sname[64];
@@ -122,7 +122,7 @@ int mrf_app_init(){
   printf("opened pipe %s fd = %d\n\n",sname,appfd);
   mrf_arch_app_callback(appfd,_appl_fifo_callback);
 
-  // open output application pipe
+  // open output application response pipe
 
   sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
@@ -130,6 +130,13 @@ int mrf_app_init(){
   _outfd = open(sname,O_WRONLY);
   printf("opened out pipe %s fd = %d\n",sname,_outfd);
 
+  // open output application struct pipe  - we need a link partner... hmpff maybe
+  sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d\n",sname,tmp);
+  _outfds = open(sname,O_WRONLY);
+  printf("opened out pipe %s fd = %d\n",sname,_outfds);
+  printf("\nmrf_app_init exit\n\n");
   
 
 }

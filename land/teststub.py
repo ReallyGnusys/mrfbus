@@ -51,15 +51,45 @@ class rx_thread(threading.Thread):
                 if self._stop:
                     return
 
+class struct_thread(threading.Thread):
+    """
+        A thread class to read stub structure output
+    """
+
+    def __init__ (self, stub_out_fifo_path):        
+        self.stub_out_fifo_path = stub_out_fifo_path
+        print "struct_thread.init: stub_out_fifo_path = %s"%self.stub_out_fifo_path
+        self.app_out_fifo = os.open(self.stub_out_fifo_path, os.O_RDONLY | os.O_NONBLOCK)
+        print "struct_thread app_out_fifo type is %s"%type(self.app_out_fifo)
+        self._stop = False
+        threading.Thread.__init__ (self)
+   
+    def stop(self):
+        self._stop = True
+    def run(self):
+        while True:
+            try:
+                resp = os.read(self.app_out_fifo, MRFBUFFLEN)
+                print "struct_thread.read got something, length is %d"%len(resp)
+                #self.q.put(resp)
+            except:
+                if self._stop:
+                    return
+
+                
 
 class StubIf(object):
     def __init__(self):
 
         self.q = Queue.Queue()
         self.stub_out_pipe_path = "/tmp/mrf_bus/0-app-out"
+        self.stub_struct_pipe_path = "/tmp/mrf_bus/0-app-str"
         
         self.rx_thread = rx_thread(self.stub_out_pipe_path, self.q)
         self.rx_thread.start()
+        self.struct_thread = struct_thread(self.stub_struct_pipe_path)
+        self.struct_thread.start()
+
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         print "StubIf.__init__  opened app_fifo "
         outfname = "/tmp/mrf_bus/0-app-out"
@@ -168,6 +198,8 @@ class StubIf(object):
     def quit(self):
         self.rx_thread.join(0.1)
         self.rx_thread.stop()
+        self.struct_thread.join(0.1)
+        self.struct_thread.stop()
 
     def cmd_test(self,dest,cmd_code,expected,dstruct=None):
         """

@@ -399,7 +399,7 @@ int _mrf_process_buff(uint8 bnum)
     const MRF_CMD *cmd = _mrf_cmd(type);
   
     if(cmd == NULL){  // how to manage packets that don't execute - i.e. unsolicited datagrams from sensors, that don't have any meaning in our app. For stub/hub applications we need to pass them to python regardless.
-
+      // note : adding usr_struct sys command every node must provide at least a null handler
       mrf_debug("big trouble 29339 - we got a packet but don't recognise type %d\n",type);
       return -1;
     }
@@ -415,7 +415,6 @@ int _mrf_process_buff(uint8 bnum)
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
         mrf_debug("pushing to app queue");
-
         int rv = mrf_app_queue_push(bnum);
         if (rv == 0){
           mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
@@ -424,10 +423,8 @@ int _mrf_process_buff(uint8 bnum)
           }
         } else {
             mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
-            mrf_sretry(bnum);
-          
+            mrf_sretry(bnum); 
         }
- 
       }
   } else if ( valid_cmd(pkt->type)) {
     //otherwise send segment ack then forward on network
