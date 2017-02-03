@@ -26,6 +26,6 @@
    returns current MRF_PKT_TIMEDATE 
 */
 
-MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp);
+MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 
 #endif

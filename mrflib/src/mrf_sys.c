@@ -114,7 +114,7 @@ uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
 
 int mrf_tx_bnum(I_F i_f,uint8 bnum){
   //mrf_debug("mrf_tx_buff : i_f %d  bnum %d\n",i_f,bnum);
-  MRF_IF *if_ptr = mrf_if_ptr(i_f);
+  const MRF_IF *if_ptr = mrf_if_ptr(i_f);
   uint8 *buff = _mrf_buff_ptr(bnum);
   (*(if_ptr->type->funcs.send))(i_f,buff);
   
@@ -128,7 +128,7 @@ int mrf_sack(uint8 bnum){
  mrf_debug("mrf_sack : orig header is\n");
  mrf_print_packet_header(hdr);
  mrf_debug("route if is %d\n",route.i_f);
- MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
  if_ptr->ackbuff->udest = hdr->hsrc;
@@ -153,7 +153,7 @@ int mrf_sretry(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
- MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
  if_ptr->ackbuff->udest = hdr->hsrc;
@@ -173,7 +173,7 @@ int mrf_retry(I_F i_f,uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
- MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+ const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
  if_ptr->ackbuff->udest = hdr->hsrc;
@@ -204,8 +204,15 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len){
 
 int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   uint8 bnum;
-  int i;
-  if ((bnum == mrf_alloc_if(NUM_INTERFACES)) == _MRF_BUFFS){
+  uint8 i;
+  MRF_ROUTE route;
+  mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
+
+ // deliver buffer to dest
+
+  mrf_nexthop(&route,_mrfid,dest);
+
+  if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
     return -1;
   }
   
@@ -215,35 +222,29 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
 
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
- MRF_ROUTE route;
- mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
 
- // turning buffer around - deliver to usrc
-
- mrf_nexthop(&route,_mrfid,dest);
-
- MRF_IF *ifp = mrf_if_ptr(route.i_f);
-
+ //MRF_IF *ifp = mrf_if_ptr(route.i_f);
+ hdr->udest = dest; 
+ hdr->hdest = route.relay;
+ hdr->usrc = _mrfid;
+ hdr->hsrc = _mrfid;
+ 
+ resp->rlen = len;
+ resp->type = code;
+ hdr->type = mrf_cmd_usr_struct; //_mrf_response_type(hdr->type);
+ hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+ mrf_debug("mrf_send_resp, responding - header follows(1)\n");
+ //mrf_print_packet_header(hdr);
+ _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
    // FIXME this should increment an error stat at least , maybe leave to calling app
-   _mrf_buff_free(bnum);
+   //_mrf_buff_free(bnum);
+    mrf_retry(route.i_f,bnum);
    return -1;
-   
  }
  else
    {
-     hdr->udest = dest; 
-     hdr->hdest = route.relay;
-     hdr->usrc = _mrfid;
-     hdr->hsrc = _mrfid;
-
-     resp->rlen = len;
-     resp->type = code;
-     hdr->type = mrf_cmd_usr_struct; //_mrf_response_type(hdr->type);
-     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
-     mrf_debug("mrf_send_resp, responding - header follows(1)\n");
-     mrf_print_packet_header(hdr);
-     mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
+     mrf_debug("sent structure resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
    }
 
  return 0;  
@@ -261,7 +262,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
 
  mrf_nexthop(&route,_mrfid,hdr->usrc);
 
- MRF_IF *ifp = mrf_if_ptr(route.i_f);
+ const MRF_IF *ifp = mrf_if_ptr(route.i_f);
  mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
 
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
@@ -283,7 +284,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
      hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
      hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
      mrf_debug("mrf_send_resp, responding - header follows(1)\n");
-     mrf_print_packet_header(hdr);
+     //mrf_print_packet_header(hdr);
      mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
    }
 
@@ -312,7 +313,7 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
 
 
 
-int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,MRF_IF *ifp){
+int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF *ifp){
       mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
       mrf_debug("cmd name %s  req size %u  rsp size %u cflags %x cmd->data %p\n",
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
@@ -347,7 +348,7 @@ int mrf_app_queue_push(uint8 bnum){
 int _mrf_ex_buffer(uint8 bnum){
   MRF_PKT_HDR *pkt;
   I_F owner = mrf_buff_owner(bnum);
-  MRF_IF *ifp = mrf_if_ptr(owner);
+  const MRF_IF *ifp = mrf_if_ptr(owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   mrf_debug("_mrf_ex_buffer bnum %d\n",bnum);
   const MRF_CMD *cmd =  _mrf_cmd(pkt->type);
@@ -388,7 +389,7 @@ int _mrf_buff_forward(uint8 bnum){
 
   MRF_ROUTE route;
   mrf_nexthop(&route,_mrfid,pkt->udest);
-  MRF_IF *ifp = mrf_if_ptr(route.i_f);
+  const MRF_IF *ifp = mrf_if_ptr(route.i_f);
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
   pkt->netid = MRFNET;  // what are we going to use this for?
@@ -424,7 +425,7 @@ int _mrf_process_buff(uint8 bnum)
       return -1;
     }
 
-  MRF_IF *ifp = mrf_if_ptr(owner);
+  const MRF_IF *ifp = mrf_if_ptr(owner);
   // don't count ack and retry
   //  if(type < mrf_cmd_resp)
   // ifp->status->stats.rx_pkts++;
@@ -548,7 +549,7 @@ int _mrf_if_can_tx(IF_STATE istate){
 
 
 void _mrf_tick(){
-  MRF_IF *mif; 
+  const MRF_IF *mif; 
   I_F i;
   uint8 j;
   uint8 *tb;

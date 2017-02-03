@@ -190,7 +190,7 @@ static int _mrf_uart_init_lnx(I_F i_f){
     mrf_debug("error mrf_uart_init_lnx i_f %d\n",i_f);
     return -1;
   }
-  MRF_IF *mif = mrf_if_ptr(i_f); 
+  const MRF_IF *mif = mrf_if_ptr(i_f); 
   mrf_debug("mrf_uart_init_lnx having a go at opening %s for i_f %d\n",mif->name,i_f);
 
   fd = usb_open(mif->name);

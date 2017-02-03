@@ -32,6 +32,7 @@ static uint8 _mrf_buff[_MRF_BUFFS][_MRF_BUFFLEN];
 
 static MRF_BUFF_STATE _mrf_buffst[_MRF_BUFFS];
 
+const uint8 _mrf_buffs = _MRF_BUFFS;
 //extern const MRF_CMD const mrf_cmds[];
 void _mrf_buff_free(uint8 i){
   if (i < _MRF_BUFFS){
@@ -47,7 +48,7 @@ void _mrf_buff_free(uint8 i){
 
 // this is where OS processes buffer
 int mrf_buff_loaded(uint8 bnum){
-  MRF_IF *ifp;
+  const MRF_IF *ifp;
   if (bnum <  _MRF_BUFFS){
     mrf_debug("mrf_buff_loaded bnum entry  %u owner %u\n",bnum, _mrf_buffst[bnum].owner);
     ifp = mrf_if_ptr( _mrf_buffst[bnum].owner);

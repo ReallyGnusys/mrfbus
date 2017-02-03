@@ -116,6 +116,8 @@ void rtc_ps0_init(RTCDIVCODE div,VFUNCPTR func){
   _rtc_ps0_handler = func;
 
   //relying on enum order and encoding to set RT0IP bits
+  
+  RTCPS0CTL &= ~((uint16)div << 2);
   RTCPS0CTL |= (uint16)div << 2;
 
   // clear flag

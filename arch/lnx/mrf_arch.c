@@ -249,7 +249,7 @@ char buff[2048];
   // devices must have been initialised - we're getting fds from _sys_if
   // lnx arch drivers must set an fd for input stream
   // add i_f events + cntrl if
-  MRF_IF *ifp;
+  const MRF_IF *ifp;
   for ( i = 0 ; i <  NUM_INTERFACES ; i++){
     ifp = mrf_if_ptr(i);
     ievent[i].data.u32 = i;

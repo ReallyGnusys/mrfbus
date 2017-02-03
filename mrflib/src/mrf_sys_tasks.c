@@ -22,7 +22,7 @@
 #include <mrf_debug.h>
 
 
-MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status->state);
 
   uint8 bn;
@@ -74,13 +74,13 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_retry..doing nothing yet\n");
 
 }
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
-MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_resp cmdcode %u bnum %u\n",cmd,bnum);
   _mrf_buff_print();
   
@@ -103,7 +103,7 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 extern int _tick_count;
-MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_device_status\n");
 
   MRF_PKT_DEVICE_STATUS info;
@@ -117,7 +117,7 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   info.tick_count = _tick_count;
   I_F i;
   uint32 rxp,txp;
-  MRF_IF *i_f;
+  const MRF_IF *i_f;
   for ( i = 0 ; i < NUM_INTERFACES ; i++ ) {
     i_f = mrf_if_ptr(i);
     info.tx_retries += i_f->status->stats.tx_retries;
@@ -132,14 +132,14 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 
 }
-MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
   mrf_debug("mrf_task_if_status request for i_f %d\n",streq->value);
 
   if ( (streq->value) >= NUM_INTERFACES)
     return MRF_CMD_RES_ERROR;
-  MRF_IF *i_f = mrf_if_ptr(streq->value);
+  const MRF_IF *i_f = mrf_if_ptr(streq->value);
 
   mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));  
   return MRF_CMD_RES_OK;
@@ -149,7 +149,7 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 
 
-MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   TIMEDATE td;
   mrf_rtc_get(&td);
   mrf_debug("mrf_task_get_time \n");
@@ -163,7 +163,7 @@ MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   TIMEDATE *td,endtd;
   mrf_debug("mrf_task_set_time entry\n");
   td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
@@ -175,7 +175,7 @@ MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
   mrf_debug("mrf_task_buff_state request for buffer %d\n",streq->value);
   if ( (streq->value) >= _MRF_BUFFS)
@@ -188,7 +188,7 @@ MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
   mrf_debug("mrf_task_cmd_info request for cmd %d\n",streq->value);
   if ( (streq->value) >= MRF_NUM_SYS_CMDS)
@@ -207,7 +207,7 @@ MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 extern const MRF_CMD mrf_app_cmds[];
 
-MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
   mrf_debug("mrf_task_app_cmd_info request for cmd %d\n",streq->value);
   if ( (streq->value) >= MRF_NUM_APP_CMDS)
@@ -225,13 +225,13 @@ MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_get_sensor_data exit\n");
   mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_test_1 entry\n");
   TIMEDATE *rbuff = (TIMEDATE *)mrf_response_buffer(bnum);
   mrf_rtc_get(rbuff);
@@ -240,7 +240,7 @@ MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;  
 }
 
-MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_test_2\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
  

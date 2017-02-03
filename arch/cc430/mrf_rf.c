@@ -39,7 +39,7 @@ const MRF_IF_TYPE mrf_rf_cc_if = {
 
 
 int rf_if_send_func(I_F i_f, uint8 *buff){
-  MRF_IF *mif = mrf_if_ptr(i_f);
+  const MRF_IF *mif = mrf_if_ptr(i_f);
   _xb_hw_wr_tx_fifo(buff[0] , buff);
 }
 
@@ -60,10 +60,6 @@ int mrf_rf_init(I_F i_f){
   return 0;
 }
 
-void xb_hw_idle(){
-  Strobe(RF_SIDLE);
-  Strobe(RF_SFRX);// flush rx fifo
-}
 
 void _mrf_receive_enable(void){
   RF1AIES |= BIT9;                          // Falling edge of RFIFG9
@@ -85,7 +81,7 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
   uint8 *buff;
   uint8 lenerr = FALSE;
   uint8 ebuff;
-  MRF_IF *mif;
+  const MRF_IF *mif;
   mif = mrf_if_ptr(i_f);
   len = ReadSingleReg( RXBYTES ); 
 
@@ -152,14 +148,14 @@ RF1AIE &= ~BIT9;                    // Disable TX end-of-packet interrupt
 }
 
 void mrf_rf_idle(I_F i_f){
-  MRF_IF *ifp = mrf_if_ptr(i_f);
+  const MRF_IF *ifp = mrf_if_ptr(i_f);
   ifp->status->state = MRF_ST_IDLE;
   Strobe( RF_SIDLE );
 
 }
 
 int _mrf_rf_tx_intr(I_F i_f){
-  MRF_IF *ifp = mrf_if_ptr(i_f);
+  const MRF_IF *ifp = mrf_if_ptr(i_f);
   IF_STATE *if_state = &(ifp->status->state);
   xb_hw_disable_tx_eop();
 	// _dbg100(xbst);

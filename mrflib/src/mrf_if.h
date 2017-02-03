@@ -105,9 +105,9 @@ typedef struct  {
 
 void mrf_if_init();
 
-void mrf_if_register(I_F i_f, const MRF_IF_TYPE *type);
+//voi mrf_if_register(I_F i_f, const MRF_IF_TYPE *type);
 
-MRF_IF *mrf_if_ptr(I_F i_f);
+const MRF_IF *mrf_if_ptr(I_F i_f);
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum );
 void _mrf_if_print_all();

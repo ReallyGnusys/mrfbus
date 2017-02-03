@@ -296,13 +296,14 @@ int build_state(MRF_PKT_PT1000_STATE *state){
 #define APP_SIG_SECOND  0
 static int _tick_cnt;
 static int _tick_err_cnt;
+static MRF_PKT_PT1000_STATE _state; 
+
 int tick_task(){
   _tick_cnt++;
-  return 0;
-  MRF_PKT_PT1000_STATE state; 
-  build_state(&state);
+  //return 0;
+  build_state(&_state);
 
-  mrf_send_structure(0, mrf_app_cmd_read_state,  (uint8 *)&state, sizeof(MRF_PKT_PT1000_STATE));
+  mrf_send_structure(0,  mrf_app_cmd_read_state,  (uint8 *)&_state, sizeof(MRF_PKT_PT1000_STATE));
   return 0;
   
 }
@@ -337,16 +338,16 @@ int mrf_app_init(){
   rtc_rdy_enable(on_second);
 }
 
-MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
 }
 
-MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_task_test entry\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
   mrf_rtc_get((TIMEDATE *)rbuff);
@@ -355,7 +356,7 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
-MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   //toggle_cs();
   mrf_debug("mrf_app_read_spi entry bnum %d\n",bnum);
@@ -369,7 +370,7 @@ MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   //toggle_cs();
   mrf_debug("mrf_app_spi_data entry bnum %d\n",bnum);
@@ -382,7 +383,7 @@ MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_spi_write entry bnum %d\n",bnum);
   MRF_PKT_UINT8_2 *data = (MRF_PKT_UINT8_2 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   ads1148_write(data->d0,data->d1);
@@ -393,7 +394,7 @@ MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_config_adc entry bnum %d\n",bnum);
   ads1148_config();
   //mrf_send_response(bnum,0);
@@ -405,7 +406,7 @@ MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 
 
-MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   //toggle_cs();
   mrf_debug("mrf_app_read_state entry bnum %d\n",bnum);
@@ -423,7 +424,7 @@ extern uint16 _spi_rx_bytes;
 extern uint16 _spi_tx_bytes;
 extern uint16 _spi_rxov_err;
 
-MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_spi_debug entry bnum %d\n",bnum);
   MRF_PKT_SPI_DEBUG pkt;  // FIXME why not get pointer to buffer and cast to MRF_PKT_SPI_DEBUG?
   // e.g. MRF_PKT_SPI_DEBUG  *pkt = (MRF_PKT_SPI_DEBUG *)mrf_response_buffer(bnum); 

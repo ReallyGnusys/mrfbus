@@ -67,7 +67,7 @@ typedef enum {
 
 
 
-typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , MRF_IF *ifp);
+typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
 
 #ifdef MRF_ARCH_lnx
 typedef MRF_CMD_RES (*MRF_APP_CALLBACK)(int fd);

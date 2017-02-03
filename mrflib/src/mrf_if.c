@@ -8,9 +8,9 @@
 #include <mrf_sys.h>
 #include <mrf_debug.h>
 
-MRF_IF _sys_ifs[NUM_INTERFACES];
+extern const MRF_IF _sys_ifs[NUM_INTERFACES];
 
-inline MRF_IF *mrf_if_ptr(I_F i_f){
+inline const MRF_IF *mrf_if_ptr(I_F i_f){
   if (i_f < NUM_INTERFACES)
     return &_sys_ifs[i_f];
   else
@@ -49,7 +49,7 @@ void mrf_if_init(){
   mrf_debug("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
   for (i = 0 ; i < NUM_INTERFACES ; i++){
     mrf_debug("interface %d\n",i);
-    MRF_IF *mif = mrf_if_ptr(i);
+    const MRF_IF *mif = mrf_if_ptr(i);
     // rough zeroing of status data including stats
     dptr = (uint8 *)mif->status;
     mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
@@ -66,24 +66,26 @@ void mrf_if_init(){
 
 }
 
+/*
 void mrf_if_register(I_F i_f,const MRF_IF_TYPE *type){
   _sys_ifs[i_f].type = type;
   
 }
+*/
 
 void _mrf_if_print_all(){
 
   I_F i_f;
-  MRF_IF *ifp;
+  const MRF_IF *ifp;
   for ( i_f = 0 ; i_f < NUM_INTERFACES ; i_f++){
-    MRF_IF *ifp = mrf_if_ptr(i_f);
+    ifp = mrf_if_ptr(i_f);
     mrf_debug("I_F %d state %d txq_da %d\n",i_f,ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
   }
 }
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
   int i;
-  MRF_IF *mif = mrf_if_ptr(i_f);
+  const MRF_IF *mif = mrf_if_ptr(i_f);
   MRF_BUFF_STATE *mbst = _mrf_buff_state(bnum);
   IQUEUE *qp = &(mif->status->txqueue);
   //mrf_debug("mrf_if_tx_queue entry\n");

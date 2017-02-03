@@ -74,19 +74,29 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
 
   }
 
-  uint8 bnum = mrf_alloc_if(NUM_INTERFACES);
+  uint8 udest = buff[1];
+
+  MRF_ROUTE route;
+
+  mrf_nexthop(&route,_mrfid,udest);
+
+  // get a buffer with null i_f 
+  uint8 bnum = mrf_alloc_if(route.i_f);
+
+  MRF_PKT_HDR *pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+
+
+
+  
   mrf_debug("allocated buffer number %u\n",bnum);
 
   if (bnum >= _MRF_BUFFS){
     mrf_debug("no buffs left\n");
     return MRF_CMD_RES_ERROR;
   }
-  MRF_PKT_HDR *pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   
   pkt->udest = buff[1];
   pkt->type = buff[2];
-  MRF_ROUTE route;
-  mrf_nexthop(&route,_mrfid,pkt->udest);
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
   pkt->usrc = _mrfid;
@@ -171,11 +181,11 @@ int response_to_app(uint8 bnum){
  return 0;
 }
 
-MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
 }
 
-MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   /*
     prints response packets
   */
@@ -283,7 +293,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
 
 
 
-MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, MRF_IF *ifp){
+MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_task_test entry\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
   mrf_rtc_get((TIMEDATE *)rbuff);
