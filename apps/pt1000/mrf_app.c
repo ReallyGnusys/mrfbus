@@ -303,7 +303,7 @@ int tick_task(){
   //return 0;
   build_state(&_state);
 
-  mrf_send_structure(0,  mrf_app_cmd_read_state,  (uint8 *)&_state, sizeof(MRF_PKT_PT1000_STATE));
+  mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state, sizeof(MRF_PKT_PT1000_STATE));
   return 0;
   
 }
