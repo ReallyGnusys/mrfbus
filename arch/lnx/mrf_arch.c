@@ -349,33 +349,47 @@ char buff[2048];
 
      else if (revent[i].data.u32 == NUM_INTERFACES+1){
        // internal cntrl
-
+       char token[64];  // we must split tokens
+       int bi, j = 0;
        s = read(intfd, buff, 1024);
+       mrf_debug("\n internal control (1) : s = %d buff = %s\n",(int)s,buff);
+
+       for (bi = 0 ; bi < s ; bi++){
+         token[j] = buff[bi];
+         j++;
+         if (buff[bi] == 0) {
+           j = 0;
+           mrf_debug("token %s\n",token);
+           if(strcmp(buff,TICK_ENABLE) == 0){
+             mrf_debug("INTERNAL:tick_enable\n");
+             epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
+             //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
+           }
+           else if (strcmp(buff,TICK_DISABLE) == 0){
+             mrf_debug("INTERNAL:tick_disable\n");
+             epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
+             //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+           }
+           else if (strcmp(buff,"wake") == 0){
+             mrf_debug("INTERNAL:wakeup\n");
+             int i = mrf_foreground();
+             printf("ran %d foreground tasks\n",i);
+           }
+           else{
+         
+             printf("internal control unrecognised string %s\n",buff);
+           }
+           
+           
+         }
+       } // end for
+       /*
        buff[s] = 0;
        trim_trailing_space(buff);
        s = strlen(buff);
 
-       //printf("\n internal control : s = %d buff = %s\n",(int)s,buff);
-
-       if(strcmp(buff,TICK_ENABLE) == 0){
-         //printf("INTERNAL:tick_enable\n");
-         epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
-         //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
-       }
-       else if (strcmp(buff,TICK_DISABLE) == 0){
-         //printf("INTERNAL:tick_disable\n");
-         epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
-         //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-       }
-       else if (strcmp(buff,"wake") == 0){
-         printf("got wakeup\n");
-         int i = mrf_foreground();
-         printf("ran %d foreground tasks\n",i);
-       }
-       else{
-         
-         printf("internal control unrecognised string %s\n",buff);
-       }
+       mrf_debug("\n internal control : s = %d buff = %s\n",(int)s,buff);
+       */
      } else if (revent[i].data.u32 == NUM_INTERFACES+2){
        // app fifo
 
@@ -433,11 +447,13 @@ int _write_internal_pipe(char *data, int len){
 
 
 int mrf_tick_enable(){
+  mrf_debug("mrf_tick_enable : sending tick_enable signal\n");
   int bc = _write_internal_pipe(TICK_ENABLE, sizeof(TICK_ENABLE) );
   return bc;
 }
 
 int mrf_tick_disable(){
+  mrf_debug("mrf_tick_disable : sending tick_disable signal\n");
   return  _write_internal_pipe(TICK_DISABLE, sizeof(TICK_DISABLE) );
 }
 

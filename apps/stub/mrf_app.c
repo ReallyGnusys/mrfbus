@@ -153,6 +153,33 @@ int mrf_app_init(){
   
 
 }
+int structure_to_app(uint8 bnum){
+  // just squirt the raw buffer to python app via fifo
+  char sname[64];
+  int outfd;
+  uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
+  uint8 len = buff[0];
+  sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
+  outfd = open(sname, O_WRONLY | O_NONBLOCK);
+
+  printf("response_to_app : bnum %d opened out pipe %s fd = %d\n", bnum, sname, outfd);
+  if (outfd == -1 ){
+    mrf_debug("failed to open fd = %d\n",outfd);
+    return -1;
+  }
+ if(len > _MRF_BUFFLEN){
+   mrf_debug("error - length is bonkers %u\n",len);
+   return -1;
+ }
+ int bc = write(outfd, buff,len );
+
+
+ mrf_debug("wrote %d bytes to outpipe %s\n",bc,sname);
+ _mrf_print_hex_buff(buff,len);
+ close(outfd);
+ return 0;
+}
+
 
 int response_to_app(uint8 bnum){
   // just squirt the raw buffer to python app via fifo
@@ -182,6 +209,107 @@ int response_to_app(uint8 bnum){
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
+
+  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
+
+  uint8 *buff = (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
+
+  mrf_debug("mrf_task_usr_struct (stub) : bnum %u type = %u rlen %u msgid %u\n",bnum,resp->type,resp->rlen,resp->msgid);
+
+
+  _mrf_print_hex_buff(buff,buff[0]);
+
+  if (resp->type == mrf_cmd_device_info){
+    MRF_PKT_DEVICE_INFO *dev_inf = (MRF_PKT_DEVICE_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("DEVICE %s MRFID 0x%X MRFNET 0x%X num_buffs %d num_ifs %d\n",dev_inf->dev_name,dev_inf->mrfid,dev_inf->netid,
+              dev_inf->num_buffs,dev_inf->num_ifs);
+  }
+  else if  (resp->type == mrf_cmd_device_status){
+    MRF_PKT_DEVICE_STATUS *if_inf = (MRF_PKT_DEVICE_STATUS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("DEVICE_STATUS   free_buffs %u rx_pkts %u tx_pkts %u tx_retries %u tick_count %u\n",
+              if_inf->buffs_free, if_inf->rx_pkts, if_inf->tx_pkts, if_inf->tx_retries,if_inf->tick_count);
+  }
+  else if (resp->type == mrf_cmd_sys_info){
+    MRF_PKT_SYS_INFO *dev_inf = (MRF_PKT_SYS_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("SYS INFO num_cmds %u mrfbus version %s modified %u build %s\n",
+              dev_inf->num_cmds, dev_inf->mrfbus_version, dev_inf->modified, dev_inf->build);
+  }
+  else if  (resp->type == mrf_cmd_if_stats){
+    IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("IF STATUS : rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u tx_overruns %u unexp_ack %u alloc_err %u st_err %u\n",if_stats->rx_pkts,if_stats->tx_pkts,if_stats->tx_acks,if_stats->tx_retries,if_stats->tx_overruns, if_stats->unexp_ack, if_stats->alloc_err, if_stats->st_err);
+  }  
+  else if  (resp->type == mrf_cmd_get_time){
+    TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+    */
+  }  
+  else if  (resp->type == mrf_cmd_buff_state){
+    MRF_PKT_BUFF_STATE *bst = (MRF_PKT_BUFF_STATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    char *bstnames[] = {"FREE","LOADING","LOADED","TXQUEUE","TX","APPIN"};
+    if (bst->id > (_MRF_BUFFS - 1))
+      mrf_debug("BUFF_STATE : got invalid id %u\n",bst->id);
+    else
+      mrf_debug("BUFF_STATE : buff %u state %s\n", bst->id, bstnames[bst->state.state]);
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+    */
+  }  
+  else if (resp->type == mrf_cmd_cmd_info){
+    MRF_PKT_CMD_INFO *cmd_inf = (MRF_PKT_CMD_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("CMD INFO type %u name %s cflags 0x%02X req_size %u rsp_size %u\n",
+              cmd_inf->type,cmd_inf->name,cmd_inf->cflags,cmd_inf->req_size,cmd_inf->rsp_size);
+  }
+  else if (resp->type == mrf_cmd_app_info){
+    MRF_PKT_APP_INFO *app_inf = (MRF_PKT_APP_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("APP INFO name %s num_cmds %u\n",
+              app_inf->name,app_inf->num_cmds);
+  }
+  else if (resp->type == mrf_cmd_app_cmd_info){
+    MRF_PKT_CMD_INFO *cmd_inf = (MRF_PKT_CMD_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("APP CMD INFO type %u name %s cflags 0x%02X req_size %u rsp_size %u\n",
+              cmd_inf->type,cmd_inf->name,cmd_inf->cflags,cmd_inf->req_size,cmd_inf->rsp_size);
+  }
+  else if  (resp->type == mrf_cmd_test_1){
+    TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+    */
+  }  
+  else if  (resp->type == mrf_cmd_usr_struct){
+    char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+    mrf_debug("usr_struct : this is slightly bonkers \n");
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
+    mrf_debug(":end of hex");
+*/
+  }  
+
+  else if  (resp->type >= _MRF_APP_CMD_BASE){
+    mrf_debug("_MRF_APP_CMD  %d ( mrf_cmd code %d)\n",resp->type - _MRF_APP_CMD_BASE , resp->type);
+    /*
+    mrf_debug("hex buff follows:");
+    _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
+    mrf_debug(":end of hex");
+    */
+  }  
+  
+  // squirt complete response packet to higher level app
+  mrf_debug("about to send response\n");
+  int rc = structure_to_app(bnum);
+  mrf_debug("sent structur.. I think rc %d\n",rc);
+  
+
   _mrf_buff_free(bnum);
 }
 

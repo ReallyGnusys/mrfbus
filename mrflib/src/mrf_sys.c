@@ -125,7 +125,7 @@ int mrf_sack(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
- mrf_debug("mrf_sack : orig header is\n");
+ mrf_debug("mrf_sack : for addr %d orig header is\n",hdr->hsrc);
  mrf_print_packet_header(hdr);
  mrf_debug("route if is %d\n",route.i_f);
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
@@ -469,6 +469,7 @@ int _mrf_process_buff(uint8 bnum)
         if (rv == 0){
           mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
           if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+            mrf_debug("sending segment ack\n");
             mrf_sack(bnum);   
           }
         } else {
