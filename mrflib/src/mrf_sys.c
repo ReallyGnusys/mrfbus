@@ -464,7 +464,7 @@ int _mrf_process_buff(uint8 bnum)
         mrf_debug("executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
-        mrf_debug("pushing to app queue");
+        mrf_debug("pushing to app queue\n");
         int rv = mrf_app_queue_push(bnum);
         if (rv == 0){
           mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);

@@ -51,17 +51,47 @@ class rx_thread(threading.Thread):
                 if self._stop:
                     return
 
+def buffToObj(resp,app_cmds):
+    hdr = PktHeader()
+    print "buffToObj len is %d"%len(resp)
+    if len(resp) >= len(hdr):
+        hdr_data = bytes(resp)[0:len(hdr)]
+        hdr.load(bytes(resp)[0:len(hdr)])
+        print "hdr is %s"%repr(hdr)
+        if hdr.type in MrfSysCmds.keys():
+            if MrfSysCmds[hdr.type]['param'] and ( MrfSysCmds[hdr.type]['name'] == 'USR_RESP' or MrfSysCmds[hdr.type]['name'] == 'USR_STRUCT' ):  # testing aye
+                param = MrfSysCmds[hdr.type]['param']()
+                param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
+                param.load(param_data)
+                if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
+                    respobj = MrfSysCmds[param.type]['resp']()
+                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
+                    respobj.load(respdat)
+                    return respobj
+                elif param.type in app_cmds.keys() and app_cmds[param.type]['resp']:
+                    respobj = app_cmds[param.type]['resp']()
+                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
+                    respobj.load(respdat)
+                    return respobj
+                else:
+                    print "got param type %d "%param.type
+            else:
+                print "got hdr.type %d"%hdr.type
+    return None
+
+                
 class struct_thread(threading.Thread):
     """
         A thread class to read stub structure output
     """
 
-    def __init__ (self, stub_out_fifo_path):        
+    def __init__ (self, stub_out_fifo_path,app_cmds):        
         self.stub_out_fifo_path = stub_out_fifo_path
         print "struct_thread.init: stub_out_fifo_path = %s"%self.stub_out_fifo_path
         self.app_out_fifo = os.open(self.stub_out_fifo_path, os.O_RDONLY | os.O_NONBLOCK)
         print "struct_thread app_out_fifo type is %s"%type(self.app_out_fifo)
         self._stop = False
+        self.app_cmds = app_cmds
         threading.Thread.__init__ (self)
    
     def stop(self):
@@ -71,12 +101,14 @@ class struct_thread(threading.Thread):
             try:
                 resp = os.read(self.app_out_fifo, MRFBUFFLEN)
                 print "struct_thread.read got something, length is %d"%len(resp)
+                rstr = buffToObj(resp)
+                print "rstr %s"%repr(rstr)
                 #self.q.put(resp)
             except:
                 if self._stop:
                     return
 
-                
+    
 
 class StubIf(object):
     def __init__(self):
@@ -87,14 +119,16 @@ class StubIf(object):
         
         self.rx_thread = rx_thread(self.stub_out_pipe_path, self.q)
         self.rx_thread.start()
-        self.struct_thread = struct_thread(self.stub_struct_pipe_path)
-        self.struct_thread.start()
 
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         print "StubIf.__init__  opened app_fifo "
         outfname = "/tmp/mrf_bus/0-app-out"
         self.app_cmds = {}  # need to override in some ugly way to allow app command testing for now
- 
+
+        self.struct_thread = struct_thread(self.stub_struct_pipe_path,self.app_cmds)
+        self.struct_thread.start()
+
+        
     def bin2hex(self,buff):
         return ''.join('{:02x}'.format(x) for x in bytearray(buff))
 
@@ -169,31 +203,7 @@ class StubIf(object):
             if elapsed >= timeout:
                 return None
         resp = self.q.get()
-
-        hdr = PktHeader()
-        if len(resp) >= len(hdr):
-            hdr_data = bytes(resp)[0:len(hdr)]
-            hdr.load(bytes(resp)[0:len(hdr)])
-            if hdr.type in MrfSysCmds.keys():
-                if MrfSysCmds[hdr.type]['param'] and MrfSysCmds[hdr.type]['name'] == 'USR_RESP':  # testing aye
-                    param = MrfSysCmds[hdr.type]['param']()
-                    param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-                    param.load(param_data)
-                    if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
-                        respobj = MrfSysCmds[param.type]['resp']()
-                        respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                        respobj.load(respdat)
-                        return respobj
-                    elif param.type in self.app_cmds.keys() and self.app_cmds[param.type]['resp']:
-                        respobj = self.app_cmds[param.type]['resp']()
-                        respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                        respobj.load(respdat)
-                        return respobj
-                    else:
-                        print "got param type %d "%param.type
-            else:
-                print "got hdr.type %d"%hdr.type
-            return None
+        return buffToObj(resp,self.app_cmds)
                         
     def quit(self):
         self.rx_thread.join(0.1)
