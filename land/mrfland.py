@@ -23,6 +23,7 @@ import signal
 import logging
 import socket
 import linuxfd
+import mrf_land_state
 
 from mrf_structs import *
 
@@ -125,29 +126,10 @@ class mrfland(object):
         #signal.signal(signal.SIGALRM, itimer_handler)
         #signal.setitimer(signal.ITIMER_REAL,2,2)   # keep overseer process running every 2 seconds
 
-        try:
-            self.tfd = linuxfd.timerfd()
-            self.tfd.settime(value=2, interval = 2)
-            self.log.info("created timerfd %d"%self.tfd.fileno())
-        except:
-            self.log.error("timerfd exception")
             
         self.stub_out_resp_path = stub_out_resp_path
-        self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.rfd == -1:
-            self._error_exit("could not open response fifo %s"%self.stub_out_resp_path)
-    
         self.stub_out_str_path = stub_out_str_path
-        self.sfd =  os.open(self.stub_out_str_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.sfd == -1:
-            self._error_exit("could not open structure fifo %s"%self.stub_out_str_path)
 
-
-        self.log.info( "opened pipes")
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
-        self.log.info( "app_fifo opened")
-
-        
         self.portnum = portnum
 
         self.ss = self._create_server_socket()
@@ -155,11 +137,22 @@ class mrfland(object):
         self.conns = {}  # connections
         self.ep = select.epoll()
 
-        self.ep.register(self.rfd)
-        self.ep.register(self.sfd)
         self.ep.register(self.ss.fileno())
-        self.ep.register(self.tfd.fileno())
 
+        try:
+            self.tfd = linuxfd.timerfd()
+            self.tfd.settime(value=2, interval = 2)
+            self.log.info("created timerfd %d"%self.tfd.fileno())
+            self.ep.register(self.tfd.fileno())
+        except:
+            self.log.error("timerfd exception")
+
+
+        self.start_network()
+
+        
+
+        # probe for host device to test initial network state
         self.init_cmds()   # run any initial commands
 
         
@@ -167,6 +160,7 @@ class mrfland(object):
             while True:
                 self.poll()
         finally:
+            self.log.warn("about to quite... exception")
             self.ep.unregister(self.ss.fileno())
             self.ep.unregister(self.tfd.fileno())
             self.ep.unregister(self.rfd)
@@ -174,6 +168,25 @@ class mrfland(object):
             self.ep.close()
             self.ss.close()
 
+    def start_network(self):
+        self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
+        if self.rfd == -1:
+            self._error_exit("could not open response fifo %s"%self.stub_out_resp_path)
+        else:
+            self.ep.register(self.rfd)
+
+        self.sfd =  os.open(self.stub_out_str_path, os.O_RDONLY | os.O_NONBLOCK)
+        if self.sfd == -1:
+            self._error_exit("could not open structure fifo %s"%self.stub_out_str_path)
+        else:
+            self.ep.register(self.sfd)
+
+
+        self.log.info( "opened pipes, trying to open pipe to stub")
+        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
+        self.log.info( "app_fifo opened")
+        
+            
     def init_cmds(self):
         self.init_cmd(1,mrf_cmd_device_info)
         self.init_cmd(1,mrf_cmd_device_status)
@@ -206,7 +219,7 @@ class mrfland(object):
                 #sys.stdout.write(repr(rstr))
             elif event_type & select.EPOLLHUP:
                 self.log.info("response connection has hung up")
-                self.ep.unregister(self.rfd)
+                self.network_down()
 
                 
         elif fd == self.sfd:
@@ -217,7 +230,7 @@ class mrfland(object):
                 sys.stdout.write(repr(resp))
             elif event_type & select.EPOLLHUP:
                 self.log.info("data connection has hung up")
-                self.ep.unregister(self.sfd)
+                self.network_down()
 
         elif fd == self.tfd.fileno():
             self.log.debug("timerfd: (%d)", event_type)
@@ -250,6 +263,16 @@ class mrfland(object):
                 else:
                     sys.stdout.write(b)
  
+    def network_down(self):        
+        self.log.warn("network_down entry")
+        self.ep.unregister(self.rfd)
+        self.ep.unregister(self.sfd)
+        os.close(self.rfd)
+        os.close(self.sfd)
+        self.app_fifo.close()
+        self.log.warn("closed all fifos..attempting restart")
+        self.start_network()
+        self.log.warn("fifos opened")
         
     def _create_server_socket(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -327,7 +350,8 @@ class mrfland(object):
     def overseer(self):
         """ overseer process checks things over on regular timerfd """
         self.log.debug("overseer entry")
-    
+        self.cmd(1,mrf_cmd_device_status)
+
 if __name__ == "__main__":
     ml =  mrfland()
 
