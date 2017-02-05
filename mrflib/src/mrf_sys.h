@@ -119,6 +119,8 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr);
 uint8 *mrf_response_buffer(uint8 bnum);
 int mrf_send_response(uint8 bnum,uint8 rlen);
 int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len);
+int mrf_send_command(uint8 dest, uint8 code,  uint8 *data, uint8 len);
+
 uint16 mrf_copy(void *src,void *dst, size_t nbytes);
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes);
 const MRF_CMD *mrf_cmd_ptr(uint8 type);

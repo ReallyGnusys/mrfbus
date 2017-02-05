@@ -202,11 +202,11 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len){
 }
 //FIXME way too much near identical code in different functions around here
 
+
 int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   uint8 bnum;
   uint8 i;
   MRF_ROUTE route;
-  mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
 
  // deliver buffer to dest
 
@@ -215,19 +215,21 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
     return -1;
   }
+  mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
+
+  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+
+  //MRF_IF *ifp = mrf_if_ptr(route.i_f);
+  hdr->udest = dest; 
+  hdr->hdest = route.relay;
+  hdr->usrc = _mrfid;
+  hdr->hsrc = _mrfid;
   
   uint8 *dptr = mrf_response_buffer(bnum);
   for (i = 0 ; i < len ; i++ )
     *(dptr + i) = data[i];
 
- MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
- MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
-
- //MRF_IF *ifp = mrf_if_ptr(route.i_f);
- hdr->udest = dest; 
- hdr->hdest = route.relay;
- hdr->usrc = _mrfid;
- hdr->hsrc = _mrfid;
  
  resp->rlen = len;
  resp->type = code;
@@ -251,6 +253,51 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
 }
 
 
+int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
+  uint8 bnum;
+  uint8 i;
+  MRF_ROUTE route;
+  mrf_debug("\nmrf_send_command :  bnum %d  len %d\n",bnum,len);
+
+ // deliver buffer to dest
+
+  mrf_nexthop(&route,_mrfid,dest);
+
+  if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
+    return -1;
+  }
+
+  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
+  uint8 *pl = (uint8 *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+
+  for (i = 0 ; i < len ; i++ )
+    *(pl + i) = data[i];
+
+
+ //MRF_IF *ifp = mrf_if_ptr(route.i_f);
+ hdr->udest = dest; 
+ hdr->hdest = route.relay;
+ hdr->usrc = _mrfid;
+ hdr->hsrc = _mrfid;
+ 
+ hdr->type = type;
+ hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+ _mrf_buff_state(bnum)->state = LOADED; //
+ if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
+   // FIXME this should increment an error stat at least , maybe leave to calling app
+   //_mrf_buff_free(bnum);
+    mrf_retry(route.i_f,bnum);
+   return -1;
+ }
+ else
+   {
+     mrf_debug("sent command resp->type=%u\n",type);
+   }
+
+ return 0;  
+}
+
+
 
 int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
@@ -261,6 +308,18 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  // turning buffer around - deliver to usrc
 
  mrf_nexthop(&route,_mrfid,hdr->usrc);
+
+ // turnaround buffer and add response
+ hdr->udest = hdr->usrc; 
+ hdr->hdest = route.relay;
+ hdr->usrc = _mrfid;
+ hdr->hsrc = _mrfid;
+
+ resp->rlen = rlen;
+ resp->type = hdr->type;
+ hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
+ hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
+
 
  const MRF_IF *ifp = mrf_if_ptr(route.i_f);
  mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
@@ -273,16 +332,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  else
    {
      mrf_debug("mdr l1\n");
-     // turnaround buffer and add response
-     hdr->udest = hdr->usrc; 
-     hdr->hdest = route.relay;
-     hdr->usrc = _mrfid;
-     hdr->hsrc = _mrfid;
-
-     resp->rlen = rlen;
-     resp->type = hdr->type;
-     hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
-     hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
+     
      mrf_debug("mrf_send_resp, responding - header follows(1)\n");
      //mrf_print_packet_header(hdr);
      mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);

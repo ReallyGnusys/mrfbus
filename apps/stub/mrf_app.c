@@ -75,6 +75,8 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   }
 
   uint8 udest = buff[1];
+  uint8 type = buff[2];
+  return  mrf_send_command(udest, type,  &(buff[3]), len -3);
 
   MRF_ROUTE route;
 
