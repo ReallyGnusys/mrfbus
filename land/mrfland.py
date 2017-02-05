@@ -22,6 +22,8 @@ import select
 import signal
 import logging
 import socket
+import linuxfd
+
 from mrf_structs import *
 
 
@@ -68,16 +70,19 @@ def buffToObj(resp,app_cmds = {}):
     if len(resp) >= len(hdr):
         hdr_data = bytes(resp)[0:len(hdr)]
         hdr.load(bytes(resp)[0:len(hdr)])
-        print "hdr is %s"%repr(hdr)
+        #print "hdr is:\n%s\n"%repr(hdr)
         if hdr.type in MrfSysCmds.keys():
-            if MrfSysCmds[hdr.type]['param'] and ( MrfSysCmds[hdr.type]['name'] == 'USR_RESP' or MrfSysCmds[hdr.type]['name'] == 'USR_STRUCT' ):  # testing aye
+            if hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
                 param = MrfSysCmds[hdr.type]['param']()
                 param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
                 param.load(param_data)
+                #print "resp should be %s"%repr(param)
                 if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
                     respobj = MrfSysCmds[param.type]['resp']()
+                    #print "respopb is %s"%type(respobj)
                     respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                     respobj.load(respdat)
+                    #print "repr %s"%repr(respobj)
                     return respobj
                 elif param.type in app_cmds.keys() and app_cmds[param.type]['resp']:
                     respobj = app_cmds[param.type]['resp']()
@@ -101,7 +106,7 @@ class mrfland(object):
 
     def start_logging(self):
         self.log = logging.getLogger(__name__)
-        self.log.setLevel(logging.DEBUG)
+        self.log.setLevel(logging.INFO)
         ch = logging.StreamHandler()
         formatter = logging.Formatter(_DEFAULT_LOG_FORMAT)
         ch.setFormatter(formatter)
@@ -113,9 +118,20 @@ class mrfland(object):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
+            
         self.start_logging()
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
+        #signal.signal(signal.SIGALRM, itimer_handler)
+        #signal.setitimer(signal.ITIMER_REAL,2,2)   # keep overseer process running every 2 seconds
+
+        try:
+            self.tfd = linuxfd.timerfd()
+            self.tfd.settime(value=2, interval = 2)
+            self.log.info("created timerfd %d"%self.tfd.fileno())
+        except:
+            self.log.error("timerfd exception")
+            
         self.stub_out_resp_path = stub_out_resp_path
         self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
         if self.rfd == -1:
@@ -142,13 +158,17 @@ class mrfland(object):
         self.ep.register(self.rfd)
         self.ep.register(self.sfd)
         self.ep.register(self.ss.fileno())
+        self.ep.register(self.tfd.fileno())
+
         self.init_cmds()   # run any initial commands
 
+        
         try:
             while True:
                 self.poll()
         finally:
             self.ep.unregister(self.ss.fileno())
+            self.ep.unregister(self.tfd.fileno())
             self.ep.unregister(self.rfd)
             self.ep.unregister(self.sfd)
             self.ep.close()
@@ -158,6 +178,7 @@ class mrfland(object):
         self.init_cmd(1,mrf_cmd_device_info)
         self.init_cmd(1,mrf_cmd_device_status)
         self.init_cmd(1,mrf_cmd_app_info)
+        self.init_cmd(1,mrf_cmd_get_time)
 
     def poll(self):
         events = self.ep.poll(_EPOLL_BLOCK_DURATION_S)
@@ -173,22 +194,38 @@ class mrfland(object):
             self.log.debug("Received (%d): %s", 
                            fd, flag_list)
  
-        # Activity on the master socket means a new connection.
         if fd == self.rfd:
-            self.log.debug("Input on response pipe (%d)"%event_type)
+            self.log.info("Input on response pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
                 resp = os.read(self.rfd, MRFBUFFLEN)
                 self.log.debug("have response len %d"%len(resp))
                 rstr = buffToObj(resp)
+                self.log.info("received object on response pipe %s\n%s"%(type(rstr),repr(rstr)))
+                #self.log.info(repr(rstr))
+                #self.log.info("end obj")
+                #sys.stdout.write(repr(rstr))
+            elif event_type & select.EPOLLHUP:
+                self.log.info("response connection has hung up")
+                self.ep.unregister(self.rfd)
 
-                sys.stdout.write(repr(rstr))
+                
         elif fd == self.sfd:
-            self.log.debug("Input on data pipe (%d)"%event_type)
+            self.log.info("Input on data pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
                 resp = os.read(self.rfd, MRFBUFFLEN)
                 #b = fd.recv(1024)
                 sys.stdout.write(repr(resp))
-                
+            elif event_type & select.EPOLLHUP:
+                self.log.info("data connection has hung up")
+                self.ep.unregister(self.sfd)
+
+        elif fd == self.tfd.fileno():
+            self.log.debug("timerfd: (%d)", event_type)
+            self.tfd.read()
+            self.overseer()
+        
+
+        # Activity on the server socket means a new client connection.                
         elif fd == self.ss.fileno():
             self.log.debug("Received connection: (%d)", event_type)
  
@@ -287,7 +324,9 @@ class mrfland(object):
         self.app_fifo.write(msg)
         self.app_fifo.flush()
         return 0
-
+    def overseer(self):
+        """ overseer process checks things over on regular timerfd """
+        self.log.debug("overseer entry")
     
 if __name__ == "__main__":
     ml =  mrfland()

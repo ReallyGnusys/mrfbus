@@ -38,6 +38,8 @@ extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];
 extern const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS];
 
 
+static uint8 _txmsgid;
+
 /*
 uint8 _mrf_response_type(uint8 type){
   return type | 0x80;
@@ -225,7 +227,8 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   hdr->hdest = route.relay;
   hdr->usrc = _mrfid;
   hdr->hsrc = _mrfid;
-  
+  hdr->netid = MRFNET; 
+  hdr->msgid = _txmsgid++;
   uint8 *dptr = mrf_response_buffer(bnum);
   for (i = 0 ; i < len ; i++ )
     *(dptr + i) = data[i];
@@ -279,7 +282,9 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
  hdr->hdest = route.relay;
  hdr->usrc = _mrfid;
  hdr->hsrc = _mrfid;
- 
+ hdr->netid = MRFNET; 
+ hdr->msgid = _txmsgid++;
+
  hdr->type = type;
  hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
  _mrf_buff_state(bnum)->state = LOADED; //
@@ -559,6 +564,7 @@ int _tick_count;
 
 void mrf_sys_init(){
   _tick_count = 0;
+  _txmsgid = 0;
   queue_init(&_app_queue);
 }
 
