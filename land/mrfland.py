@@ -23,7 +23,7 @@ import signal
 import logging
 import socket
 import linuxfd
-import mrf_land_state
+from mrf_land_state import MrfLandState
 
 from mrf_structs import *
 
@@ -67,7 +67,7 @@ def buffToObj(resp,app_cmds = {}):
     """
     
     hdr = PktHeader()
-    print "buffToObj len is %d"%len(resp)
+    #print "buffToObj len is %d"%len(resp)
     if len(resp) >= len(hdr):
         hdr_data = bytes(resp)[0:len(hdr)]
         hdr.load(bytes(resp)[0:len(hdr)])
@@ -84,17 +84,17 @@ def buffToObj(resp,app_cmds = {}):
                     respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                     respobj.load(respdat)
                     #print "repr %s"%repr(respobj)
-                    return respobj
+                    return hdr, respobj
                 elif param.type in app_cmds.keys() and app_cmds[param.type]['resp']:
                     respobj = app_cmds[param.type]['resp']()
                     respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                     respobj.load(respdat)
-                    return respobj
+                    return hdr, respobj
                 else:
                     print "got param type %d "%param.type
             else:
                 print "got hdr.type %d"%hdr.type
-    return None
+    return None,None
 
 
 class mrfland(object):
@@ -119,14 +119,14 @@ class mrfland(object):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
-            
+        self.hostaddr = 1
         self.start_logging()
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         #signal.signal(signal.SIGALRM, itimer_handler)
         #signal.setitimer(signal.ITIMER_REAL,2,2)   # keep overseer process running every 2 seconds
 
-            
+        self.state = MrfLandState(self)
         self.stub_out_resp_path = stub_out_resp_path
         self.stub_out_str_path = stub_out_str_path
 
@@ -208,12 +208,13 @@ class mrfland(object):
                            fd, flag_list)
  
         if fd == self.rfd:
-            self.log.info("Input on response pipe (%d)"%event_type)
+            self.log.debug("Input on response pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
                 resp = os.read(self.rfd, MRFBUFFLEN)
                 self.log.debug("have response len %d"%len(resp))
-                rstr = buffToObj(resp)
-                self.log.info("received object on response pipe %s\n%s"%(type(rstr),repr(rstr)))
+                hdr, rstr = buffToObj(resp)
+                self.log.info("received object %s response from  %d : %s"%(type(rstr),hdr.usrc,repr(rstr)))
+                self.state.fyi(hdr,rstr)
                 #self.log.info(repr(rstr))
                 #self.log.info("end obj")
                 #sys.stdout.write(repr(rstr))
@@ -288,7 +289,7 @@ class mrfland(object):
         self.poll()
 
     def cmd(self,dest,cmd_code,dstruct=None):
-        self.log.info("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
+        self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
         if dest > 255:
             print "dest > 255"
             return -1
@@ -350,7 +351,7 @@ class mrfland(object):
     def overseer(self):
         """ overseer process checks things over on regular timerfd """
         self.log.debug("overseer entry")
-        self.cmd(1,mrf_cmd_device_status)
+        self.state.task()
 
 if __name__ == "__main__":
     ml =  mrfland()
