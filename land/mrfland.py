@@ -22,6 +22,7 @@ import select
 import signal
 import logging
 import socket
+import Queue
 import linuxfd
 from mrf_land_state import MrfLandState
 
@@ -121,6 +122,8 @@ class mrfland(object):
             sys.exit(0)
         self.hostaddr = 1
         self.start_logging()
+        self.q = Queue.Queue()
+
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         #signal.signal(signal.SIGALRM, itimer_handler)
@@ -160,7 +163,7 @@ class mrfland(object):
             while True:
                 self.poll()
         finally:
-            self.log.warn("about to quite... exception")
+            self.log.warn("about to quit... exception")
             self.ep.unregister(self.ss.fileno())
             self.ep.unregister(self.tfd.fileno())
             self.ep.unregister(self.rfd)
@@ -262,7 +265,8 @@ class mrfland(object):
                     del (self.conns[fd])
                     self.log.info("%d connections"%len(self.conns))
                 else:
-                    sys.stdout.write(b)
+                    sys.stdout.write(b)                    
+                    c.send("got it , thanks\n")
  
     def network_down(self):        
         self.log.warn("network_down entry")
@@ -288,7 +292,10 @@ class mrfland(object):
         self.cmd(dest,cmd_code,dstruct)
         self.poll()
 
+        
     def cmd(self,dest,cmd_code,dstruct=None):
+        self.run_cmd(dest,cmd_code,dstruct)
+    def run_cmd(self,dest,cmd_code,dstruct=None):
         self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
         if dest > 255:
             print "dest > 255"
