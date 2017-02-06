@@ -123,7 +123,9 @@ class mrfland(object):
         self.hostaddr = 1
         self.start_logging()
         self.q = Queue.Queue()
-
+        self.active_cmd = None
+        self.active_timer = 0
+        self._comm_active = False  # flag indication bus communications active
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         #signal.signal(signal.SIGALRM, itimer_handler)
@@ -217,7 +219,7 @@ class mrfland(object):
                 self.log.debug("have response len %d"%len(resp))
                 hdr, rstr = buffToObj(resp)
                 self.log.info("received object %s response from  %d : %s"%(type(rstr),hdr.usrc,repr(rstr)))
-                self.state.fyi(hdr,rstr)
+                self.handle_response(hdr,rstr)
                 #self.log.info(repr(rstr))
                 #self.log.info("end obj")
                 #sys.stdout.write(repr(rstr))
@@ -291,11 +293,42 @@ class mrfland(object):
     def init_cmd(self,dest,cmd_code,dstruct=None):
         self.cmd(dest,cmd_code,dstruct)
         self.poll()
-
         
-    def cmd(self,dest,cmd_code,dstruct=None):
-        self.run_cmd(dest,cmd_code,dstruct)
-    def run_cmd(self,dest,cmd_code,dstruct=None):
+    def _activate(self):  # ramp up tick while responses or txqueue outstanding
+        if not self._comm_active:
+            #self.log.warn("activating!")
+            self.active_timer = 0
+            self._comm_active = True
+            self.tfd.settime(value=0.001, interval = 0.01)
+
+    def _deactivate(self):  # relax tick while all quiet
+        self._comm_active = False
+        self.tfd.settime(value=2, interval = 2)
+        #self.log.warn("deactivating .. timer was %d",self.active_timer)
+            
+    def handle_response(self,hdr,rstr):
+        self.state.fyi(hdr,rstr)  # state sees everything
+        """ check response is for active_cmd"""
+        if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
+            self.active_cmd = None
+
+    def cmd(self, dest,cmd_code,dstruct=None):  # only for this code to call
+        self.queue_cmd(0 , dest,cmd_code,dstruct)   # tag is zero for this process -  responses are never forwarded
+
+    def _next_cmd(self,cmdarr):
+        (tag, dest,cmd_code,dstruct) = cmdarr
+        self.resp_timer = 0
+        self.active_cmd = cmdarr            
+        self._run_cmd(dest,cmd_code,dstruct)
+        
+    def queue_cmd(self,tag, dest,cmd_code,dstruct=None):
+        if self.active_cmd:            
+            self.q.put((tag, dest,cmd_code,dstruct))
+        else:
+            self._next_cmd((tag, dest,cmd_code,dstruct))
+            self._activate()
+            
+    def _run_cmd(self,dest,cmd_code,dstruct = None):
         self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
         if dest > 255:
             print "dest > 255"
@@ -355,9 +388,27 @@ class mrfland(object):
         self.app_fifo.write(msg)
         self.app_fifo.flush()
         return 0
+    def send_ndr(self):
+        return
     def overseer(self):
         """ overseer process checks things over on regular timerfd """
-        self.log.debug("overseer entry")
+        #self.log.debug("overseer entry")
+        if self._comm_active:
+            self.active_timer += 1
+            if self.active_cmd:
+                self.resp_timer += 1
+                if self.resp_timer > 2:  # give up
+                    self.log.warn("timed out waiting for response for %s"%(repr(self.active_cmd)))
+                    if self.active_cmd[0] :  # send ndr if response destined to socket
+                        self.send_ndr()
+                    self.active_cmd = None
+            if not self.active_cmd:
+                if self.q.empty():  # deactivate
+                    self._deactivate()
+                else:
+                    self._next_cmd(self.q.get())
+                    
+                    
         self.state.task()
 
 if __name__ == "__main__":
