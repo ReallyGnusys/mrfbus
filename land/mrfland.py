@@ -23,8 +23,10 @@ import signal
 import logging
 import socket
 import Queue
+import json
+import traceback
 import linuxfd
-from mrf_land_state import MrfLandState
+from mrfland_state import MrflandState
 
 from mrf_structs import *
 
@@ -98,7 +100,7 @@ def buffToObj(resp,app_cmds = {}):
     return None,None
 
 
-class mrfland(object):
+class Mrfland(object):
     """
         MRF LAN Daemon
     """
@@ -114,14 +116,21 @@ class mrfland(object):
         ch.setFormatter(formatter)
         self.log.addHandler(ch)
         self.log.info("log started")
-        
-    def __init__ (self, portnum=7777,stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str'):
+
+    def __init__ (self, portnum=7777,stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
         self.hostaddr = 1
         self.start_logging()
+        self.log.info("apps are %s"%repr(apps))
+        papps = {}
+        for appn in apps.keys():
+            papps[appn] = apps[appn]()
+            papps[appn].setlog(self.log)
+        self.apps = papps
+        self.log.info("apps are %s"%repr(self.apps))
         self.q = Queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
@@ -131,7 +140,7 @@ class mrfland(object):
         #signal.signal(signal.SIGALRM, itimer_handler)
         #signal.setitimer(signal.ITIMER_REAL,2,2)   # keep overseer process running every 2 seconds
 
-        self.state = MrfLandState(self)
+        self.state = MrflandState(self)
         self.stub_out_resp_path = stub_out_resp_path
         self.stub_out_str_path = stub_out_str_path
 
@@ -267,8 +276,23 @@ class mrfland(object):
                     del (self.conns[fd])
                     self.log.info("%d connections"%len(self.conns))
                 else:
+                    self.log.info("trying to decode *%s*  len %d"%(b,len(b)))
+                    b = b.rstrip()
+                    self.log.info("trying to decode *%s*  len %d type %s"%(b,len(b),type(b)))
+                    try:
+                        jcmd = json.loads(b)
+                        self.log.info("got json cmd %s"%repr(jcmd))
+                        c.send("got it , thanks\n")
+                    except:
+                        
+                        self.log.info("unintelligible input *%s*"%b)
+                        print "Exception processing input:"
+                        print '-'*60
+                        traceback.print_exc(file=sys.stdout)
+                        print '-'*60
+                        c.send("no idea what you're on about\n")
+                        
                     sys.stdout.write(b)                    
-                    c.send("got it , thanks\n")
  
     def network_down(self):        
         self.log.warn("network_down entry")
@@ -412,5 +436,5 @@ class mrfland(object):
         self.state.task()
 
 if __name__ == "__main__":
-    ml =  mrfland()
+    ml =  Mrfland()
 

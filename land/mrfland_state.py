@@ -66,7 +66,7 @@ class DevState(object):
         self.last_msg = pkt
         self.last_msg_time = datetime.now()
 
-class MrfLandState(object):
+class MrflandState(object):
     def __init__(self,mld):
         self.log = mld.log
         self.mld = mld
