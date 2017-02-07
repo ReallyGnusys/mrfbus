@@ -130,13 +130,12 @@ int mrf_app_init(){
 
   // need to open input application pipe
 
-  sprintf(sname,"%s%d-app-in",SOCKET_DIR,_mrfid);
-  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
-  appfd = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe %s fd = %d\n\n",sname,appfd);
-  mrf_arch_app_callback(appfd,_appl_fifo_callback);
 
+#if 1  // no , sadly we will achieve deadlock by trying to open this at start, as
+       // the other end ( mrfland ) is trying to do the same thing in the other
+       // direction. Please FIXME, get rid of named pipes for comms, and use sockets in preference.
+       // in meantime we're opening each time time for writing ... see below
+  
   // open output application response pipe
 
   sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
@@ -152,33 +151,43 @@ int mrf_app_init(){
   _outfds = open(sname,O_WRONLY);
   printf("opened out pipe %s fd = %d\n",sname,_outfds);
   printf("\nmrf_app_init exit\n\n");
-  
+ #endif
 
+  sprintf(sname,"%s%d-app-in",SOCKET_DIR,_mrfid);
+  tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d\n",sname,tmp);
+  appfd = open(sname,O_RDONLY | O_NONBLOCK);
+  printf("opened pipe %s fd = %d\n\n",sname,appfd);
+  mrf_arch_app_callback(appfd,_appl_fifo_callback);
+
+  
 }
 int structure_to_app(uint8 bnum){
   // just squirt the raw buffer to python app via fifo
   char sname[64];
-  int outfd;
   uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
   uint8 len = buff[0];
-  sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
-  outfd = open(sname, O_WRONLY | O_NONBLOCK);
+  printf("structure to app : bnum %d using opened app data pipe fd = %d\n", bnum, _outfds);
 
-  printf("response_to_app : bnum %d opened out pipe %s fd = %d\n", bnum, sname, outfd);
-  if (outfd == -1 ){
-    mrf_debug("failed to open fd = %d\n",outfd);
+
+  if(len > _MRF_BUFFLEN){
+    mrf_debug("error - length is bonkers %u\n",len);
     return -1;
   }
- if(len > _MRF_BUFFLEN){
-   mrf_debug("error - length is bonkers %u\n",len);
-   return -1;
- }
- int bc = write(outfd, buff,len );
+#if 0
+  // FIXME - should prefer sockets
+ // open output application struct pipe  - we need a link partner... hmpff maybe
+  sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
+  int tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d\n",sname,tmp);
+  _outfds = open(sname,O_WRONLY | O_NONBLOCK);
+  printf("opened out pipe %s fd = %d\n",sname,_outfds);
+#endif
+  int bc = write(_outfds, buff,len );
 
-
+  // close(_outfds);
  mrf_debug("wrote %d bytes to outpipe %s\n",bc,sname);
  _mrf_print_hex_buff(buff,len);
- close(outfd);
  return 0;
 }
 
@@ -186,28 +195,28 @@ int structure_to_app(uint8 bnum){
 int response_to_app(uint8 bnum){
   // just squirt the raw buffer to python app via fifo
   char sname[64];
-  int outfd;
   uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
   uint8 len = buff[0];
-  sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
-  outfd = open(sname, O_WRONLY | O_NONBLOCK);
 
-  printf("response_to_app : bnum %d opened out pipe %s fd = %d\n", bnum, sname, outfd);
-  if (outfd == -1 ){
-    mrf_debug("failed to open fd = %d\n",outfd);
+  if(len > _MRF_BUFFLEN){
+    mrf_debug("error - length is bonkers %u\n",len);
     return -1;
   }
- if(len > _MRF_BUFFLEN){
-   mrf_debug("error - length is bonkers %u\n",len);
-   return -1;
- }
- int bc = write(outfd, buff,len );
+#if 0
+  // FIXME - we shouldn't be doing this - move to socket connection for stub
+  sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
+  int tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
+  printf("created pipe %s res %d\n",sname,tmp);
+  _outfd = open(sname,O_WRONLY | O_NONBLOCK);
+  printf("opened out pipe %s fd = %d\n",sname,_outfd);
+#endif
+  int bc = write(_outfd, buff,len );
 
 
- mrf_debug("wrote %d bytes to outpipe %s\n",bc,sname);
- _mrf_print_hex_buff(buff,len);
- close(outfd);
- return 0;
+  mrf_debug("response to app :wrote %d bytes to outpipe %s from buff %d\n",bc,sname,bnum);
+  _mrf_print_hex_buff(buff,len);
+  //  close(_outfd);
+  return 0;
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){

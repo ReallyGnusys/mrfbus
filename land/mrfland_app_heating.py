@@ -35,7 +35,8 @@ class MrflandAppHeating(MrflandApp):
         print "cmd nancy here, data was %s"%repr(data)
     
 
-    def fyi(self,hdr,resp):
+    def fyi(self,hdr,rsp, robj, rdata):
+        print "heating app got hdr %s"%repr(hdr)
         if hdr.usrc in self.pt1000 :
             print "heating app fyi  says yes"
             

@@ -43,7 +43,7 @@ class DevState(object):
         if type(self.app_info) != type(PktAppInfo()) :
             return mrf_cmd_app_info
         if type(self.device_status) != type(PktDeviceStatus()) :
-            return mrf_cmd_dev_status
+            return mrf_cmd_device_status
         return None
 
     def fyi(self, hdr, pkt):
@@ -93,11 +93,23 @@ class MrflandState(object):
         self.task_count += 1
         if cr:
             self.mld.cmd(self.mld.hostaddr,cr)
-        else:
-            if self.task_count % self.idle_mark == 0:
-                self.mld.cmd(self.mld.hostaddr,mrf_cmd_get_time)
+            return
 
-    def fyi(self, hdr, pkt):
+        for da in self.devices.keys():
+            cr = self.devices[da].command_request()
+            if cr:
+                self.mld.cmd(da,cr)
+                return
+        
+        if self.task_count % self.idle_mark == 0:
+            self.mld.cmd(self.mld.hostaddr,mrf_cmd_get_time)
+
+    def fyi(self, hdr, rsp, robj):
         if hdr.usrc == self.mld.hostaddr:            
-            self.host.fyi(hdr,pkt)
+            self.host.fyi(hdr,robj)
+        elif hdr.usrc in self.devices.keys():
+            self.devices[hdr.usrc].fyi(hdr,robj)
+        else:
+            print "mrfland state added device %d"%hdr.usrc
+            self.devices[hdr.usrc] = DevState(hdr.usrc)
         

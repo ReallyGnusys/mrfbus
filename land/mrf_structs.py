@@ -196,6 +196,7 @@ MRF_NUM_SYS_CMDS = 16
 
 
 ## some app commands for the time being here.. ideally would be auto discovered codes
+MRF_APP_CMD_BASE = 128  # from mrf_sys.h
 
 mrf_cmd_spi_read = 129
 
@@ -262,4 +263,14 @@ MrfSysCmds = {
 
 
 
+## common funcs
+
+def mrf_decode_buff(rtype,rbytes):
+    if rtype in MrfSysCmds.keys() and MrfSysCmds[rtype]['resp']:
+        respobj = MrfSysCmds[rtype]['resp']()
+        print "mrf_decode_buff got type  %s"%type(respobj)
+        #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
+        respobj.load(rbytes)
+        return respobj
+    return None
 

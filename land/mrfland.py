@@ -70,26 +70,28 @@ def buffToObj(resp,app_cmds = {}):
     """
     
     hdr = PktHeader()
-    #print "buffToObj len is %d"%len(resp)
+    print "buffToObj len is %d"%len(resp)
     if len(resp) >= len(hdr):
         hdr_data = bytes(resp)[0:len(hdr)]
         hdr.load(bytes(resp)[0:len(hdr)])
-        #print "hdr is:\n%s\n"%repr(hdr)
+        print "hdr is:\n%s\n"%repr(hdr)
         if hdr.type in MrfSysCmds.keys():
             if hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
                 param = MrfSysCmds[hdr.type]['param']()
+                print "have param type %s"%type(param)
                 param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
                 param.load(param_data)
-                #print "resp should be %s"%repr(param)
+                print "resp should be %s"%repr(param)
                 if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
                     respobj = MrfSysCmds[param.type]['resp']()
-                    #print "respopb is %s"%type(respobj)
+                    print "sys respopb is %s"%type(respobj)
                     respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                     respobj.load(respdat)
                     #print "repr %s"%repr(respobj)
                     return hdr, respobj
-                elif param.type in app_cmds.keys() and app_cmds[param.type]['resp']:
-                    respobj = app_cmds[param.type]['resp']()
+                elif (param.type - MRF_APP_CMD_BASE) in app_cmds.keys():
+                    respobj = app_cmds[param.type]['param']()
+                    print "app respopb is %s"%type(respobj)
                     respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
                     respobj.load(respdat)
                     return hdr, respobj
@@ -98,6 +100,7 @@ def buffToObj(resp,app_cmds = {}):
             else:
                 print "got hdr.type %d"%hdr.type
     return None,None
+
 
 
 class Mrfland(object):
@@ -117,12 +120,13 @@ class Mrfland(object):
         self.log.addHandler(ch)
         self.log.info("log started")
 
-    def __init__ (self, portnum=7777,stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}):
+    def __init__ (self, portnum=7777,stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}, netid = 0x25):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
         self.hostaddr = 1
+        self.netid = netid
         self.start_logging()
         self.log.info("apps are %s"%repr(apps))
         papps = {}
@@ -164,7 +168,8 @@ class Mrfland(object):
 
         self.start_network()
 
-        
+        #import pdb
+        #pdb.set_trace()
 
         # probe for host device to test initial network state
         self.init_cmds()   # run any initial commands
@@ -187,26 +192,73 @@ class Mrfland(object):
         if self.rfd == -1:
             self._error_exit("could not open response fifo %s"%self.stub_out_resp_path)
         else:
-            self.ep.register(self.rfd)
+            self.log.info("opened response fifo %d"%self.rfd)
+            self.ep.register(self.rfd, select.EPOLLIN)
 
         self.sfd =  os.open(self.stub_out_str_path, os.O_RDONLY | os.O_NONBLOCK)
         if self.sfd == -1:
             self._error_exit("could not open structure fifo %s"%self.stub_out_str_path)
         else:
-            self.ep.register(self.sfd)
+            self.log.info("opened data fifo %d"%self.sfd)
+            self.ep.register(self.sfd, select.EPOLLIN)
 
 
         self.log.info( "opened pipes, trying to open pipe to stub")
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
-        self.log.info( "app_fifo opened")
+        self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
         
             
     def init_cmds(self):
+        return 
         self.init_cmd(1,mrf_cmd_device_info)
         self.init_cmd(1,mrf_cmd_device_status)
         self.init_cmd(1,mrf_cmd_app_info)
         self.init_cmd(1,mrf_cmd_get_time)
 
+    def parse_input(self,resp):
+        """
+        check for valid looking header and types
+        if found returns
+           hdrpacket  , resppacket,  databuff
+        else returns
+           None
+        """
+    
+        print "parse_input len is %d"%len(resp)
+        hdr = PktHeader()
+
+        if len(resp) < len(hdr):  # no way valid
+            return None,None,None
+
+
+        hdr.load(bytes(resp)[0:len(hdr)])
+        print "hdr is:\n%s\n"%repr(hdr)
+
+        if hdr.netid != self.netid: # only looking for packets from this netid
+            self.log.info("not our netid")
+            return None,None,None
+        
+        if hdr.udest != 0: # only looking for packets destined for us
+            self.log.info("not our us")
+            return None,None,None
+
+        
+        if not (hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
+            self.log.info("not resp or struct")
+            return None,None,None
+
+        
+        param = MrfSysCmds[hdr.type]['param']()
+        print "have param type %s"%type(param)
+        param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
+        param.load(param_data)
+        print "resp should be %s"%repr(param)
+        respdat = bytes(resp)[len(hdr)+len(param):]
+        
+        return hdr , param , respdat
+
+
+        
     def poll(self):
         events = self.ep.poll(_EPOLL_BLOCK_DURATION_S)
         for fd, event_type in events:
@@ -215,38 +267,54 @@ class Mrfland(object):
     def _handle_event(self, fd, event_type):
         # Common, but we're not interested.
         flag_list = _get_flag_names(event_type)
-        self.log.debug("got event on fd %d : %s", fd, flag_list)
+        #self.log.info("got event on fd %d : %s", fd, flag_list)
         
-        if (event_type & select.EPOLLOUT) == 0:
-            self.log.debug("Received (%d): %s", 
-                           fd, flag_list)
+        #if (event_type & select.EPOLLOUT) == 0:
+        self.log.info("Received (%d): %s", 
+                       fd, flag_list)
  
         if fd == self.rfd:
             self.log.debug("Input on response pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
                 resp = os.read(self.rfd, MRFBUFFLEN)
-                self.log.debug("have response len %d"%len(resp))
-                hdr, rstr = buffToObj(resp)
-                self.log.info("received object %s response from  %d : %s"%(type(rstr),hdr.usrc,repr(rstr)))
-                self.handle_response(hdr,rstr)
+                #self.log.debug("have response len %d"%len(resp))
+
+                hdr , rsp, rdata = self.parse_input(resp)
+
+                if hdr:                    
+                    self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
+                    self.handle_response(hdr, rsp , rdata)
                 #self.log.info(repr(rstr))
                 #self.log.info("end obj")
                 #sys.stdout.write(repr(rstr))
+            elif event_type & select.POLLHUP:
+                self.log.info("response connection has hung up")
+                self.network_down()
+        
+            """
             elif event_type & select.EPOLLHUP:
                 self.log.info("response connection has hung up")
                 self.network_down()
-
+            """
                 
         elif fd == self.sfd:
-            self.log.info("Input on data pipe (%d)"%event_type)
+            self.log.info("11a Input on data pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
-                resp = os.read(self.rfd, MRFBUFFLEN)
-                #b = fd.recv(1024)
-                sys.stdout.write(repr(resp))
-            elif event_type & select.EPOLLHUP:
+                resp = os.read(self.sfd, MRFBUFFLEN)
+                hdr , rsp, rdata = self.parse_input(resp)
+                if hdr:                    
+                    self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
+                    self.handle_response(hdr, rsp , rdata)
+                    
+            elif event_type & select.POLLHUP:
                 self.log.info("data connection has hung up")
                 self.network_down()
 
+            """
+            elif event_type & select.EPOLLHUP:
+                self.log.info("data connection has hung up")
+                self.network_down()
+            """
         elif fd == self.tfd.fileno():
             self.log.debug("timerfd: (%d)", event_type)
             self.tfd.read()
@@ -283,6 +351,7 @@ class Mrfland(object):
                         jcmd = json.loads(b)
                         self.log.info("got json cmd %s"%repr(jcmd))
                         c.send("got it , thanks\n")
+                        self.client_input(fd,jcmd)
                     except:
                         
                         self.log.info("unintelligible input *%s*"%b)
@@ -291,11 +360,13 @@ class Mrfland(object):
                         traceback.print_exc(file=sys.stdout)
                         print '-'*60
                         c.send("no idea what you're on about\n")
-                        
-                    sys.stdout.write(b)                    
- 
+                    #sys.stdout.write(b)                    
+
+    def client_input(self,fd,cmd):
+        self.log.info("client input fd %d cmd %s"%(fd,repr(cmd)))
     def network_down(self):        
         self.log.warn("network_down entry")
+        return
         self.ep.unregister(self.rfd)
         self.ep.unregister(self.sfd)
         os.close(self.rfd)
@@ -323,15 +394,21 @@ class Mrfland(object):
             #self.log.warn("activating!")
             self.active_timer = 0
             self._comm_active = True
-            self.tfd.settime(value=0.001, interval = 0.01)
+            self.tfd.settime(value=0.001, interval = 0.5)
 
     def _deactivate(self):  # relax tick while all quiet
         self._comm_active = False
         self.tfd.settime(value=2, interval = 2)
         #self.log.warn("deactivating .. timer was %d",self.active_timer)
             
-    def handle_response(self,hdr,rstr):
-        self.state.fyi(hdr,rstr)  # state sees everything
+    def handle_response(self,hdr,rsp, rdata):
+        # test if sys command response or data
+        sysobj = mrf_decode_buff(rsp.type,rdata)
+
+        if sysobj:            
+            self.state.fyi(hdr,rsp, sysobj)  # state sees everything
+        for appn in self.apps.keys(): # apps see everything
+            self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
         """ check response is for active_cmd"""
         if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
             self.active_cmd = None
@@ -362,12 +439,6 @@ class Mrfland(object):
         if cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cmd_code]['param']
 
-        elif cmd_code in self.app_cmds.keys():
-            paramtype = self.app_cmds[cmd_code]['param']
-            #print "got app command - cmd_code %d  paramtype %s :\n   %s"%(cmd_code,
-            #                                                              repr(paramtype),
-            #                                                              repr(dstruct),
-            #)
         else:
             print "unrecognised cmd_code (01xs) %d"%cmd_code
             return -1
