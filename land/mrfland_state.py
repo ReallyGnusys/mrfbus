@@ -35,6 +35,16 @@ class DevState(object):
         self.last_hdr = None
         self.last_msg = None
         self.last_msg_time = None
+    def __repr__(self):
+        if self.device_info and self.sys_info and self.app_info:
+            s = "%s addr %d:%d device %s app %s version %s"%\
+                (self.__class__.__name__,
+                 self.device_info.netid,self.device_info.mrfid,
+                 self.device_info.attstr("dev_name"),self.app_info.attstr("name"),
+                 self.sys_info.attstr("mrfbus_version"))
+            return s
+                 
+                 
     def command_request(self):
         if type(self.device_info) != type(PktDeviceInfo()) :
             return mrf_cmd_device_info
@@ -52,9 +62,9 @@ class DevState(object):
             return
         #print "dev %d fyi %s  cf  %s"%(hdr.usrc,type(pkt),type(PktDeviceInfo()))
         if type(pkt) == type(PktDeviceInfo()) :
-            print "initial type self.device_info %s"%(type(self.device_info))
+            #print "initial type self.device_info %s"%(type(self.device_info))
             self.device_info = pkt
-            print "final type self.device_info %s"%(type(self.device_info))
+            #print "final type self.device_info %s"%(type(self.device_info))
         elif type(pkt) == type(PktSysInfo()) :
             self.sys_info = pkt
         if type(pkt) == type(PktAppInfo()) :
@@ -77,6 +87,19 @@ class MrflandState(object):
         self.network_last_up = None
         self.network_last_down = None
         self.task_count = 0
+
+    def __repr__(self):
+        if self.network_accessible:
+            s = "%s : network is up"%self.__class__.__name__
+        else:
+            s = "%s : network is up"%self.__class__.__name__
+        s += "\n----host------"
+        s += "\n %s"%repr(self.host)
+        s += "\n----devices %d------"%len(self.devices)
+        for d in self.devices.keys():
+            s += "\n----device addr %d------"%d
+            s += "\n %s"%repr(self.devices[d])
+        return s+"\n"
     def network_is_accessible(self):
         return network_accessible
 
@@ -93,23 +116,28 @@ class MrflandState(object):
         self.task_count += 1
         if cr:
             self.mld.cmd(self.mld.hostaddr,cr)
+            self.log.info("state task - chose host task %s"%repr(cr))
             return
 
         for da in self.devices.keys():
+            self.log.debug("checking command_request for %d"%da)
             cr = self.devices[da].command_request()
             if cr:
+                self.log.info("state task - chose device %d task %s"%(da,repr(cr)))
                 self.mld.cmd(da,cr)
                 return
         
         if self.task_count % self.idle_mark == 0:
             self.mld.cmd(self.mld.hostaddr,mrf_cmd_get_time)
+            self.log.info(repr(self))
 
     def fyi(self, hdr, rsp, robj):
         if hdr.usrc == self.mld.hostaddr:            
             self.host.fyi(hdr,robj)
         elif hdr.usrc in self.devices.keys():
+            self.log.debug("state fyi : got something from dev %d %s"%(hdr.usrc,repr(robj)))
             self.devices[hdr.usrc].fyi(hdr,robj)
         else:
-            print "mrfland state added device %d"%hdr.usrc
+            self.log.info( "mrfland state added device %d"%hdr.usrc)
             self.devices[hdr.usrc] = DevState(hdr.usrc)
         

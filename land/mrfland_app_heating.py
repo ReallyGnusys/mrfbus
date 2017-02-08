@@ -86,8 +86,8 @@ class Pt1000State(object):
             self.temps[ch].new_reading(state.milliohms[ch])
 
         self.last_reading = now
-        self.log.info("Pt1000State updated - now")
-        self.log.info(repr(self))
+        self.log.debug("Pt1000State updated - now")
+        self.log.debug(repr(self))
         return 0
     
 class MrflandAppHeating(MrflandApp):

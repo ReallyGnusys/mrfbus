@@ -405,8 +405,8 @@ class Mrfland(object):
         # test if sys command response or data
         sysobj = mrf_decode_buff(rsp.type,rdata)
 
-        if sysobj:            
-            self.state.fyi(hdr,rsp, sysobj)  # state sees everything
+        #if sysobj:            
+        self.state.fyi(hdr,rsp, sysobj)  # state sees everything
         for appn in self.apps.keys(): # apps see everything
             self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
         """ check response is for active_cmd"""

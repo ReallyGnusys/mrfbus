@@ -7,9 +7,13 @@ class MrfStruct(LittleEndianStructure):
     def __len__(self):
         return sizeof(self)
 
-    def attstr(self,att):
+    def attstr(self,attname):
+        att = getattr(self,attname)
+        
         #return "%s"%repr(att)
-        if str(type(att)).find('c_ubyte_Array') > -1:  #FIXME! 
+        if type(att) == type(""):
+            return att
+        if str(type(att)).find('c_ubyte_Array') > -1 :  #FIXME! 
             atts = ""
             for i in att:
                 if i != 0:
@@ -23,23 +27,25 @@ class MrfStruct(LittleEndianStructure):
                 
         elif str(type(att)).find('PktTimeDate') > -1:  #FIXME!
             atts  = "%s"%repr(att)
+            
         else:
+            #print "att is "+str(type(att))
             atts = "%d"%int(att)
         return atts
     def __repr__(self):
         s = ''
         for field in self._fields_:
-            att = getattr(self,field[0])
+            #att = getattr(self,field[0])
 
-            atts = self.attstr(att)
+            atts = self.attstr(field[0])
             s += "%s %s\n"%(field[0],atts)
         return s
     def __eq__(self,other):
         for field in self._fields_:
-            att = getattr(self,field[0])
-            oatt = getattr(other,field[0])
-            atts = self.attstr(att)
-            oatts = self.attstr(oatt)
+            #att = getattr(self,field[0])
+            #oatt = getattr(other,field[0])
+            atts = self.attstr(field[0])
+            oatts = other.attstr(field[0])
             if atts != oatts:
                 print "cmp attname %s failed us %s other %s"%(field[0],atts,oatts)
                 return False
