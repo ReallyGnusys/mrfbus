@@ -31,8 +31,8 @@ class MrflandApp(object):
     def cmd(self,cmd, data=None):
         fn = 'cmd_'+cmd
         if hasattr(self, fn):
-            print "OK you can go"
+            self.log.info( "OK you can go")
             return getattr(self,fn)(data)
         else:
-            print "you're not coming in here"
+            self.log.info("you're not coming in here")
 

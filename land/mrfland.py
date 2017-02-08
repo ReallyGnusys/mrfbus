@@ -131,8 +131,8 @@ class Mrfland(object):
         self.log.info("apps are %s"%repr(apps))
         papps = {}
         for appn in apps.keys():
-            papps[appn] = apps[appn]()
-            papps[appn].setlog(self.log)
+            papps[appn] = apps[appn](log=self.log)
+            #papps[appn].setlog(self.log)
         self.apps = papps
         self.log.info("apps are %s"%repr(self.apps))
         self.q = Queue.Queue()
@@ -224,7 +224,7 @@ class Mrfland(object):
            None
         """
     
-        print "parse_input len is %d"%len(resp)
+        #print "parse_input len is %d"%len(resp)
         hdr = PktHeader()
 
         if len(resp) < len(hdr):  # no way valid
@@ -232,7 +232,7 @@ class Mrfland(object):
 
 
         hdr.load(bytes(resp)[0:len(hdr)])
-        print "hdr is:\n%s\n"%repr(hdr)
+        #print "hdr is:\n%s\n"%repr(hdr)
 
         if hdr.netid != self.netid: # only looking for packets from this netid
             self.log.info("not our netid")
@@ -249,10 +249,10 @@ class Mrfland(object):
 
         
         param = MrfSysCmds[hdr.type]['param']()
-        print "have param type %s"%type(param)
+        #print "have param type %s"%type(param)
         param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
         param.load(param_data)
-        print "resp should be %s"%repr(param)
+        #print "resp should be %s"%repr(param)
         respdat = bytes(resp)[len(hdr)+len(param):]
         
         return hdr , param , respdat
@@ -270,7 +270,7 @@ class Mrfland(object):
         #self.log.info("got event on fd %d : %s", fd, flag_list)
         
         #if (event_type & select.EPOLLOUT) == 0:
-        self.log.info("Received (%d): %s", 
+        self.log.debug("Received (%d): %s", 
                        fd, flag_list)
  
         if fd == self.rfd:
@@ -282,7 +282,7 @@ class Mrfland(object):
                 hdr , rsp, rdata = self.parse_input(resp)
 
                 if hdr:                    
-                    self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
+                    self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
                     self.handle_response(hdr, rsp , rdata)
                 #self.log.info(repr(rstr))
                 #self.log.info("end obj")
@@ -298,12 +298,12 @@ class Mrfland(object):
             """
                 
         elif fd == self.sfd:
-            self.log.info("11a Input on data pipe (%d)"%event_type)
+            self.log.debug("11a Input on data pipe (%d)"%event_type)
             if event_type & select.EPOLLIN:
                 resp = os.read(self.sfd, MRFBUFFLEN)
                 hdr , rsp, rdata = self.parse_input(resp)
                 if hdr:                    
-                    self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
+                    self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
                     self.handle_response(hdr, rsp , rdata)
                     
             elif event_type & select.POLLHUP:
