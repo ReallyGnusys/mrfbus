@@ -53,6 +53,8 @@ class Pt1000TempSensor(object):
     def new_reading(self,milliohms):
         self.milliohms = milliohms
         self.temperature = self.res_to_temp(self.milliohms)
+
+        
 class Pt1000State(object):
     def __init__(self,address,log):
         self.address = address
@@ -64,7 +66,7 @@ class Pt1000State(object):
 
             
     def __repr__(self):
-        s = "%s address %d last reading %s\n"%(self.__class__.__name__,self.address,repr(self.last_reading))
+        s = "%s address %d last reading %s\n"%(self.__class__.__name__,self.address,str(self.last_reading))
         for chan in xrange(Pt1000MaxChanns):
             s += " %d) %s\n"%(chan,repr(self.temps[chan]))
         return s
@@ -86,8 +88,8 @@ class Pt1000State(object):
             self.temps[ch].new_reading(state.milliohms[ch])
 
         self.last_reading = now
-        self.log.debug("Pt1000State updated - now")
-        self.log.debug(repr(self))
+        self.log.info("Pt1000State updated - now")
+        self.log.info(repr(self))
         return 0
     
 class MrflandAppHeating(MrflandApp):

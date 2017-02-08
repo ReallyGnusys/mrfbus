@@ -138,7 +138,6 @@ class Mrfland(object):
         self.q = Queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
-        self._comm_active = False  # flag indication bus communications active
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         #signal.signal(signal.SIGALRM, itimer_handler)
@@ -390,14 +389,14 @@ class Mrfland(object):
         self.poll()
         
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
-        if not self._comm_active:
+        if not self.state._comm_active:
             #self.log.warn("activating!")
             self.active_timer = 0
-            self._comm_active = True
-            self.tfd.settime(value=0.001, interval = 0.5)
+            self.state._comm_active = True
+            self.tfd.settime(value=0.001, interval = 0.01)
 
     def _deactivate(self):  # relax tick while all quiet
-        self._comm_active = False
+        self.state._comm_active = False
         self.tfd.settime(value=2, interval = 2)
         #self.log.warn("deactivating .. timer was %d",self.active_timer)
             
@@ -488,7 +487,7 @@ class Mrfland(object):
     def overseer(self):
         """ overseer process checks things over on regular timerfd """
         #self.log.debug("overseer entry")
-        if self._comm_active:
+        if self.state._comm_active:
             self.active_timer += 1
             if self.active_cmd:
                 self.resp_timer += 1

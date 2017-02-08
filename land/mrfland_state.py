@@ -60,7 +60,7 @@ class DevState(object):
         if hdr.usrc != self.addr:
             print "not for us!! we are %d this is %d"%(self.addr,hdr.usrc)
             return
-        #print "dev %d fyi %s  cf  %s"%(hdr.usrc,type(pkt),type(PktDeviceInfo()))
+        #print "fyi dev %d  %s  cf  %s"%(hdr.usrc,type(pkt),type(PktDeviceInfo()))
         if type(pkt) == type(PktDeviceInfo()) :
             #print "initial type self.device_info %s"%(type(self.device_info))
             self.device_info = pkt
@@ -82,17 +82,20 @@ class MrflandState(object):
         self.mld = mld
         self.host = DevState(self.mld.hostaddr)
         self.devices = {}
+        self._comm_active = False  # flag indication bus communications active
         self.idle_mark = 5 # every ten seconds send idle mark cmd
         self.network_accessible = False
         self.network_last_up = None
         self.network_last_down = None
         self.task_count = 0
+        self.last_msg_time = None
+
 
     def __repr__(self):
-        if self.network_accessible:
-            s = "%s : network is up"%self.__class__.__name__
-        else:
-            s = "%s : network is up"%self.__class__.__name__
+        s = "%s : host_rx_pkts %d  last msg %s"%\
+            (self.__class__.__name__,
+             self.host.device_status.rx_pkts,str(self.last_msg_time))
+        return s
         s += "\n----host------"
         s += "\n %s"%repr(self.host)
         s += "\n----devices %d------"%len(self.devices)
@@ -128,10 +131,11 @@ class MrflandState(object):
                 return
         
         if self.task_count % self.idle_mark == 0:
-            self.mld.cmd(self.mld.hostaddr,mrf_cmd_get_time)
+            self.mld.cmd(self.mld.hostaddr,mrf_cmd_device_status)
             self.log.info(repr(self))
 
     def fyi(self, hdr, rsp, robj):
+        self.last_msg_time = datetime.now()
         if hdr.usrc == self.mld.hostaddr:            
             self.host.fyi(hdr,robj)
         elif hdr.usrc in self.devices.keys():
