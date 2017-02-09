@@ -60,7 +60,11 @@ class DevState(object):
         if hdr.usrc != self.addr:
             print "not for us!! we are %d this is %d"%(self.addr,hdr.usrc)
             return
-        #print "fyi dev %d  %s  cf  %s"%(hdr.usrc,type(pkt),type(PktDeviceInfo()))
+
+        self.last_hdr = hdr
+        self.last_msg = pkt
+        self.last_msg_time = datetime.now()
+
         if type(pkt) == type(PktDeviceInfo()) :
             #print "initial type self.device_info %s"%(type(self.device_info))
             self.device_info = pkt
@@ -72,10 +76,11 @@ class DevState(object):
         if type(pkt) == type(PktDeviceStatus()) :
             self.device_status = pkt         
 
-        self.last_hdr = hdr
-        self.last_msg = pkt
-        self.last_msg_time = datetime.now()
-
+            return '{"rx_pkts":%d,"tx_pkts":%d,"errors":%d}'%\
+                (self.device_status.rx_pkts,self.device_status.tx_pkts,
+                 self.device_status.errors)
+             
+            
 class MrflandState(object):
     def __init__(self,mld):
         self.log = mld.log
@@ -83,7 +88,7 @@ class MrflandState(object):
         self.host = DevState(self.mld.hostaddr)
         self.devices = {}
         self._comm_active = False  # flag indication bus communications active
-        self.idle_mark = 5 # every ten seconds send idle mark cmd
+        self.idle_mark = 300 # every ten minutes send idle mark cmd
         self.network_accessible = False
         self.network_last_up = None
         self.network_last_down = None
@@ -119,14 +124,14 @@ class MrflandState(object):
         self.task_count += 1
         if cr:
             self.mld.cmd(self.mld.hostaddr,cr)
-            self.log.info("state task - chose host task %s"%repr(cr))
+            #self.log.info("state task - chose host task %s"%repr(cr))
             return
 
         for da in self.devices.keys():
             self.log.debug("checking command_request for %d"%da)
             cr = self.devices[da].command_request()
             if cr:
-                self.log.info("state task - chose device %d task %s"%(da,repr(cr)))
+                #self.log.info("state task - chose device %d task %s"%(da,repr(cr)))
                 self.mld.cmd(da,cr)
                 return
         
@@ -137,10 +142,10 @@ class MrflandState(object):
     def fyi(self, hdr, rsp, robj):
         self.last_msg_time = datetime.now()
         if hdr.usrc == self.mld.hostaddr:            
-            self.host.fyi(hdr,robj)
+            return self.host.fyi(hdr,robj)
         elif hdr.usrc in self.devices.keys():
             self.log.debug("state fyi : got something from dev %d %s"%(hdr.usrc,repr(robj)))
-            self.devices[hdr.usrc].fyi(hdr,robj)
+            return self.devices[hdr.usrc].fyi(hdr,robj)
         else:
             self.log.info( "mrfland state added device %d"%hdr.usrc)
             self.devices[hdr.usrc] = DevState(hdr.usrc)

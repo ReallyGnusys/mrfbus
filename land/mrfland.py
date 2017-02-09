@@ -134,6 +134,12 @@ class Mrfland(object):
             papps[appn] = apps[appn](log=self.log)
             #papps[appn].setlog(self.log)
         self.apps = papps
+
+        self.registrations = {}
+        self.registrations["main"] = []
+        for appn in apps.keys():
+            self.registrations[appn] = []
+    
         self.log.info("apps are %s"%repr(self.apps))
         self.q = Queue.Queue()
         self.active_cmd = None
@@ -349,8 +355,12 @@ class Mrfland(object):
                     try:
                         jcmd = json.loads(b)
                         self.log.info("got json cmd %s"%repr(jcmd))
-                        c.send("got it , thanks\n")
-                        self.client_input(fd,jcmd)
+                        #c.send("got it , thanks\n")
+                        rv = self.client_input(fd,jcmd)
+                        if rv:
+                            c.send(rv)
+                        else:
+                            return '{}'
                     except:
                         
                         self.log.info("unintelligible input *%s*"%b)
@@ -358,11 +368,57 @@ class Mrfland(object):
                         print '-'*60
                         traceback.print_exc(file=sys.stdout)
                         print '-'*60
-                        c.send("no idea what you're on about\n")
-                    #sys.stdout.write(b)                    
+                        c.send(self.json_msg("you are a knob"))
+                    #sys.stdout.write(b)
 
+    def json_msg(self,msg):
+        return '{"msg":"%s"}'%msg
+    def register(self,fd,appn):
+        if appn == "main":  # for now just try registering for main
+            if fd in self.registrations["main"]:
+                self.log.info("fd %d already registered")
+                return '{"msg":"you are already registered for main app"}'
+            self.registrations["main"].append(fd)
+            self.log.warning("fd %d registered for main")
+            return '{"msg":"you are now registered for main app, have a nice day"}'
+
+        if appn in self.apps.keys():
+            if fd in self.registrations[appn]:
+                self.log.info("fd %d already registered for app %s"%appn)
+                return '{"msg":"you are already registered for app %s"}'%appn
+            self.registrations[appn].append(fd)
+            self.log.warning("fd %d registered for app %s"%(fd,appn))
+            return '{"msg":"you are now registered for app %s, have a nice day"}'%appn
+            
+            
+        return '{"msg" : "unrecognised app %s"}'%appn
+
+    
+    def client_cmd(self,fd,cmd):
+        if cmd['cmd'] == 'register':
+            if not 'data' in cmd:
+                self.log.warn("cmd does not contain data field")
+                return '{"error":"command format error" - needs "data" field}'
+            return self.register(fd,cmd["data"]) 
+            
     def client_input(self,fd,cmd):
         self.log.info("client input fd %d cmd %s"%(fd,repr(cmd)))
+        if not 'app' in cmd:
+            self.log.warn("cmd does not contain app field")
+            return
+        if not 'cmd' in cmd:
+            self.log.warn("cmd does not contain cmd field")
+            return
+        
+
+        app = cmd['app']
+        cmdc = cmd['cmd']
+        self.log.info("app is %s cmd %s"%(app,cmdc))
+        if app == "main":
+            return self.client_cmd(fd,cmd)
+                
+            
+        
     def network_down(self):        
         self.log.warn("network_down entry")
         return
@@ -405,9 +461,19 @@ class Mrfland(object):
         sysobj = mrf_decode_buff(rsp.type,rdata)
 
         #if sysobj:            
-        self.state.fyi(hdr,rsp, sysobj)  # state sees everything
+        rv = self.state.fyi(hdr,rsp, sysobj)  # state sees everything
+        if rv:
+            #self.log.warn("we have response from main app fyi %s"%rv)
+            for fd in self.registrations["main"]:  # send to registered clients
+                c = self.conns[fd]
+                c.send(rv)
         for appn in self.apps.keys(): # apps see everything
-            self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
+            rv = self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
+            if rv:
+                for fd in self.registrations[appn]:  # send to registered clients
+                    c = self.conns[fd]
+                    c.send(rv)
+                
         """ check response is for active_cmd"""
         if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
             self.active_cmd = None

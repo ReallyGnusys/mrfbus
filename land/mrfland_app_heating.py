@@ -51,9 +51,11 @@ class Pt1000TempSensor(object):
         return "Channel %d milliohms %7d %7.3f C  label %s"%(self.channel,self.milliohms,self.temperature, self.label)
     
     def new_reading(self,milliohms):
+        if milliohms == self.milliohms:
+            return None
         self.milliohms = milliohms
         self.temperature = self.res_to_temp(self.milliohms)
-
+        return self.temperature
         
 class Pt1000State(object):
     def __init__(self,address,log):
@@ -73,24 +75,40 @@ class Pt1000State(object):
     def new_state(self,hdr,state):
         if type(state) != type(PktPt1000State()):
             self.log.warn( "PT1000 state wrong type!!")
-            return -1
+            return
         if hdr.usrc != self.address:   # just a spot sanity check..
             self.log.warn("PT1000 state wrong address!!")
-            return -1
+            return
 
         now = datetime.now()
 
         if not ( self.last_reading == None or now > self.last_reading):
             self.log.warn( "PT1000 state - time confusion!!!")
-            return -1
-        
-        for ch in xrange(Pt1000MaxChanns):
-            self.temps[ch].new_reading(state.milliohms[ch])
+            return
 
+        updated = []
+        for ch in xrange(Pt1000MaxChanns):
+            updated.append(self.temps[ch].new_reading(state.milliohms[ch]))
+            
+        msg = ""
+        js = '{ "tempsensors" : {'
+        notfirst = False
+        for ch in xrange(Pt1000MaxChanns):
+            if updated[ch]:
+                msg += "ch %d) %.3f :"%(ch,updated[ch])
+                if notfirst :
+                    js += ',' #yuk
+                notfirst = True
+                js += ' %d : { "temp" : %.3f, "milliohms" : %d }'%\
+                      (ch,self.temps[ch].temperature,self.temps[ch].milliohms)
+        js += '}}'
+        
         self.last_reading = now
-        self.log.info("Pt1000State updated - now")
-        self.log.info(repr(self))
-        return 0
+                    
+        if msg != "":
+            self.log.info("Pt1000State updated %s"%msg)
+            return js
+        return
     
 class MrflandAppHeating(MrflandApp):
 
@@ -119,14 +137,16 @@ class MrflandAppHeating(MrflandApp):
             if not robj:
                 self.log.warn("still couldn't make sense of rdata!!!")
                 return
-            self.pt1000state[hdr.usrc].new_state(hdr,robj)
+            return self.pt1000state[hdr.usrc].new_state(hdr,robj)
+
+        
             
 
     def fyi(self,hdr,rsp, robj, rdata):
         self.log.debug("heating app got hdr %s"%repr(hdr))
         if hdr.usrc in self._pt1000_addrs :
             self.log.debug( "heating app fyi  he say yes")
-            self.pt1000msg(hdr,rsp, robj, rdata)
+            return self.pt1000msg(hdr,rsp, robj, rdata)
             
         else:
             self.log.debug("heating app fyi  says no")
