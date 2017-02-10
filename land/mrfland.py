@@ -358,7 +358,7 @@ class Mrfland(object):
                         #c.send("got it , thanks\n")
                         rv = self.client_input(fd,jcmd)
                         if rv:
-                            c.send(rv)
+                            c.send(rv+"\n")  #help readers from telnet
                         else:
                             return '{}'
                     except:
@@ -368,7 +368,7 @@ class Mrfland(object):
                         print '-'*60
                         traceback.print_exc(file=sys.stdout)
                         print '-'*60
-                        c.send(self.json_msg("you are a knob"))
+                        c.send(self.json_msg("you are a knob")+"\n")
                     #sys.stdout.write(b)
 
     def json_msg(self,msg):
