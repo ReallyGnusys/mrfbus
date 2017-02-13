@@ -27,6 +27,7 @@ from mrfland_state import MrflandState
 from mrf_structs import *
 from mrfland_app_heating import MrflandAppHeating
 
+import mrfland
 
 clients = dict()
 alog = mrflog_init()
@@ -69,7 +70,7 @@ def send_object_to_client(id,obj):
 
 
 def comm(id,ro,touch = False):
-    return asa.comm.comm(id,ro)
+    return mrfland.comm.comm(id,ro)
 
  
 
@@ -96,26 +97,26 @@ def action_client_cmd(id,username,msgob):
         #ro = eval(ccmds[cmd])
         try:
             msgob['data']['ssid'] = id
-            ro = dcmds[cmd](aconn,asa.comm.clients[id]['sid'],msgob['data'] )
+            ro = dcmds[cmd](aconn,mrfland.comm.clients[id]['sid'],msgob['data'] )
         except Exception,e: 
             import traceback
             details = traceback.format_exc()
 
             errmsg = "despatcher exception : socket id "+id+" assigned to "+username+" obj :"+str(msgob)+", exception:"+str(e)+"\n+Details:\n"+details
             alog.error(errmsg)
-            asa.asa_error(aconn,'py','general',errmsg)
+            #mrfland.asa_error(aconn,'py','general',errmsg)
             return
 
         if asa_prims.is_asa_ret_obj(ro):
-            asa.comm.comm(id,ro)
+            mrfland.comm.comm(id,ro)
         else:
             errmsg = "no retobj returned from command"+cmd
             alog.error(errmsg)
-            asa.asa_error(aconn,'py','general',errmsg)
+            #mrfland.asa_error(aconn,'py','general',errmsg)
     else:
         errmsg = "socket id "+id+" assigned to "+username+" sent unrecognised command :"+str(cmd)
         alog.error(errmsg)
-        asa.asa_error(aconn,'py','general',errmsg)
+        #mrfland.asa_error(aconn,'py','general',errmsg)
         return
       
     return
@@ -126,7 +127,7 @@ def json_parse(str):
     except:
         return None
     return ob
-# we gonna store clients in dictionary..
+
 class IndexHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
@@ -143,12 +144,45 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         #print str(dir(self))
         #check id has been issued
         alog.info("headers:"+str(self.request.headers))
-        
+        #alog.debug("staff_type = "+str(stype))
 
-    def on_message(self, message):              
+        rs =  self._request_summary()
+        alog.debug("req_sum:"+rs)
+        regx = r'^GET /ws\?Id=%s \(([^\(]+)\)'%self.id
+        #print "rs:"+rs
+        #print "regx:"+regx
+        mob = re.match(regx,rs)
+        if mob:
+            ip = mob.group(1)
+            alog.debug("client ip="+ip)
+            sob =  mrfland.comm.check_socket(self.id,ip)
+        else:
+            ip = 'none'
+            alog.debug("client ip not found!")
+            return
+            
+        
+        cdata = {"id": self.id,
+                 "sid":sob.sid,
+                 "ip":sob.ip,
+                 "username": sob.username,
+                 "object": self 
+                 }
+        mrfland.comm.add_client(self.id,cdata)
+
+        ro = mrfland.RetObj()
+        ro.b(mrfland.atime())
+        
+        mrfland.comm.comm(self.id,ro)
+
+
+    def on_message(self, message):
+        alog.info("client message on wsid ="+self.id+" "+str(message))
+
         return
     
     def on_close(self):
+        alog.info("ws handler close")
         return
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
@@ -170,7 +204,7 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
             return None
 
 
-class Mrfland(object):
+class MrflandServer(object):
 
     def __init__(self,log,apps={}):
         def exit_nicely(signum,frame):
@@ -209,7 +243,6 @@ class Mrfland(object):
         for appn in apps.keys():
             self.registrations[appn] = []
     
-        self.log.info("apps are %s"%repr(self.apps))
         self.q = Queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
@@ -262,7 +295,6 @@ class Mrfland(object):
         
         return hdr , param , respdat
 
-
     def handle_response(self,hdr,rsp, rdata):
         # test if sys command response or data
         sysobj = mrf_decode_buff(rsp.type,rdata)
@@ -281,10 +313,9 @@ class Mrfland(object):
                     c = self.conns[fd]
                     c.send(rv)
                 
-        """ check response is for active_cmd"""
+        # check response is for active_cmd
         if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
             self.active_cmd = None
-        
     def _resp_handler(self,*args, **kwargs):
         self.log.debug("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
@@ -304,7 +335,6 @@ class Mrfland(object):
         if hdr:                    
             self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
             self.handle_response(hdr, rsp , rdata)
-
             
     def _connect_to_mrfnet(self):
         self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
@@ -341,6 +371,14 @@ class Mrfland(object):
         
         self.nsettings = dict(
         )
+        """
+        self.nsettings = dict({  "ssl_options" : 
+                           { "certfile": install._ssl_cert_file,
+                     "keyfile": install._ssl_key_file
+                   }
+        }
+        )
+        """
 
 
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
@@ -352,7 +390,7 @@ class Mrfland(object):
     def time_tick(self):
         ct = time.time() + 5
         tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
-        alog.info("time_tick")
+        alog.debug("time_tick")
 
 alog.info('Application started')
 if __name__ == '__main__':
@@ -360,6 +398,6 @@ if __name__ == '__main__':
     alog.info("Mrfland web server starting on port "+str(options.port))
     
 
-    ml =  Mrfland(alog,apps = {'heating' : MrflandAppHeating })
+    ml =  MrflandServer(alog,apps = {'heating' : MrflandAppHeating })
 
 

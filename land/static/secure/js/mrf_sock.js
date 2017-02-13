@@ -3,6 +3,14 @@ $(document).ready(function() {
     init_socket();
 });
 
+function ParseJsonString(str) {
+    try {
+        obj = JSON.parse(str);
+    } catch (e) {
+        return null;
+    }
+    return obj;
+}
 
 function MrfSocket(socket){
     this.set_socket(socket);
@@ -41,6 +49,13 @@ function mrf_ccmd(cmd,data){
 
 }
 
+
+//incoming socket command handler
+function mrf_command(obj){
+    console.log("mrf_command : got")
+    console.log(obj)
+
+}
 
 function init_socket(){
     console.log("init_socket");    

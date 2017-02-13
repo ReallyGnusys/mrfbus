@@ -25,552 +25,254 @@ import socket
 import Queue
 import json
 import traceback
-import linuxfd
+import base64
+from datetime import datetime
+import install
+from mrflog import mrf_log
 from mrfland_state import MrflandState
 
 from mrf_structs import *
 
+from mrflog import mrf_log
 
-_DEFAULT_LOG_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+alog = mrf_log()
 
-_MAX_CONNECTION_BACKLOG = 1
-_EPOLL_BLOCK_DURATION_S = 1
- 
- 
- 
-_EVENT_LOOKUP = {
-    select.POLLIN: 'POLLIN',
-    select.EPOLLIN: 'EPOLLIN',
-    select.EPOLLHUP: 'EPOLLHUP',
-    select.EPOLLERR: 'EPOLLERR',
-    select.EPOLLOUT: 'EPOLLOUT',
-    select.POLLPRI: 'POLLPRI',
-    select.POLLOUT: 'POLLOUT',
-    select.POLLERR: 'POLLERR',
-    select.POLLHUP: 'POLLHUP',
-    select.POLLNVAL: 'POLLNVAL',
-    
-}
-def _get_flag_names(flags):
-    names = []
-    for bit, name in _EVENT_LOOKUP.items():
-        if flags & bit:
-            names.append(name)
-            flags -= bit
- 
-            if flags == 0:
-                break
- 
-    return names
- 
+def is_asa_ob(ob):
+    if ob == None:
+        return False
+    if type(ob) != type({}):
+        return False
+    return True
 
-def buffToObj(resp,app_cmds = {}):
-    """
-    attempt to convert pipe ascii data to a MrfStruct
-    """
-    
-    hdr = PktHeader()
-    print "buffToObj len is %d"%len(resp)
-    if len(resp) >= len(hdr):
-        hdr_data = bytes(resp)[0:len(hdr)]
-        hdr.load(bytes(resp)[0:len(hdr)])
-        print "hdr is:\n%s\n"%repr(hdr)
-        if hdr.type in MrfSysCmds.keys():
-            if hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
-                param = MrfSysCmds[hdr.type]['param']()
-                print "have param type %s"%type(param)
-                param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-                param.load(param_data)
-                print "resp should be %s"%repr(param)
-                if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
-                    respobj = MrfSysCmds[param.type]['resp']()
-                    print "sys respopb is %s"%type(respobj)
-                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                    respobj.load(respdat)
-                    #print "repr %s"%repr(respobj)
-                    return hdr, respobj
-                elif (param.type - MRF_APP_CMD_BASE) in app_cmds.keys():
-                    respobj = app_cmds[param.type]['param']()
-                    print "app respopb is %s"%type(respobj)
-                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                    respobj.load(respdat)
-                    return hdr, respobj
-                else:
-                    print "got param type %d "%param.type
+class socket_info(object):
+    def __init__(self,other):
+        self.sid = other.sid
+        self.wsid = other.wsid
+        self.username = other.username
+        self.ip  = other.ip
+
+        
+class staff_socket(object):
+    def __init__(self,sid,wsid,sessid,username,stype,ip):
+        self.opened = None
+        self.closed = None
+        self.isopen = True
+        self.sid = sid
+        self.wsid = wsid
+        self.sessid = sessid
+        self.username = username
+        self.stype = stype
+        self.ip = ip
+        self.expire = None
+        
+    def close(self):
+        self.closed = datetime.now()
+        self.isopen = False
+        
+class mrf_comm(object):
+    def __init__(self):
+        self.clients = dict()
+        self.sockets = {}
+
+    def prepare_socket(self,sid,wsid,sessid,username,stype,ip):
+        self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,ip)
+        
+    def check_socket(self,wsid,ip):
+        alog.info("checking socket id %s  ip %s"%(wsid,ip))
+        if not wsid in self.sockets.keys():
+            alog.warn("wsid not found...(%s)"%wsid)            
+            return None
+        skt = self.sockets[wsid]
+        if skt.ip != ip:
+            alog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
+            return None
+        else:
+            return socket_info(skt)
+
+        
+        
+    def add_client(self,wsid,data):
+        #self.sockets[sid] = staff_socket(sid)        
+        self.clients[wsid] = data
+        
+    def del_client(self,wsid):
+        if wsid in self.clients:
+            del self.clients[wsid]
+            self.sockets[wsid].close()
+
+    def _jso_broadcast(self,raw):
+        alog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+        alog.info(" clients = "+str(self.clients))    
+        for client in self.clients :   
+            alog.info( "client:"+client)
+            self.clients[client]['object'].write_message(raw + "\r\n\r\n")
+
+    def send_object_to_client(self,id,obj):
+        if not self.clients.has_key(id):
+            errstr = "asa_comm:obj to client key error, key was "+str(id)+" obj was "+str(obj)
+            alog.error(errstr)
+            return
+        username = self.clients[id]['username']
+        alog.info( "send_object_to_client: sent cmd "+str(obj['cmd'])+ " to  "+username)
+        msg = to_json(obj)
+        alog.debug(msg)
+        self.clients[id]['object'].write_message(msg+"\r\n\r\n")
+    def broadcast(self,obj):
+        msg = to_json(obj)
+        alog.debug("broadcasting obj:"+msg)
+        self._jso_broadcast(msg)
+    def set_session_expire(self,id,seconds = install.session_timeout):
+        self.sockets[id].expire = int(time.time() + seconds)
+
+    def session_expire_notice(self,wsid):
+        skt = self.sockets[wsid]
+        data = { 'sid' : skt.sid , 'expire' : skt.expire }
+        return mrf_cmd('session-expire',data)
+        
+    def session_isvalid(self,sessid):
+
+        for wsid in self.sockets.keys():
+            skt = self.sockets[wsid]
+            if skt.expire > int(time.time()):
+                return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire, 'type': skt.stype , 'username' : skt.username}
             else:
-                print "got hdr.type %d"%hdr.type
-    return None,None
+                return None
+        return None
+        
+    def comm(self,id,ro):
+        if not is_ret_obj(ro):
+            alog.error("mrf_comm: ro not ret_obj")
+            return 0
+        if id != None:
+            for ob in ro.a():
+                self.send_object_to_client(id,ob)  
+            if True or ro.touch or ( len(ro.a()) > 0 ) :  # now touch session for every command received
+                self.set_session_expire(id,1200) # 1200 = 20mins
+                self.send_object_to_client(id,self.session_expire_notice(id))
+        for ob in ro.b():
+            self.broadcast(ob)                
+        return 1
 
-
-
-class Mrfland(object):
-    """
-        MRF LAN Daemon
-    """
-    def _error_exit(self,msg):
-        print "CRITICAL ERROR: %s"%msg
-        sys.exit(-1)
-
-    def start_logging(self):
-        self.log = logging.getLogger(__name__)
-        self.log.setLevel(logging.INFO)
-        ch = logging.StreamHandler()
-        formatter = logging.Formatter(_DEFAULT_LOG_FORMAT)
-        ch.setFormatter(formatter)
-        self.log.addHandler(ch)
-        self.log.info("log started")
-
-    def __init__ (self, portnum=7777,stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}, netid = 0x25):
-        def exit_nicely(signum,frame):
-            signal.signal(signal.SIGINT, self.original_sigint)
-            self.log.warn( "CTRL-C pressed , quitting")
-            sys.exit(0)
-        self.hostaddr = 1
-        self.netid = netid
-        self.start_logging()
-        self.log.info("apps are %s"%repr(apps))
-        papps = {}
-        for appn in apps.keys():
-            papps[appn] = apps[appn](log=self.log)
-            #papps[appn].setlog(self.log)
-        self.apps = papps
-
-        self.registrations = {}
-        self.registrations["main"] = []
-        for appn in apps.keys():
-            self.registrations[appn] = []
+comm = mrf_comm()   # FIXME! 
     
-        self.log.info("apps are %s"%repr(self.apps))
-        self.q = Queue.Queue()
-        self.active_cmd = None
-        self.active_timer = 0
-        self.original_sigint = signal.getsignal(signal.SIGINT)
-        signal.signal(signal.SIGINT, exit_nicely)
-        #signal.signal(signal.SIGALRM, itimer_handler)
-        #signal.setitimer(signal.ITIMER_REAL,2,2)   # keep overseer process running every 2 seconds
+class RetObj:
+    def __init__ (self,touch = False):
+        self._a = []
+        self._b = []
+        self.touch = touch
+    def a(self,ob=None):
+        if is_asa_ob(ob):
+            self._a.append(ob)
+        elif type(ob) == type([]):
+            for obe in ob:
+                if is_asa_ob(obe):
+                    self._a.append(obe)
+        elif ( ob == None):
+            return self._a
+    def b(self,ob=None):
+        if is_asa_ob(ob):
+            self._b.append(ob)
+        elif type(ob) == type([]):
+            for obe in ob:
+                if is_asa_ob(obe):
+                    self._b.append(obe)
+        elif ( ob == None):
+            return self._b
+    def info(self):
+        st = "retob %d sc  %d bc"%(len(self._a),len(self._b))
+        return st
 
-        self.state = MrflandState(self)
-        self.stub_out_resp_path = stub_out_resp_path
-        self.stub_out_str_path = stub_out_str_path
+    def __str__(self):
+        st = "retob .a="+str(self._a)+" .b="+str(self._b)
+        return st
 
-        self.portnum = portnum
+def is_ret_obj(ob):
+    return type(ob) == type(RetObj())
 
-        self.ss = self._create_server_socket()
-        self.log.info( "we have a socket %s"%repr(self.ss))
-        self.conns = {}  # connections
-        self.ep = select.epoll()
-
-        self.ep.register(self.ss.fileno())
-
-        try:
-            self.tfd = linuxfd.timerfd()
-            self.tfd.settime(value=2, interval = 2)
-            self.log.info("created timerfd %d"%self.tfd.fileno())
-            self.ep.register(self.tfd.fileno())
-        except:
-            self.log.error("timerfd exception")
-
-
-        self.start_network()
-
-        #import pdb
-        #pdb.set_trace()
-
-        # probe for host device to test initial network state
-        self.init_cmds()   # run any initial commands
-
-        
-        try:
-            while True:
-                self.poll()
-        finally:
-            self.log.warn("about to quit... exception")
-            self.ep.unregister(self.ss.fileno())
-            self.ep.unregister(self.tfd.fileno())
-            self.ep.unregister(self.rfd)
-            self.ep.unregister(self.sfd)
-            self.ep.close()
-            self.ss.close()
-
-    def start_network(self):
-        self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.rfd == -1:
-            self._error_exit("could not open response fifo %s"%self.stub_out_resp_path)
-        else:
-            self.log.info("opened response fifo %d"%self.rfd)
-            self.ep.register(self.rfd, select.EPOLLIN)
-
-        self.sfd =  os.open(self.stub_out_str_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.sfd == -1:
-            self._error_exit("could not open structure fifo %s"%self.stub_out_str_path)
-        else:
-            self.log.info("opened data fifo %d"%self.sfd)
-            self.ep.register(self.sfd, select.EPOLLIN)
-
-
-        self.log.info( "opened pipes, trying to open pipe to stub")
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
-        self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
-        
-            
-    def init_cmds(self):
-        return 
-        self.init_cmd(1,mrf_cmd_device_info)
-        self.init_cmd(1,mrf_cmd_device_status)
-        self.init_cmd(1,mrf_cmd_app_info)
-        self.init_cmd(1,mrf_cmd_get_time)
-
-    def parse_input(self,resp):
-        """
-        check for valid looking header and types
-        if found returns
-           hdrpacket  , resppacket,  databuff
-        else returns
-           None
-        """
     
-        #print "parse_input len is %d"%len(resp)
-        hdr = PktHeader()
-
-        if len(resp) < len(hdr):  # no way valid
-            return None,None,None
+def gen_sessid():
+    return base64.b64encode(os.urandom(18))
 
 
-        hdr.load(bytes(resp)[0:len(hdr)])
-        #print "hdr is:\n%s\n"%repr(hdr)
-
-        if hdr.netid != self.netid: # only looking for packets from this netid
-            self.log.info("not our netid")
-            return None,None,None
-        
-        if hdr.udest != 0: # only looking for packets destined for us
-            self.log.info("not our us")
-            return None,None,None
-
-        
-        if not (hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
-            self.log.info("not resp or struct")
-            return None,None,None
-
-        
-        param = MrfSysCmds[hdr.type]['param']()
-        #print "have param type %s"%type(param)
-        param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-        param.load(param_data)
-        #print "resp should be %s"%repr(param)
-        respdat = bytes(resp)[len(hdr)+len(param):]
-        
-        return hdr , param , respdat
 
 
-        
-    def poll(self):
-        events = self.ep.poll(_EPOLL_BLOCK_DURATION_S)
-        for fd, event_type in events:
-            self._handle_event(fd, event_type)
+def tbd_set_session_expire(uname,seconds = install.session_timeout):
+    install.users[uname]['expire'] = int(time.time() + seconds)
+
+
+def search_userdb(key,value):
+    for un in install.users.keys():
+        uinf = install.users[un]
+        if uinf.has_key(key) and uinf[key] == value:
+            return uinf
+    return None
     
-    def _handle_event(self, fd, event_type):
-        # Common, but we're not interested.
-        flag_list = _get_flag_names(event_type)
-        #self.log.info("got event on fd %d : %s", fd, flag_list)
-        
-        #if (event_type & select.EPOLLOUT) == 0:
-        self.log.debug("Received (%d): %s", 
-                       fd, flag_list)
+    
+
+    
+def ws_url(wsid):
+    url = install.wsprot+install.host+'.'+install.domain+':'+str(install.proxy_port)+'/ws?Id='+wsid
+    return url
+
+def staff_info():
+    rob = {}
+    rob['cmd'] = 'staff-info'
+    rob['data'] = {}
+    return rob
+
+def authenticate(username,password,ip):             
+    alog.info('authenticate_staff : username = '+username+" , ip : "+ip)
+    if username not in install.users.keys():
+        return None
+
+    uinf =  install.users[username]
+    
+    if password != uinf['password']:
+        return None
+    
+
+    
+    alog.info('authenticated')
+    wsid = os.urandom(16).encode('hex')  
+    sessid = gen_sessid()
+
+    comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],ip)    
+    comm.set_session_expire(wsid)
+    #install.users[username]['sessid'] = sessid
+    #install.users[username]['ip'] = ip
+
+    return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
+
+
+def staff_logout(sid,username,ip):
+    del(install.users[username]['sessid'])
+    ro = RetObj()
+    return ro
+
+
+dt_handler = lambda obj: (
+    obj.isoformat()
+    if isinstance(obj, datetime)
+    or isinstance(obj, date)
+    else None)
+
+
+def to_json(obj):
+    return json.dumps(obj,default = dt_handler)
+
+
+def mrf_cmd(cmd,data):
+    mcmd = {}
+    mcmd['cmd'] = cmd
+    mcmd['data'] = data
+    return mcmd
+
+# return utc time
+def atime():    
+    return mrf_cmd('datetime',datetime.utcfromtimestamp(time.time()))
  
-        if fd == self.rfd:
-            self.log.debug("Input on response pipe (%d)"%event_type)
-            if event_type & select.EPOLLIN:
-                resp = os.read(self.rfd, MRFBUFFLEN)
-                #self.log.debug("have response len %d"%len(resp))
-
-                hdr , rsp, rdata = self.parse_input(resp)
-
-                if hdr:                    
-                    self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
-                    self.handle_response(hdr, rsp , rdata)
-                #self.log.info(repr(rstr))
-                #self.log.info("end obj")
-                #sys.stdout.write(repr(rstr))
-            elif event_type & select.POLLHUP:
-                self.log.info("response connection has hung up")
-                self.network_down()
-        
-            """
-            elif event_type & select.EPOLLHUP:
-                self.log.info("response connection has hung up")
-                self.network_down()
-            """
-                
-        elif fd == self.sfd:
-            self.log.debug("11a Input on data pipe (%d)"%event_type)
-            if event_type & select.EPOLLIN:
-                resp = os.read(self.sfd, MRFBUFFLEN)
-                hdr , rsp, rdata = self.parse_input(resp)
-                if hdr:                    
-                    self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
-                    self.handle_response(hdr, rsp , rdata)
-                    
-            elif event_type & select.POLLHUP:
-                self.log.info("data connection has hung up")
-                self.network_down()
-
-            """
-            elif event_type & select.EPOLLHUP:
-                self.log.info("data connection has hung up")
-                self.network_down()
-            """
-        elif fd == self.tfd.fileno():
-            self.log.debug("timerfd: (%d)", event_type)
-            self.tfd.read()
-            self.overseer()
-        
-
-        # Activity on the server socket means a new client connection.                
-        elif fd == self.ss.fileno():
-            self.log.debug("Received connection: (%d)", event_type)
- 
-            c, address = self.ss.accept()
-            c.setblocking(0)
-            child_fd = c.fileno()
- 
-            # Start watching the new connection.
-            self.ep.register(child_fd, select.EPOLLIN or select.EPOLLHUP)
-            self.conns[child_fd] = c
-            self.log.info("%d connections"%len(self.conns))
-
-        else:
-            c = self.conns[fd]
-            if event_type & select.EPOLLIN:
-                b = c.recv(1024)
-                if len(b) == 0:
-                    self.log.warn("got zero length on fd %d"%fd)
-                    self.ep.unregister(fd)
-                    del (self.conns[fd])
-                    self.log.info("%d connections"%len(self.conns))
-                else:
-                    self.log.info("trying to decode *%s*  len %d"%(b,len(b)))
-                    b = b.rstrip()
-                    self.log.info("trying to decode *%s*  len %d type %s"%(b,len(b),type(b)))
-                    try:
-                        jcmd = json.loads(b)
-                        self.log.info("got json cmd %s"%repr(jcmd))
-                        #c.send("got it , thanks\n")
-                        rv = self.client_input(fd,jcmd)
-                        if rv:
-                            c.send(rv+"\n")  #help readers from telnet
-                        else:
-                            return '{}'
-                    except:
-                        
-                        self.log.info("unintelligible input *%s*"%b)
-                        print "Exception processing input:"
-                        print '-'*60
-                        traceback.print_exc(file=sys.stdout)
-                        print '-'*60
-                        c.send(self.json_msg("you are a knob")+"\n")
-                    #sys.stdout.write(b)
-
-    def json_msg(self,msg):
-        return '{"msg":"%s"}'%msg
-    def register(self,fd,appn):
-        if appn == "main":  # for now just try registering for main
-            if fd in self.registrations["main"]:
-                self.log.info("fd %d already registered")
-                return '{"msg":"you are already registered for main app"}'
-            self.registrations["main"].append(fd)
-            self.log.warning("fd %d registered for main")
-            return '{"msg":"you are now registered for main app, have a nice day"}'
-
-        if appn in self.apps.keys():
-            if fd in self.registrations[appn]:
-                self.log.info("fd %d already registered for app %s"%appn)
-                return '{"msg":"you are already registered for app %s"}'%appn
-            self.registrations[appn].append(fd)
-            self.log.warning("fd %d registered for app %s"%(fd,appn))
-            return '{"msg":"you are now registered for app %s, have a nice day"}'%appn
-            
-            
-        return '{"msg" : "unrecognised app %s"}'%appn
-
-    
-    def client_cmd(self,fd,cmd):
-        if cmd['cmd'] == 'register':
-            if not 'data' in cmd:
-                self.log.warn("cmd does not contain data field")
-                return '{"error":"command format error" - needs "data" field}'
-            return self.register(fd,cmd["data"]) 
-            
-    def client_input(self,fd,cmd):
-        self.log.info("client input fd %d cmd %s"%(fd,repr(cmd)))
-        if not 'app' in cmd:
-            self.log.warn("cmd does not contain app field")
-            return
-        if not 'cmd' in cmd:
-            self.log.warn("cmd does not contain cmd field")
-            return
-        
-
-        app = cmd['app']
-        cmdc = cmd['cmd']
-        self.log.info("app is %s cmd %s"%(app,cmdc))
-        if app == "main":
-            return self.client_cmd(fd,cmd)
-                
-            
-        
-    def network_down(self):        
-        self.log.warn("network_down entry")
-        return
-        self.ep.unregister(self.rfd)
-        self.ep.unregister(self.sfd)
-        os.close(self.rfd)
-        os.close(self.sfd)
-        self.app_fifo.close()
-        self.log.warn("closed all fifos..attempting restart")
-        self.start_network()
-        self.log.warn("fifos opened")
-        
-    def _create_server_socket(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(('0.0.0.0', self.portnum))
-        s.listen(_MAX_CONNECTION_BACKLOG)
-        s.setblocking(0)
-        self.log.info("created server socket")
-        return s
-    
-    def init_cmd(self,dest,cmd_code,dstruct=None):
-        self.cmd(dest,cmd_code,dstruct)
-        self.poll()
-        
-    def _activate(self):  # ramp up tick while responses or txqueue outstanding
-        if not self.state._comm_active:
-            #self.log.warn("activating!")
-            self.active_timer = 0
-            self.state._comm_active = True
-            self.tfd.settime(value=0.001, interval = 0.01)
-
-    def _deactivate(self):  # relax tick while all quiet
-        self.state._comm_active = False
-        self.tfd.settime(value=2, interval = 2)
-        #self.log.warn("deactivating .. timer was %d",self.active_timer)
-            
-    def handle_response(self,hdr,rsp, rdata):
-        # test if sys command response or data
-        sysobj = mrf_decode_buff(rsp.type,rdata)
-
-        #if sysobj:            
-        rv = self.state.fyi(hdr,rsp, sysobj)  # state sees everything
-        if rv:
-            #self.log.warn("we have response from main app fyi %s"%rv)
-            for fd in self.registrations["main"]:  # send to registered clients
-                c = self.conns[fd]
-                c.send(rv)
-        for appn in self.apps.keys(): # apps see everything
-            rv = self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
-            if rv:
-                for fd in self.registrations[appn]:  # send to registered clients
-                    c = self.conns[fd]
-                    c.send(rv)
-                
-        """ check response is for active_cmd"""
-        if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
-            self.active_cmd = None
-
-    def cmd(self, dest,cmd_code,dstruct=None):  # only for this code to call
-        self.queue_cmd(0 , dest,cmd_code,dstruct)   # tag is zero for this process -  responses are never forwarded
-
-    def _next_cmd(self,cmdarr):
-        (tag, dest,cmd_code,dstruct) = cmdarr
-        self.resp_timer = 0
-        self.active_cmd = cmdarr            
-        self._run_cmd(dest,cmd_code,dstruct)
-        
-    def queue_cmd(self,tag, dest,cmd_code,dstruct=None):
-        if self.active_cmd:            
-            self.q.put((tag, dest,cmd_code,dstruct))
-        else:
-            self._next_cmd((tag, dest,cmd_code,dstruct))
-            self._activate()
-            
-    def _run_cmd(self,dest,cmd_code,dstruct = None):
-        self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
-        if dest > 255:
-            print "dest > 255"
-            return -1
 
 
-        if cmd_code in MrfSysCmds.keys():
-            paramtype = MrfSysCmds[cmd_code]['param']
-
-        else:
-            print "unrecognised cmd_code (01xs) %d"%cmd_code
-            return -1
-            
-         
-        if type(dstruct) == type(None) and type(paramtype) != type(None):
-            print "No param sent , expected %s"%type(paramtype)
-            return -1
-        
-        if type(paramtype) == type(None) and type(dstruct) != type(None):
-            print "Param sent ( type %s ) but None expected"%type(dstruct)
-            return -1
-
-        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
-            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
-            return -1
-
-
-        mlen = 4
-        if dstruct:
-            mlen += len(dstruct)
-        if mlen > 64:
-            print "mlen = %d"%mlen
-            return -1
-        msg = bytearray(mlen)
-        msg[0] = mlen
-        msg[1] = dest
-        msg[2] = cmd_code
-        
-        n = 3
-        if dstruct:
-            dbytes = dstruct.dump()
-            for b in dbytes:
-                msg[ n ] =  b
-                n += 1
-
-        csum = 0
-        for i in xrange(mlen -1):
-            csum += int(msg[i])
-        csum = csum % 256
-        msg[mlen - 1] = csum
-        self.app_fifo.write(msg)
-        self.app_fifo.flush()
-        return 0
-    def send_ndr(self):
-        return
-    def overseer(self):
-        """ overseer process checks things over on regular timerfd """
-        #self.log.debug("overseer entry")
-        if self.state._comm_active:
-            self.active_timer += 1
-            if self.active_cmd:
-                self.resp_timer += 1
-                if self.resp_timer > 2:  # give up
-                    self.log.warn("timed out waiting for response for %s"%(repr(self.active_cmd)))
-                    if self.active_cmd[0] :  # send ndr if response destined to socket
-                        self.send_ndr()
-                    self.active_cmd = None
-            if not self.active_cmd:
-                if self.q.empty():  # deactivate
-                    self._deactivate()
-                else:
-                    self._next_cmd(self.q.get())
-                    
-                    
-        self.state.task()
 
 if __name__ == "__main__":
-    ml =  Mrfland()
-
+    print "nothing"
