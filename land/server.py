@@ -302,13 +302,25 @@ class MrflandServer(object):
         #if sysobj:            
         rv = self.state.fyi(hdr,rsp, sysobj)  # state sees everything
         if rv:
-            #self.log.warn("we have response from main app fyi %s"%rv)
+            self.log.warn("we have response from main app fyi %s"%repr(rv))
+            ro = mrfland.RetObj()
+            for mcmd in rv.keys():
+                ro.b(mrfland.mrf_cmd(mcmd,rv[mcmd]))
+            mrfland.comm.comm(None,ro)
             for fd in self.registrations["main"]:  # send to registered clients
                 c = self.conns[fd]
                 c.send(rv)
         for appn in self.apps.keys(): # apps see everything
             rv = self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
             if rv:
+                self.log.info("app %s fyi returned"%appn)
+                self.log.info(repr(rv))
+                
+                ro = mrfland.RetObj()
+                for mcmd in rv.keys():
+                     ro.b(mrfland.mrf_cmd(mcmd,rv[mcmd]))
+                mrfland.comm.comm(None,ro)
+                
                 for fd in self.registrations[appn]:  # send to registered clients
                     c = self.conns[fd]
                     c.send(rv)

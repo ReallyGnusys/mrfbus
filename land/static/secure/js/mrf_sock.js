@@ -43,17 +43,43 @@ function mrf_ccmd(cmd,data){
     cobj = Object();
     cobj['ccmd'] = cmd;
     cobj['data'] = data;
-    jso = JSON.stringify(cobj)
-    console.log("mrf_ccmd - cmd = "+cmd+" jso = "+jso)
+    jso = JSON.stringify(cobj);
+    console.log("mrf_ccmd - cmd = "+cmd+" jso = "+jso);
     return jso;
 
 }
 
+function mrf_update_div(obj){
+    $("#"+obj.id).html(obj.value)
 
+}
+
+
+function mrf_heating_tempsensors(data){
+
+    for (var ch in data){
+        cdata = data[ch]
+        console.log("ch "+ch+" = "+cdata)
+        jsel = '#tempsensor-'+ch+'-value'
+        htm = ""+cdata.temperature.toFixed(3)
+        console.log("trying jsel "+jsel+" with data "+htm)
+        $(''+jsel).html(htm)
+    }
+
+}
 //incoming socket command handler
 function mrf_command(obj){
-    console.log("mrf_command : got")
-    console.log(obj)
+    console.log("mrf_command : got");
+    console.log(obj);
+    if (obj.cmd == 'update-div'){
+        mrf_update_div(obj.data);
+
+    } else if (obj.cmd == 'tempsensors'){
+        mrf_heating_tempsensors(obj.data);  // FIXME - separate APP in js!!
+    }
+    
+    
+    
 
 }
 

@@ -23,7 +23,7 @@ helpline_webchat = 'https://'+publicdomain+'/chat'
 sess_cookie = "MRFLANDSESSID"
 public_cookie = "MFLANDPUBLICID"
 
-session_timeout = 1200  # seconds
+session_timeout = 60*60*24  # seconds
 import logging
 
 log_level = logging.INFO

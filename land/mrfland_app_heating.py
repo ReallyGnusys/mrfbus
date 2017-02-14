@@ -91,23 +91,23 @@ class Pt1000State(object):
             updated.append(self.temps[ch].new_reading(state.milliohms[ch]))
             
         msg = ""
-        js = '{ "tempsensors" : {'
+
+        tsensors = {}
         notfirst = False
         for ch in xrange(Pt1000MaxChanns):
             if updated[ch]:
+                tsensors[ch] = {}
+                tsensors[ch]["temperature"] = self.temps[ch].temperature
+                tsensors[ch]["milliohms"]   = self.temps[ch].milliohms                             
                 msg += "ch %d) %.3f :"%(ch,updated[ch])
-                if notfirst :
-                    js += ',' #yuk
-                notfirst = True
-                js += ' %d : { "temp" : %.3f, "milliohms" : %d }'%\
-                      (ch,self.temps[ch].temperature,self.temps[ch].milliohms)
-        js += '}}'
         
         self.last_reading = now
-                    
+
+        robj = {"tempsensors" : tsensors }
+                             
         if msg != "":
             self.log.info("Pt1000State updated %s"%msg)
-            return js
+            return robj
         return
     
 class MrflandAppHeating(MrflandApp):
