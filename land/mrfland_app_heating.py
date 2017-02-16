@@ -62,7 +62,9 @@ class Pt1000State(object):
         self.address = address
         self.log = log
         self.temps = []
+        self.updated = []
         self.last_reading = None
+        
         for i in xrange(Pt1000MaxChanns):
             self.temps.append(Pt1000TempSensor(self.address,i))
 
@@ -100,7 +102,10 @@ class Pt1000State(object):
                 tsensors[ch]["temperature"] = self.temps[ch].temperature
                 tsensors[ch]["milliohms"]   = self.temps[ch].milliohms                             
                 msg += "ch %d) %.3f :"%(ch,updated[ch])
-        
+                if ch not in self.updated:
+                    self.updated.append(ch)
+                self.log.info("ch %s was updated now %s"%(ch,repr(self.updated)))
+
         self.last_reading = now
 
         robj = {"tempsensors" : tsensors }
@@ -109,6 +114,22 @@ class Pt1000State(object):
             self.log.info("Pt1000State updated %s"%msg)
             return robj
         return
+    
+    def curr_state(self):
+
+        if len(self.updated) == 0:
+            self.log.info("%s curr_state updated %s returning None"%(self.__class__.__name__,repr(self.updated)))
+            return None                    
+        tsensors = {}
+        for ch in self.updated:            
+            tsensors[ch] = {}
+            tsensors[ch]["temperature"] = self.temps[ch].temperature
+            tsensors[ch]["milliohms"]   = self.temps[ch].milliohms                             
+            
+
+        robj = {"tempsensors" : tsensors }
+        self.log.info("%s curr_state returning %s"%(self.__class__.__name__,repr(robj)))
+        return robj
     
 class MrflandAppHeating(MrflandApp):
 
@@ -141,7 +162,14 @@ class MrflandAppHeating(MrflandApp):
 
         
             
-
+    def curr_state(self):
+        rv = []
+        for add in self._pt1000_addrs:
+            st = self.pt1000state[add].curr_state()
+            if st:
+                rv.append(st)
+        return rv
+    
     def fyi(self,hdr,rsp, robj, rdata):
         self.log.debug("heating app got hdr %s"%repr(hdr))
         if hdr.usrc in self._pt1000_addrs :

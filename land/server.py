@@ -128,6 +128,9 @@ def json_parse(str):
         return None
     return ob
 
+
+server = None  # FIXME this is shonky just to get to our own methods added to  server from handlers
+
 class IndexHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
@@ -170,20 +173,24 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                  }
         mrfland.comm.add_client(self.id,cdata)
 
-        ro = mrfland.RetObj()
-        ro.b(mrfland.atime())
+        ro = server.welcomepack()  # FIXME little ugly
         
         mrfland.comm.comm(self.id,ro)
 
-
+        
     def on_message(self, message):
         alog.info("client message on wsid ="+self.id+" "+str(message))
 
         return
     
     def on_close(self):
+        self.id = self.get_argument("Id")
+        alog.info("*************************")
+        alog.info("client closed ws:Id="+self.id)
         alog.info("ws handler close")
-        return
+        alog.info("*************************")
+        mrfland.comm.del_client(self.id)
+    
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
         self.set_header("Cache-control", "no-cache")
@@ -211,7 +218,9 @@ class MrflandServer(object):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
+        global server
         self.log = log
+        server = self  # FIXME ouch
         self.apps = apps
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
@@ -252,6 +261,20 @@ class MrflandServer(object):
         self.stub_out_str_path = stub_out_str_path
 
         self._connect_to_mrfnet()
+        
+    def welcomepack(self):  #  build welcome pack of objects from each app
+        ro = mrfland.RetObj()
+
+
+        
+        for appn in self.apps.keys(): # apps see everything
+            ob = self.apps[appn].curr_state()
+            self.log.info("welcomepack app %s curr_state %s"%(appn,ob))
+            for cmdobj in ob:
+                for mcmd in cmdobj.keys():
+                    ro.a(mrfland.mrf_cmd(mcmd,cmdobj[mcmd]))
+
+            return ro
 
     def parse_input(self,resp):
         """

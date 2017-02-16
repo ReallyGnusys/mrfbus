@@ -2,7 +2,8 @@ test = True
 installdir = '/v/share/projects/msp/mrfbus/land/'
 
 instance = 'heat-1'
-domain = 'localdom'
+#domain = 'localdom'
+domain = None   # save adding .localdom to req urls
 host = 'lily'
 
 port = 8888  # real port used by tornado
@@ -15,11 +16,11 @@ dbuser = 'asa_sys'
 
 wsprot = 'ws://'  # or 'wss://'
 
-hostdomain =  host+"."+domain
-userdomain =  hostdomain # 'user.'+domain
+#hostdomain =  host+"."+domain
+#userdomain =  hostdomain # 'user.'+domain
 
-publicdomain = 'www.'+domain
-helpline_webchat = 'https://'+publicdomain+'/chat'
+#publicdomain = 'www.'+domain
+#helpline_webchat = 'https://'+publicdomain+'/chat'
 sess_cookie = "MRFLANDSESSID"
 public_cookie = "MFLANDPUBLICID"
 

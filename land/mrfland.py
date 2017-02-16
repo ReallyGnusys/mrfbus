@@ -211,7 +211,11 @@ def search_userdb(key,value):
 
     
 def ws_url(wsid):
-    url = install.wsprot+install.host+'.'+install.domain+':'+str(install.proxy_port)+'/ws?Id='+wsid
+    url = install.wsprot+install.host
+    if install.domain:
+        url += '.'+install.domain
+    url += ':'+str(install.proxy_port)+'/ws?Id='+wsid
+    #url = install.wsprot+install.host+'.'+install.domain+':'+str(install.proxy_port)+'/ws?Id='+wsid
     return url
 
 def staff_info():

@@ -26,7 +26,7 @@ conn = None
 
 remarg = re.compile(r'[?].*$')
 
-redemohost = re.compile(r'^'+install.hostdomain+':'+str(install.port)+'$')
+#redemohost = re.compile(r'^'+install.hostdomain+':'+str(install.port)+'$')
 
 login_tp = tornado.template.Template(templates.login_tp)
 asa_tp = tornado.template.Template(templates.asa_tp)
