@@ -57,7 +57,14 @@ DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
 
 include ${ARCHDIR}/Makefile.inc
 include ${DEVDIR}/Makefile.inc
-include ${APPDIR}/Makefile.inc
+
+APPMAKEF=${APPDIR}/Makefile*.inc
+
+ifneq ($(wildcard ${APPDIR}/Makefile*.inc),)
+	include ${APPMAKEF}
+endif 
+
+#include ${APPDIR}/Makefile*.inc
 
 
 APP_CMDS=${APPSRC}/mrf_app_cmds.c
