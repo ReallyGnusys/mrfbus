@@ -1,8 +1,12 @@
 #!/bin/bash
 
+
+
 #start mrfbus instances
 TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
+
+[ ! -d ${LOGDIR} ]  && mkdir -p ${LOGDIR} 
 #
 
 stdbuf -oL examples/host/bin/host_0x01 > ${LOGDIR}/host_0x01.log &

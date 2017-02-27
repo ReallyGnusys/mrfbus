@@ -29,7 +29,9 @@ typedef enum mrf_app_cmd_code
    mrf_app_cmd_spi_data  = 4,
    mrf_app_cmd_config_adc  = 5,
    mrf_app_cmd_read_state  = 6,
-   MRF_NUM_APP_CMDS = 7
+   mrf_app_cmd_get_relay  = 7,
+   mrf_app_cmd_set_relay  = 8,
+   MRF_NUM_APP_CMDS = 9
  } MRF_APP_CMD_CODE;
 
 #endif

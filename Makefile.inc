@@ -44,7 +44,8 @@ LSTD=${MRFMAKE}lst
 
 BIN=${MRFMAKE}bin
 #APPSRC=${MRFMAKE}src
-APPSRC=${MRFHOME}/apps/${APP}
+APPDIR=${MRFHOME}/apps/${APP}
+APPSRC=${APPDIR}
 
 TARG=${BIN}/${DEVTYPE}_${MRFID}
 LST=${LSTD}/${DEVTYPE}_${MRFID}.lst
@@ -56,9 +57,11 @@ DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
 
 include ${ARCHDIR}/Makefile.inc
 include ${DEVDIR}/Makefile.inc
+include ${APPDIR}/Makefile.inc
 
 
 APP_CMDS=${APPSRC}/mrf_app_cmds.c
+
 APPINCL=-I${APPSRC}
 
 
@@ -66,7 +69,7 @@ APPINCL=-I${APPSRC}
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
 	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o \
-	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS} ${DEVOBJS}
+	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS} ${DEVOBJS}  ${APPOBJS}
 
 ifeq (,$(wildcard ${APPSRC}/main.c))
      MAIN := ${MSRC}/main.c
@@ -77,7 +80,7 @@ endif
 CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${BFLAGS}
 
 
-ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${TARG} ${LST} ${SIZEREP}
+ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${APPOBJS} ${TARG} ${LST} ${SIZEREP}
 
 clean : 
 	rm -rf ${MOBJ}
@@ -94,8 +97,6 @@ ${MOBJ}:
 ${LSTD}:
 	mkdir -p ${LSTD}
 
-
-
 ${TARG} :
 	${GCC} ${CCFLAGS} ${MAIN} ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
@@ -106,14 +107,9 @@ ${SIZEREP}: ${TARG}
 	${SIZE} ${TARG} > ${SIZEREP}
 	cat ${SIZEREP}
 
-${MOBJ}/mrf_app.o: ${APPSRC}/mrf_app.c
-	${GCC}  -c $(CCFLAGS) ${APPSRC}/mrf_app.c -o $@
 
-
-${MOBJ}/mrf_app_cmds.o: ${APP_CMDS}
-	${GCC}  -c $(CCFLAGS) ${APP_CMDS} -o $@
-
-
+${MOBJ}/%.o: ${APPDIR}/%.c
+	${GCC}  -c $(CCFLAGS) $< -o $@
 
 
 ${MOBJ}/%.o: ${MSRC}/%.c

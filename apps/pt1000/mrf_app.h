@@ -62,7 +62,11 @@ typedef struct  __attribute__ ((packed))   {
   uint32 ref_i;
 } MRF_PKT_PT1000_STATE;
   
-  
+typedef struct  __attribute__ ((packed))   {
+  uint8 chan;  
+  uint8 val;  
+} MRF_PKT_RELAY_STATE;
+    
 
 /* mrf_app_task_test
    returns current MRF_PKT_TIMEDATE 
@@ -77,5 +81,7 @@ MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_app_read_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 
 MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp); // read ptd device state
+MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay
+MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay state
 
 #endif

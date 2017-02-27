@@ -64,13 +64,16 @@ class staff_socket(object):
         self.stype = stype
         self.ip = ip
         self.expire = None
-        
+    def __repr__(self):
+        s = "%s wsid %s sessid %s username %s"%(self.__class__.__name__,self.wsid,self.sessid,self.username)
+        return s
     def close(self):
         self.closed = datetime.now()
         self.isopen = False
         
 class mrf_comm(object):
-    def __init__(self):
+    def __init__(self,log):
+        self.log = log
         self.clients = dict()
         self.sockets = {}
 
@@ -130,9 +133,12 @@ class mrf_comm(object):
         return mrf_cmd('session-expire',data)
         
     def session_isvalid(self,sessid):
-
+        self.log.info("checking session_isvalid %s"%sessid)
         for wsid in self.sockets.keys():
             skt = self.sockets[wsid]
+            self.log.info("wsid %s  skt %s"%(wsid,skt))
+            if skt.sessid == sessid:
+                self.log.info("sessid matched for wsid %s"%wsid)
             if skt.expire > int(time.time()):
                 return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire, 'type': skt.stype , 'username' : skt.username}
             else:
@@ -153,7 +159,7 @@ class mrf_comm(object):
             self.broadcast(ob)                
         return 1
 
-comm = mrf_comm()   # FIXME! 
+comm = mrf_comm(log=alog)   # FIXME! 
     
 class RetObj:
     def __init__ (self,touch = False):

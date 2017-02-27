@@ -25,6 +25,9 @@
 #include  <msp430.h>
 #include "mrf_pinmacros.h"
 
+#define NUM_RELAY_CHANNELS 8
+#include "mrf_relays.h"
+
 // all gpio pins to TI EVM 
 
 
@@ -334,7 +337,7 @@ int mrf_app_init(){
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
   mrf_spi_init();
   ads1148_init();
-
+  
   rtc_rdy_enable(on_second);
 }
 
@@ -463,5 +466,24 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 
 
+  return MRF_CMD_RES_OK;
+}
+
+MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  MRF_PKT_RELAY_STATE *rs;
+  mrf_debug("mrf_app_task_relay entry\n");
+  rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  set_relay_state(rs->chan,rs->val);
+  rs->val = get_relay_state(rs->chan);
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  return MRF_CMD_RES_OK;
+}
+
+MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  MRF_PKT_RELAY_STATE *rs;
+  mrf_debug("mrf_app_task_relay entry\n");
+  rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  rs->val = get_relay_state(rs->chan);
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
   return MRF_CMD_RES_OK;
 }

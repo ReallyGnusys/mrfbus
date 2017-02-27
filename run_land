@@ -4,6 +4,7 @@
 TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
 #
+[ ! -d ${LOGDIR} ]  && mkdir -p ${LOGDIR} 
 
 stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
 h01_pid=$!
