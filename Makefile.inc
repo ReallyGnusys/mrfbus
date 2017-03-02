@@ -58,10 +58,10 @@ DEVDIR=${ARCHDIR}/devices/${DEVTYPE}
 include ${ARCHDIR}/Makefile.inc
 include ${DEVDIR}/Makefile.inc
 
-APPMAKEF=${APPDIR}/Makefile*.inc
+APPMAKEF=${APPDIR}/Makefile.inc
 
-ifneq ($(wildcard ${APPDIR}/Makefile*.inc),)
-	include ${APPMAKEF}
+ifneq ($(wildcard ${APPDIR}/Makefile.inc),)
+include ${APPMAKEF}
 endif 
 
 #include ${APPDIR}/Makefile*.inc

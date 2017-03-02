@@ -4,7 +4,9 @@ import tornado.ioloop
 import tornado.web
 import tornado.websocket
 import tornado.httpserver
+import tornado.tcpserver
 from tornado.options import define, options, parse_command_line
+import socket
 import logging
 import re
 import sys
@@ -26,7 +28,7 @@ from pubsock import PubSocketHandler
 from mrfland_state import MrflandState
 from mrf_structs import *
 from mrfland_app_heating import MrflandAppHeating
-
+import mrf_settings
 import mrfland
 
 clients = dict()
@@ -210,7 +212,77 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
             self.send_error(403)
             return None
 
+class SimpleTcpClient(object):
+    client_id = 0
+ 
+    def __init__(self, stream,log):
+        #super(type(self)).__init__(self)
+        SimpleTcpClient.client_id += 1
+        self.log = log
+        self.id = SimpleTcpClient.client_id
+        print "SimpleTcpClient constuctor %d"%self.id
+        self.log.info("SimpleTcpClient constuctor %d"%self.id)
+        self.stream = stream
+ 
+        self.stream.socket.setsockopt(
+            socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        self.stream.socket.setsockopt(
+            socket.IPPROTO_TCP, socket.SO_KEEPALIVE, 1)
+        self.stream.set_close_callback(self.on_disconnect)
+ 
+ 
+    @tornado.gen.coroutine
+    def on_disconnect(self):
+        self.log.info("disconnected")
+        yield []
+ 
+    @tornado.gen.coroutine
+    def dispatch_client(self):
+        try:
+            while True:
+                line = yield self.stream.read_until(b'\n')
+                self.log.info("got line %s"%line)
+                #s = line.decode('utf-8').strip()
+                #self.log('got |%s|' % repr(s))
+                ob = json_parse(line)
+                if ob:
+                    self.log.info("json ob : %s"%repr(ob))
+                else:
+                    self.log.warn("no json ob decoded in %s"%repr(line))
+                yield self.stream.write(line)
+        except tornado.iostream.StreamClosedError:
+            pass
+ 
+    @tornado.gen.coroutine
+    def on_connect(self):
+        raddr = 'closed'
+        try:
+            raddr = '%s:%d' % self.stream.socket.getpeername()
+        except Exception:
+            pass
+        self.log.info('new, %s' % raddr)
+ 
+        yield self.dispatch_client()
+ 
+    #def log(self, msg, *args, **kwargs):
+    #    print('[connection %d] %s' % (self.id, msg.format(*args, **kwargs)))
+ 
+        
 
+class MrfTcpServer(tornado.tcpserver.TCPServer):
+    def __init__(self,log):
+        tornado.tcpserver.TCPServer.__init__(self)
+        self.log = log
+        
+    @tornado.gen.coroutine
+    def handle_stream(self, stream, address):
+        """
+        Called for each new connection, stream.socket is
+        a reference to socket object
+        """
+        connection = SimpleTcpClient(stream,self.log)
+        yield connection.on_connect()  
+        
 class MrflandServer(object):
 
     def __init__(self,log,apps={}):
@@ -228,6 +300,7 @@ class MrflandServer(object):
         self._start_mrfnet(apps=apps)
 
         self._start_webapp()
+        self._start_tcp_service()
         ct = time.time() + 5  # start tick
         self.ioloop = tornado.ioloop.IOLoop.instance()
         self.ioloop.add_timeout(ct,self.time_tick)
@@ -388,7 +461,11 @@ class MrflandServer(object):
         self.log.info( "opened pipes, trying to open pipe to stub")
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
         self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
-        
+
+    def _start_tcp_service(self):
+        self.tcp_server = MrfTcpServer(log = self.log)
+        self.tcp_server.listen(mrf_settings.portnum)
+        self.log.info("started tcpserver on port %d"%mrf_settings.portnum)
     def _start_webapp(self):        
         
         self._web_static_handler = NoCacheStaticFileHandler

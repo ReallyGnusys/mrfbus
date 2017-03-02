@@ -135,9 +135,7 @@ int mrf_app_init(){
        // the other end ( mrfland ) is trying to do the same thing in the other
        // direction. Please FIXME, get rid of named pipes for comms, and use sockets in preference.
        // in meantime we're opening each time time for writing ... see below
-  
   // open output application response pipe
-
   sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   printf("created pipe %s res %d\n",sname,tmp);

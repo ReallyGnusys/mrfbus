@@ -112,16 +112,16 @@ class struct_thread(threading.Thread):
 
 class StubIf(object):
     def __init__(self):
-
         self.q = Queue.Queue()
         self.stub_out_pipe_path = "/tmp/mrf_bus/0-app-out"
         self.stub_struct_pipe_path = "/tmp/mrf_bus/0-app-str"
-        
+        self.app_fifo_pipe_path = "/tmp/mrf_bus/0-app-in"
         self.rx_thread = rx_thread(self.stub_out_pipe_path, self.q)
         self.rx_thread.start()
-
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
+        print "StubIf trying to open app_fifo %s"%self.app_fifo_pipe_path
+        self.app_fifo = open(self.app_fifo_pipe_path,"w")
         print "StubIf.__init__  opened app_fifo "
+        print repr(self.app_fifo)
         outfname = "/tmp/mrf_bus/0-app-out"
         self.app_cmds = {}  # need to override in some ugly way to allow app command testing for now
 
@@ -233,6 +233,7 @@ class StubIf(object):
 
 class StubTestCase(unittest.TestCase):
     def setUp(self):
+        print "StubTestCase setUp : entry"
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             print "CTRL-C pressed , quitting"
