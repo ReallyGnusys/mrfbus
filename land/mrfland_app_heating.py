@@ -31,10 +31,11 @@ Pt1000MaxChanns = 7
 
 
 class Pt1000TempSensor(object):
-    def __init__(self,address,channel):
+    def __init__(self,address,channel,log):
         self.label = ""
         self.address = address        
         self.channel = channel
+        self.log = log
         self.milliohms = 0
         self.temperature = -273.16
     def res_to_temp(self,milliohms):
@@ -51,6 +52,7 @@ class Pt1000TempSensor(object):
         return "Channel %d milliohms %7d %7.3f C  label %s"%(self.channel,self.milliohms,self.temperature, self.label)
     
     def new_reading(self,milliohms):
+        #self.log.info("new_reading chan %d : %d milliohms"%(self.channel,milliohms))
         if milliohms == self.milliohms:
             return None
         self.milliohms = milliohms
@@ -66,7 +68,7 @@ class Pt1000State(object):
         self.last_reading = None
         
         for i in xrange(Pt1000MaxChanns):
-            self.temps.append(Pt1000TempSensor(self.address,i))
+            self.temps.append(Pt1000TempSensor(self.address,i,self.log))
 
             
     def __repr__(self):

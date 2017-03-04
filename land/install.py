@@ -4,7 +4,7 @@ installdir = '/v/share/projects/msp/mrfbus/land/'
 instance = 'heat-1'
 #domain = 'localdom'
 domain = None   # save adding .localdom to req urls
-host = 'lily'
+host = 'ted'
 
 port = 8888  # real port used by tornado
 proxy_port = 8888  # proxy port used by clients ( handled by nginx )

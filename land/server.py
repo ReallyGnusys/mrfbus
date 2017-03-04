@@ -28,7 +28,6 @@ from pubsock import PubSocketHandler
 from mrfland_state import MrflandState
 from mrf_structs import *
 from mrfland_app_heating import MrflandAppHeating
-import mrf_settings
 import mrfland
 
 clients = dict()
@@ -91,6 +90,7 @@ dcmds = {
 def action_client_cmd(id,username,msgob):
     if not msgob.has_key('ccmd'):
         errmsg = "socket id "+id+" assigned to "+username+" sent invalid packet:"+str(msgob)
+        alog.error(errmsg)
         return
 
     cmd = msgob['ccmd']
@@ -136,10 +136,7 @@ server = None  # FIXME this is shonky just to get to our own methods added to  s
 class IndexHandler(tornado.web.RequestHandler):
     @tornado.web.asynchronous
     def get(self):
-        #self.write("This is your response")
         self.render("index.html")
-        #we don't need self.finish() because self.render() is fallowed by self.finish() inside tornado
-        #self.finish()
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self, *args):        
@@ -215,10 +212,11 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
 class SimpleTcpClient(object):
     client_id = 0
  
-    def __init__(self, stream,log):
+    def __init__(self, stream,log, callback):
         #super(type(self)).__init__(self)
         SimpleTcpClient.client_id += 1
         self.log = log
+        self.callback = callback
         self.id = SimpleTcpClient.client_id
         print "SimpleTcpClient constuctor %d"%self.id
         self.log.info("SimpleTcpClient constuctor %d"%self.id)
@@ -247,6 +245,12 @@ class SimpleTcpClient(object):
                 ob = json_parse(line)
                 if ob:
                     self.log.info("json ob : %s"%repr(ob))
+                    if ob.has_key('dest') and ob.has_key('cmd'):
+                        if ob.has_key('data'):
+                            data = ob['data']
+                        else:
+                            data = None
+
                 else:
                     self.log.warn("no json ob decoded in %s"%repr(line))
                 yield self.stream.write(line)
@@ -270,9 +274,10 @@ class SimpleTcpClient(object):
         
 
 class MrfTcpServer(tornado.tcpserver.TCPServer):
-    def __init__(self,log):
+    def __init__(self,log,callback):
         tornado.tcpserver.TCPServer.__init__(self)
         self.log = log
+        self.callback = callback
         
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -280,9 +285,9 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         Called for each new connection, stream.socket is
         a reference to socket object
         """
-        connection = SimpleTcpClient(stream,self.log)
+        connection = SimpleTcpClient(stream,self.log, self.callback)
         yield connection.on_connect()  
-        
+
 class MrflandServer(object):
 
     def __init__(self,log,apps={}):
@@ -334,6 +339,79 @@ class MrflandServer(object):
         self.stub_out_str_path = stub_out_str_path
 
         self._connect_to_mrfnet()
+
+    def _activate(self):  # ramp up tick while responses or txqueue outstanding
+        if not self._active:
+            #self.log.warn("activating!")
+            self.active_timer = 0
+            self._active = True
+            self.tfd.settime(value=0.001, interval = 0.01)
+
+        
+    def queue_cmd(self,tag, dest, cmd_code,dstruct=None):
+        if self.active_cmd:            
+            self.q.put((tag, dest,cmd_code,dstruct))
+        else:
+            self._next_cmd((tag, dest,cmd_code,dstruct))
+            self._activate()
+
+    def _next_cmd(self,cmdarr):
+        (tag, dest,cmd_code,dstruct) = cmdarr
+        self.resp_timer = 0
+        self.active_cmd = cmdarr            
+        self._run_cmd(dest,cmd_code,dstruct)
+
+    def _run_cmd(self,dest,cmd_code,dstruct = None):
+        self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
+        if dest > 255:
+            print "dest > 255"
+            return -1
+
+        if cmd_code in MrfSysCmds.keys():
+            paramtype = MrfSysCmds[cmd_code]['param']
+
+        else:
+            print "unrecognised cmd_code (01xs) %d"%cmd_code
+            return -1
+
+        if type(dstruct) == type(None) and type(paramtype) != type(None):
+            print "No param sent , expected %s"%type(paramtype)
+            return -1
+        
+        if type(paramtype) == type(None) and type(dstruct) != type(None):
+            print "Param sent ( type %s ) but None expected"%type(dstruct)
+            return -1
+
+        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
+            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
+            return -1
+
+        mlen = 4
+        if dstruct:
+            mlen += len(dstruct)
+        if mlen > 64:
+            print "mlen = %d"%mlen
+            return -1
+        msg = bytearray(mlen)
+        msg[0] = mlen
+        msg[1] = dest
+        msg[2] = cmd_code
+        
+        n = 3
+        if dstruct:
+            dbytes = dstruct.dump()
+            for b in dbytes:
+                msg[ n ] =  b
+                n += 1
+
+        csum = 0
+        for i in xrange(mlen -1):
+            csum += int(msg[i])
+        csum = csum % 256
+        msg[mlen - 1] = csum
+        self.app_fifo.write(msg)
+        self.app_fifo.flush()
+        return 0
         
     def welcomepack(self):  #  build welcome pack of objects from each app
         ro = mrfland.RetObj()
@@ -457,15 +535,16 @@ class MrflandServer(object):
         else:
             self.log.info("opened data fifo %d"%self.sfd)
 
-
         self.log.info( "opened pipes, trying to open pipe to stub")
         self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
         self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
-
+        
+    def _callback(self, tag, cmd):
+        return
     def _start_tcp_service(self):
-        self.tcp_server = MrfTcpServer(log = self.log)
-        self.tcp_server.listen(mrf_settings.portnum)
-        self.log.info("started tcpserver on port %d"%mrf_settings.portnum)
+        self.tcp_server = MrfTcpServer(log = self.log, callback = self._callback )
+        self.tcp_server.listen(install.port)
+        self.log.info("started tcpserver on port %d"%install.port)
     def _start_webapp(self):        
         
         self._web_static_handler = NoCacheStaticFileHandler
@@ -502,7 +581,7 @@ class MrflandServer(object):
     def time_tick(self):
         ct = time.time() + 5
         tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
-        alog.debug("time_tick")
+        #self.log.info("time_tick")
 
 alog.info('Application started')
 if __name__ == '__main__':

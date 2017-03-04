@@ -225,8 +225,6 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   uint8 *buff = (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
 
   mrf_debug("mrf_task_usr_struct (stub) : bnum %u type = %u rlen %u msgid %u\n",bnum,resp->type,resp->rlen,resp->msgid);
-
-
   _mrf_print_hex_buff(buff,buff[0]);
 
   if (resp->type == mrf_cmd_device_info){

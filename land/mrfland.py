@@ -37,7 +37,7 @@ from mrflog import mrf_log
 
 alog = mrf_log()
 
-def is_asa_ob(ob):
+def is_mrf_obj(ob):
     if ob == None:
         return False
     if type(ob) != type({}):
@@ -167,20 +167,20 @@ class RetObj:
         self._b = []
         self.touch = touch
     def a(self,ob=None):
-        if is_asa_ob(ob):
+        if is_mrf_obj(ob):
             self._a.append(ob)
         elif type(ob) == type([]):
             for obe in ob:
-                if is_asa_ob(obe):
+                if is_mrf_obj(obe):
                     self._a.append(obe)
         elif ( ob == None):
             return self._a
     def b(self,ob=None):
-        if is_asa_ob(ob):
+        if is_mrf_obj(ob):
             self._b.append(ob)
         elif type(ob) == type([]):
             for obe in ob:
-                if is_asa_ob(obe):
+                if is_mrf_obj(obe):
                     self._b.append(obe)
         elif ( ob == None):
             return self._b
