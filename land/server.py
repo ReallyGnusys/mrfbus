@@ -250,7 +250,9 @@ class SimpleTcpClient(object):
                             data = ob['data']
                         else:
                             data = None
-
+                        self.callback(self.id, ob['dest'],ob['cmd'],data)
+                    else:
+                        self.log.info("no valid cmd decoded in  %s"%repr(line))
                 else:
                     self.log.warn("no json ob decoded in %s"%repr(line))
                 yield self.stream.write(line)
@@ -271,7 +273,19 @@ class SimpleTcpClient(object):
     #def log(self, msg, *args, **kwargs):
     #    print('[connection %d] %s' % (self.id, msg.format(*args, **kwargs)))
  
-        
+
+# little nicer to reference if we queue Cmds as objects    
+class MrfCmdObj(object):
+    def __init__(self, tag, dest, cmd_code,dstruct=None):
+        self.tag = tag
+        self.dest = dest
+        self.cmd_code = cmd_code
+        self.dstruct = dstruct
+    def __repr__(self):
+        s = "%s: tag %d dest %d cmd_code %d dstruct %s"%\
+            (self.__class__.__name__,self.tag,self.dest,self.cmd_code,repr(self.dstruct))
+        return s
+
 
 class MrfTcpServer(tornado.tcpserver.TCPServer):
     def __init__(self,log,callback):
@@ -306,9 +320,11 @@ class MrflandServer(object):
 
         self._start_webapp()
         self._start_tcp_service()
-        ct = time.time() + 5  # start tick
+        self._active = False
         self.ioloop = tornado.ioloop.IOLoop.instance()
-        self.ioloop.add_timeout(ct,self.time_tick)
+        self._deactivate()  # start quiet
+        #ct = time.time() + 5  # start tick
+        #self.ioloop.add_timeout(ct,self.time_tick)
         self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
         self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
         
@@ -342,64 +358,74 @@ class MrflandServer(object):
 
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if not self._active:
-            #self.log.warn("activating!")
+            self.log.warn("activating!")
             self.active_timer = 0
             self._active = True
-            self.tfd.settime(value=0.001, interval = 0.01)
+            ct = time.time() + 0.02
+            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+            
+    def _deactivate(self):  # ramp down tick when quiet
+        self.log.warn("deactivating!")
+        self._active = False
+        self.active_cmd = None
+            #ct = time.time() + 5
+            #tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
 
-        
+
     def queue_cmd(self,tag, dest, cmd_code,dstruct=None):
-        if self.active_cmd:            
-            self.q.put((tag, dest,cmd_code,dstruct))
+        cobj = MrfCmdObj(tag, dest, cmd_code,dstruct)
+        if self.active_cmd:
+            self.log.info("queuing cmd %s"%repr(cobj))
+            self.q.put(cobj)
         else:
-            self._next_cmd((tag, dest,cmd_code,dstruct))
+            self.log.info("running cmd %s"%repr(cobj))
+            self._next_cmd(cobj)
             self._activate()
 
-    def _next_cmd(self,cmdarr):
-        (tag, dest,cmd_code,dstruct) = cmdarr
+    def _next_cmd(self,cobj):
         self.resp_timer = 0
-        self.active_cmd = cmdarr            
-        self._run_cmd(dest,cmd_code,dstruct)
+        self.active_cmd = cobj            
+        self._run_cmd(cobj)
 
-    def _run_cmd(self,dest,cmd_code,dstruct = None):
-        self.log.debug("cmd : dest %d cmd_code %s"%(dest,repr(cmd_code)))
-        if dest > 255:
+    def _run_cmd(self,cobj):
+        self.log.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
+        if cobj.dest > 255:
             print "dest > 255"
             return -1
 
-        if cmd_code in MrfSysCmds.keys():
-            paramtype = MrfSysCmds[cmd_code]['param']
+        if cobj.cmd_code in MrfSysCmds.keys():
+            paramtype = MrfSysCmds[cobj.cmd_code]['param']
 
         else:
-            print "unrecognised cmd_code (01xs) %d"%cmd_code
+            print "unrecognised cmd_code (01xs) %d"%cobj.cmd_code
             return -1
 
-        if type(dstruct) == type(None) and type(paramtype) != type(None):
+        if type(cobj.dstruct) == type(None) and type(paramtype) != type(None):
             print "No param sent , expected %s"%type(paramtype)
             return -1
         
-        if type(paramtype) == type(None) and type(dstruct) != type(None):
-            print "Param sent ( type %s ) but None expected"%type(dstruct)
+        if type(paramtype) == type(None) and type(cobj.dstruct) != type(None):
+            print "Param sent ( type %s ) but None expected"%type(cobj.dstruct)
             return -1
 
-        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
-            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
+        if type(cobj.dstruct) != type(None) and type(cobj.dstruct) != type(paramtype()):
+            print "Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype()))
             return -1
 
         mlen = 4
-        if dstruct:
-            mlen += len(dstruct)
+        if cobj.dstruct:
+            mlen += len(cobj.dstruct)
         if mlen > 64:
             print "mlen = %d"%mlen
             return -1
         msg = bytearray(mlen)
         msg[0] = mlen
-        msg[1] = dest
-        msg[2] = cmd_code
+        msg[1] = cobj.dest
+        msg[2] = cobj.cmd_code
         
         n = 3
-        if dstruct:
-            dbytes = dstruct.dump()
+        if cobj.dstruct:
+            dbytes = cobj.dstruct.dump()
             for b in dbytes:
                 msg[ n ] =  b
                 n += 1
@@ -409,16 +435,19 @@ class MrflandServer(object):
             csum += int(msg[i])
         csum = csum % 256
         msg[mlen - 1] = csum
+        self.log.info("msg len is %d"%len(msg))
+        self._app_fifo_write(msg)
+        return 0
+    def _app_fifo_write(self,msg):
         self.app_fifo.write(msg)
         self.app_fifo.flush()
-        return 0
+        #self.app_fifo.close()
+        self.log.info("written to app_fifo")
         
     def welcomepack(self):  #  build welcome pack of objects from each app
         ro = mrfland.RetObj()
-
-
         
-        for appn in self.apps.keys(): # apps see everything
+        for appn in self.apps.keys():
             ob = self.apps[appn].curr_state()
             self.log.info("welcomepack app %s curr_state %s"%(appn,ob))
             for cmdobj in ob:
@@ -466,6 +495,7 @@ class MrflandServer(object):
         param.load(param_data)
         #print "resp should be %s"%repr(param)
         respdat = bytes(resp)[len(hdr)+len(param):]
+        #FIXME - this should be decoded here...somehow .. or passed to applications
         
         return hdr , param , respdat
 
@@ -500,16 +530,19 @@ class MrflandServer(object):
                     c.send(rv)
                 
         # check response is for active_cmd
-        if self.active_cmd and hdr.usrc == self.active_cmd[1]:  # FIXME - make queue items a bit nicer
+        if self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
+            self.log.info("got response for active command %s"%repr(self.active_cmd))
             self.active_cmd = None
+            self.log.info("rsp %s rdata %s"%(rsp,rdata))
+            
     def _resp_handler(self,*args, **kwargs):
-        self.log.debug("Input on response pipe")
+        self.log.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
         hdr , rsp, rdata = self.parse_input(resp)
 
         if hdr:                    
-            self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
+            self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
             self.handle_response(hdr, rsp , rdata)
 
     def _struct_handler(self,*args, **kwargs):
@@ -535,16 +568,18 @@ class MrflandServer(object):
         else:
             self.log.info("opened data fifo %d"%self.sfd)
 
-        self.log.info( "opened pipes, trying to open pipe to stub")
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w+")
+        self.log.info( "trying to open pipe to stub")
+        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
         self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
-        
-    def _callback(self, tag, cmd):
-        return
+
+    def _callback(self, tag, dest, cmd,data=None):
+        self.log.info("_callback tag %d dest %d cmd %s  data %s"%(tag,dest,cmd,repr(data)))
+        self.queue_cmd(tag, dest, cmd,data)
+
     def _start_tcp_service(self):
         self.tcp_server = MrfTcpServer(log = self.log, callback = self._callback )
-        self.tcp_server.listen(install.port)
-        self.log.info("started tcpserver on port %d"%install.port)
+        self.tcp_server.listen(install.tcpport)
+        self.log.info("started tcpserver on port %d"%install.tcpport)
     def _start_webapp(self):        
         
         self._web_static_handler = NoCacheStaticFileHandler
@@ -562,27 +597,55 @@ class MrflandServer(object):
         
         self.nsettings = dict(
         )
-        """
         self.nsettings = dict({  "ssl_options" : 
-                           { "certfile": install._ssl_cert_file,
-                     "keyfile": install._ssl_key_file
-                   }
-        }
-        )
-        """
+                    { "certfile": install._ssl_cert_file,
+                      "keyfile": install._ssl_key_file
+                    }
+        })
 
-
+        self.log.info("starting http server certfile %s keyfile %s"%\
+                      (install._ssl_cert_file,install._ssl_key_file))
+                      
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
 
         self.http_server.listen(options.port)
 
-        
+
+    def _check_if_anything(self):
+        if self.q.empty():
+            self.log.info("_check_if_anything -queue empty")
+            self._deactivate()
+        else:
+            self.log.info("_check_if_anything : running next command")
+            self._next_cmd(self.q.get())
+      
 
     def time_tick(self):
-        ct = time.time() + 5
-        tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
-        #self.log.info("time_tick")
+        
+        if self._active:
+            self.log.info("time_tick active");
+            if self.active_cmd == None:
+                self.log.info("tick can run another cmd")
+            else:
+                self.log.info("time_tick active resp_timer %d"%self.resp_timer)
+                self.resp_timer += 1
+                if self.resp_timer > 2:
+                    self.log.info("give up waiting for response for %s"%( self.active_cmd))
+                    self.active_cmd = None
 
+            if self.active_cmd == None:
+                self._check_if_anything()
+
+
+
+        if self._active:
+            ct = time.time() + 0.2
+            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+        else:
+            ct = time.time() + 5
+            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+                    
+            
 alog.info('Application started')
 if __name__ == '__main__':
     parse_command_line()

@@ -6,15 +6,19 @@ instance = 'heat-1'
 domain = None   # save adding .localdom to req urls
 host = 'ted'
 
-port = 8888  # real port used by tornado
+port = 8888  # real port used by tornado webapp
 proxy_port = 8888  # proxy port used by clients ( handled by nginx )
+
+
+tcpport = 8912   # port used by tcp/json service
+
 dbname = 'asa_sys'
 dbuser = 'asa_sys'
 
 
-#wsprot = 'wss://'  # or 'wss://'
+wsprot = 'wss://'  # or 'wss://'
 
-wsprot = 'ws://'  # or 'wss://'
+#wsprot = 'ws://'  # or 'wss://'
 
 #hostdomain =  host+"."+domain
 #userdomain =  hostdomain # 'user.'+domain
@@ -43,5 +47,5 @@ users = {
 
 
 
-_ssl_cert_file = installdir+'/certs/cert.pem' 
-_ssl_key_file =  installdir+'/certs/key.pem'  
+_ssl_cert_file = installdir+'/certs/'+host+'/cert.pem' 
+_ssl_key_file =  installdir+'/certs/'+host+'/private/key.pem'  

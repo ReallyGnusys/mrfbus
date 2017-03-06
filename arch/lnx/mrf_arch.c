@@ -237,7 +237,7 @@ char buff[2048];
   printf("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
 
-  printf("mrf_arch_main_loop:entry\n");
+  printf("mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
 
   int count = 0;
 
