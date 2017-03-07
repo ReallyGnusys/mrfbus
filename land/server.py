@@ -292,7 +292,16 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         tornado.tcpserver.TCPServer.__init__(self)
         self.log = log
         self.callback = callback
-        
+        self.clients = {}
+    def tag_is_tcp_client(self,tag):
+        return self.clients.has_key(tag)
+    
+    def write_to_client(self,id , msg):
+        if not self.clients.has_key(id):
+            self.log.error("%s no client with id %d"%(self.__class__.__name__,id))
+            return
+        self.clients[id].stream.write(msg)
+        self.log.info("wrote_to client %id"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
         """
@@ -300,6 +309,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         a reference to socket object
         """
         connection = SimpleTcpClient(stream,self.log, self.callback)
+        self.clients[connection.id] = connection
         yield connection.on_connect()  
 
 class MrflandServer(object):
@@ -495,6 +505,16 @@ class MrflandServer(object):
         param.load(param_data)
         #print "resp should be %s"%repr(param)
         respdat = bytes(resp)[len(hdr)+len(param):]
+
+
+        #self.log.info(" have response or struct object %s"%repr(param))
+
+
+        if param.type < MRF_NUM_SYS_CMDS  and param.type >= 0:
+            resp = MrfSysCmds[param.type]['resp']()
+            resp.load(respdat)
+            self.log.info("got response %s"%repr(resp))
+            
         #FIXME - this should be decoded here...somehow .. or passed to applications
         
         return hdr , param , respdat
@@ -532,11 +552,14 @@ class MrflandServer(object):
         # check response is for active_cmd
         if self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))
+            self.log.info("rsp %s rdata %s"%(rsp,repr(rdata)))
+            if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
+                self.log.info("response for tcp client %d"%self.active_cmd.tag)
+
             self.active_cmd = None
-            self.log.info("rsp %s rdata %s"%(rsp,rdata))
-            
+                                
     def _resp_handler(self,*args, **kwargs):
-        self.log.info("Input on response pipe")
+        #self.log.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
         hdr , rsp, rdata = self.parse_input(resp)
