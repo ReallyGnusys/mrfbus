@@ -86,7 +86,7 @@ login_tp = """<!DOCTYPE html>
 
     
 
-asa_tp = """
+mrf_tp = """
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -104,8 +104,6 @@ asa_tp = """
     <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
 
 
-    <!-- Custom styles for this template -->
-    <link href="static/secure/navbar-fixed-top.css" rel="stylesheet">
     <script type="text/javascript">
        var _mrf_sdata = {  
        ws_url   : " {{ ws_url }} ",
@@ -120,48 +118,19 @@ asa_tp = """
 
   <body>
 
-    <!-- Fixed navbar -->
-    <nav class="navbar navbar-default navbar-fixed-top">
-      <div class="container">
-        <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
-            <span class="sr-only">Toggle navigation</span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-          </button>
-          <a class="navbar-brand" href="#">Project name</a>
-        </div>
-        <div id="navbar" class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="#">Home</a></li>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-            <li class="dropdown">
-              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Dropdown <span class="caret"></span></a>
-              <ul class="dropdown-menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
-                <li role="separator" class="divider"></li>
-                <li class="dropdown-header">Nav header</li>
-                <li><a href="#">Separated link</a></li>
-                <li><a href="#">One more separated link</a></li>
-              </ul>
-            </li>
-          </ul>
-          <ul class="nav navbar-nav navbar-right">
-            <li><a href="../navbar/">Default</a></li>
-            <li><a href="../navbar-static-top/">Static top</a></li>
-            <li class="active"><a href="./">Fixed top <span class="sr-only">(current)</span></a></li>
-          </ul>
-        </div><!--/.nav-collapse -->
-      </div>
-    </nav>
-
     <div class="container">
+<ul class="nav nav-pills">
+    <li class="active"><a data-toggle="pill" href="#home">Home</a></li>
+    <li><a data-toggle="pill" href="#temps">Temperatures</a></li>
+    <li><a data-toggle="pill" href="#pumps">Pumps</a></li>
+  </ul>
 
-        <h2>Temps</h2>
+  <div class="tab-content">
+    <div id="home" class="tab-pane fade in active">
+    <h3> Home </h3>
+    </div>
+    <div id="temps" class="tab-pane fade">
+        <h2>Temperature</h2>
         <table class="table">
           <thead>
             <tr>
@@ -178,6 +147,18 @@ asa_tp = """
             </tr>
           </tbody>
          </table>
+    </div>
+    <div id="pumps" class="tab-pane fade">
+      <h3>Pumps</h3>
+      <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
+    </div>
+    <div id="menu3" class="tab-pane fade">
+      <h3>Menu 3</h3>
+      <p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
+    </div>
+  </div>
+
+
 
     </div> <!-- /container -->
 

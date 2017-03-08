@@ -65,7 +65,7 @@ def mrf_page(rh,sob,ip):
     # prepared for them when they authenticated.....
     #pjs = _expand_priv_js(sob['type'])
     #alog.info("pjs:"+pjs)
-    rh.write(asa_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,email="email.tbd",sms='number.tbd',webchat='webchat.tbd'))
+    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,email="email.tbd",sms='number.tbd',webchat='webchat.tbd'))
 
 def request_ip(rh):
         rs =  rh._request_summary()
