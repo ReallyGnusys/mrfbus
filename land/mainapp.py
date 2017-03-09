@@ -5,6 +5,7 @@ import install
 import os
 import base64
 import sys
+from datetime import datetime
 sys.path.append('../lib')
 from mrflog import mrf_log
 import templates
@@ -26,10 +27,8 @@ conn = None
 
 remarg = re.compile(r'[?].*$')
 
-#redemohost = re.compile(r'^'+install.hostdomain+':'+str(install.port)+'$')
-
 login_tp = tornado.template.Template(templates.login_tp)
-asa_tp = tornado.template.Template(templates.asa_tp)
+mrf_tp = tornado.template.Template(templates.mrf_tp)
 
 def login_page(rh):
     rh.write(login_tp.generate())
@@ -65,7 +64,13 @@ def mrf_page(rh,sob,ip):
     # prepared for them when they authenticated.....
     #pjs = _expand_priv_js(sob['type'])
     #alog.info("pjs:"+pjs)
-    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,email="email.tbd",sms='number.tbd',webchat='webchat.tbd'))
+    host = install.host
+
+    if install.domain:
+        host += "."+install.domain
+
+    upsince_str = install.upsince.strftime("%c")
+    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob, host = host, upsince = upsince_str))
 
 def request_ip(rh):
         rs =  rh._request_summary()
@@ -172,6 +177,10 @@ def post_login(rh):
 
 
 class mainapp(tornado.web.RequestHandler):
+    def __init__(self,*args, **kwargs):
+        tornado.web.RequestHandler.__init__(self,*args, **kwargs)
+        #self.log = log
+    
     def post(self, *args, **kwargs):
         alog.info('post:'+str(self.request))
         alog.info("uri : "+self.request.uri)

@@ -127,7 +127,9 @@ mrf_tp = """
 
   <div class="tab-content">
     <div id="home" class="tab-pane fade in active">
-    <h3> Home </h3>
+    <h3> Mrfland running on {{host}} </h3>
+    <h3>Up since {{upsince}} </h3>
+   
     </div>
     <div id="temps" class="tab-pane fade">
         <h2>Temperature</h2>

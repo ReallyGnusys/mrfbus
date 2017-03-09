@@ -15,7 +15,8 @@ tcpport = 8912   # port used by tcp/json service
 dbname = 'asa_sys'
 dbuser = 'asa_sys'
 
-
+from datetime import datetime
+upsince = datetime.now()
 wsprot = 'wss://'  # or 'wss://'
 
 #wsprot = 'ws://'  # or 'wss://'
