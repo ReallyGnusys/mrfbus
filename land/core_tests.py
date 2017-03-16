@@ -82,7 +82,7 @@ class DeviceTestCase(LandTestCase):
         resp = self.dev_status(dest)
         print "dev_status_test : dest %u , received :\n%s"%(dest,repr(resp))
 
-        self.assertEqual(type(PktDeviceStatus()),type(resp))
+        self.assertTrue(self.check_attrs(resp,PktDeviceStatus()))
         # assumes this is  linux hostsim 
         self.assertEqual(resp.errors, 0)
 
@@ -104,10 +104,10 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktSysInfo()),type(resp))
+        self.assertTrue(self.check_attrs(resp,PktSysInfo()))
 
 
-        self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
+        self.assertEqual(resp['num_cmds'],MRF_NUM_SYS_CMDS)
         ## long winded faff to check git hash 
         exp = PktSysInfo()
         exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
@@ -131,7 +131,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktSysInfo()),type(resp))
+        self.assertTrue(self.check_attrs,resp,PktSysInfo())
 
 
         self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
@@ -155,7 +155,7 @@ class DeviceTestCase(LandTestCase):
             self.cmd(dest,ccode,dstruct=paramstr)
             resp = self.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
-            self.assertEqual(type(PktCmdInfo()),type(resp))
+            self.assertTrue(self.check_attrs(resp,PktCmdInfo()))
             
     def get_time_test(self,dest):
         print "**********************"
@@ -165,7 +165,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktTimeDate()),type(resp))
+        self.assertTrue(self.check_attrs(resp,PktTimeDate()))
 
     def set_time_test(self,dest,ref):
         print "**********************"
@@ -175,7 +175,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(ref,ccode)
         reftime = self.response(timeout=self.timeout)
         print "ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime))
-        self.assertEqual(type(PktTimeDate()),type(reftime))
+        self.assertTrue(self.check_attrs(reftime,PktTimeDate()))
 
         self.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
         resp = self.response(timeout=self.timeout)
@@ -185,7 +185,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktTimeDate()),type(resp))
+        self.assertTrue(self.check_attrs(resp,PktTimeDate()))
 
         
     def app_info_test(self,dest):
@@ -196,7 +196,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktAppInfo()),type(resp))
+        self.assertTrue(self.check_attrs(PktAppInfo()))
             
     def app_cmd_info_test(self,dest):
         print "**********************"
@@ -206,7 +206,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertEqual(type(PktAppInfo()),type(resp))
+        self.assertTrue(self.check_attrs(resp,PktAppInfo()))
         num_cmds = resp.num_cmds
         ccode = mrf_cmd_app_cmd_info   # eyup
         paramstr = PktUint8()
@@ -237,7 +237,7 @@ class TestMrfBus(LandTestCase):
         for dest in range(1,0x30):
             rv = self.cmd(dest,cmd_code)
             rsp = self.response(timeout=self.timeout)
-            if type(rsp) == type(PktDeviceInfo()):
+            if self.check_attrs(rsp,PktDeviceInfo()):
                 devs.append(rsp)
                 print "found device at dest %x"%dest
                 print repr(rsp)

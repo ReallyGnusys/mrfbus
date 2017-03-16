@@ -79,7 +79,7 @@ class Pt1000State(object):
         return s
     def new_state(self,hdr,state):
         if type(state) != type(PktPt1000State()):
-            self.log.warn( "PT1000 state wrong type!! got  %s expected"%( type(state),type(PktPt1000State())
+            self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
             return
         if hdr.usrc != self.address:   # just a spot sanity check..
             self.log.warn("PT1000 state wrong address!!")

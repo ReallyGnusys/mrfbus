@@ -28,36 +28,6 @@ import signal
 from mrfland import to_json, json_parse
 
 
-def buffToObj(resp,app_cmds):
-    hdr = PktHeader()
-    print "buffToObj len is %d"%len(resp)
-    if len(resp) >= len(hdr):
-        hdr_data = bytes(resp)[0:len(hdr)]
-        hdr.load(bytes(resp)[0:len(hdr)])
-        print "hdr is %s"%repr(hdr)
-        if hdr.type in MrfSysCmds.keys():
-            if MrfSysCmds[hdr.type]['param'] and ( MrfSysCmds[hdr.type]['name'] == 'USR_RESP' or MrfSysCmds[hdr.type]['name'] == 'USR_STRUCT' ):  # testing aye
-                param = MrfSysCmds[hdr.type]['param']()
-                param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-                param.load(param_data)
-                if param.type in MrfSysCmds.keys() and MrfSysCmds[param.type]['resp']:
-                    respobj = MrfSysCmds[param.type]['resp']()
-                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                    respobj.load(respdat)
-                    return respobj
-                elif param.type in app_cmds.keys() and app_cmds[param.type]['resp']:
-                    respobj = app_cmds[param.type]['resp']()
-                    respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-                    respobj.load(respdat)
-                    return respobj
-                else:
-                    print "got param type %d "%param.type
-            else:
-                print "got hdr.type %d"%hdr.type
-    return None
-
-                
-    
 
 import pdb
 
@@ -73,7 +43,7 @@ def endjsonstr(s):
     return st
 
 
- 
+
 def readjsonstr(s):
     st = ''
     depth = 0
@@ -95,9 +65,6 @@ def readjsonstr(s):
     #print "found end st = %s"%st
     return st
 
-        
-
-    
 
 class LandTestCase(unittest.TestCase):
     def setUp(self):
@@ -149,8 +116,8 @@ class LandTestCase(unittest.TestCase):
             print "Param sent ( type %s ) but None expected"%type(dstruct)
             return -1
 
-        if type(dstruct) != type(None) and type(dstruct) != type(paramtype()):
-            print "Param sent ( type %s ) but  %s expected"%(type(dstruct),type(paramtype()))
+        if type(dstruct) != type(None) and not self.check_attrs(dstruct,paramtype()):
+            print "check attrs failed for cmd"
             return -1
 
 
@@ -170,11 +137,7 @@ class LandTestCase(unittest.TestCase):
     def response(self,timeout = 0.2):
         elapsed = 0.0
         tinc = 0.1
-
-
         resp = readjsonstr(self.sock)
-
-    
         print "got response %s"%resp
         
         robj = json_parse(resp)
@@ -182,12 +145,28 @@ class LandTestCase(unittest.TestCase):
         print "after parse it's %s"%repr(robj)
 
         return robj
-    
-        return buffToObj(resp,self.app_cmds)
                         
     def quit(self):
         print "landtest quit...doing nothing"
 
+        
+        
+    def check_attrs(self,rsp,exp):  # rsp is a dict
+        edic = exp.dic()
+        for at in exp.iter_fields():
+            print "checking at %s from expected"%at
+            if at not in rsp:
+                print "check_attrs: attr %s not found in response"%at
+                return False
+        print "check_attrs level 1 passed"
+        print "rsp.keys %s "%repr(rsp.keys())
+        for at in rsp.keys():
+            print "rchecking at %s"%at
+            if at not in exp.dic():
+                print "check_attrs: attr %s found in response but not expected"%at
+                return False
+        return True
+        
     def check_resp(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
         for at in exp.iter_fields():
@@ -213,4 +192,3 @@ class LandTestCase(unittest.TestCase):
         else:
             print "cmd_test passed"
             return 0
-
