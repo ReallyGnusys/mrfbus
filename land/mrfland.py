@@ -96,9 +96,11 @@ class mrf_comm(object):
         
     def add_client(self,wsid,data):
         #self.sockets[sid] = staff_socket(sid)        
+        alog.info("adding wsid %s"%wsid)
         self.clients[wsid] = data
         
     def del_client(self,wsid):
+        alog.info("deleting wsid %s"%wsid)
         if wsid in self.clients:
             del self.clients[wsid]
             self.sockets[wsid].close()
@@ -262,14 +264,19 @@ def staff_logout(sid,username,ip):
 
 dt_handler = lambda obj: (
     obj.isoformat()
-    if isinstance(obj, datetime)
-    or isinstance(obj, date)
+    if isinstance(obj, datetime) #or isinstance(obj, date)
     else None)
 
 
 def to_json(obj):
     return json.dumps(obj,default = dt_handler)
 
+def json_parse(str):
+    try:
+        ob = json.loads(str)        
+    except:
+        return None
+    return ob
 
 def mrf_cmd(cmd,data):
     mcmd = {}

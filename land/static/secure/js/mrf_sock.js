@@ -12,6 +12,22 @@ function ParseJsonString(str) {
     return obj;
 }
 
+
+function convert_obj_date(obj){
+    if ((typeof obj == 'object') && (typeof obj.date == 'string'))
+        obj.date = new Date(obj.date);
+    return obj;
+
+}
+
+function convert_obj_date_name(obj,name){
+    if ((typeof obj == 'object') &&  ( obj != null ) && obj.hasOwnProperty(name) &&  ( typeof obj[name] == 'string'))
+        obj[name] = new Date(obj[name]);
+    return obj;
+
+}
+
+
 function MrfSocket(socket){
     this.set_socket(socket);
 }
@@ -58,12 +74,16 @@ function mrf_update_div(obj){
 function mrf_heating_tempsensors(data){
 
     for (var ch in data){
-        cdata = data[ch]
-        console.log("ch "+ch+" = "+cdata)
-        jsel = '#tempsensor-'+ch+'-value'
-        htm = ""+cdata.temperature.toFixed(3)
-        console.log("trying jsel "+jsel+" with data "+htm)
-        $(''+jsel).html(htm)
+        cdata = data[ch];
+        console.log("ch "+ch+" = "+cdata);
+        jsel = '#tempsensor-'+ch+'-value';
+        htm = ""+cdata.temperature.toFixed(3);
+        console.log("trying jsel "+jsel+" with data "+htm);
+        $(''+jsel).html(htm);
+        jsel = '#timedate-'+ch;
+        htm = ""+cdata.date;
+        console.log("trying jsel "+jsel+" with data "+htm);
+        $(''+jsel).html(htm);
     }
 
 }

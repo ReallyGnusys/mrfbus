@@ -157,6 +157,8 @@ def post_login(rh):
     ## set session id
     rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
+    #rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
+
    
   
     
@@ -221,8 +223,10 @@ class mainapp(tornado.web.RequestHandler):
         alog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
         if sessid == None:
             if page == 'login':
+                alog.info("returning login page as requested")
                 return login_page(self)  
             else:
+                alog.info("no sessid - redirecting to login page")
                 return self.redirect('/login')
   
 

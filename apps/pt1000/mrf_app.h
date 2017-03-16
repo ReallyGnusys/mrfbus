@@ -55,11 +55,11 @@ typedef struct  __attribute__ ((packed))   {
 
 typedef struct  __attribute__ ((packed))   {
   TIMEDATE td;
-  uint8 relay_cmd;  // 8 bit emergency masks for request and ideally a validated check below
-  uint8 relay_state;
-  uint32 milliohms[MAX_RTDS];  // channels
-  uint32 ref_r;
-  uint32 ref_i;
+  uint8    relay_cmd;  // 8 bit emergency masks for request and ideally a validated check below
+  uint8    relay_state;
+  uint32   milliohms[MAX_RTDS];  // channels
+  uint32   ref_r;
+  uint32   ref_i;
 } MRF_PKT_PT1000_STATE;
   
 typedef struct  __attribute__ ((packed))   {

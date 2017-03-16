@@ -231,7 +231,7 @@ class SimpleTcpClient(object):
  
     @tornado.gen.coroutine
     def on_disconnect(self):
-        self.log.info("disconnected")
+        self.log.info("tcp conn %d disconnected"%self.id)
         yield []
  
     @tornado.gen.coroutine
@@ -244,18 +244,20 @@ class SimpleTcpClient(object):
                 #self.log('got |%s|' % repr(s))
                 ob = json_parse(line)
                 if ob:
+                    data = None
                     self.log.info("json ob : %s"%repr(ob))
                     if ob.has_key('dest') and ob.has_key('cmd'):
-                        if ob.has_key('data'):
-                            data = ob['data']
-                        else:
-                            data = None
+                        if ob.has_key('data') and ob['cmd'] in MrfSysCmds:
+                            if MrfSysCmds[ob['cmd']]['param'] != None:
+                                data = MrfSysCmds[ob['cmd']]['param']()
+                                data.dic_set(ob['data'])
+                            
                         self.callback(self.id, ob['dest'],ob['cmd'],data)
                     else:
                         self.log.info("no valid cmd decoded in  %s"%repr(line))
                 else:
                     self.log.warn("no json ob decoded in %s"%repr(line))
-                yield self.stream.write(line)
+                yield self.stream.write("\n")
         except tornado.iostream.StreamClosedError:
             pass
  
@@ -282,7 +284,7 @@ class MrfCmdObj(object):
         self.cmd_code = cmd_code
         self.dstruct = dstruct
     def __repr__(self):
-        s = "%s: tag %d dest %d cmd_code %d dstruct %s"%\
+        s = "%s: tag %s dest %d cmd_code %d dstruct %s"%\
             (self.__class__.__name__,self.tag,self.dest,self.cmd_code,repr(self.dstruct))
         return s
 
@@ -325,12 +327,12 @@ class MrflandServer(object):
         self.apps = apps
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
+        self._active = False
 
         self._start_mrfnet(apps=apps)
 
         self._start_webapp()
         self._start_tcp_service()
-        self._active = False
         self.ioloop = tornado.ioloop.IOLoop.instance()
         self._deactivate()  # start quiet
         #ct = time.time() + 5  # start tick
@@ -340,22 +342,13 @@ class MrflandServer(object):
         
         tornado.ioloop.IOLoop.instance().start()
         print "do we ever get here?"
-        
+
+
     def _start_mrfnet (self, stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}, netid = 0x25):
         self.hostaddr = 1
         self.netid = netid
-        self.log.info("apps are %s"%repr(apps))
-        papps = {}
-        for appn in apps.keys():
-            papps[appn] = apps[appn](log=self.log)
-            #papps[appn].setlog(self.log)
-        self.apps = papps
 
-        self.registrations = {}
-        self.registrations["main"] = []
-        for appn in apps.keys():
-            self.registrations[appn] = []
-    
+
         self.q = Queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
@@ -363,9 +356,28 @@ class MrflandServer(object):
         self.state = MrflandState(self)
         self.stub_out_resp_path = stub_out_resp_path
         self.stub_out_str_path = stub_out_str_path
+        
 
         self._connect_to_mrfnet()
 
+
+        self.log.info("apps are %s"%repr(apps))
+        papps = {}
+        for appn in apps.keys():
+            papps[appn] = apps[appn]("app_"+appn,log=self.log,cmd_callback=self._callback)
+            #papps[appn].setlog(self.log)
+        self.apps = papps
+        self.log.info("apps instanced are %s"%repr(apps))
+        for appn in self.apps.keys():
+            self.apps[appn].post_init()
+
+        self.registrations = {}
+        self.registrations["main"] = []
+        for appn in self.apps.keys():
+            self.registrations[appn] = []
+    
+
+        
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if not self._active:
             self.log.warn("activating!")
@@ -397,29 +409,40 @@ class MrflandServer(object):
         self.active_cmd = cobj            
         self._run_cmd(cobj)
 
+
+    def _app_cmd_set(self,dest):
+        for appn in self.apps.keys():
+            app = self.apps[appn]
+            if self.apps[appn].i_manage(dest):
+                return self.apps[appn].cmd_set(dest)
+        
     def _run_cmd(self,cobj):
         self.log.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
         if cobj.dest > 255:
             print "dest > 255"
             return -1
 
+        appcmds = self._app_cmd_set(cobj.dest)
         if cobj.cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
-
+        elif (appcmds):
+            paramtype = appcmds[cobj.cmd_code]['param']
+            self.log.info("app supplied command set for dest %d param is %s"%(cobj.dest,repr(paramtype)))
+            
         else:
-            print "unrecognised cmd_code (01xs) %d"%cobj.cmd_code
+            self.log.info("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
             return -1
 
         if type(cobj.dstruct) == type(None) and type(paramtype) != type(None):
-            print "No param sent , expected %s"%type(paramtype)
+            self.log.info("No param sent , expected %s"%type(paramtype))
             return -1
         
         if type(paramtype) == type(None) and type(cobj.dstruct) != type(None):
-            print "Param sent ( type %s ) but None expected"%type(cobj.dstruct)
+            self.log.info("Param sent ( type %s ) but None expected"%type(cobj.dstruct))
             return -1
 
         if type(cobj.dstruct) != type(None) and type(cobj.dstruct) != type(paramtype()):
-            print "Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype()))
+            self.log.info("Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype())))
             return -1
 
         mlen = 4
@@ -510,21 +533,22 @@ class MrflandServer(object):
         #self.log.info(" have response or struct object %s"%repr(param))
 
 
-        if param.type < MRF_NUM_SYS_CMDS  and param.type >= 0:
-            resp = MrfSysCmds[param.type]['resp']()
-            resp.load(respdat)
-            self.log.info("got response %s"%repr(resp))
+        resp = mrf_decode_buff(param.type,respdat)
+
+        if not resp:
+            appcmds = self._app_cmd_set(hdr.usrc)
+            if appcmds:
+                resp = mrf_decode_buff(param.type,respdat,cmdset=appcmds)
+ 
+        
             
         #FIXME - this should be decoded here...somehow .. or passed to applications
         
-        return hdr , param , respdat
+        return hdr , param , resp 
 
-    def handle_response(self,hdr,rsp, rdata):
+    def handle_response(self,hdr,rsp, robj):
         # test if sys command response or data
-        sysobj = mrf_decode_buff(rsp.type,rdata)
-
-        #if sysobj:            
-        rv = self.state.fyi(hdr,rsp, sysobj)  # state sees everything
+        rv = self.state.fyi(hdr,rsp, robj)  # state sees everything
         if rv:
             self.log.warn("we have response from main app fyi %s"%repr(rv))
             ro = mrfland.RetObj()
@@ -535,10 +559,10 @@ class MrflandServer(object):
                 c = self.conns[fd]
                 c.send(rv)
         for appn in self.apps.keys(): # apps see everything
-            rv = self.apps[appn].fyi(hdr,rsp, sysobj, rdata)
+            rv = self.apps[appn].fyi(hdr,rsp, robj)
             if rv:
-                self.log.info("app %s fyi returned"%appn)
-                self.log.info(repr(rv))
+                #self.log.info("app %s fyi returned"%appn)
+                #self.log.info(repr(rv))
                 
                 ro = mrfland.RetObj()
                 for mcmd in rv.keys():
@@ -552,9 +576,12 @@ class MrflandServer(object):
         # check response is for active_cmd
         if self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))
-            self.log.info("rsp %s rdata %s"%(rsp,repr(rdata)))
+            self.log.info("rsp %s"%(rsp))
             if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                 self.log.info("response for tcp client %d"%self.active_cmd.tag)
+                self.log.info("robj dic is %s"%repr(robj.dic()))
+                rstr = mrfland.to_json(robj.dic())
+                self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
 
             self.active_cmd = None
                                 
@@ -562,21 +589,21 @@ class MrflandServer(object):
         #self.log.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
-        hdr , rsp, rdata = self.parse_input(resp)
+        hdr , rsp, robj  = self.parse_input(resp)
 
         if hdr:                    
             self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
-            self.handle_response(hdr, rsp , rdata)
+            self.handle_response(hdr, rsp , robj )
 
     def _struct_handler(self,*args, **kwargs):
         self.log.debug("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)
 
-        hdr , rsp, rdata = self.parse_input(resp)
+        hdr , rsp, robj = self.parse_input(resp)
 
         if hdr:                    
             self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
-            self.handle_response(hdr, rsp , rdata)
+            self.handle_response(hdr, rsp , robj)
             
     def _connect_to_mrfnet(self):
         self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
@@ -596,7 +623,7 @@ class MrflandServer(object):
         self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
 
     def _callback(self, tag, dest, cmd,data=None):
-        self.log.info("_callback tag %d dest %d cmd %s  data %s"%(tag,dest,cmd,repr(data)))
+        self.log.info("_callback tag %s dest %d cmd %s  data %s"%(tag,dest,cmd,repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
     def _start_tcp_service(self):
@@ -622,7 +649,7 @@ class MrflandServer(object):
         )
         self.nsettings = dict({  "ssl_options" : 
                     { "certfile": install._ssl_cert_file,
-                      "keyfile": install._ssl_key_file
+                      "keyfile" : install._ssl_key_file
                     }
         })
 

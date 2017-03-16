@@ -24,6 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
 class MrflandApp(object):
+    def __init__(self,tag, log , cmd_callback):
+        self.tag = tag
+        self.log = log
+        self.cmd_callback = cmd_callback
+        self.managed_addrs = {}
+
+    def i_manage(self,addr):
+        return addr in self.managed_addrs
 
     def setlog(self,log):
         self.log = log

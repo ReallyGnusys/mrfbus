@@ -75,7 +75,7 @@ class DevState(object):
             self.app_info = pkt
         if type(pkt) == type(PktDeviceStatus()) :
             self.device_status = pkt         
-
+            return
             return '{"rx_pkts":%d,"tx_pkts":%d,"errors":%d}'%\
                 (self.device_status.rx_pkts,self.device_status.tx_pkts,
                  self.device_status.errors)

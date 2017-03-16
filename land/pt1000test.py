@@ -158,7 +158,7 @@ class TestPt1000(DeviceTestCase):
         self.num_buffs = 16
         self.timeout = 0.6
         self.dest =0x01
-        self.stub.app_cmds = DefaultAppCmds
+        self.app_cmds = DefaultAppCmds
 
     def setUp(self):
         DeviceTestCase.setUp(self)
@@ -168,15 +168,15 @@ class TestPt1000(DeviceTestCase):
         self.timeout = 0.6
         self.dest =0x02
         self.host= 0x01
-        #self.stub.app_cmds = Pt1000AppCmds
-        self.stub.app_cmds = copy(MrfSysCmds)
-        self.stub.app_cmds.update(Pt1000AppCmds)
+        #self.app_cmds = Pt1000AppCmds
+        self.app_cmds = copy(MrfSysCmds)
+        self.app_cmds.update(Pt1000AppCmds)
         self.checkgit = False
         #self.host_test()
 
     def spi_debug(self):
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
 
@@ -186,7 +186,7 @@ class TestPt1000(DeviceTestCase):
         paramstr.value[0] = 0
         paramstr.value[1] = 1
 
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
         
         print "set default val 01"
 
@@ -196,7 +196,7 @@ class TestPt1000(DeviceTestCase):
         paramstr.value[0] = addr
         paramstr.value[1] = val
 
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
         
         print "wrote spi addr %02x val %02x"%(addr,val)
 
@@ -204,8 +204,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         paramstr.value = addr
         
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.response(timeout=self.timeout)
         print "address %02x , read value %s"%(addr,repr(resp))
         
         #print "got resp:\n%s"%repr(resp)
@@ -240,8 +240,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         paramstr.value = addr
 
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.response(timeout=self.timeout)
         #print "read addr %d : %s"%(addr,repr(resp))
         oval = resp.value
         print "address %d , read value %d"%(addr,oval)
@@ -257,7 +257,7 @@ class TestPt1000(DeviceTestCase):
         paramstr.value[1] = tval
 
         print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
         
         print "wrote spi write val %02x"%tval
 
@@ -265,8 +265,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         paramstr.value = addr
         
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.response(timeout=self.timeout)
         print "address %d , read value %d"%(addr,resp.value)
         
         #print "got resp:\n%s"%repr(resp)
@@ -280,7 +280,7 @@ class TestPt1000(DeviceTestCase):
         paramstr.value[1] = oval
 
         print "paramstr = addr %d val %d "%(paramstr.value[0],paramstr.value[1])
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
         
         print "wrote spi write"
 
@@ -288,8 +288,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         paramstr.value = addr
         
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktUint8()),type(resp))
         self.assertEqual(oval,resp.value)
@@ -300,8 +300,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         paramstr.value = i_f
         ccode = mrf_cmd_if_stats
-        self.stub.cmd(self.dest,ccode,dstruct=paramstr)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode,dstruct=paramstr)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktIfStats()),type(resp))
         
@@ -312,8 +312,8 @@ class TestPt1000(DeviceTestCase):
         print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
         print "**********************"
         ccode = mrf_cmd_app_test
-        self.stub.cmd(self.dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
@@ -323,8 +323,8 @@ class TestPt1000(DeviceTestCase):
         regvals = {}
         for addr in xrange(0xf):        
             paramstr.value = addr
-            self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
-            resp = self.stub.response(timeout=self.timeout)            
+            self.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+            resp = self.response(timeout=self.timeout)            
             print "reg %x :  %02x"%(addr, resp.value)
             regvals[addr] = resp.value
 
@@ -357,8 +357,8 @@ class TestPt1000(DeviceTestCase):
     def config_cmd(self):
         print "Sending mrf_cmd_config_adc"
         ccode = mrf_cmd_config_adc
-        self.stub.cmd(self.dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)
         
     def skipped_test04_configure(self):
         self.config_cmd()
@@ -367,11 +367,11 @@ class TestPt1000(DeviceTestCase):
 
     def read_adc(self):
         ccode = mrf_cmd_spi_data
-        self.stub.cmd(self.dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)        
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)        
         return resp.value
     
-    def test05a_read_adc(self):
+    def skipped_test05a_read_adc(self):
         ds = self.dev_status(self.dest)
         print "Initial device status:\n %s",repr(ds)
         for i in xrange(5):
@@ -393,8 +393,8 @@ class TestPt1000(DeviceTestCase):
     def test05c_read_state(self):
         print "READ STATE"
         ccode = mrf_cmd_read_state
-        self.stub.cmd(self.dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
 
         
@@ -408,8 +408,8 @@ class TestPt1000(DeviceTestCase):
         
     def skipped_test03_device_read_tests(self):
 
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
 
@@ -431,8 +431,8 @@ class TestPt1000(DeviceTestCase):
         paramstr = PktUint8()
         for addr in xrange(0xf):        
             paramstr.value = addr
-            self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
-            resp = self.stub.response(timeout=self.timeout)            
+            self.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+            resp = self.response(timeout=self.timeout)            
             print "reg %x :  %02x"%(addr, resp.value)
             regvals[addr] = resp.value
             
@@ -444,8 +444,8 @@ class TestPt1000(DeviceTestCase):
             for addr in xrange(0xf):
                 chks = chks + 1
                 paramstr.value = addr
-                self.stub.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
-                resp = self.stub.response(timeout=self.timeout)
+                self.cmd(self.dest,mrf_cmd_spi_read,dstruct=paramstr)
+                resp = self.response(timeout=self.timeout)
                 if resp.value != regvals[addr]:
                     err_tot += 1
                     if not errs.has_key(addr):
@@ -465,8 +465,8 @@ class TestPt1000(DeviceTestCase):
             print "reg %d  errors %d"%(ky,errs[ky])
             
 
-        self.stub.cmd(self.dest,mrf_cmd_spi_debug)
-        dresp = self.stub.response(timeout=self.timeout)
+        self.cmd(self.dest,mrf_cmd_spi_debug)
+        dresp = self.response(timeout=self.timeout)
         print "spi debug:\n"
         print dresp
         

@@ -139,6 +139,7 @@ mrf_tp = """
              <th>ID</th>
              <th>label</th>
              <th>value</th>
+             <th>time</th>
             </tr>
           </thead>
           <tbody>
@@ -146,6 +147,7 @@ mrf_tp = """
              <td>temp-000</td>
              <td>Top temperature</td>
              <td id="tempsensor-0-value">NADA</td>
+             <td id="timedate-0">NADA</td>
             </tr>
           </tbody>
          </table>

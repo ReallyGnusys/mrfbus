@@ -23,7 +23,8 @@ from mrf_structs import *
 MRFBUFFLEN = 128
 import ctypes
 
-from teststub import StubTestCase
+#from teststub import StubTestCase
+from landtest import LandTestCase
 
 import unittest
 
@@ -43,10 +44,11 @@ DefaultAppCmds = {
 }
 
 
-class DeviceTestCase(StubTestCase):
+class DeviceTestCase(LandTestCase):
 
     def setUp(self):
-        StubTestCase.setUp(self)
+        print "DeviceTestCase setup"
+        LandTestCase.setUp(self)
         self.devname = 'hostsim'
         self.num_ifs = 4
         self.num_buffs = 16
@@ -64,13 +66,13 @@ class DeviceTestCase(StubTestCase):
         #setattr(exp,'dev_name','hostsim')
         exp.dev_name = (ctypes.c_uint8*10)(*(bytearray(self.devname)))
         exp.mrfid = dest
-        rv = self.stub.cmd_test(dest,ccode,exp,dstruct=None)
+        rv = self.cmd_test(dest,ccode,exp,dstruct=None)
         self.assertEqual(rv,0)
 
     def dev_status(self,dest):
         ccode = mrf_cmd_device_status
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         return resp
     
     def dev_status_test(self,dest):
@@ -99,8 +101,8 @@ class DeviceTestCase(StubTestCase):
         gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktSysInfo()),type(resp))
 
@@ -126,8 +128,8 @@ class DeviceTestCase(StubTestCase):
         gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktSysInfo()),type(resp))
 
@@ -150,8 +152,8 @@ class DeviceTestCase(StubTestCase):
         for cmdnum in xrange(MRF_NUM_SYS_CMDS): # oooer!
             paramstr.value = cmdnum
             print "trying to get cmd info for cmd %d"%cmdnum
-            self.stub.cmd(dest,ccode,dstruct=paramstr)
-            resp = self.stub.response(timeout=self.timeout)
+            self.cmd(dest,ccode,dstruct=paramstr)
+            resp = self.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
             self.assertEqual(type(PktCmdInfo()),type(resp))
             
@@ -160,8 +162,8 @@ class DeviceTestCase(StubTestCase):
         print "* get time test (dest 0x%02x)"%dest
         print "**********************"
         ccode = mrf_cmd_get_time
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
@@ -170,18 +172,18 @@ class DeviceTestCase(StubTestCase):
         print "* set time test (dest 0x%02x)"%dest
         print "**********************"
         ccode = mrf_cmd_get_time
-        self.stub.cmd(ref,ccode)
-        reftime = self.stub.response(timeout=self.timeout)
+        self.cmd(ref,ccode)
+        reftime = self.response(timeout=self.timeout)
         print "ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime))
         self.assertEqual(type(PktTimeDate()),type(reftime))
 
-        self.stub.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
 
         
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktTimeDate()),type(resp))
 
@@ -191,8 +193,8 @@ class DeviceTestCase(StubTestCase):
         print "* app info test (dest 0x%02x)"%dest
         print "**********************"
         ccode = mrf_cmd_app_info
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktAppInfo()),type(resp))
             
@@ -201,8 +203,8 @@ class DeviceTestCase(StubTestCase):
         print "* app cmd info test (dest 0x%02x)"%dest
         print "**********************"
         ccode = mrf_cmd_app_info
-        self.stub.cmd(dest,ccode)
-        resp = self.stub.response(timeout=self.timeout)
+        self.cmd(dest,ccode)
+        resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertEqual(type(PktAppInfo()),type(resp))
         num_cmds = resp.num_cmds
@@ -211,8 +213,8 @@ class DeviceTestCase(StubTestCase):
         for cmdnum in xrange(num_cmds): # oooer!
             paramstr.value = cmdnum
             print "trying to get app cmd info for cmd %d"%cmdnum
-            self.stub.cmd(dest,ccode,dstruct=paramstr)
-            resp = self.stub.response(timeout=self.timeout)
+            self.cmd(dest,ccode,dstruct=paramstr)
+            resp = self.response(timeout=self.timeout)
             print "got resp:\n%s"%str(resp)
 
 
@@ -225,7 +227,7 @@ class DeviceTestCase(StubTestCase):
         self.app_cmd_info_test(dest)
         self.get_time_test(dest)
 
-class TestMrfBus(DeviceTestCase):
+class TestMrfBus(LandTestCase):
 
         
     @unittest.skip("temp disabled - too long")
@@ -233,8 +235,8 @@ class TestMrfBus(DeviceTestCase):
         devs = []
         cmd_code = mrf_cmd_device_info
         for dest in range(1,0x30):
-            rv = self.stub.cmd(dest,cmd_code)
-            rsp = self.stub.response(timeout=self.timeout)
+            rv = self.cmd(dest,cmd_code)
+            rsp = self.response(timeout=self.timeout)
             if type(rsp) == type(PktDeviceInfo()):
                 devs.append(rsp)
                 print "found device at dest %x"%dest

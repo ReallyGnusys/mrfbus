@@ -1,5 +1,5 @@
 from ctypes import *
-
+from datetime import datetime
 
 class MrfStruct(LittleEndianStructure):
     def fromstr(self, string):
@@ -7,6 +7,8 @@ class MrfStruct(LittleEndianStructure):
     def __len__(self):
         return sizeof(self)
 
+    def __getitem__(self,attname):
+        return getattr(self,attname)
     def attstr(self,attname):
         att = getattr(self,attname)
         
@@ -32,6 +34,9 @@ class MrfStruct(LittleEndianStructure):
             #print "att is "+str(type(att))
             atts = "%d"%int(att)
         return atts
+    def iter_fields(self):
+        for field in self._fields_:
+            yield field[0]
     def __repr__(self):
         s = ''
         for field in self._fields_:
@@ -40,6 +45,19 @@ class MrfStruct(LittleEndianStructure):
             atts = self.attstr(field[0])
             s += "%s %s\n"%(field[0],atts)
         return s
+    def dic(self):
+        dic = {}
+        for field in self._fields_:
+            key = field[0]
+            val = self[key]
+            if str(type(val)).find('mrf_structs') > -1:
+                val = self.attstr(key)
+            dic[key ] = val
+        return dic
+
+    def dic_set(self,dic):
+        for attr in dic.keys():
+            setattr(self,attr,dic[attr])
     def __eq__(self,other):
         for field in self._fields_:
             #att = getattr(self,field[0])
@@ -140,7 +158,17 @@ class PktTimeDate(MrfStruct):
         ]
     def __repr__(self):
         return "%02d:%02d:%02d %d/%d/%d"%(self.hour,self.min,self.sec,self.day,self.mon,self.year+2000)
+    def set(self,dt):
+        self.sec  = dt.second
+        self.min  = dt.minute
+        self.hour = dt.hour
+        self.day  = dt.hour
+        self.mon  = dt.month
+        self.year = dt.year - 2000
+    def to_datetime(self):
+        return datetime(year = self.year+2000,month=self.mon,day=self.day,hour=self.hour,minute=self.min,second=self.sec)
 
+        
 class PktCmdInfo(MrfStruct):
     _fields_ = [
         ("name",c_uint8*16),
