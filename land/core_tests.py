@@ -103,22 +103,14 @@ class DeviceTestCase(LandTestCase):
         ccode = mrf_cmd_sys_info
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
+        print "****got resp:\n%s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktSysInfo()))
 
 
         self.assertEqual(resp['num_cmds'],MRF_NUM_SYS_CMDS)
-        ## long winded faff to check git hash 
-        exp = PktSysInfo()
-        exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
-        att1 = getattr(exp,'mrfbus_version')
-        ever = exp.attstr(att1)
-        att1 = getattr(resp,'mrfbus_version')
-        rver = resp.attstr(att1)
-        
+
         if self.checkgit:
-            print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
-            self.assertEqual(ever,rver)
+            self.assertEqual(gitversion,resp["mrfbus_version"])
 
 
     def sys_cmd_info_test(self,dest):
@@ -135,7 +127,14 @@ class DeviceTestCase(LandTestCase):
 
 
         self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
-        ## long winded faff to check git hash 
+
+        
+        if self.checkgit:
+            print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
+            self.assertEqual(gitversion,resp["mrfbus_version"])
+
+        ## long winded faff to check git hash
+        
         exp = PktSysInfo()
         exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
         att1 = getattr(exp,'mrfbus_version')
@@ -196,7 +195,7 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertTrue(self.check_attrs(PktAppInfo()))
+        self.assertTrue(self.check_attrs(resp,PktAppInfo()))
             
     def app_cmd_info_test(self,dest):
         print "**********************"

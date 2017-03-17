@@ -90,7 +90,7 @@ class Pt1000State(object):
         if not ( self.last_reading == None or now > self.last_reading):
             
             self.log.warn( "PT1000 state - time confusion!!! now %s  last %s"%(repr(now),repr(self.last_reading)))
-            return
+            #return
 
         self.log.debug("pt1000state %s"%repr(state))
         updated = []

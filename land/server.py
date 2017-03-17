@@ -546,8 +546,9 @@ class MrflandServer(object):
         
         return hdr , param , resp 
 
-    def handle_response(self,hdr,rsp, robj):
+    def handle_response(self,hdr,rsp, robj,response=False):
         # test if sys command response or data
+        self.log.info("handle_response hdr %s",repr(hdr))
         rv = self.state.fyi(hdr,rsp, robj)  # state sees everything
         if rv:
             self.log.warn("we have response from main app fyi %s"%repr(rv))
@@ -574,7 +575,7 @@ class MrflandServer(object):
                     c.send(rv)
                 
         # check response is for active_cmd
-        if self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
+        if response and self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))
             self.log.info("rsp %s"%(rsp))
             if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
@@ -593,7 +594,7 @@ class MrflandServer(object):
 
         if hdr:                    
             self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
-            self.handle_response(hdr, rsp , robj )
+            self.handle_response(hdr, rsp , robj, response=True )
 
     def _struct_handler(self,*args, **kwargs):
         self.log.debug("Input on data pipe")

@@ -154,14 +154,15 @@ class LandTestCase(unittest.TestCase):
     def check_attrs(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
         for at in exp.iter_fields():
-            print "checking at %s from expected"%at
+            #print "checking at %s from expected"%at
             if at not in rsp:
                 print "check_attrs: attr %s not found in response"%at
+                print "resp was %s"%repr(rsp)
                 return False
         print "check_attrs level 1 passed"
         print "rsp.keys %s "%repr(rsp.keys())
         for at in rsp.keys():
-            print "rchecking at %s"%at
+            #print "rchecking at %s"%at
             if at not in exp.dic():
                 print "check_attrs: attr %s found in response but not expected"%at
                 return False
