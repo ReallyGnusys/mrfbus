@@ -61,14 +61,16 @@ uint8 _nibble2hex(uint8 nib){
     return 'A' + (nib - 10);
 }
 
+#define _MAX_PRINTLEN 512
 void _mrf_print_hex_buff(uint8 *buff,uint16 len){
  
-  uint8 s[_MRF_BUFFLEN*2 + 2];
+  uint8 s[_MAX_PRINTLEN + 2];
   uint8 i;
   mrf_debug("print_hex_buff : len is %u buff:",len);
-  if (len >  _MRF_BUFFLEN){
+  //if (len >  _MRF_BUFFLEN){
+  if (len > _MAX_PRINTLEN ){
     mrf_debug("try len <= %u - you had %d\n",_MRF_BUFFLEN,len);
-    return;
+    len = _MAX_PRINTLEN;
   }
   for ( i=0; i<len ; i++){
     s[i*2] = _nibble2hex(buff[i]/16);
@@ -301,12 +303,13 @@ char buff[2048];
        //it's an input stream
        fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
-       printf("event on fd %d\n",fd);
+       mrf_debug("event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
        printf("read %d bytes\n",(int)s);
-       _mrf_print_hex_buff(buff,s);
+       printf("%s\n",buff);
+       //_mrf_print_hex_buff(buff,s);
        uint8 bind;
        //bind = mrf_alloc_if(inif);
 
@@ -317,7 +320,7 @@ char buff[2048];
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
-         printf("ERROR ERROR ERROR : lnx - no input/buff function\n\n");
+         mrf_debug("ERROR ERROR ERROR : lnx - no input/buff function\n\n");
          if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
            mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);  
              _mrf_buff_free(bind);

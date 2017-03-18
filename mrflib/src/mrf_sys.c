@@ -27,7 +27,7 @@
 #include "mrf_sys_cmds.h"
 
 #define _MRF_TX_TIMEOUT 10
-#define _MRF_MAX_RETRY 0
+#define _MRF_MAX_RETRY 4
 
 
 #define ACKTIMER_VAL 20   //FIXME prob needs to be i/f dependent

@@ -24,6 +24,18 @@ stub_pid=$!
 
 # make sure everyone is up
 
+
+
+sleep 1
+
+# need to start mrfland... ho ho ho
+
+
+
+
+source land/venv/bin/activate
+stdbuf -oL  python land/server.py  > ${LOGDIR}/mrfland.log&
+
 sleep 1
 
 # run stubtst
