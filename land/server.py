@@ -548,7 +548,8 @@ class MrflandServer(object):
 
     def handle_response(self,hdr,rsp, robj,response=False):
         # test if sys command response or data
-        #self.log.info("handle_response hdr %s",repr(hdr))
+        if response:
+            self.log.info("handle_response hdr %s",repr(hdr))
         rv = self.state.fyi(hdr,rsp, robj)  # state sees everything
         if rv:
             self.log.warn("we have response from main app fyi %s"%repr(rv))
@@ -680,7 +681,7 @@ class MrflandServer(object):
             else:
                 self.log.info("time_tick active resp_timer %d"%self.resp_timer)
                 self.resp_timer += 1
-                if self.resp_timer > 2:
+                if self.resp_timer > 7:
                     self.log.info("give up waiting for response for %s"%( self.active_cmd))
                     if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                         self.log.info("response for tcp client %d"%self.active_cmd.tag)

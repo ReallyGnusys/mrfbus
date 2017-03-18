@@ -87,7 +87,7 @@ class Pt1000State(object):
 
         now = state.td.to_datetime()
     
-        if not ( self.last_reading == None or now > self.last_reading):
+        if not ( self.last_reading == None or now >= self.last_reading):
             
             self.log.warn( "PT1000 state - time confusion!!! now %s  last %s"%(repr(now),repr(self.last_reading)))
             #return

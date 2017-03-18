@@ -24,9 +24,16 @@ class MrfStruct(LittleEndianStructure):
                     break
         elif str(type(att)).find('c_uint_Array') > -1:  #FIXME! 
             atts = "["
+            first = True
             for i in att:
-                atts += "%u,"%int(i)
-                
+
+                if not first:
+                    atts +=","
+                else:
+                    first = False
+                    
+                atts += "%u"%int(i)
+            atts += "]"
         elif str(type(att)).find('PktTimeDate') > -1:  #FIXME!
             atts  = "%s"%repr(att)
             
@@ -51,6 +58,8 @@ class MrfStruct(LittleEndianStructure):
             key = field[0]
             val = self[key]
             if str(type(val)).find('mrf_structs') > -1:
+                val = self.attstr(key)
+            if str(type(val)).find('Array') > -1:
                 val = self.attstr(key)
             dic[key ] = val
         return dic

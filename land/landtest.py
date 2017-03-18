@@ -138,7 +138,7 @@ class LandTestCase(unittest.TestCase):
         elapsed = 0.0
         tinc = 0.1
         resp = readjsonstr(self.sock)
-        print "got response %s"%resp
+        print "landtest:got response %s"%resp
         
         robj = json_parse(resp)
 
@@ -171,7 +171,11 @@ class LandTestCase(unittest.TestCase):
     def check_resp(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
         for at in exp.iter_fields():
+            if not rsp.has_key(at):
+                print "check_resp no key %s in  rsp %s"%(at,repr(rsp))
+                return False
             if rsp[at] != edic[at]:
+                print "check_resp value mismatch for key %s in  rsp %s exp %s"%(at,repr(rsp),repr(exp))
                 return False
         return True
         
