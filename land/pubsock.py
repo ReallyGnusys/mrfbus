@@ -14,7 +14,7 @@ import psycopg2
 from datetime import datetime
 import time
 import json
-from asalog import asa_log
+from mrflog import mrf_log
 from mainapp import mainapp
 from public import publicapp
 #from asa_pcomm import asa_pcomm
@@ -22,7 +22,7 @@ import hashlib
 
 clients = dict()
 
-alog = asa_log()
+alog = mrf_log()
 #aconn = asa.Connection()
 #dbc = aconn.cursor()
 
