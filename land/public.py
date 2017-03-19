@@ -6,10 +6,10 @@ import os
 import base64
 import sys
 sys.path.append('../lib')
-from asalog import asa_log
+from mrflog import mrf_log
 import templates
 import psycopg2
-alog = asa_log()
+alog = mrf_log()
 
 def print_everything(*args):
     alog.debug( "print *args")
