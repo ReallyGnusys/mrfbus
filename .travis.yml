@@ -5,6 +5,7 @@ addons:
     packages:
       - gcc-msp430
       - msp430-libc
+      - virtualenv
 
 script:
   - make venv
