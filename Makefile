@@ -5,6 +5,10 @@ HOSTFIFO=${TMP}/1-0-in
 
 tests: ${TMP} ${HOSTFIFO} ${LOGDIR} BUILD BUILDCC QTEST
 
+venv :	land/requirements.txt
+	cd land && virtualenv venv
+	bash && source land/venv/bin/activate && pip install -r land/requirements.txt
+
 
 ${TMP}:
 	mkdir ${TMP}

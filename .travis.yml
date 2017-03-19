@@ -6,10 +6,8 @@ addons:
       - gcc-msp430
       - msp430-libc
 
-install:
-   - cd land ; virtualenv venv  ;  source venv/bin/activate ; pip install -r requirements.txt
-
 script:
+  - make venv
   - make tests
   - ./mrflib/tests/iqueue/test_01
   - ./run_tests
