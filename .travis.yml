@@ -6,6 +6,8 @@ addons:
       - gcc-msp430
       - msp430-libc
 
+install: "pip install -r land/requirements.txt"
+
 script:
   - make tests
   - ./mrflib/tests/iqueue/test_01

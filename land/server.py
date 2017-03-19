@@ -218,7 +218,7 @@ class SimpleTcpClient(object):
         self.log = log
         self.callback = callback
         self.id = SimpleTcpClient.client_id
-        print "SimpleTcpClient constuctor %d"%self.id
+        #print "SimpleTcpClient constuctor %d"%self.id
         self.log.info("SimpleTcpClient constuctor %d"%self.id)
         self.stream = stream
  
@@ -646,18 +646,21 @@ class MrflandServer(object):
 
         self._webapp = tornado.web.Application(self._web_handlers,cookie_secret="dighobalanamsamarosaddhammamavijanatam")
 
-        
-        self.nsettings = dict(
-        )
-        self.nsettings = dict({  "ssl_options" : 
-                    { "certfile": install._ssl_cert_file,
-                      "keyfile" : install._ssl_key_file
-                    }
-        })
+        self.nsettings = dict()
 
-        self.log.info("starting http server certfile %s keyfile %s"%\
+        
+        if install.https_server:
+            self.nsettings["ssl_options"] = {
+                "certfile": install._ssl_cert_file,
+                "keyfile" : install._ssl_key_file
+            }
+
+
+            self.log.info("starting https server certfile %s keyfile %s"%\
                       (install._ssl_cert_file,install._ssl_key_file))
-                      
+        else:
+            self.log.info("starting http server")
+                           
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
 
         self.http_server.listen(options.port)

@@ -17,15 +17,15 @@ dbuser = 'asa_sys'
 
 from datetime import datetime
 upsince = datetime.now()
-wsprot = 'wss://'  # or 'wss://'
 
-#wsprot = 'ws://'  # or 'wss://'
+https_server = False
 
-#hostdomain =  host+"."+domain
-#userdomain =  hostdomain # 'user.'+domain
 
-#publicdomain = 'www.'+domain
-#helpline_webchat = 'https://'+publicdomain+'/chat'
+if https_server:
+    wsprot = 'wss://'  # or 'wss://'
+else:
+    wsprot = 'ws://'
+
 sess_cookie = "MRFLANDSESSID"
 public_cookie = "MFLANDPUBLICID"
 
@@ -36,7 +36,11 @@ log_level = logging.INFO
 logger_name = 'mrfland'
 
 
-logdir = installdir+'log/'
+tmpdir  = "/tmp/mrf_bus"
+
+
+
+logdir = tmpdir +'/log/'
 mrflog = 'mrfland.log'
 
 #hard coded userdb

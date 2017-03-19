@@ -80,7 +80,7 @@ class LandTestCase(unittest.TestCase):
         self.app_cmds = {}  # need to override in some ugly way to allow app command testing for now
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(('ted',8912))  #FIXME need config param or something here
+        self.sock.connect(('localhost',8912))  #FIXME need config param or something here
         #self.sock.setblocking(0)
 
     def tearDown(self):
@@ -116,17 +116,24 @@ class LandTestCase(unittest.TestCase):
             print "Param sent ( type %s ) but None expected"%type(dstruct)
             return -1
 
-        if type(dstruct) != type(None) and not self.check_attrs(dstruct,paramtype()):
-            print "check attrs failed for cmd"
-            return -1
+        ddic = None
+        if type(dstruct) != type(None):
+            if type(dstruct) == type({}):
+                ddic = dstruct
+            else:
+                ddic = dstruct.dic()
+
+            if not self.check_attrs(ddic,paramtype()):
+                print "check attrs failed for cmd"
+                return -1
 
 
 
         mobj = { 'dest' : dest , 'cmd' : cmd_code }
         
 
-        if dstruct:
-            mobj['data'] = dstruct
+        if ddic:
+            mobj['data'] = ddic
 
 
         mstr = to_json(mobj)
@@ -142,7 +149,7 @@ class LandTestCase(unittest.TestCase):
         
         robj = json_parse(resp)
 
-        print "after parse it's %s"%repr(robj)
+        #print "after parse it's %s"%repr(robj)
 
         return robj
                         
@@ -153,14 +160,15 @@ class LandTestCase(unittest.TestCase):
         
     def check_attrs(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
+        #print "check_attrs rsp %s"%repr(rsp)
         for at in exp.iter_fields():
             #print "checking at %s from expected"%at
             if at not in rsp:
                 print "check_attrs: attr %s not found in response"%at
                 print "resp was %s"%repr(rsp)
                 return False
-        print "check_attrs level 1 passed"
-        print "rsp.keys %s "%repr(rsp.keys())
+        #print "check_attrs level 1 passed"
+        #print "rsp.keys %s "%repr(rsp.keys())
         for at in rsp.keys():
             #print "rchecking at %s"%at
             if at not in exp.dic():

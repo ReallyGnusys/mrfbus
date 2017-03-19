@@ -63,8 +63,10 @@ class DeviceTestCase(LandTestCase):
         exp.netid = 0x25
         exp.num_buffs = self.num_buffs
         exp.num_ifs = self.num_ifs
-        #setattr(exp,'dev_name','hostsim')
         exp.dev_name = (ctypes.c_uint8*10)(*(bytearray(self.devname)))
+        #exp.dev_name = 'host'
+        #setattr(exp,'dev_name','host')
+        #exp.dev_name = (ctypes.c_uint8*10)(*(bytearray("host")))
         exp.mrfid = dest
         rv = self.cmd_test(dest,ccode,exp,dstruct=None)
         self.assertEqual(rv,0)
@@ -84,16 +86,16 @@ class DeviceTestCase(LandTestCase):
 
         self.assertTrue(self.check_attrs(resp,PktDeviceStatus()))
         # assumes this is  linux hostsim 
-        self.assertEqual(resp.errors, 0)
+        self.assertEqual(resp['errors'], 0)
 
         ## check rx tx pkts increment
-        rxp = resp.rx_pkts
-        txp = resp.tx_pkts
+        rxp = resp['rx_pkts']
+        txp = resp['tx_pkts']
 
         resp = self.dev_status(dest)
                 
-        self.assertEqual(resp.rx_pkts, rxp+1)
-        self.assertEqual(resp.tx_pkts, txp+1)
+        self.assertEqual(resp['rx_pkts'], rxp+1)
+        self.assertEqual(resp['tx_pkts'], txp+1)
     def sys_info_test(self,dest):
         print "**********************"
         print "* sys info test   (dest 0x%02x)"%dest
@@ -123,10 +125,10 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertTrue(self.check_attrs,resp,PktSysInfo())
+        self.assertTrue(self.check_attrs(resp,PktSysInfo()))
 
 
-        self.assertEqual(resp.num_cmds,MRF_NUM_SYS_CMDS)
+        self.assertEqual(resp['num_cmds'],MRF_NUM_SYS_CMDS)
 
         
         if self.checkgit:
@@ -134,7 +136,7 @@ class DeviceTestCase(LandTestCase):
             self.assertEqual(gitversion,resp["mrfbus_version"])
 
         ## long winded faff to check git hash
-        
+        """
         exp = PktSysInfo()
         exp.mrfbus_version = (ctypes.c_uint8*40)(*(bytearray(gitversion)))
         att1 = getattr(exp,'mrfbus_version')
@@ -145,7 +147,7 @@ class DeviceTestCase(LandTestCase):
         if self.checkgit:
             print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
             self.assertEqual(ever,rver)
-
+        """
         ccode = mrf_cmd_cmd_info   # eyup
         paramstr = PktUint8()
         for cmdnum in xrange(MRF_NUM_SYS_CMDS): # oooer!
@@ -206,7 +208,7 @@ class DeviceTestCase(LandTestCase):
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktAppInfo()))
-        num_cmds = resp.num_cmds
+        num_cmds = resp['num_cmds']
         ccode = mrf_cmd_app_cmd_info   # eyup
         paramstr = PktUint8()
         for cmdnum in xrange(num_cmds): # oooer!
@@ -226,7 +228,7 @@ class DeviceTestCase(LandTestCase):
         self.app_cmd_info_test(dest)
         self.get_time_test(dest)
 
-class TestMrfBus(LandTestCase):
+class TestMrfBus(DeviceTestCase):
 
         
     @unittest.skip("temp disabled - too long")
@@ -259,7 +261,6 @@ class TestMrfBus(LandTestCase):
     def test03_device_tests_repeat(self):
         for i in xrange(10):
             self.test02_device_tests()
-
 
 
 if __name__ == "__main__":
