@@ -6,7 +6,8 @@ addons:
       - gcc-msp430
       - msp430-libc
 
-install: "pip install -r land/requirements.txt"
+install:
+   - cd land ; virtualenv venv  ;  source venv/bin/activate ; pip install -r land/requirements.txt
 
 script:
   - make tests
