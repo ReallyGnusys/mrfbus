@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "creating virtualenv"
+virtualenv land/venv
+
+source land/venv/bin/activate
+
+echo "installing requirements"
+pip install -r land/requirements.txt
+
+  
