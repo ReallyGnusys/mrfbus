@@ -429,16 +429,34 @@ class TestPt1000(DeviceTestCase):
         print "* pt1000 set relay test (dest 0x%02x)"%self.dest
         print "**********************"
        
-        ccode = mrf_cmd_get_relay
         data = PktRelayState()
         data.chan = 0
         data.val = 0
-        self.cmd(self.dest,ccode,dstruct=data)
+        
+        self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
         resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktRelayState()))
 
+        if resp['val']:
+           data.val = 0
+        else:
+           data.val = 1
+
+        self.cmd(self.dest,mrf_cmd_set_relay,dstruct=data)
+        resp2 = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp2)
+        self.assertTrue(self.check_attrs(resp2,data,checkval=True))
+
+        self.cmd(self.dest,mrf_cmd_set_relay,dstruct=resp)
+        resp2 = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp2)
+        exp = PktRelayState()
+        exp.dic_set(resp)
+        self.assertTrue(self.check_attrs(resp2,exp,checkval=True))
+
         
+           
         
     def skipped_test02a_spi_write_test(self):
         self.if_status()
