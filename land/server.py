@@ -212,11 +212,12 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
 class SimpleTcpClient(object):
     client_id = 0
  
-    def __init__(self, stream,log, callback):
+    def __init__(self, stream,log, landserver,disconnect):
         #super(type(self)).__init__(self)
         SimpleTcpClient.client_id += 1
         self.log = log
-        self.callback = callback
+        self.landserver = landserver
+        self.disconnect = disconnect
         self.id = SimpleTcpClient.client_id
         #print "SimpleTcpClient constuctor %d"%self.id
         self.log.info("SimpleTcpClient constuctor %d"%self.id)
@@ -232,6 +233,7 @@ class SimpleTcpClient(object):
     @tornado.gen.coroutine
     def on_disconnect(self):
         self.log.info("tcp conn %d disconnected"%self.id)
+        self.disconnect(self.id)
         yield []
  
     @tornado.gen.coroutine
@@ -247,12 +249,20 @@ class SimpleTcpClient(object):
                     data = None
                     self.log.info("json ob : %s"%repr(ob))
                     if ob.has_key('dest') and ob.has_key('cmd'):
-                        if ob.has_key('data') and ob['cmd'] in MrfSysCmds:
-                            if MrfSysCmds[ob['cmd']]['param'] != None:
-                                data = MrfSysCmds[ob['cmd']]['param']()
-                                data.dic_set(ob['data'])
+                        if ob.has_key('data'):
+                            if ob['cmd'] in MrfSysCmds:
+                                if MrfSysCmds[ob['cmd']]['param'] != None:
+                                    data = MrfSysCmds[ob['cmd']]['param']()
+                                    data.dic_set(ob['data'])
+                            else:
+                                appcmdset = self.landserver._app_cmd_set(ob['dest'])
+                                if appcmdset:
+                                    if appcmdset[ob['cmd']]['param'] != None:
+                                        data = appcmdset[ob['cmd']]['param']()
+                                        data.dic_set(ob['data'])
+                                
                             
-                        self.callback(self.id, ob['dest'],ob['cmd'],data)
+                        self.landserver._callback(self.id, ob['dest'],ob['cmd'],data)
                     else:
                         self.log.info("no valid cmd decoded in  %s"%repr(line))
                 else:
@@ -290,11 +300,15 @@ class MrfCmdObj(object):
 
 
 class MrfTcpServer(tornado.tcpserver.TCPServer):
-    def __init__(self,log,callback):
+    def __init__(self,log,landserver):
         tornado.tcpserver.TCPServer.__init__(self)
         self.log = log
-        self.callback = callback
+        self.landserver = landserver
         self.clients = {}
+    def client_disconnect(self,id):
+        self.clients.pop(id)
+        self.log.info("removed tcp client %s"%repr(id))
+        self.log.info("tcp clients now %s"%repr(self.clients.keys()))
     def tag_is_tcp_client(self,tag):
         return self.clients.has_key(tag)
     
@@ -310,7 +324,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         Called for each new connection, stream.socket is
         a reference to socket object
         """
-        connection = SimpleTcpClient(stream,self.log, self.callback)
+        connection = SimpleTcpClient(stream,self.log, self.landserver,self.client_disconnect)
         self.clients[connection.id] = connection
         yield connection.on_connect()  
 
@@ -405,10 +419,11 @@ class MrflandServer(object):
             self._activate()
 
     def _next_cmd(self,cobj):
-        self.resp_timer = 0
-        self.active_cmd = cobj            
-        self._run_cmd(cobj)
-
+        if self._run_cmd(cobj) == 0:
+            self.resp_timer = 0
+            self.active_cmd = cobj            
+        else:
+            self.log.warn("_run_cmd failed for %s"%repr(cobj))
 
     def _app_cmd_set(self,dest):
         for appn in self.apps.keys():
@@ -433,6 +448,7 @@ class MrflandServer(object):
             self.log.info("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
             return -1
 
+        
         if type(cobj.dstruct) == type(None) and type(paramtype) != type(None):
             self.log.info("No param sent , expected %s"%type(paramtype))
             return -1
@@ -629,7 +645,7 @@ class MrflandServer(object):
         self.queue_cmd(tag, dest, cmd,data)
 
     def _start_tcp_service(self):
-        self.tcp_server = MrfTcpServer(log = self.log, callback = self._callback )
+        self.tcp_server = MrfTcpServer(log = self.log, landserver = self )
         self.tcp_server.listen(install.tcpport)
         self.log.info("started tcpserver on port %d"%install.tcpport)
     def _start_webapp(self):        

@@ -93,7 +93,7 @@ class LandTestCase(unittest.TestCase):
             print "dest > 255"
             return -1
 
-
+        print "landtest.cmd  dest %d cmd_code %d dstruct %s"%(dest,cmd_code,dstruct)
         if cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cmd_code]['param']
 
@@ -110,6 +110,7 @@ class LandTestCase(unittest.TestCase):
          
         if type(dstruct) == type(None) and type(paramtype) != type(None):
             print "No param sent , expected %s"%type(paramtype)
+            print "got %s"%repr(dstruct)
             return -1
         
         if type(paramtype) == type(None) and type(dstruct) != type(None):

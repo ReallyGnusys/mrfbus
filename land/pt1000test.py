@@ -98,6 +98,13 @@ class PktPt1000State(MrfStruct):
         ("ref_i",c_uint32),
         ]
 
+class PktRelayState(MrfStruct):
+    _fields_ = [
+        ("chan", c_uint8),
+        ("val", c_uint8),
+        ]
+
+    
     
 mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
@@ -105,6 +112,8 @@ mrf_cmd_spi_debug = 131
 mrf_cmd_spi_data  = 132
 mrf_cmd_config_adc  = 133
 mrf_cmd_read_state  = 134
+mrf_cmd_get_relay   = 135
+mrf_cmd_set_relay   = 136
 
 
 Pt1000AppCmds = {
@@ -145,6 +154,16 @@ Pt1000AppCmds = {
         'name'  : "READ_STATE",
         'param' : None,
         'resp'  : PktPt1000State
+    },
+    mrf_cmd_get_relay : {
+        'name'  : "GET_RELAY",
+        'param' : PktRelayState,
+        'resp'  : PktRelayState
+    },
+    mrf_cmd_set_relay : {
+        'name'  : "SET_RELAY",
+        'param' : PktRelayState,
+        'resp'  : PktRelayState
     },
 
 }
@@ -331,7 +350,11 @@ class TestPt1000(DeviceTestCase):
     def test001_dev_id_tests(self):
         self.dev_info_test(self.dest)
         self.sys_info_test(self.dest)
+
+
+    def test002_app_info_tests(self):
         self.app_info_test(self.dest)
+        self.app_cmd_info_test(self.dest)
 
     
     def test01_core_tests(self):
@@ -391,12 +414,31 @@ class TestPt1000(DeviceTestCase):
             time.sleep(1)
 
     def test05c_read_state(self):
-        print "READ STATE"
+        print "**********************"
+        print "* pt1000 read state test (dest 0x%02x)"%self.dest
+        print "**********************"
+       
         ccode = mrf_cmd_read_state
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
 
+
+    def test06_set_relay(self):
+        print "**********************"
+        print "* pt1000 set relay test (dest 0x%02x)"%self.dest
+        print "**********************"
+       
+        ccode = mrf_cmd_get_relay
+        data = PktRelayState()
+        data.chan = 0
+        data.val = 0
+        self.cmd(self.dest,ccode,dstruct=data)
+        resp = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp)
+        self.assertTrue(self.check_attrs(resp,PktRelayState()))
+
+        
         
     def skipped_test02a_spi_write_test(self):
         self.if_status()
