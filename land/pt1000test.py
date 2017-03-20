@@ -422,7 +422,8 @@ class TestPt1000(DeviceTestCase):
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
-
+        self.assertTrue(self.check_attrs(resp,PktPt1000State()))
+        print "pt1000 read_state test PASSED"
 
     def test06_set_relay(self):
         print "**********************"

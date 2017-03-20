@@ -188,7 +188,7 @@ class DeviceTestCase(LandTestCase):
         print "got resp:\n%s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktTimeDate()))
 
-        
+        print "set_time_test PASSED"
     def app_info_test(self,dest):
         print "**********************"
         print "* app info test (dest 0x%02x)"%dest
