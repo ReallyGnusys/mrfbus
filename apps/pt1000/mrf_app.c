@@ -48,7 +48,7 @@
 //#define _RESET_BIT  3
 
 #define _DRDY_PORT P2
-#define _DRDY_BIT 4
+#define _DRDY_BIT 5
 
 
 #define _SCLK_PORT P1
@@ -514,7 +514,7 @@ void drdy_int(){
 interrupt(PORT2_VECTOR) PORT2_ISR()
 {
   
-  P1IFG &= ~BITNAME(DRDY);                          // DRDY int cleared
+  P2IFG &= ~BITNAME(DRDY);                          // DRDY int cleared
 
-  
+  drdy_int();
 }
