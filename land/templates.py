@@ -132,7 +132,7 @@ mrf_tp = """
    
     </div>
     <div id="temps" class="tab-pane fade">
-        <h2>Temperature</h2>
+        <h2>Temps</h2>
         <table class="table">
           <thead>
             <tr>
@@ -153,14 +153,45 @@ mrf_tp = """
          </table>
     </div>
     <div id="pumps" class="tab-pane fade">
-      <h3>Pumps</h3>
-      <p>Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium, totam rem aperiam.</p>
-    </div>
-    <div id="menu3" class="tab-pane fade">
-      <h3>Menu 3</h3>
-      <p>Eaque ipsa quae ab illo inventore veritatis et quasi architecto beatae vitae dicta sunt explicabo.</p>
-    </div>
-  </div>
+        <h2>Pumps</h2>
+        <table class="table">
+          <thead>
+            <tr>
+             <th>ID</th>
+             <th>label</th>
+             <th>value</th>
+             <th>time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+             <td>pump-000</td>
+             <td>Main rads</td>
+             <td id="pump-0-value">NADA</td>
+             <td id="pump-0-timedate">0</td>
+            </tr>
+            <tr>
+             <td>pump-001</td>
+             <td>Underfloor</td>
+             <td id="pump-1-value">NADA</td>
+             <td id="pump-1-timedate"></td>
+            </tr>
+            <tr>
+             <td>pump-002</td>
+             <td>DHW charge 1</td>
+             <td id="pump-2-value">NADA</td>
+             <td id="pump-2-timedate"></td>
+            </tr>
+            <tr>
+             <td>pump-003</td>
+             <td>DHW charge 2</td>
+             <td id="pump-2-value">NADA</td>
+             <td id="pump-2-timedate"></td>
+            </tr>
+          </tbody>
+         </table>
+
+      </div>
 
 
 

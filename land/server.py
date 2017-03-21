@@ -317,7 +317,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
             self.log.error("%s no client with id %d"%(self.__class__.__name__,id))
             return
         self.clients[id].stream.write(msg)
-        self.log.info("wrote_to client %id"%id)
+        self.log.info("wrote_to client %d"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
         """
@@ -579,8 +579,8 @@ class MrflandServer(object):
         for appn in self.apps.keys(): # apps see everything
             rv = self.apps[appn].fyi(hdr,rsp, robj)
             if rv:
-                #self.log.info("app %s fyi returned"%appn)
-                #self.log.info(repr(rv))
+                self.log.info("app %s fyi returned"%appn)
+                self.log.info(repr(rv))
                 
                 ro = mrfland.RetObj()
                 for mcmd in rv.keys():

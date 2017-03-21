@@ -112,6 +112,27 @@ class Pt1000State(object):
 
     def new_relay_state(self,hdr,state):
         self.log.info("new_relay_state %s"%repr(state))
+        _relay_state = self.relay_state
+        if state.chan > Pt1000MaxRelays:
+            self.log.error("new_relay_state got illegal chan in %s"%repr(state))
+            return
+        
+        if state.val == 0:
+            _relay_state = _relay_state  & ~(1 << state.chan)
+        elif state.val == 1:
+            _relay_state = _relay_state  | (1 << state.chan)
+        else:
+            self.log.error("new_relay_state got illegal val in %s"%repr(state))
+            return
+
+        if _relay_state != self.relay_state:
+            self.log.info("relay state change from %0x to %0x "%(self.relay_state,_relay_state))
+            self.relay_state = _relay_state
+            relays = self.relays()
+            robj = {"relays" : relays  }
+            return robj
+            
+        
     def new_state(self,hdr,state):
         
         now = state.td.to_datetime()

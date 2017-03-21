@@ -87,6 +87,21 @@ function mrf_heating_tempsensors(data){
     }
 
 }
+
+function mrf_heating_relays(data){
+
+    for (var ch = 0 ; ch < data.length ; ch++){
+        cdata = data[ch];
+        console.log("rly ch "+ch+" = "+cdata);
+        jsel = '#pump-'+ch+'-value';
+        htm = ""+cdata;
+        console.log("trying jsel "+jsel+" with data "+htm);
+        $(''+jsel).html(htm);
+    }
+
+}
+
+
 //incoming socket command handler
 function mrf_command(obj){
     console.log("mrf_command : got");
@@ -96,6 +111,9 @@ function mrf_command(obj){
 
     } else if (obj.cmd == 'tempsensors'){
         mrf_heating_tempsensors(obj.data);  // FIXME - separate APP in js!!
+    }
+    else if (obj.cmd == 'relays'){
+        mrf_heating_relays(obj.data);  // FIXME - separate APP in js!!
     }
     
     
@@ -136,7 +154,8 @@ function init_socket(){
 
         };
         ws.onclose = function() { 
-            console.log("Connection is closed...logging out"); 
+            console.log("Connection is closed...logging out");
+            alert("server has closed connection - try reloading page");
             //window.location.href = window.location.origin + '/logout';
             
         };
