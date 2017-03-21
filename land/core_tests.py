@@ -111,14 +111,23 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "****got resp:\n%s"%repr(resp)
-        self.assertTrue(self.check_attrs(resp,PktSysInfo()))
+        pass_fail = self.check_attrs(resp,PktSysInfo())
+        self.assertTrue(pass_fail)
 
+        if resp['num_cmds'] != MRF_NUM_SYS_CMDS:
+            pass_fail = False
+        self.assertTrue(pass_fail)
+                                     
 
-        self.assertEqual(resp['num_cmds'],MRF_NUM_SYS_CMDS)
+        if self.checkgit and gitversion != resp["mrfbus_version"]:
+            pass_fail = False
+            self.assertTrue(pass_fail)
 
-        if self.checkgit:
-            self.assertEqual(gitversion,resp["mrfbus_version"])
-
+        if pass_fail:
+            print "PASSED sys_info test (dest 0x%02x)"%dest
+        else:
+            print "FAILED sys_info test (dest 0x%02x)"%dest
+            
 
     def sys_cmd_info_test(self,dest):
         print "**********************"
