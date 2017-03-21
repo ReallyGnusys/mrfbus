@@ -23,6 +23,9 @@
 
 #include "mrf_spi.h"
 #include  <msp430.h>
+#include <legacymsp430.h>
+#include "cc430f5137.h"
+
 #include "mrf_pinmacros.h"
 
 #define NUM_RELAY_CHANNELS 8
@@ -226,9 +229,12 @@ int ads1148_config(){
   ads1148_write(IDAC0_OFFS,  4 );  // 500uA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
   set_input(0);
+  
+  PINHIGH(START);  // continuous sampling
 
 
 }
+static int port2_icnt;
 
 int ads1148_init(){
   // start output
@@ -257,7 +263,6 @@ int ads1148_init(){
   __delay_cycles(1000);
   
   mrf_spi_flush_rx();
-  PINHIGH(START);
 
   int i,j;
   for (i = 0; i < 1000 ; i++)  
@@ -267,6 +272,14 @@ int ads1148_init(){
   ads1148_config();
   __delay_cycles(100);
   ads1148_config();  // temp desperation
+
+  // need to enable interrupts on DRDY
+  P2REN |= BITNAME(DRDY);
+  P2OUT |= BITNAME(DRDY);
+  P2IE  |= BITNAME(DRDY);  
+  P2IES |= BITNAME(DRDY);
+  P2IFG &= ~BITNAME(DRDY);
+  port2_icnt = 0;
   
 }
 
@@ -487,4 +500,21 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   rs->val = get_relay_state(rs->chan);
   mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
   return MRF_CMD_RES_OK;
+}
+
+
+void drdy_int(){
+  port2_icnt++;
+
+
+}
+
+
+
+interrupt(PORT2_VECTOR) PORT2_ISR()
+{
+  
+  P1IFG &= ~BITNAME(DRDY);                          // DRDY int cleared
+
+  
 }
