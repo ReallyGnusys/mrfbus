@@ -54,7 +54,7 @@ class Pt1000TempSensor(object):
     
     def new_reading(self,milliohms,td):
         #self.log.info("new_reading chan %d : %d milliohms"%(self.channel,milliohms))
-        if milliohms == self.milliohms:
+        if milliohms == self.milliohms:  # no change
             return None
         self.milliohms = milliohms
         self.temperature = self.res_to_temp(self.milliohms)
@@ -67,14 +67,12 @@ class Pt1000State(object):
         self.log = log
         self.temps = []
         self.updated = []
-        self.relays  = []
+        self.relay_state = 0
         self.last_reading = None
         
         for i in xrange(Pt1000MaxChanns):
             self.temps.append(Pt1000TempSensor(self.address,i,self.log))
 
-        for i in xrange(Pt1000MaxRelays):
-            self.relays.append(0)
             
     def __repr__(self):
         s = "%s address %d last reading %s\n"%(self.__class__.__name__,self.address,str(self.last_reading))
@@ -87,21 +85,33 @@ class Pt1000State(object):
                 s += ","
         s += "]\n"
         return s
+
+    def relays(self):  # return relay state as array
+        _relays = []
+        for i in xrange(Pt1000MaxRelays):
+            if self.relay_state & ( 1 << i) != 0:
+                _relays.append(1)
+            else:
+                _relays.append(0)
+        return _relays
+    
     def new_msg(self,hdr,state):
         if hdr.usrc != self.address:   # just a spot sanity check..
             self.log.warn("PT1000 state wrong address!!")
             return
 
-        if type(state) != type(PktPt1000State()) and :
+        if type(state) == type(PktPt1000State()):
             #self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
-            return self.new_state(hdr,state):
-        elif type(state) != type(PktRelayState()) and :
+            return self.new_state(hdr,state)
+        elif type(state) == type(PktRelayState()):
             #self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
-            return self.new_relay_state(hdr,state):
+            return self.new_relay_state(hdr,state)
         else:
             return
             
 
+    def new_relay_state(self,hdr,state):
+        self.log.info("new_relay_state %s"%repr(state))
     def new_state(self,hdr,state):
         
         now = state.td.to_datetime()
@@ -134,7 +144,13 @@ class Pt1000State(object):
         self.last_reading = now
 
         robj = {"tempsensors" : tsensors  }
-                             
+
+        if state.relay_state != self.relay_state:
+            self.relay_state = state.relay_state
+            robj["relays"] = self.relays()
+            msg += "relay_state 0x%x"%self.relay_state
+            
+        
         if msg != "":
             self.log.info("Pt1000State updated %s"%msg)
             return robj
