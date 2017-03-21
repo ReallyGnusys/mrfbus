@@ -70,6 +70,11 @@ class DeviceTestCase(LandTestCase):
         exp.mrfid = dest
         rv = self.cmd_test(dest,ccode,exp,dstruct=None)
         self.assertEqual(rv,0)
+        if rv == 0:
+            print "PASSED device info test (dest 0x%02x)"%dest
+        else:
+            print "FAILED device info test (dest 0x%02x)"%dest
+            
 
     def dev_status(self,dest):
         ccode = mrf_cmd_device_status
@@ -176,18 +181,28 @@ class DeviceTestCase(LandTestCase):
         self.cmd(ref,ccode)
         reftime = self.response(timeout=self.timeout)
         print "ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime))
-        self.assertTrue(self.check_attrs(reftime,PktTimeDate()))
+
+        result = self.check_attrs(reftime,PktTimeDate())
+        self.assertTrue(result)
 
         self.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
+        result2 = self.check_attrs(resp,PktTimeDate())
+        self.assertTrue(result2)
 
         
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertTrue(self.check_attrs(resp,PktTimeDate()))
+        result3 = self.check_attrs(resp,PktTimeDate())
+        self.assertTrue(result3)
 
+        if result and result2 and result3:
+            print "PASSED set time test (dest 0x%02x)"%dest
+        else:
+            print "FAILED set time test (dest 0x%02x)"%dest
+            
         print "set_time_test PASSED"
     def app_info_test(self,dest):
         print "**********************"
@@ -197,7 +212,14 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
-        self.assertTrue(self.check_attrs(resp,PktAppInfo()))
+        res = self.check_attrs(resp,PktAppInfo())
+        if res:
+            print "PASSED app info test (dest 0x%02x)"%dest
+        else:
+            print "FAILED app info test (dest 0x%02x)"%dest
+            
+        self.assertTrue(res)
+            
             
     def app_cmd_info_test(self,dest):
         print "**********************"

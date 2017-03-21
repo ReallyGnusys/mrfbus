@@ -28,6 +28,7 @@ from pt1000test import *
 from datetime import datetime
 
 Pt1000MaxChanns = 7
+Pt1000MaxRelays = 4
 
 
 class Pt1000TempSensor(object):
@@ -66,25 +67,43 @@ class Pt1000State(object):
         self.log = log
         self.temps = []
         self.updated = []
+        self.relays  = []
         self.last_reading = None
         
         for i in xrange(Pt1000MaxChanns):
             self.temps.append(Pt1000TempSensor(self.address,i,self.log))
 
+        for i in xrange(Pt1000MaxRelays):
+            self.relays.append(0)
             
     def __repr__(self):
         s = "%s address %d last reading %s\n"%(self.__class__.__name__,self.address,str(self.last_reading))
         for chan in xrange(Pt1000MaxChanns):
             s += " %d) %s\n"%(chan,repr(self.temps[chan]))
+        s += "Relays ["
+        for chan in xrange(Pt1000MaxRelays):
+            s += "%d"%self.relays[chan]
+            if chan < Pt1000MaxRelays - 1:
+                s += ","
+        s += "]\n"
         return s
-    def new_state(self,hdr,state):
-        if type(state) != type(PktPt1000State()):
-            self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
-            return
+    def new_msg(self,hdr,state):
         if hdr.usrc != self.address:   # just a spot sanity check..
             self.log.warn("PT1000 state wrong address!!")
             return
 
+        if type(state) != type(PktPt1000State()) and :
+            #self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
+            return self.new_state(hdr,state):
+        elif type(state) != type(PktRelayState()) and :
+            #self.log.warn( "PT1000 state wrong type!! got  %s expected %s"%( type(state),type(PktPt1000State())))
+            return self.new_relay_state(hdr,state):
+        else:
+            return
+            
+
+    def new_state(self,hdr,state):
+        
         now = state.td.to_datetime()
     
         if not ( self.last_reading == None or now >= self.last_reading):
@@ -180,7 +199,7 @@ class MrflandAppHeating(MrflandApp):
 
     def pt1000msg(self,hdr,rsp,robj):
         #if type(robj) != type(PktPt1000State()):
-        return self.pt1000state[hdr.usrc].new_state(hdr,robj)
+        return self.pt1000state[hdr.usrc].new_msg(hdr,robj)
 
         
             

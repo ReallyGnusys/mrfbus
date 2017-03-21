@@ -433,12 +433,13 @@ class TestPt1000(DeviceTestCase):
         data = PktRelayState()
         data.chan = 0
         data.val = 0
-        
+        ## get initial relay state for chan 0
         self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
         resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktRelayState()))
 
+        # toggle relay state
         if resp['val']:
            data.val = 0
         else:
@@ -449,6 +450,13 @@ class TestPt1000(DeviceTestCase):
         print "resp %s"%repr(resp2)
         self.assertTrue(self.check_attrs(resp2,data,checkval=True))
 
+        ## check pt1000state has updated
+        self.cmd(self.dest,mrf_cmd_read_state)
+        rst = self.response(timeout=self.timeout)
+        print "resp %s"%repr(rst)
+        self.assertTrue(self.check_attrs(rst,PktPt1000State()))
+        
+        # restore relay state
         self.cmd(self.dest,mrf_cmd_set_relay,dstruct=resp)
         resp2 = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp2)
