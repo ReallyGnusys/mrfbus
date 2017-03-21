@@ -100,6 +100,9 @@ function mrf_heating_relays(data){
         htm = ""+cdata;
         console.log("trying jsel "+jsel+" with data "+htm);
         $(''+jsel).html(htm);
+        $("#pump-"+ch+"-cb").prop("checked",cdata !=0);
+
+        
     }
 
 }
