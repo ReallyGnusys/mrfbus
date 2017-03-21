@@ -190,7 +190,7 @@ class Pt1000State(object):
             tsensors[ch]["date"]        = self.temps[ch].date     
             
  
-        robj = {"tempsensors" : tsensors }
+        robj = {"tempsensors" : tsensors , "relays" : self.relays() }
         self.log.info("%s curr_state returning %s"%(self.__class__.__name__,repr(robj)))
         return robj
     
@@ -233,6 +233,18 @@ class MrflandAppHeating(MrflandApp):
 
     def cmd_nancy(self,data):
         self.log.info( "cmd nancy here, data was %s"%repr(data))
+
+    def cmd_relay_set(self,data):
+        self.log.info( "cmd relay_set here, data was %s"%repr(data))
+        if not data.has_key("chan") or not data.has_key("val"):
+            self.log.error("cmd_relay_set data problem in %s"%repr(data))
+            return
+        dest = list(self._pt1000_addrs)[0]
+        param = PktRelayState()
+        param.dic_set(data)
+        self.cmd_callback(self.tag,dest,mrf_cmd_set_relay,param)
+
+        
 
     def pt1000msg(self,hdr,rsp,robj):
         #if type(robj) != type(PktPt1000State()):

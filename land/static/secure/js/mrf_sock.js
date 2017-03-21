@@ -1,5 +1,6 @@
 $(document).ready(function() {
     console.log("inbox.index : typeof sock = "+ typeof sock);
+    init_app();
     init_socket();
 });
 
@@ -55,8 +56,9 @@ var mrf_socket = new MrfSocket();
 sock = null;
 
 
-function mrf_ccmd(cmd,data){
+function mrf_ccmd(app,cmd,data){
     cobj = Object();
+    cobj['app'] = app;
     cobj['ccmd'] = cmd;
     cobj['data'] = data;
     jso = JSON.stringify(cobj);
@@ -88,6 +90,7 @@ function mrf_heating_tempsensors(data){
 
 }
 
+_NUM_RELAYS = 4;  // ouch
 function mrf_heating_relays(data){
 
     for (var ch = 0 ; ch < data.length ; ch++){
@@ -98,6 +101,26 @@ function mrf_heating_relays(data){
         console.log("trying jsel "+jsel+" with data "+htm);
         $(''+jsel).html(htm);
     }
+
+}
+
+
+function init_app(){
+    for (var ch = 0 ; ch < _NUM_RELAYS ; ch++){
+        //channel = Number(ch)
+        $("#pump-"+ch+"-cb").change(
+            function(){
+                console.log("cb changed checked "+this.checked);
+                if (this.checked){
+                    val = 1;
+                }
+                else{
+                    val = 0;
+                }
+                ws.send(mrf_ccmd("heating","relay_set",{"chan": Number(this.value) , "val" :val }));
+            });
+    }
+    
 
 }
 
@@ -134,7 +157,7 @@ function init_socket(){
         ws.onopen = function() {
             console.log("websocket opened : ok");
             mrf_socket.set_socket(ws);
-            ws.send(mrf_ccmd("send-inbox",{}));
+            //ws.send(mrf_ccmd("send-inbox",{}));
         };
         ws.onmessage = function (evt) { 
             var msg = evt.data;

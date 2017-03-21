@@ -160,7 +160,7 @@ mrf_tp = """
              <th>ID</th>
              <th>label</th>
              <th>value</th>
-             <th>time</th>
+             <th>control</th>
             </tr>
           </thead>
           <tbody>
@@ -168,25 +168,26 @@ mrf_tp = """
              <td>pump-000</td>
              <td>Main rads</td>
              <td id="pump-0-value">NADA</td>
-             <td id="pump-0-timedate">0</td>
+             <td id="pump-0-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-0-cb" value="0"></div></td>
             </tr>
             <tr>
              <td>pump-001</td>
              <td>Underfloor</td>
              <td id="pump-1-value">NADA</td>
-             <td id="pump-1-timedate"></td>
+             <td id="pump-1-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-1-cb" value="1"></div></td>
+
             </tr>
             <tr>
              <td>pump-002</td>
              <td>DHW charge 1</td>
              <td id="pump-2-value">NADA</td>
-             <td id="pump-2-timedate"></td>
-            </tr>
+              <td id="pump-2-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-2-cb" value="2"></div></td>
+           </tr>
             <tr>
              <td>pump-003</td>
              <td>DHW charge 2</td>
-             <td id="pump-2-value">NADA</td>
-             <td id="pump-2-timedate"></td>
+             <td id="pump-3-value">NADA</td>
+             <td id="pump-3-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-3-cb" value="3"></div></td>
             </tr>
           </tbody>
          </table>

@@ -179,8 +179,11 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         
     def on_message(self, message):
         alog.info("client message on wsid ="+self.id+" "+str(message))
+        cobj = json_parse(message)
 
-        return
+        if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
+            alog.info("decoded client command %s"%repr(cobj))
+            server.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
     
     def on_close(self):
         self.id = self.get_argument("Id")
@@ -390,7 +393,11 @@ class MrflandServer(object):
         for appn in self.apps.keys():
             self.registrations[appn] = []
     
-
+    def web_client_command(self,wsid,app,cmd,data):
+        if app not in self.apps.keys():
+            self.log.error("web_client_command unknown app %s from wsid %d"%(app,wsid))
+            return
+        self.apps[app].cmd(cmd,data)
         
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if not self._active:
