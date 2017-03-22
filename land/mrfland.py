@@ -106,10 +106,10 @@ class mrf_comm(object):
             self.sockets[wsid].close()
 
     def _jso_broadcast(self,raw):
-        alog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
-        alog.info(" clients = "+str(self.clients))    
+        alog.debug( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+        alog.debug(" clients = "+str(self.clients))    
         for client in self.clients :   
-            alog.info( "client:"+client)
+            alog.debug( "client:"+client)
             self.clients[client]['object'].write_message(raw + "\r\n\r\n")
 
     def send_object_to_client(self,id,obj):

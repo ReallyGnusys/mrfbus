@@ -586,8 +586,8 @@ class MrflandServer(object):
         for appn in self.apps.keys(): # apps see everything
             rv = self.apps[appn].fyi(hdr,rsp, robj)
             if rv:
-                self.log.info("app %s fyi returned"%appn)
-                self.log.info(repr(rv))
+                self.log.debug("app %s fyi returned"%appn)
+                self.log.debug(repr(rv))
                 
                 ro = mrfland.RetObj()
                 for mcmd in rv.keys():

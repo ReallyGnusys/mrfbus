@@ -54,8 +54,8 @@ class Pt1000TempSensor(object):
     
     def new_reading(self,milliohms,td):
         #self.log.info("new_reading chan %d : %d milliohms"%(self.channel,milliohms))
-        if milliohms == self.milliohms:  # no change
-            return None
+        #if milliohms == self.milliohms:  # no change
+        #    return None
         self.milliohms = milliohms
         self.temperature = self.res_to_temp(self.milliohms)
         self.date = td.to_datetime()
@@ -160,7 +160,7 @@ class Pt1000State(object):
                 msg += "ch %d) %.3f :"%(ch,updated[ch])
                 if ch not in self.updated:
                     self.updated.append(ch)
-                self.log.info("ch %s was updated now %s"%(ch,repr(self.updated)))
+                #self.log.info("ch %s was updated now %s"%(ch,repr(self.updated)))
 
         self.last_reading = now
 
@@ -173,7 +173,7 @@ class Pt1000State(object):
             
         
         if msg != "":
-            self.log.info("Pt1000State updated %s"%msg)
+            self.log.debug("Pt1000State updated %s"%msg)
             return robj
         return
     
