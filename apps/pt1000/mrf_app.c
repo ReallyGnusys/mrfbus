@@ -110,10 +110,10 @@ uint16 ads1148_data(){
   uint16 lc = 0;
   uint8  i = 0;
   _rxcnt = 0 ;
-  PINHIGH(START);  // leave continuous sampling
+  //PINHIGH(START);  // leave continuous sampling
 //toggle_cs();
   PINLOW(CS);
-  __delay_cycles(10);
+  //__delay_cycles(10);
   mrf_spi_flush_rx(); 
   /*  
   while((lc < 100) && (INPUTVAL(DRDY))){
@@ -156,7 +156,7 @@ uint8 ads1148_read(uint8 reg){
   uint8 b1 = 0x20 + ( reg & 0xf );
 //toggle_cs();
   //PINLOW(CS);
-  __delay_cycles(10);
+  //__delay_cycles(10);
   mrf_spi_flush_rx();
 
   mrf_spi_tx(b1);
@@ -247,9 +247,6 @@ int ads1148_config(){
   set_input(0);
   flush_spi();
 
-  PINHIGH(START);  // continuous sampling
-
-
 }
 static int port2_icnt;
 
@@ -299,6 +296,8 @@ int ads1148_init(){
   P2IES |= BITNAME(DRDY);
   P2IFG &= ~BITNAME(DRDY);
   port2_icnt = 0;
+ 
+  PINHIGH(START);  // continuous sampling
   
 }
 
