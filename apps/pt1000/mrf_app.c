@@ -185,11 +185,11 @@ uint8 ads1148_write_noblock(uint8 reg,uint8 data){
   uint8 b1 = 0x40 + ( reg & 0xf );
 
   mrf_spi_tx(b1);
-  __delay_cycles(10);  
+  //__delay_cycles(10);  
   mrf_spi_tx(0); // 1 byte
-  __delay_cycles(10);  
+  //__delay_cycles(10);  
   mrf_spi_tx(data);
-  __delay_cycles(10);  
+  //__delay_cycles(10);  
  
  
   return 0;
