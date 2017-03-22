@@ -141,7 +141,7 @@ uint16 ads1148_data(){
 
   
   //PINLOW(START);  // leave continuous sampling
-  PINHIGH(CS);
+  //PINHIGH(CS);
 
   return rv;
 }
@@ -155,7 +155,7 @@ uint8 ads1148_read(uint8 reg){
   _rxcnt = 0 ;
   uint8 b1 = 0x20 + ( reg & 0xf );
 //toggle_cs();
-  PINLOW(CS);
+  //PINLOW(CS);
   __delay_cycles(10);
   mrf_spi_flush_rx();
 
@@ -168,7 +168,7 @@ uint8 ads1148_read(uint8 reg){
     b1 = mrf_spi_rx();
     debfunc(b1);
   }
-  PINHIGH(CS);
+  //PINHIGH(CS);
 
   return b1;
 }
@@ -196,6 +196,14 @@ uint8 ads1148_write_noblock(uint8 reg,uint8 data){
 }
 
 
+// clear all spi transactions
+void flush_spi(){
+  while(mrf_spi_tx_data_avail()){ // FIXME
+    __delay_cycles(10);  
+  }
+  mrf_spi_flush_rx();
+}
+
 uint8 ads1148_write(uint8 reg,uint8 data){
   /*
   while(mrf_spi_tx_data_avail()){  // block until queue cleared
@@ -206,27 +214,22 @@ uint8 ads1148_write(uint8 reg,uint8 data){
  
   mrf_spi_flush_rx();
   ads1148_write_noblock(reg,data);
- 
-  while(mrf_spi_tx_data_avail()){ // FIXME
-    __delay_cycles(10);  
-  }
-  
-  mrf_spi_flush_rx();
-  //PINHIGH(CS);
-  __delay_cycles(10);  
+
+  flush_spi();
   return 0;
 }
 
 
 #define NUM_ADC_INPUTS 7
+
+
 static int set_input(int channel){
   if ( channel > NUM_ADC_INPUTS){
     return -1;
   }
-  ads1148_write(MUX0_OFFS, (channel << 3) | 0x7 );
+  ads1148_write_noblock(MUX0_OFFS, (channel << 3) | 0x7 );
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
-  ads1148_write(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
- 
+  ads1148_write_noblock(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
 }
 
 int ads1148_config(){
@@ -242,7 +245,8 @@ int ads1148_config(){
   ads1148_write(IDAC0_OFFS,  4 );  // 500uA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
   set_input(0);
-  
+  flush_spi();
+
   PINHIGH(START);  // continuous sampling
 
 
