@@ -77,14 +77,11 @@ function mrf_heating_tempsensors(data){
 
     for (var ch in data){
         cdata = data[ch];
-        console.log("ch "+ch+" = "+cdata);
         jsel = '#tempsensor-'+ch+'-value';
         htm = ""+cdata.temperature.toFixed(3);
-        console.log("trying jsel "+jsel+" with data "+htm);
         $(''+jsel).html(htm);
         jsel = '#timedate-'+ch;
         htm = ""+cdata.date;
-        console.log("trying jsel "+jsel+" with data "+htm);
         $(''+jsel).html(htm);
     }
 
@@ -98,7 +95,6 @@ function mrf_heating_relays(data){
         console.log("rly ch "+ch+" = "+cdata);
         jsel = '#pump-'+ch+'-value';
         htm = ""+cdata;
-        console.log("trying jsel "+jsel+" with data "+htm);
         $(''+jsel).html(htm);
         $("#pump-"+ch+"-cb").prop("checked",cdata !=0);
 
@@ -130,8 +126,8 @@ function init_app(){
 
 //incoming socket command handler
 function mrf_command(obj){
-    console.log("mrf_command : got");
-    console.log(obj);
+    //console.log("mrf_command : got");
+    //console.log(obj);
     if (obj.cmd == 'update-div'){
         mrf_update_div(obj.data);
 
@@ -164,8 +160,8 @@ function init_socket(){
         };
         ws.onmessage = function (evt) { 
             var msg = evt.data;
-            console.log("got ws message");
-            console.log(evt.data);
+            //console.log("got ws message");
+            //console.log(evt.data);
 	    
 	    obj = ParseJsonString(evt.data);
 	    if ( obj) {
