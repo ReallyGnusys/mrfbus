@@ -172,20 +172,17 @@ uint8 ads1148_read(uint8 reg){
 
   return b1;
 }
-uint8 ads1148_write(uint8 reg,uint8 data){
+
+
+
+uint8 ads1148_write_noblock(uint8 reg,uint8 data){
   /*
   while(mrf_spi_tx_data_avail()){  // block until queue cleared
     __delay_cycles(50);
   }
   */
 
-  _rxcnt = 0 ;
   uint8 b1 = 0x40 + ( reg & 0xf );
-  //PINLOW(START);  // stop sampling during reconfig
-
-  PINLOW(CS);
-  __delay_cycles(10);
-  mrf_spi_flush_rx();
 
   mrf_spi_tx(b1);
   __delay_cycles(10);  
@@ -195,15 +192,31 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   __delay_cycles(10);  
  
  
+  return 0;
+}
+
+
+uint8 ads1148_write(uint8 reg,uint8 data){
+  /*
+  while(mrf_spi_tx_data_avail()){  // block until queue cleared
+    __delay_cycles(50);
+  }
+  */
+
+ 
+  mrf_spi_flush_rx();
+  ads1148_write_noblock(reg,data);
+ 
   while(mrf_spi_tx_data_avail()){ // FIXME
     __delay_cycles(10);  
   }
   
   mrf_spi_flush_rx();
-  PINHIGH(CS);
+  //PINHIGH(CS);
   __delay_cycles(10);  
   return 0;
 }
+
 
 #define NUM_ADC_INPUTS 7
 static int set_input(int channel){
@@ -261,13 +274,15 @@ int ads1148_init(){
 //PINHIGH(RESET);
   PINHIGH(MR);  
   __delay_cycles(1000);
-  
+
   mrf_spi_flush_rx();
 
   int i,j;
   for (i = 0; i < 1000 ; i++)  
     for (j = 0; j < 2 ; j++)  
       __delay_cycles(1000); // need to wait 16ms
+
+  PINLOW(CS);  // leave SPI continually enabled in this app
 
   ads1148_config();
   __delay_cycles(100);
