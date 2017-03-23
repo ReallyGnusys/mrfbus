@@ -97,7 +97,7 @@ uint8 _dbg_rxdata[4];
 static uint32_t _ref_r;  // the resistor value between ref+ and ref
 static uint32_t _ref_i;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
 
-static uint16 _last_reading[MAX_RTDS];
+static uint16_t _last_reading[MAX_RTDS];
 
 uint16 ads1148_data(){
   /*
@@ -306,6 +306,8 @@ int ads1148_init(){
 
 uint32_t eval_milliohms(uint16_t adc){
   uint64_t rv = (uint64_t)adc * (uint64_t)_ref_r;
+  if (rv == 0)
+    return 0;
   rv /= (uint64_t)32767;
   rv -= _ref_i;
   return (uint32_t)rv;
@@ -318,8 +320,9 @@ int build_state(MRF_PKT_PT1000_STATE *state){
   
   mrf_rtc_get(&((*state).td));
   uint8 ch;
-  for (ch = 0 ; ch < MAX_RTDS ; ch++)
+  for (ch = 0 ; ch < MAX_RTDS ; ch++){
     (*state).milliohms[ch] = eval_milliohms(_last_reading[ch]);
+  }
   (*state).ref_r   = _ref_r;
   (*state).ref_i   = _ref_i;
   (*state).relay_cmd   = 0;
@@ -373,7 +376,7 @@ int mrf_app_init(){
   clear_relay_state();
 
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
-    _last_reading[0] = 0;
+    _last_reading[ch] = 0;
   
   mrf_spi_init();
   ads1148_init();
