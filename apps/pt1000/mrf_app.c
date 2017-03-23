@@ -246,7 +246,7 @@ static int port2_icnt;
 static void cycle_input(){
   uint8 rc;
   uint16 rv = 0 ;
-  uint8 curr_chan,next_chan;
+  uint8 curr_chan,next_chan,last_chan;
   port2_icnt++;
   last_chan = (_curr_adc_channel - 1) % 4;  // FIXME - this is bonkers
   curr_chan = _curr_adc_channel;
