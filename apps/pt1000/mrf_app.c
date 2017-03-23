@@ -97,7 +97,7 @@ uint8 _dbg_rxdata[4];
 static uint32_t _ref_r;  // the resistor value between ref+ and ref
 static uint32_t _ref_i;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
 
-
+static uint16 _last_reading[MAX_RTDS];
 
 uint16 ads1148_data(){
   /*
@@ -125,12 +125,12 @@ uint16 ads1148_data(){
   //if (lc == 100){
   //  return 0xeeee;
   //}
-  mrf_spi_tx(b1);
+  //mrf_spi_tx(b1);
   mrf_spi_tx(0xff); // NOP
   mrf_spi_tx(0xff); // NOP
-  b1 = mrf_spi_rx();  // discard first
-  _dbg_rxdata[i++] = b1;
-  debfunc(b1);
+  //b1 = mrf_spi_rx();  // discard first
+  //_dbg_rxdata[i++] = b1;
+  //debfunc(b1);
   b1 = mrf_spi_rx();  // get second - msb of result
   rv += (b1 << 8);
   _dbg_rxdata[i++] = b1;
@@ -223,13 +223,16 @@ uint8 ads1148_write(uint8 reg,uint8 data){
 #define NUM_ADC_INPUTS 7
 
 
-static int set_input(int channel){
+static uint8 _curr_adc_channel;
+
+static int set_input(uint8 channel){
   if ( channel > NUM_ADC_INPUTS){
     return -1;
   }
   ads1148_write_noblock(MUX0_OFFS, (channel << 3) | 0x7 );
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
+  _curr_adc_channel = channel;
 }
 
 int ads1148_config(){
@@ -311,17 +314,17 @@ uint32_t eval_milliohms(uint16_t adc){
 
 int build_state(MRF_PKT_PT1000_STATE *state){
 
-  uint16 rd = ads1148_data();
+  //uint16 rd = ads1148_data();
   
   mrf_rtc_get(&((*state).td));
   uint8 ch;
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
-    (*state).milliohms[ch] = 0;
+    (*state).milliohms[ch] = eval_milliohms(_last_reading[ch]);
   (*state).ref_r   = _ref_r;
   (*state).ref_i   = _ref_i;
   (*state).relay_cmd   = 0;
   (*state).relay_state = relay_state();
-  (*state).milliohms[0]= eval_milliohms(rd);  // temp  
+  //(*state).milliohms[0]= eval_milliohms(0);  // temp  
 
 }
 
@@ -360,13 +363,18 @@ void on_second(){
 }
 
 int mrf_app_init(){
-  
+    uint8 ch;
+
   dbg22 = 101;
   _tick_cnt = 0;
   _tick_err_cnt = 0;
   _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
   clear_relay_state();
+
+  for (ch = 0 ; ch < MAX_RTDS ; ch++)
+    _last_reading[0] = 0;
+  
   mrf_spi_init();
   ads1148_init();
   
@@ -521,9 +529,13 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 
-void drdy_int(){
-  port2_icnt++;
 
+
+void drdy_int(){
+  uint16 rd;
+  port2_icnt++;
+  rd = ads1148_data();
+  _last_reading[_curr_adc_channel] = rd;
 
 }
 

@@ -46,8 +46,13 @@ class Pt1000TempSensor(object):
         R0 = 1000.0
         R=R/R0
         T=0.0-A
-        T = T +  sqrt((A*A) - 4.0 * B * (1.0 - R))
-        T = T/ (2.0 * B)
+        tmp = (A*A) - 4.0 * B * (1.0 - R)
+        try:
+            T = T +  sqrt(tmp)
+            T = T/ (2.0 * B)
+        except:
+            self.log.error("res_to_temp error chan %d  with milliohms %d"%(self.channel,milliohms))
+            T = -273.16
         return T
     def __repr__(self):
         return "Channel %d milliohms %7d %7.3f C  label %s"%(self.channel,self.milliohms,self.temperature, self.label)
