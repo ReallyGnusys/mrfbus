@@ -248,6 +248,7 @@ static void cycle_input(){
   uint16 rv = 0 ;
   uint8 curr_chan,next_chan;
   port2_icnt++;
+  last_chan = (_curr_adc_channel - 1) % 4;  // FIXME - this is bonkers
   curr_chan = _curr_adc_channel;
   next_chan = (_curr_adc_channel + 1 ) % 4;
 
@@ -257,7 +258,7 @@ static void cycle_input(){
   rv += (rc << 8);
   rc = mrf_spi_rx();  // get third  - lsb of result
   rv += rc;
-  _last_reading[curr_chan] = rv;
+  _last_reading[last_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
 
