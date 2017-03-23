@@ -149,6 +149,24 @@ mrf_tp = """
              <td id="tempsensor-0-value">NADA</td>
              <td id="timedate-0">NADA</td>
             </tr>
+            <tr>
+             <td>temp-001</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-1-value">NADA</td>
+             <td id="timedate-1">NADA</td>
+            </tr>
+            <tr>
+             <td>temp-002</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-2-value">NADA</td>
+             <td id="timedate-2">NADA</td>
+            </tr>
+            <tr>
+             <td>temp-003</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-3-value">NADA</td>
+             <td id="timedate-3">NADA</td>
+            </tr>
           </tbody>
          </table>
     </div>

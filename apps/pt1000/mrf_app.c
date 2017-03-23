@@ -225,14 +225,48 @@ uint8 ads1148_write(uint8 reg,uint8 data){
 
 static uint8 _curr_adc_channel;
 
-static int set_input(uint8 channel){
+
+static int set_input_only(uint8 channel){
+  uint8 rc;
+  uint16 rv = 0 ;
+
   if ( channel > NUM_ADC_INPUTS){
     return -1;
   }
+  mrf_spi_flush_rx();
   ads1148_write_noblock(MUX0_OFFS, (channel << 3) | 0x7 );
-  //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
   _curr_adc_channel = channel;
+  mrf_spi_flush_rx(); 
+  return rv;
+
+}
+static int port2_icnt;
+
+static void cycle_input(){
+  uint8 rc;
+  uint16 rv = 0 ;
+  uint8 curr_chan,next_chan;
+  port2_icnt++;
+  curr_chan = _curr_adc_channel;
+  next_chan = (_curr_adc_channel + 1 ) % 4;
+
+  mrf_spi_flush_rx();
+  ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
+  rc = mrf_spi_rx();  // get second - msb of result
+  rv += (rc << 8);
+  rc = mrf_spi_rx();  // get third  - lsb of result
+  rv += rc;
+  _last_reading[curr_chan] = rv;
+  //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
+  ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
+
+  
+  _curr_adc_channel = next_chan;
+
+
+  return;
+
 }
 
 int ads1148_config(){
@@ -247,11 +281,10 @@ int ads1148_config(){
   ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
   ads1148_write(IDAC0_OFFS,  4 );  // 500uA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
-  set_input(0);
+  set_input_only(0);
   flush_spi();
 
 }
-static int port2_icnt;
 
 int ads1148_init(){
   // start output
@@ -537,8 +570,10 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 void drdy_int(){
   uint16 rd;
   port2_icnt++;
-  rd = ads1148_data();
-  _last_reading[_curr_adc_channel] = rd;
+  cycle_input();
+  //rd = ads1148_data();
+  //_last_reading[curr_chan] = rd;
+  
 
 }
 
