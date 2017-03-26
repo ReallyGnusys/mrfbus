@@ -9,11 +9,11 @@
 volatile static uint8 _relay_state;
 
 
-#define _RLA_PORT P2
-#define _RLA_BIT  7
+#define _RLA_PORT P3
+#define _RLA_BIT  5
 
-#define _RLB_PORT P2
-#define _RLB_BIT  6
+#define _RLB_PORT P3
+#define _RLB_BIT  4
 
 
 void clear_relay_state(){
