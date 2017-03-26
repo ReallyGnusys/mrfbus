@@ -41,7 +41,7 @@ uint8 set_relay_state(uint8 chan,uint8 val){
       PINLOW(RLB);
     }
   }
-  else
+  else {
     _relay_state |=  (uint8)( 1 << chan );  
     if (chan == 0 ) {
       PINHIGH(RLA);
@@ -49,6 +49,7 @@ uint8 set_relay_state(uint8 chan,uint8 val){
     else if (chan == 1 ){
       PINHIGH(RLB);
     }
+  }
 }
 
 
