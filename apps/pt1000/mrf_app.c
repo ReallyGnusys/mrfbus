@@ -409,8 +409,7 @@ int mrf_app_init(){
   _tick_err_cnt = 0;
   _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
-  clear_relay_state();
-
+  init_relays();
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
     _last_reading[ch] = 0;
   

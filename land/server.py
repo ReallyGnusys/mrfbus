@@ -156,7 +156,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         mob = re.match(regx,rs)
         if mob:
             ip = mob.group(1)
-            alog.debug("client ip="+ip)
+            alog.info("client ip="+ip)
             sob =  mrfland.comm.check_socket(self.id,ip)
         else:
             ip = 'none'

@@ -78,6 +78,7 @@ class mrf_comm(object):
         self.sockets = {}
 
     def prepare_socket(self,sid,wsid,sessid,username,stype,ip):
+        alog.info("mrf_comm.prepare_socket sid %s wsid %s  ip %s"%(repr(sid),repr(wsid),repr(ip)))
         self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,ip)
         
     def check_socket(self,wsid,ip):
@@ -88,9 +89,9 @@ class mrf_comm(object):
         skt = self.sockets[wsid]
         if skt.ip != ip:
             alog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
-            return None
-        else:
-            return socket_info(skt)
+            #return None
+            
+        return socket_info(skt)
 
         
         
@@ -244,7 +245,7 @@ def authenticate(username,password,ip):
     
 
     
-    alog.info('authenticated')
+    alog.info('authenticated ip '+ip)
     wsid = os.urandom(16).encode('hex')  
     sessid = gen_sessid()
 

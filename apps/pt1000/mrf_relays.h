@@ -4,5 +4,6 @@
 uint8 set_relay_state(uint8 chan, uint8 val);
 uint8 get_relay_state(uint8 chan);
 void clear_relay_state();
+void init_relays();
 
 #endif
