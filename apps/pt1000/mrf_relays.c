@@ -35,19 +35,19 @@ uint8 set_relay_state(uint8 chan,uint8 val){
   if ( val == 0 ){
     _relay_state &=  (uint8)(~( 1 << chan ));
     if (chan == 0 ) {
-      PINLOW(RLA);
+      PINHIGH(RLA);
     }
     else if (chan == 1 ){
-      PINLOW(RLB);
+      PINHIGH(RLB);
     }
   }
   else {
     _relay_state |=  (uint8)( 1 << chan );  
     if (chan == 0 ) {
-      PINHIGH(RLA);
+      PINLOW(RLA);
     }
     else if (chan == 1 ){
-      PINHIGH(RLB);
+      PINLOW(RLB);
     }
   }
 }
@@ -55,8 +55,8 @@ uint8 set_relay_state(uint8 chan,uint8 val){
 
 void init_relays(){
   clear_relay_state();
-  PINLOW(RLA);
+  PINHIGH(RLA);
   OUTPUTPIN(RLA);
-  PINLOW(RLB);
+  PINHIGH(RLB);
   OUTPUTPIN(RLB);
 }
