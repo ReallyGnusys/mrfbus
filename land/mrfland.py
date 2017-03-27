@@ -78,7 +78,7 @@ class mrf_comm(object):
         self.sockets = {}
 
     def prepare_socket(self,sid,wsid,sessid,username,stype,ip):
-        alog.info("mrf_comm.prepare_socket sid %s wsid %s  ip %s"%(repr(sid),repr(wsid),repr(ip)))
+        alog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
         self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,ip)
         
     def check_socket(self,wsid,ip):
@@ -89,7 +89,7 @@ class mrf_comm(object):
         skt = self.sockets[wsid]
         if skt.ip != ip:
             alog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
-            #return None
+            return None
             
         return socket_info(skt)
 
@@ -125,7 +125,10 @@ class mrf_comm(object):
         self.clients[id]['object'].write_message(msg+"\r\n\r\n")
     def broadcast(self,obj):
         msg = to_json(obj)
-        alog.debug("broadcasting obj:"+msg)
+        if obj['cmd'] == 'relays':
+            alog.info("broadcasting relay obj:"+msg)
+            alog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+            alog.info(" clients = "+str(self.clients))    
         self._jso_broadcast(msg)
     def set_session_expire(self,id,seconds = install.session_timeout):
         self.sockets[id].expire = int(time.time() + seconds)
@@ -137,15 +140,18 @@ class mrf_comm(object):
         
     def session_isvalid(self,sessid):
         self.log.info("checking session_isvalid %s"%sessid)
+        self.log.info("self.sockets.keys %s"%repr(self.sockets.keys()))
+        self.log.info("self.sockets %s"%repr(self.sockets))
+        
         for wsid in self.sockets.keys():
             skt = self.sockets[wsid]
             self.log.info("wsid %s  skt %s"%(wsid,skt))
             if skt.sessid == sessid:
                 self.log.info("sessid matched for wsid %s"%wsid)
-            if skt.expire > int(time.time()):
-                return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire, 'type': skt.stype , 'username' : skt.username}
-            else:
-                return None
+                if skt.expire > int(time.time()):
+                    return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire, 'type': skt.stype , 'username' : skt.username}
+                else:
+                    return None
         return None
         
     def comm(self,id,ro):

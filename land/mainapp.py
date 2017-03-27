@@ -31,6 +31,8 @@ login_tp = tornado.template.Template(templates.login_tp)
 mrf_tp = tornado.template.Template(templates.mrf_tp)
 
 def login_page(rh):
+    rh.add_header("Expires",0)
+    
     rh.write(login_tp.generate())
     #rh.write("Login page")
 
@@ -65,7 +67,7 @@ def mrf_page(rh,sob,ip):
     #pjs = _expand_priv_js(sob['type'])
     #alog.info("pjs:"+pjs)
     host = install.host
-
+    rh.add_header("Expires",0)
     if install.domain:
         host += "."+install.domain
 
