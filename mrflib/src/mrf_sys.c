@@ -26,8 +26,8 @@
 #include "mrf_route.h"
 #include "mrf_sys_cmds.h"
 
-#define _MRF_TX_TIMEOUT 10
-#define _MRF_MAX_RETRY 4
+#define _MRF_TX_TIMEOUT 10   // FIXME - what is this? - we also have ACKTIMER
+#define _MRF_MAX_RETRY 1
 
 
 #define ACKTIMER_VAL 20   //FIXME prob needs to be i/f dependent
@@ -144,7 +144,7 @@ int mrf_sack(uint8 bnum){
 
  if_ptr->status->state = MRF_ST_ACKDELAY;
 
- mrf_debug("mrf_sack : exit, ackbuff is\n");
+ mrf_debug("%s","mrf_sack : exit, ackbuff is\n");
  mrf_print_packet_header(if_ptr->ackbuff);
 
  mrf_tick_enable();
@@ -238,7 +238,7 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
  resp->type = code;
  hdr->type = mrf_cmd_usr_struct; //_mrf_response_type(hdr->type);
  hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
- mrf_debug("mrf_send_resp, responding - header follows(1)\n");
+ mrf_debug("%s","mrf_send_resp, responding - header follows(1)\n");
  //mrf_print_packet_header(hdr);
  _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
@@ -336,9 +336,8 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  }
  else
    {
-     mrf_debug("mdr l1\n");
      
-     mrf_debug("mrf_send_resp, responding - header follows(1)\n");
+     //mrf_debug("mrf_send_resp, responding - header follows(1)\n");
      //mrf_print_packet_header(hdr);
      mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
    }
@@ -357,13 +356,13 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
     cname = mrf_sys_cmds[hdr->type].str;
 
   uint8 type = hdr->type;
-   mrf_debug("**************************************\n");
+  mrf_debug("%s","**************************************\n");
 
-   mrf_debug("PACKET %s  LEN %d \n",cname,hdr->length);
+  mrf_debug("PACKET %s  LEN %d \n",cname,hdr->length);
   
-   mrf_debug(" HSRC 0x%02X HDEST 0x%02X  LEN %02d  MSGID 0x%02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
-   mrf_debug(" USRC 0x%02X UDEST 0x%02X  NETID 0x%02X type 0x%02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
-   mrf_debug("**************************************\n");
+  mrf_debug(" HSRC 0x%02X HDEST 0x%02X  LEN %02d  MSGID 0x%02X   \n",hdr->hsrc,hdr->hdest,hdr->length,hdr->msgid);
+  mrf_debug(" USRC 0x%02X UDEST 0x%02X  NETID 0x%02X type 0x%02X  \n",hdr->usrc,hdr->udest,hdr->netid,hdr->type);
+  mrf_debug("%s","**************************************\n");
 }
 
 
@@ -373,14 +372,14 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF
       mrf_debug("cmd name %s  req size %u  rsp size %u cflags %x cmd->data %p\n",
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
-        mrf_debug("sending data response \n");
+        mrf_debug("%s","sending data response \n");
         mrf_data_response(bnum,cmd->data,cmd->rsp_size);
         return 0;
       }
-      mrf_debug("pp l12\n");
+      mrf_debug("%s","pp l12\n");
       // check if command func defined
       if(cmd->func != NULL){
-        mrf_debug("executing cmd func\n");
+        mrf_debug("%s","executing cmd func\n");
         (*(cmd->func))(pkt->type,bnum,ifp);
         return 0;
       }
@@ -390,7 +389,7 @@ int mrf_app_queue_push(uint8 bnum){
   int rv = queue_push(&_app_queue,bnum);
   
   if ( rv == 0) {
-    mrf_debug("queue pushed.. waking\n");
+    mrf_debug("%s","queue pushed.. waking\n");
     mrf_wake();
   }
   else{
@@ -491,7 +490,7 @@ int _mrf_process_buff(uint8 bnum)
   // a response can substitute for an ack - if usrc and hsrc are same
   if (((pkt->type) == mrf_cmd_resp) && ((pkt->usrc) == (pkt->hsrc))){
     // act like we received an ack
-      mrf_debug("got resp_should count as ack \n");
+    mrf_debug("%s","got resp_should count as ack \n");
       mrf_task_ack(pkt->type,bnum,ifp);
   }
   // end desperate
@@ -516,19 +515,19 @@ int _mrf_process_buff(uint8 bnum)
     //   ifp->status->stats.rx_pkts++;     // FIXME this is already incremented in mrf_buff_loaded, we need a separate stat
     // for command packets executed by us
       if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
-        mrf_debug("executing packet in intr");
+        mrf_debug("%s","executing packet in intr");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
-        mrf_debug("pushing to app queue\n");
+        mrf_debug("%s","pushing to app queue\n");
         int rv = mrf_app_queue_push(bnum);
         if (rv == 0){
           mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
           if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
-            mrf_debug("sending segment ack\n");
+            mrf_debug("%s","sending segment ack\n");
             mrf_sack(bnum);   
           }
         } else {
-            mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
+          mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
             mrf_sretry(bnum); 
         }
       }
@@ -574,7 +573,7 @@ int mrf_foreground(){
   uint8 bnum;
   int rv,cnt = 0;
   while(queue_data_avail(&_app_queue)){
-    mrf_debug("appq data available\n");
+    mrf_debug("%s","appq data available\n");
 
     bnum = (uint8)queue_pop(&_app_queue);
     mrf_debug("got bnum %d\n",bnum);
@@ -679,7 +678,7 @@ void _mrf_tick(){
           // if (_tick_count >10)
           //  exit(1);
           if ( (bs->state) == TXQUEUE ){
-            mrf_debug("buffer state is TXQUEUE \n");
+            mrf_debug("%s","buffer state is TXQUEUE \n");
 
         
             if ( (bs->tx_timer) == 0 ){
@@ -731,7 +730,7 @@ void _mrf_tick(){
 
               }else{
 
-                mrf_debug("retry limit reached - abort buffer tx\n");
+                mrf_debug("%s","retry limit reached - abort buffer tx\n");
                 // maybe send NDR here ..but in meantime
                 bs->state = FREE;
                 bs->owner = NUM_INTERFACES;

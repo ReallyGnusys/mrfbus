@@ -164,6 +164,9 @@ class mrf_comm(object):
             if True or ro.touch or ( len(ro.a()) > 0 ) :  # now touch session for every command received
                 self.set_session_expire(id,1200) # 1200 = 20mins
                 self.send_object_to_client(id,self.session_expire_notice(id))
+        bobs= ro.b()
+        nobs = len(bobs)
+        alog.info("have %d obs to broadcast"%nobs)
         for ob in ro.b():
             self.broadcast(ob)                
         return 1

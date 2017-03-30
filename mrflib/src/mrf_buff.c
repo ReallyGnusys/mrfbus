@@ -57,7 +57,7 @@ int mrf_buff_loaded(uint8 bnum){
     _mrf_buffst[bnum].state = LOADED;
     //_mrf_buff_print();
     _mrf_process_buff(bnum);
-    mrf_debug("mrf_buff_loaded exit\n");
+    mrf_debug("%s","mrf_buff_loaded exit\n");
     //_mrf_buff_print();
 
     return 0;
@@ -75,7 +75,7 @@ void mrf_free(uint8* buff){
       mrf_debug("mrf_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
       return;
     }
-  mrf_debug("ERROR : buff was not found or freed\n\n");
+  mrf_debug("%s","ERROR : buff was not found or freed\n\n");
 }
 
 void _mrf_buff_clear_status(){

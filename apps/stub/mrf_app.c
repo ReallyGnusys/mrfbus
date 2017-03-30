@@ -48,7 +48,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   _mrf_print_hex_buff(buff,s);
 
   if ( s < 4){
-    mrf_debug("ignoring pkt with len too small \n");
+    mrf_debug("%s","ignoring pkt with len too small \n");
     return MRF_CMD_RES_WARN;
   }
   
@@ -69,7 +69,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   mrf_debug("calculated csum %u  received csum %u\n",csum,buff[s-1]);
 
   if ( csum != buff[s-1]) {
-    mrf_debug("packet checksum error, discarding\n");
+    mrf_debug("%s","packet checksum error, discarding\n");
     return MRF_CMD_RES_WARN;
 
   }
@@ -93,7 +93,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   mrf_debug("allocated buffer number %u\n",bnum);
 
   if (bnum >= _MRF_BUFFS){
-    mrf_debug("no buffs left\n");
+    mrf_debug("%s","no buffs left\n");
     return MRF_CMD_RES_ERROR;
   }
   
@@ -111,10 +111,10 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
     payload[i - 3] = buff[i];
     pkt->length++;
   }
-  mrf_debug("_appl_fifo_callback : trying to send packet with header:\n");
+  mrf_debug("%s","_appl_fifo_callback : trying to send packet with header:\n");
   mrf_print_packet_header(pkt);
   if( mrf_if_tx_queue(route.i_f,bnum) == -1) {// then outgoing queue full - need to retry
-    mrf_debug("looking dodgy sending packet\n");
+    mrf_debug("%s","looking dodgy sending packet\n");
     mrf_retry(route.i_f,bnum);
   } else {
     mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d\n",pkt->udest,route.relay,route.i_f);  
@@ -126,7 +126,7 @@ static int _outfd,_outfds;  // file descs for output pipes - response and struct
 int mrf_app_init(){
   char sname[64];
   int appfd, tmp;
-  mrf_debug("mrf_app_init stub\n");
+  mrf_debug("%s","mrf_app_init stub\n");
 
   // need to open input application pipe
 
@@ -294,9 +294,9 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   }  
   else if  (resp->type == mrf_cmd_usr_struct){
     char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("usr_struct : this is slightly bonkers \n");
+    mrf_debug("%s","usr_struct : this is slightly bonkers \n");
     /*
-    mrf_debug("hex buff follows:");
+    mrf_debug("%s","hex buff follows:");
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
     mrf_debug(":end of hex");
 */
@@ -312,7 +312,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   }  
   
   // squirt complete response packet to higher level app
-  mrf_debug("about to send response\n");
+  mrf_debug("%s","about to send response\n");
   int rc = structure_to_app(bnum);
   mrf_debug("sent structur.. I think rc %d\n",rc);
   
@@ -400,7 +400,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   }  
   else if  (resp->type == mrf_cmd_usr_struct){
     //char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
-    mrf_debug("usr_struct : fixme for output \n");
+    mrf_debug("%s","usr_struct : fixme for output \n");
     /*
     mrf_debug("hex buff follows:");
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
@@ -419,7 +419,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   }  
   
   // squirt complete response packet to higher level app
-  mrf_debug("about to send response\n");
+  mrf_debug("%s","about to send response\n");
   int rc = response_to_app(bnum);
   mrf_debug("send response.. I think rc %d\n",rc);
   _mrf_buff_free(bnum);
@@ -429,11 +429,11 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 
 MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  mrf_debug("mrf_app_task_test entry\n");
+  mrf_debug("%s","mrf_app_task_test entry\n");
   uint8 *rbuff = mrf_response_buffer(bnum);
   mrf_rtc_get((TIMEDATE *)rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
-  mrf_debug("mrf_app_task_test exit\n");
+  mrf_debug("%s","mrf_app_task_test exit\n");
   return MRF_CMD_RES_OK;
 }
 

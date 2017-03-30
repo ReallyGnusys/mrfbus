@@ -26,7 +26,7 @@ int mrf_uart_init_rx_state(I_F i_f,UART_CSTATE *rxstate){
   rxstate->bindex = 0;
   rxstate->bnum = mrf_alloc_if(i_f);
   if (rxstate->bnum == _MRF_BUFFS){
-    mrf_debug("mrf_uart_init: failed to alloc buff!");
+    mrf_debug("%s","mrf_uart_init: failed to alloc buff!");
     rxstate->buff = NULL;
     rxstate->errors = 1;
     return -1;

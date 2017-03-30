@@ -114,7 +114,7 @@ static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
     txbuff[i*2] = int_to_hex_digit(buffer[i]/16);
     txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);    
   }
-  txbuff[i*2] = '\0';
+  txbuff[i*2] = '\n';
 
   return i*2 + 1;
 }
@@ -214,6 +214,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   printf("copied to tx_buffer .. len %d\n",tb);
 
   bc = write(fd, txbuff,tb );
+  //fsync(fd);
   close(fd);
   //printf("bc = %d  fd = %d\n",bc,fd);
 }

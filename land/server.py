@@ -583,6 +583,7 @@ class MrflandServer(object):
             for fd in self.registrations["main"]:  # send to registered clients
                 c = self.conns[fd]
                 c.send(rv)
+        self.log.info("handle_response apps.keys %s "%repr(self.apps.keys()))
         for appn in self.apps.keys(): # apps see everything
             rv = self.apps[appn].fyi(hdr,rsp, robj)
             if rv:
@@ -590,6 +591,7 @@ class MrflandServer(object):
                 self.log.debug(repr(rv))
                 
                 ro = mrfland.RetObj()
+                self.log.info("creating ro for appn %s"%appn)
                 for mcmd in rv.keys():
                      ro.b(mrfland.mrf_cmd(mcmd,rv[mcmd]))
                 mrfland.comm.comm(None,ro)
@@ -611,7 +613,7 @@ class MrflandServer(object):
             self.active_cmd = None
                                 
     def _resp_handler(self,*args, **kwargs):
-        #self.log.info("Input on response pipe")
+        self.log.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
         hdr , rsp, robj  = self.parse_input(resp)
@@ -621,7 +623,7 @@ class MrflandServer(object):
             self.handle_response(hdr, rsp , robj, response=True )
 
     def _struct_handler(self,*args, **kwargs):
-        self.log.debug("Input on data pipe")
+        self.log.info("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)
 
         hdr , rsp, robj = self.parse_input(resp)

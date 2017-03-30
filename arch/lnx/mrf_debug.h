@@ -19,10 +19,23 @@
 
 #ifndef __MRF_DEBUG_INCLUDED__
 #define __MRF_DEBUG_INCLUDED__
-
-#include <stdio.h>
+/*
 
 #define mrf_debug  printf
+*/
+#include <stdio.h>
 
 
+#define MRF_DEBUG 1
+
+//#define mrf_debug(x)  _mrf_debug("%s",x)
+
+#define mrf_debug(fmt, ...) \
+          do { if (MRF_DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)  
+// do { if (MRF_DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)  
+//  do { if (MRF_DEBUG) fprintf(stderr, "%s:%d:%s(): " fmt, __FILE__,   \
+//                                __LINE__, __func__, __VA_ARGS__); } while (0)
+
+
+          
 #endif

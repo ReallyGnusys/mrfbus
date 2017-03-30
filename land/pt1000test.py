@@ -425,7 +425,7 @@ class TestPt1000(DeviceTestCase):
         self.assertTrue(self.check_attrs(resp,PktPt1000State()))
         print "pt1000 read_state test PASSED"
 
-    def test06_set_relay(self):
+    def skipped_test06_set_relay(self):
         print "**********************"
         print "* pt1000 set relay test (dest 0x%02x)"%self.dest
         print "**********************"
@@ -466,7 +466,7 @@ class TestPt1000(DeviceTestCase):
 
 
 
-    def test06_toggle_relay(self):
+    def skipped_test06_toggle_relay(self):
         print "**********************"
         print "* pt1000 toggle relay test (dest 0x%02x)"%self.dest
         print "**********************"
