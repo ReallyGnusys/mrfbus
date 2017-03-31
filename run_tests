@@ -26,7 +26,7 @@ stub_pid=$!
 
 
 
-sleep 1
+sleep 2
 
 # need to start mrfland... ho ho ho
 
@@ -50,6 +50,8 @@ sleep 1
 kill $h01_pid $h02_pid $h20_pid $h2f_pid $stub_pid $land_pid
 
 sleep 1
+deactivate
+
 
 echo "run_tests adios at $(date)"
 
