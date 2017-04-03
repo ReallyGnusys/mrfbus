@@ -26,5 +26,6 @@ int mrf_arch_app_callback(int fd, MRF_APP_CALLBACK callback);
 void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 int is_hex_digit(uint8 dig);
 uint8 int_to_hex_digit(int in);
+long long mrf_timestamp();
   
 #endif

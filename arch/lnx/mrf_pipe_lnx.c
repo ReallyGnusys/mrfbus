@@ -31,7 +31,7 @@
 
 #define SOCKET_DIR "/tmp/mrf_bus/"
 
-extern uint8 _mrfid;
+//extern uint8 _mrfid;
 
 
 
@@ -62,22 +62,23 @@ static int _pipe_alloc_buff(I_F i_f){
 
   _bnum[i_f] = mrf_alloc_if(i_f);
   if ( _bnum[i_f] == _MRF_BUFFS){
-    printf("_pipe_alloc_buff houston,we have a prob - mrf_alloc_if returned %d\n", _bnum[i_f]);
+    mrf_debug("_pipe_alloc_buff houston,we have a prob - mrf_alloc_if returned %d\n", _bnum[i_f]);
   }
   else{
-    printf("_pipe_alloc_buff mrf_alloc_if returned %d\n", _bnum[i_f]);
+    mrf_debug("_pipe_alloc_buff mrf_alloc_if returned %d\n", _bnum[i_f]);
   }
   return _bnum[i_f];
 }
 int _mrf_pipe_init_lnx(I_F i_f){
+  // open input pipes
   int fd,tmp;
   char sname[64];
   sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   fd = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
+  mrf_debug("opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
   _pipe_alloc_buff(i_f);
   return fd; // lnx arch needs it for epoll
 }
@@ -125,9 +126,9 @@ void trim_trailing_space(uint8 *buff);
 //convert raw i_f data to buffer data
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int i,len;
-  printf("_mrf_pipe_buff_lnx entry i_f %d len %d\n",i_f,inlen);
+  mrf_debug("_mrf_pipe_buff_lnx entry i_f %d len %d\n",i_f,inlen);
   //_print_mrf_cmd(mrf_cmd_device_info);
-  printf("_mrf_pipe_buff_lnx about to trim_trailing_space\n");
+  mrf_debug("%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
 
   trim_trailing_space(inbuff);
   len = strlen(inbuff);
@@ -135,8 +136,8 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
     mrf_debug("ALERT - odd length packet %d\n",len);
     len = len - 1;
   }
-  printf("len is %d\n",len);
-  printf("%s\n",inbuff);
+  mrf_debug("len is %d\n",len);
+  mrf_debug("%s\n",inbuff);
   // sanity checking gone bonkers
   if ( len > _MRF_BUFFLEN * 2){
     mrf_debug("ALERT - buffer oversized at %d\n",len);
@@ -145,33 +146,33 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   for (i = 0 ; i < len ; i ++ )
     {
       if (is_hex_digit(inbuff[i] == 0) ){
-        printf("dig %d ( %c ) not hex\n",i,inbuff[i]); 
+        mrf_debug("dig %d ( %c ) not hex\n",i,inbuff[i]); 
         return -1;
       }
     }
 
   if (len < sizeof(MRF_PKT_HDR) * 2){
-    printf("PACKET too short ( %d bytes )\n",len);
+    mrf_debug("PACKET too short ( %d bytes )\n",len);
     return -1;
   }
 
   uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
-  printf("about to copy to mbuff\n");
+  mrf_debug("%s","about to copy to mbuff\n");
   if ( copy_to_mbuff(inbuff,len,mbuff) == 0){
-    printf("copied to mbuff i_f is %d , bnum is %d\n",i_f,_bnum[i_f]);
+    mrf_debug("copied to mbuff i_f is %d , bnum is %d\n",i_f,_bnum[i_f]);
 
     mrf_buff_loaded(_bnum[i_f]);
-    printf("mbuff loaded!\n");
+    mrf_debug("%s","mbuff loaded!\n");
      // need to alloc next buffer
     uint8 _bnum = _pipe_alloc_buff(i_f);
-    printf("_pipe_alloc_buff 'ed %d!\n",_bnum);
+    mrf_debug("_pipe_alloc_buff 'ed %d!\n",_bnum);
     return 0;
   } else {
-    printf("problem copying to buff...\n");
+    mrf_debug("%s","problem copying to buff...\n");
     return -1;
   }
   
-  printf("_mrf_pipe_buff_lnx exit\n");
+  mrf_debug("%s","_mrf_pipe_buff_lnx exit\n");
 }
 
 
@@ -181,7 +182,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   int fd,bc,tb;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
-  printf("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
+  mrf_debug("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
   
   // rough hack to get up and down using correct sockets
@@ -196,25 +197,25 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   else  // zl-0
     sknum = 0;
   //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
-  // printf("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
+  // mrf_debug("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
   // apologies - this is how we frig the 'wiring' on the interface to write to the intended target
   sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  printf("_mrf_pipe_send_lnx using socket *%s*\n",spath);
+  mrf_debug("_mrf_pipe_send_lnx using socket *%s*\n",spath);
   fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
-    printf(" %d\n",fd);
-    printf("ERROR file open\n");
+    mrf_debug(" %d\n",fd);
+    mrf_debug("%s","ERROR file open\n");
     return -1;
   }
   if(buff[0] > _MRF_BUFFLEN){
-    printf("\nGOT DANGER ERROR COMING\n");
+    mrf_debug("%s","\nGOT DANGER ERROR COMING\n");
   }
-  printf("copying to tx_buffer .. len %d\n",buff[0]);
+  mrf_debug("copying to tx_buffer .. len %d\n",buff[0]);
   tb = copy_to_txbuff(buff,buff[0],txbuff);
-  printf("copied to tx_buffer .. len %d\n",tb);
+  mrf_debug("copied to tx_buffer .. len %d\n",tb);
 
   bc = write(fd, txbuff,tb );
-  //fsync(fd);
+  fsync(fd);
   close(fd);
-  //printf("bc = %d  fd = %d\n",bc,fd);
+  //mrf_debug("bc = %d  fd = %d\n",bc,fd);
 }

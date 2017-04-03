@@ -11,22 +11,26 @@ echo $h01_pid
 
 stdbuf -oL examples/hostsim/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
 h02_pid=$!
+echo $h02_pid
 
 stdbuf -oL examples/hostsim/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
 h20_pid=$!
+echo $h20_pid
 
 
 stdbuf -oL examples/hostsim/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
 h2f_pid=$!
+echo $h2f_pid
 
 stdbuf -oL  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
 stub_pid=$!
+echo $stub_pid
 
 # make sure everyone is up
 
+echo "all mrf instances started"
 
-
-sleep 2
+#sleep 4
 
 # need to start mrfland... ho ho ho
 
@@ -36,9 +40,9 @@ sleep 2
 source land/venv/bin/activate
 stdbuf -oL  python land/server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
+echo "land started "$land_pid
 
-
-sleep 3
+sleep 4
 
 # run stubtst
 

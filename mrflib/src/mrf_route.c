@@ -97,6 +97,7 @@ uint8 nextbranchhopout(uint8 src,uint8 dest){
   return hop;
 }
 
+// FIXME - this is rubbish
 // how many I_Fs has an address got
 uint8 num_ifs(uint8 addr){
   return  addr == 0 ? 1 :addr == 1 ?  (256/SNETSZ)-1 : (addr / SNETSZ) == 0 ? 2 :1 ;

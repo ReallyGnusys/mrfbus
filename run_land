@@ -6,12 +6,14 @@ LOGDIR=${TMP}/log
 #
 [ ! -d ${LOGDIR} ]  && mkdir -p ${LOGDIR} 
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+#stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+stdbuf -o0 -i0 examples/host/bin/host_0x01 > ${LOGDIR}/host_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
-stdbuf -oL  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
+stdbuf -o0 -i0  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
 stub_pid=$!
+echo $stub_pid
 
 
 function ctrl_c() {

@@ -29,7 +29,7 @@
 
 #include "mrf_route.h"
 
-extern uint8 _mrfid;
+//extern uint8 _mrfid;
 static uint8 buff[2048];
 
 int signal_handler(uint8 signal){
@@ -40,11 +40,11 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   ssize_t s;
   uint8 i;
   mrf_debug("fifo callback for fd %d\n",fd);
-  printf("event on fd %d\n",fd);
+  mrf_debug("event on fd %d\n",fd);
   s = read(fd, (char *)buff, 1024); // FIXME need to handle multiple packets
   buff[s] = 0;
 
-  printf("read %d bytes\n",(int)s);
+  mrf_debug("read %d bytes\n",(int)s);
   _mrf_print_hex_buff(buff,s);
 
   if ( s < 4){
@@ -138,24 +138,24 @@ int mrf_app_init(){
   // open output application response pipe
   sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   _outfd = open(sname,O_WRONLY);
-  printf("opened out pipe %s fd = %d\n",sname,_outfd);
+  mrf_debug("opened out pipe %s fd = %d\n",sname,_outfd);
 
   // open output application struct pipe  - we need a link partner... hmpff maybe
   sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   _outfds = open(sname,O_WRONLY);
-  printf("opened out pipe %s fd = %d\n",sname,_outfds);
-  printf("\nmrf_app_init exit\n\n");
+  mrf_debug("opened out pipe %s fd = %d\n",sname,_outfds);
+  mrf_debug("%s","\nmrf_app_init exit\n\n");
  #endif
 
   sprintf(sname,"%s%d-app-in",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   appfd = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe %s fd = %d\n\n",sname,appfd);
+  mrf_debug("opened pipe %s fd = %d\n\n",sname,appfd);
   mrf_arch_app_callback(appfd,_appl_fifo_callback);
 
   
@@ -165,7 +165,7 @@ int structure_to_app(uint8 bnum){
   char sname[64];
   uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
   uint8 len = buff[0];
-  printf("structure to app : bnum %d using opened app data pipe fd = %d\n", bnum, _outfds);
+  mrf_debug("structure to app : bnum %d using opened app data pipe fd = %d\n", bnum, _outfds);
 
 
   if(len > _MRF_BUFFLEN){
@@ -177,9 +177,9 @@ int structure_to_app(uint8 bnum){
  // open output application struct pipe  - we need a link partner... hmpff maybe
   sprintf(sname,"%s%d-app-str",SOCKET_DIR,_mrfid);
   int tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   _outfds = open(sname,O_WRONLY | O_NONBLOCK);
-  printf("opened out pipe %s fd = %d\n",sname,_outfds);
+  mrf_debug("opened out pipe %s fd = %d\n",sname,_outfds);
 #endif
   int bc = write(_outfds, buff,len );
 
@@ -204,9 +204,9 @@ int response_to_app(uint8 bnum){
   // FIXME - we shouldn't be doing this - move to socket connection for stub
   sprintf(sname,"%s%d-app-out",SOCKET_DIR,_mrfid);
   int tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d\n",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   _outfd = open(sname,O_WRONLY | O_NONBLOCK);
-  printf("opened out pipe %s fd = %d\n",sname,_outfd);
+  mrf_debug("opened out pipe %s fd = %d\n",sname,_outfd);
 #endif
   int bc = write(_outfd, buff,len );
 

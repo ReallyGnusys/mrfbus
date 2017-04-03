@@ -29,26 +29,38 @@
 #include <sys/epoll.h>
 #include <sys/stat.h>
 #include <sys/timerfd.h>
+#include <sys/time.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+
 //mrfbus
+#include <mrf_debug.h>
+
 #include <mrf_arch.h>
 #include <mrf_buff.h>
 #include <mrf_sys.h>
 #include <mrf_if.h>
 #include <mrf_route.h>
-#include <mrf_debug.h>
 #include <mrf_arch.h>
 
-extern uint8 _mrfid;
+//extern uint8 _mrfid;
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
 
-//debug tmp
+//FIXME debug tmp
 extern const MRF_CMD const *mrf_sys_cmds;
+
+long long mrf_timestamp(){
+struct timeval te; 
+    gettimeofday(&te, NULL); // get current time
+    long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
+    // printf("milliseconds: %lld\n", milliseconds);
+    return milliseconds;
+}
+
 
 #define handle_error(msg)  \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -234,12 +246,12 @@ char buff[2048];
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  printf("created pipe %s res %d",sname,tmp);
+  mrf_debug("created pipe %s res %d",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
-  printf("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
+  mrf_debug("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
 
-  printf("mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
+  mrf_debug("mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
 
   int count = 0;
 
@@ -258,7 +270,7 @@ char buff[2048];
     ievent[i].events = EPOLLIN | EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
-    printf("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
+    mrf_debug("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
  _print_mrf_cmd(mrf_cmd_device_info);
   // timer event
@@ -273,7 +285,7 @@ char buff[2048];
   ievent[NUM_INTERFACES+1].data.u32 = NUM_INTERFACES+1;
   ievent[NUM_INTERFACES+1].events = EPOLLIN | EPOLLET;
   epoll_ctl(efd, EPOLL_CTL_ADD, intfd , &ievent[NUM_INTERFACES+1]);
-  printf("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
+  mrf_debug("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
 
 
   // add appl pipe if initialised by appl
@@ -286,14 +298,14 @@ char buff[2048];
     ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
     ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
     epoll_ctl(efd, EPOLL_CTL_ADD, app_callback_fd , &ievent[NUM_INTERFACES+2]);
-    printf("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,app_callback_fd);
+    mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,app_callback_fd);
   }
   
 
   while(1){
    nfds = epoll_wait(efd, revent,num_fds , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
-   printf("nfds = %d\n",nfds);
+   mrf_debug("nfds = %d\n",nfds);
    
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
@@ -307,8 +319,8 @@ char buff[2048];
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
-       printf("read %d bytes\n",(int)s);
-       printf("%s\n",buff);
+       mrf_debug("read %d bytes\n",(int)s);
+       mrf_debug("%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
        uint8 bind;
        //bind = mrf_alloc_if(inif);
@@ -363,17 +375,17 @@ char buff[2048];
          if (buff[bi] == 0) {
            j = 0;
            mrf_debug("token %s\n",token);
-           if(strcmp(buff,TICK_ENABLE) == 0){
+           if(strcmp(token,TICK_ENABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_enable\n");
              epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
            }
-           else if (strcmp(buff,TICK_DISABLE) == 0){
+           else if (strcmp(token,TICK_DISABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_disable\n");
              epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
            }
-           else if (strcmp(buff,"wake") == 0){
+           else if (strcmp(token,"wake") == 0){
              mrf_debug("%s","INTERNAL:wakeup\n");
              int i = mrf_foreground();
              printf("ran %d foreground tasks\n",i);

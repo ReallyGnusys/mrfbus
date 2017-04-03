@@ -29,6 +29,8 @@
 #define MRFID 1
 #endif
 
+
+
 #define NUM_IFS MRFID == 1 ?  (256/SNETSZ)-1 : (MRFID / SNETSZ) ==0 ? 2 :1 
 
 typedef struct {
@@ -38,5 +40,7 @@ typedef struct {
 
 uint8 mrf_nexthop(MRF_ROUTE *route,uint8 us,uint8 dest);
 uint8 num_ifs(uint8 addr);
+
+
 
 #endif

@@ -19,19 +19,19 @@
 
 #include "mrf_types.h"
 
+#include "mrf_debug.h"
 #include "mrf_buff.h"
 #include "mrf_if.h"
-#include "mrf_debug.h"
 #include "mrf_sys_structs.h"
 #include "mrf_route.h"
 #include "mrf_sys_cmds.h"
 
 #define _MRF_TX_TIMEOUT 10   // FIXME - what is this? - we also have ACKTIMER
-#define _MRF_MAX_RETRY 1
+#define _MRF_MAX_RETRY 4
 
 
 #define ACKTIMER_VAL 20   //FIXME prob needs to be i/f dependent
-extern uint8 _mrfid;
+//extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
 extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];

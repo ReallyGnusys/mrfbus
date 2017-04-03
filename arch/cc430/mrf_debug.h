@@ -21,6 +21,7 @@
 #define __MRF_DEBUG_INCLUDED__
 
 #include <stdarg.h>
+extern const uint8 _mrfid;
 
 //#define mrf_debug(format, ...) mrf_cc_debug( format, ## __VA_ARGS__ )
 
