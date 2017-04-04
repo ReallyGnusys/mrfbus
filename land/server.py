@@ -730,7 +730,8 @@ class MrflandServer(object):
         else:
             ct = time.time() + 5
             tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
-                    
+            self.log.info("calling state task")
+            self.state.task()
             
 alog.info('Application started')
 if __name__ == '__main__':

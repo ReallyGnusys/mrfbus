@@ -305,12 +305,12 @@ char buff[2048];
   while(1){
    nfds = epoll_wait(efd, revent,num_fds , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
-   mrf_debug("nfds = %d\n",nfds);
+   //mrf_debug("nfds = %d\n",nfds);
    
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
      inif = revent[i].data.u32; // data contains mrfbus i_f num
-     mrf_debug("fd %i is i_f %d\n",i,inif);
+     //mrf_debug("fd %i is i_f %d\n",i,inif);
      if (inif < NUM_INTERFACES){
        //it's an input stream
        fd = *(mrf_if_ptr(inif)->fd);
@@ -320,7 +320,7 @@ char buff[2048];
        buff[s] = 0;
 
        mrf_debug("read %d bytes\n",(int)s);
-       mrf_debug("%s\n",buff);
+       //mrf_debug("%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
        uint8 bind;
        //bind = mrf_alloc_if(inif);
@@ -367,7 +367,7 @@ char buff[2048];
        char token[64];  // we must split tokens
        int bi, j = 0;
        s = read(intfd, buff, 1024);
-       mrf_debug("\n internal control (1) : s = %d buff = %s\n",(int)s,buff);
+       mrf_debug("internal control (1) : s = %d buff = %s\n",(int)s,buff);
 
        for (bi = 0 ; bi < s ; bi++){
          token[j] = buff[bi];

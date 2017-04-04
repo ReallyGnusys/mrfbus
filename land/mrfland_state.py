@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime
 from mrf_structs import *
+from mrfland_app import MrflandApp
 
 class DevState(object):
     def __init__(self,addr):
@@ -81,10 +82,11 @@ class DevState(object):
                  self.device_status.errors)
              
             
-class MrflandState(object):
-    def __init__(self,mld):
+class MrflandState(MrflandApp):
+    def __init__(self,mld,tag="state"):
         self.log = mld.log
         self.mld = mld
+        self.tag = tag
         self.host = DevState(self.mld.hostaddr)
         self.devices = {}
         self._comm_active = False  # flag indication bus communications active
@@ -123,20 +125,20 @@ class MrflandState(object):
         cr = self.host.command_request()
         self.task_count += 1
         if cr:
-            self.mld.cmd(self.mld.hostaddr,cr)
-            #self.log.info("state task - chose host task %s"%repr(cr))
+            self.mld._callback(self.tag,self.mld.hostaddr,cr)
+            self.log.info("state task - chose host task %s"%repr(cr))
             return
 
         for da in self.devices.keys():
             self.log.debug("checking command_request for %d"%da)
             cr = self.devices[da].command_request()
             if cr:
-                #self.log.info("state task - chose device %d task %s"%(da,repr(cr)))
-                self.mld.cmd(da,cr)
+                self.log.info("state task - chose device %d task %s"%(da,repr(cr)))
+                self.mld._callback(self.tag,da,cr)
                 return
         
         if self.task_count % self.idle_mark == 0:
-            self.mld.cmd(self.mld.hostaddr,mrf_cmd_device_status)
+            self.mld._callback(self.tag,self.mld.hostaddr,mrf_cmd_device_status)
             self.log.info(repr(self))
 
     def fyi(self, hdr, rsp, robj):
@@ -144,7 +146,7 @@ class MrflandState(object):
         if hdr.usrc == self.mld.hostaddr:            
             return self.host.fyi(hdr,robj)
         elif hdr.usrc in self.devices.keys():
-            self.log.debug("state fyi : got something from dev %d %s"%(hdr.usrc,repr(robj)))
+            self.log.info("state fyi : got something from dev 0x%02x %s"%(hdr.usrc,repr(robj)))
             return self.devices[hdr.usrc].fyi(hdr,robj)
         else:
             self.log.info( "mrfland state added device %d"%hdr.usrc)

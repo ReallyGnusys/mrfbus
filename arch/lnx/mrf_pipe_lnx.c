@@ -128,7 +128,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int i,len;
   mrf_debug("_mrf_pipe_buff_lnx entry i_f %d len %d\n",i_f,inlen);
   //_print_mrf_cmd(mrf_cmd_device_info);
-  mrf_debug("%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
+  //mrf_debug("%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
 
   trim_trailing_space(inbuff);
   len = strlen(inbuff);
@@ -136,8 +136,8 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
     mrf_debug("ALERT - odd length packet %d\n",len);
     len = len - 1;
   }
-  mrf_debug("len is %d\n",len);
-  mrf_debug("%s\n",inbuff);
+  //mrf_debug("len is %d\n",len);
+  //mrf_debug("%s\n",inbuff);
   // sanity checking gone bonkers
   if ( len > _MRF_BUFFLEN * 2){
     mrf_debug("ALERT - buffer oversized at %d\n",len);
