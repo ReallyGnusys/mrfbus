@@ -308,6 +308,8 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         self.log = log
         self.landserver = landserver
         self.clients = {}
+
+
     def client_disconnect(self,id):
         self.clients.pop(id)
         self.log.info("removed tcp client %s"%repr(id))
@@ -340,6 +342,7 @@ class MrflandServer(object):
             sys.exit(0)
         global server
         self.log = log
+        self._timeout_handle = None
         server = self  # FIXME ouch
         self.apps = apps
         self.original_sigint = signal.getsignal(signal.SIGINT)
@@ -347,11 +350,12 @@ class MrflandServer(object):
         self._active = False
 
         self._start_mrfnet(apps=apps)
-
+        self.quiet_cnt = 0
         self._start_webapp()
         self._start_tcp_service()
         self.ioloop = tornado.ioloop.IOLoop.instance()
         self._deactivate()  # start quiet
+
         #ct = time.time() + 5  # start tick
         #self.ioloop.add_timeout(ct,self.time_tick)
         self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
@@ -398,19 +402,25 @@ class MrflandServer(object):
             self.log.error("web_client_command unknown app %s from wsid %d"%(app,wsid))
             return
         self.apps[app].cmd(cmd,data)
-        
+
+    def _set_timeout(self,s):
+        if self._timeout_handle:
+            tornado.ioloop.IOLoop.instance().remove_timeout(self._timeout_handle)
+        ct = time.time() + s
+        self._timeout_handle = tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+          
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
-        if not self._active:
+        if True or not self._active:
             self.log.warn("activating!")
             self.active_timer = 0
             self._active = True
-            ct = time.time() + 0.02
-            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+            self._set_timeout(0.02)
             
     def _deactivate(self):  # ramp down tick when quiet
         self.log.warn("deactivating!")
         self._active = False
         self.active_cmd = None
+        self._set_timeout(5.0)
             #ct = time.time() + 5
             #tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
 
@@ -725,13 +735,16 @@ class MrflandServer(object):
 
 
         if self._active:
-            ct = time.time() + 0.2
-            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
+            self._set_timeout(0.2)
+            self.quiet_cnt = 0
         else:
-            ct = time.time() + 5
-            tornado.ioloop.IOLoop.instance().add_timeout(ct,self.time_tick)
-            self.log.info("calling state task")
-            self.state.task()
+            self.log.info("inactive - setting 5 secs - quiet_cnt %d"%self.quiet_cnt)
+            self.quiet_cnt += 1
+            self._set_timeout(5.0)
+            if self.quiet_cnt % 5 == 0  :
+                self.log.info("calling state task qc %d"%self.quiet_cnt)
+                self.state.task()
+                self.quiet_cnt = 0
             
 alog.info('Application started')
 if __name__ == '__main__':

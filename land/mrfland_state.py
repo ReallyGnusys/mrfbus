@@ -152,3 +152,5 @@ class MrflandState(MrflandApp):
             self.log.info( "mrfland state added device %d"%hdr.usrc)
             self.devices[hdr.usrc] = DevState(hdr.usrc)
         
+    def cmd_devices(self,data):
+        self.log.info("state cmd_devices")
