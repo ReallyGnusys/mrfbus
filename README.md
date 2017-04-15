@@ -4,14 +4,6 @@
 
 ## FAQ
 
-### Is it ready?
-
-Probably not. 
-
-We moved it to github to allow travis integration on 24/3/2016.
-All claims concerning mrfbus capabilities will be made by travis.
- 
-Check logs for details.
     
 ### What's the point of it?
 
@@ -21,19 +13,15 @@ To simplify deployment of ultra low power microcontroller applications networked
 
 [TI CC430F5137](http://www.ti.com/product/CC430F5137)
 
-### Why is it better than something I can lash up from a blinking LED example program in a weekend? ###
 
-MRFBUS provides a multi-hop message delivery service with automatic retries spanning RF, uart and unix fifo channels.  All MRFBUS devices are capable of routing packets across interfaces, so mixed microcontroller networks using UART and RF segments can be quickly deployed. 
+### What does it provide?
 
-Some effort has been made to separate the system code from application code as well as to organise h/w dependent code in a consistent way. 
+All code (libraries, makefiles, linker-scripts ) to build OS-less micro-controller apps with out of the box network functionality making fair use of  low power architecture features. In addition, a single threaded linux implementation of mrfbus is provided.
 
-Linux devices can participate in MRFBUS networks, enabling higher level applications to access MRFBUS devices from the wider network.
+Core command set implemented by all devices.
 
-The linux implementation of MRFBUS uses epoll to emulate the interrupt driven microcontroller implementation using a single thread that uses minimal CPU time.  Most code is common between architectures,  allowing core development and testing to be largely carried out in a linux environment. 
 
 ### What does the default MRFBUS app do?
-
-Implements the core MRFBUS command set.
 
 The core MRFBUS command set supports network mapping and debug by higher level applications. 
 It allows an application to determine essential information about a mote and it's functions.
@@ -45,23 +33,24 @@ The default MRFBUS app compiles into less than 16K of ROM for a CC430F5137.
 
 ### How does it interface with linux?
 
-Linux is a supported architecture for MRFBUS.
+Linux is a supported architecture for MRFBUS. Any modern linux system should be able to build and run MRFBUS.
 
-Mrfbus can be run and tested on linux and linux hosts can participate in mrfbus networks, alongside microcontrollers.
+MRFBUS can be run and tested on linux and linux hosts can participate in mrfbus networks, alongside microcontrollers.
 
-A common use-case is for a linux host (e.g. raspberry PI ) to act as network root/hub/bridge via an appropriate mrfbus application.
 
-### What does it provide?
+### What's the device address space?
 
-All code (libraries, makefiles, linker-scripts ) to build OS-less micro-controller apps with out of the box network functionality making fair use of  low power architecture features. In addition, a single threaded linux implementation of mrfbus is provided.
-
-Core command set implemented by all devices.
-
-### What's the address space?
-
-8 bits.  Address 255 is broadcast.
+8 bits.  Address 255 is reserved for broadcast.
 
 ### What interfaces are supported?
     
 Sub-GHZ RF (using cc430f5137 packet radio ) uart and unix fifo.
+
+
+### Yes but how could I control and monitor my home using MRFBUS? ###
+
+The project includes an example MRFBUS server written in python in /land which is used for testing by travis,  but is intended to form the basis of an application server in due course.
+
+
+
 
