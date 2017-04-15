@@ -42,18 +42,18 @@ stdbuf -oL  python land/server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
 echo "land started "$land_pid
 
-sleep 4
+sleep 1
 
 # run stubtst
 
 python land/core_tests.py
 
 
-sleep 1
+#sleep 1
 
 kill $h01_pid $h02_pid $h20_pid $h2f_pid $stub_pid $land_pid
 
-sleep 1
+#sleep 1
 deactivate
 
 

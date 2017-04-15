@@ -27,8 +27,9 @@ from mrf_structs import *
 from mrfland_app import MrflandApp
 
 class DevState(object):
-    def __init__(self,addr):
+    def __init__(self,addr,log):
         self.addr = addr
+        self.log  = log
         self.device_info = None
         self.sys_info = None
         self.app_info = None
@@ -59,7 +60,7 @@ class DevState(object):
 
     def fyi(self, hdr, pkt):
         if hdr.usrc != self.addr:
-            print "not for us!! we are %d this is %d"%(self.addr,hdr.usrc)
+            self.log.warn("not for us!! we are %d this is %d"%(self.addr,hdr.usrc))
             return
 
         self.last_hdr = hdr
@@ -69,13 +70,16 @@ class DevState(object):
         if type(pkt) == type(PktDeviceInfo()) :
             #print "initial type self.device_info %s"%(type(self.device_info))
             self.device_info = pkt
-            #print "final type self.device_info %s"%(type(self.device_info))
+            self.log.info("DevState addr 0x%02x device info is  %s"%(self.addr,repr(self.device_info)))
         elif type(pkt) == type(PktSysInfo()) :
             self.sys_info = pkt
+            self.log.info("DevState addr 0x%02x sys info is  %s"%(self.addr,repr(self.sys_info)))
         if type(pkt) == type(PktAppInfo()) :
             self.app_info = pkt
+            self.log.info("DevState addr 0x%02x app_info is  %s"%(self.addr,repr(self.app_info)))
         if type(pkt) == type(PktDeviceStatus()) :
             self.device_status = pkt         
+            self.log.info("DevState addr 0x%02x device status is  %s"%(self.addr,repr(self.device_status)))
             return
             return '{"rx_pkts":%d,"tx_pkts":%d,"errors":%d}'%\
                 (self.device_status.rx_pkts,self.device_status.tx_pkts,
@@ -87,7 +91,7 @@ class MrflandState(MrflandApp):
         self.log = mld.log
         self.mld = mld
         self.tag = tag
-        self.host = DevState(self.mld.hostaddr)
+        self.host = DevState(self.mld.hostaddr,self.log)
         self.devices = {}
         self._comm_active = False  # flag indication bus communications active
         self.idle_mark = 300 # every ten minutes send idle mark cmd
@@ -150,7 +154,7 @@ class MrflandState(MrflandApp):
             return self.devices[hdr.usrc].fyi(hdr,robj)
         else:
             self.log.info( "mrfland state added device %d"%hdr.usrc)
-            self.devices[hdr.usrc] = DevState(hdr.usrc)
+            self.devices[hdr.usrc] = DevState(hdr.usrc,self.log)
         
     def cmd_devices(self,data):
         self.log.info("state cmd_devices")
