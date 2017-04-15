@@ -141,14 +141,14 @@ int usb_open(const char *dev){
   //int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC); 
   int fd = open((char *)dev, O_RDWR); 
   if (fd < 0) {
-    printf("failed to open %s\n",dev);
+    mrf_debug("failed to open %s\n",dev);
     perror(dev); 
     return -1; 
   }
-  printf("%s opened ok fd = %d\n",dev,fd);
+  mrf_debug("%s opened ok fd = %d\n",dev,fd);
   tcgetattr(fd,&_oldtio); /* save current port settings */  
 
-  printf("ispeed %d ospeed %d\n",cfgetispeed(&_oldtio),cfgetospeed(&_oldtio));
+  mrf_debug("ispeed %d ospeed %d\n",cfgetispeed(&_oldtio),cfgetospeed(&_oldtio));
 
   /*
   int rc;
@@ -172,11 +172,11 @@ int usb_open(const char *dev){
 
   tcflush(fd, TCIFLUSH);
   int rv = tcsetattr(fd,TCSANOW,&newtio);  
-  printf("usb_open : fd = %d tcsetattr returned %d\n",fd,rv);
-  printf("newtio.c_oflag %x newtio.c_iflag %x newtio.c_cflag %x newtio.c_lflag %x\n",
+  mrf_debug("usb_open : fd = %d tcsetattr returned %d\n",fd,rv);
+  mrf_debug("newtio.c_oflag %x newtio.c_iflag %x newtio.c_cflag %x newtio.c_lflag %x\n",
          newtio.c_oflag, newtio.c_iflag,newtio.c_cflag,newtio.c_lflag);
   tcgetattr(fd,&chktio); /* check current port settings */  
-  printf("chktio.c_oflag %x chktio.c_iflag %x chktio.c_cflag %x chktio.c_lflag %x\n",
+  mrf_debug("chktio.c_oflag %x chktio.c_iflag %x chktio.c_cflag %x chktio.c_lflag %x\n",
          chktio.c_oflag, chktio.c_iflag,chktio.c_cflag,chktio.c_lflag);
 
   return fd;

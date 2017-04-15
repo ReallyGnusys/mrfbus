@@ -109,7 +109,7 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       // packet received
       //mrf_buff_loaded(rxstate->bnum);
       _dbg_last(0x0d);
-      mrf_debug("mrf_uart_rx_byte : buffer loaded got bindex %d buff[0] %d",rxstate->bindex,rxstate->buff[0]);
+      mrf_debug("mrf_uart_rx_byte : buffer loaded got bindex %d buff[0] %d\n",rxstate->bindex,rxstate->buff[0]);
       rxstate->state = S_START;
       return 1;
     }
