@@ -32,6 +32,12 @@
 //extern uint8 _mrfid;
 static uint8 buff[2048];
 
+
+// this is lnx  - we can use some ram
+
+//static uint8 _last_msg_ids[256];   // keep track of last msg ids received from every possible address
+
+
 int signal_handler(uint8 signal){
   return 0;
 }
@@ -127,7 +133,8 @@ int mrf_app_init(){
   char sname[64];
   int appfd, tmp;
   mrf_debug("%s","mrf_app_init stub\n");
-
+  //for (tmp = 0 ; tmp < 256 ; tmp++)
+  //  _last_msg_ids = 0 ;
   // need to open input application pipe
 
 
@@ -188,6 +195,9 @@ int structure_to_app(uint8 bnum){
  _mrf_print_hex_buff(buff,len);
  return 0;
 }
+
+
+
 
 
 int response_to_app(uint8 bnum){

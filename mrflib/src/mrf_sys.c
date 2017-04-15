@@ -516,7 +516,7 @@ int _mrf_process_buff(uint8 bnum)
     //   ifp->status->stats.rx_pkts++;     // FIXME this is already incremented in mrf_buff_loaded, we need a separate stat
     // for command packets executed by us
       if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
-        mrf_debug("%s","executing packet in intr");
+        mrf_debug("%s","executing packet in intr\n");
         _mrf_ex_packet(bnum, pkt, cmd, ifp); 
       } else {
         mrf_debug("%s","pushing to app queue\n");
@@ -674,7 +674,7 @@ void _mrf_tick(){
           MRF_PKT_HDR *pkt;
           pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
 
-          mrf_debug("\nmrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d tx_timer %d  tc %d\n",
+          mrf_debug("mrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d tx_timer %d  tc %d\n",
                     i,bnum,bs->state,bs->tx_timer,_tick_count);
      
           // if (_tick_count >10)
