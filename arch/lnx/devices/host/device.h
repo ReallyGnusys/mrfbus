@@ -23,7 +23,7 @@
 
 typedef  enum { PIPE0,
      	        USB0,
-		PIPE2,
+		USB1,
 		PIPE3,
                 NUM_INTERFACES} I_F;
 
