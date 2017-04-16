@@ -42,7 +42,7 @@ stdbuf -oL  python land/server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
 echo "land started "$land_pid
 
-sleep 1
+sleep 2
 
 # run stubtst
 
@@ -52,14 +52,23 @@ python land/core_tests.py
 #sleep 1
 
 kill $h01_pid $h02_pid $h20_pid $h2f_pid $stub_pid $land_pid
+rv=$?
 
 #sleep 1
 deactivate
 
 
-echo "run_tests adios at $(date)"
+echo "run_tests adios at $(date)  rv ="$rv
 
 
+if [ $rv == 0 ] ; then
+
+    echo "PASSED"
+else
+    echo "FAILED"
+fi
+
+exit $rv
 
 
 
