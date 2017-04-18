@@ -25,6 +25,7 @@ from mrfland_app import MrflandApp
 
 from pt1000test import *
 
+from heatbox_test import HeatboxAppCmds
 from datetime import datetime
 
 Pt1000MaxChanns = 7
@@ -204,7 +205,7 @@ class MrflandAppHeating(MrflandApp):
     def __init__(self , tag , log=None, cmd_callback=None):
         MrflandApp.__init__( self,tag,log,cmd_callback)
         self.log.info("MrflandAppHeating __init__ called MrflandApp.__init__")
-        self._pt1000_addrs = { 2 }  #set of addresses
+        self._pt1000_addrs = { 2 : Pt1000AppCmds ,4 : HeatboxAppCmds }  #set of addresses
 
         self.managed_addrs = self._pt1000_addrs
 
@@ -227,7 +228,7 @@ class MrflandAppHeating(MrflandApp):
             self.log.info("setting time for device %d  %s"%(add,repr(td)))
         
 
-    def cmd_set(self,addr):
+    def tbd_cmd_set(self,addr):
         if addr in self._pt1000_addrs:
             return Pt1000AppCmds
         else:

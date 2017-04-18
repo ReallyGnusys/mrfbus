@@ -105,7 +105,8 @@ class PktRelayState(MrfStruct):
         ]
 
     
-    
+
+mrf_app_cmd_test = 128
 mrf_cmd_spi_read = 129
 mrf_cmd_spi_write = 130
 mrf_cmd_spi_debug = 131

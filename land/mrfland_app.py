@@ -33,6 +33,13 @@ class MrflandApp(object):
     def i_manage(self,addr):
         return addr in self.managed_addrs
 
+    def cmd_set(self,addr):
+        if self.i_manage(addr):
+            return self.managed_addrs[addr]
+        else:
+            return None
+
+    
     def setlog(self,log):
         self.log = log
 

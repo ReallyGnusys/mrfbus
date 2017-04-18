@@ -572,7 +572,8 @@ class MrflandServer(object):
             appcmds = self._app_cmd_set(hdr.usrc)
             if appcmds:
                 resp = mrf_decode_buff(param.type,respdat,cmdset=appcmds)
- 
+            else:
+                self.log.warn("failed to find app cmds for address 0x02x",hdr,usrc)
         
             
         #FIXME - this should be decoded here...somehow .. or passed to applications
@@ -611,7 +612,7 @@ class MrflandServer(object):
                     c.send(rv)
                 
         # check response is for active_cmd
-        if response and self.active_cmd and hdr.usrc == self.active_cmd.dest:  # FIXME - make queue items a bit nicer
+        if response and self.active_cmd and hdr.usrc == self.active_cmd.dest and rsp.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))
             self.log.info("rsp %s"%(rsp))
             if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
@@ -629,7 +630,7 @@ class MrflandServer(object):
         hdr , rsp, robj  = self.parse_input(resp)
 
         if hdr:                    
-            self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
+            self.log.info("received object %s response from  %d robj %s"%(type(rsp),hdr.usrc,type(robj)))
             self.handle_response(hdr, rsp , robj, response=True )
 
     def _struct_handler(self,*args, **kwargs):
@@ -639,7 +640,7 @@ class MrflandServer(object):
         hdr , rsp, robj = self.parse_input(resp)
 
         if hdr:                    
-            self.log.debug("received object %s response from  %d"%(type(rsp),hdr.usrc))
+            self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
             self.handle_response(hdr, rsp , robj)
             
     def _connect_to_mrfnet(self):
