@@ -378,6 +378,19 @@ class TestPt1000(DeviceTestCase):
             self.get_time_test(self.dest)
     
             return
+
+    def test04_app_cmd_test(self):
+        print "**********************"
+        print "* PT1000 app_cmd_test (dest 0x%02x)"%(self.dest)
+        print "**********************"
+        print "Sending mrf_app_cmd_test"
+        ccode = mrf_app_cmd_test
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)
+        self.assertTrue(self.check_attrs(resp,PktTimeDate()))
+        print "pt1000 app_cmd_test PASSED"
+
+         
     def config_cmd(self):
         print "Sending mrf_cmd_config_adc"
         ccode = mrf_cmd_config_adc

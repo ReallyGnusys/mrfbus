@@ -573,7 +573,7 @@ class MrflandServer(object):
             if appcmds:
                 resp = mrf_decode_buff(param.type,respdat,cmdset=appcmds)
             else:
-                self.log.warn("failed to find app cmds for address 0x02x",hdr,usrc)
+                self.log.warn("failed to find app cmds for address 0x02x",hdr.usrc)
         
             
         #FIXME - this should be decoded here...somehow .. or passed to applications

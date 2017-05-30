@@ -265,6 +265,7 @@ static void cycle_input(){
   _last_reading[curr_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
+  
 
   
   _curr_adc_channel = next_chan;

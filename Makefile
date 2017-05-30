@@ -2,8 +2,9 @@
 TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
 HOSTFIFO=${TMP}/1-0-in
+STUBFIFO=${TMP}/0-app-in
 
-tests: ${TMP} ${HOSTFIFO} ${LOGDIR} BUILD BUILDCC QTEST
+tests: ${TMP} FIFOS ${LOGDIR} BUILD BUILDCC QTEST
 
 venv :	land/requirements.txt
 	./build_venv
@@ -12,8 +13,9 @@ venv :	land/requirements.txt
 ${TMP}:
 	mkdir ${TMP}
 
-${HOSTFIFO}:
-	mkfifo -m 600 ${HOSTFIFO}
+FIFOS:
+	rm -f ${HOSTFIFO} && mkfifo -m 600 ${HOSTFIFO}
+	rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
 
 ${LOGDIR}:
 	mkdir -p ${LOGDIR}
