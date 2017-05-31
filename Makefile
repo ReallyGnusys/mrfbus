@@ -3,6 +3,7 @@ TMP=/tmp/mrf_bus
 LOGDIR=${TMP}/log
 HOSTFIFO=${TMP}/1-0-in
 STUBFIFO=${TMP}/0-app-in
+APPFIFO=${TMP}/0-app-str
 
 tests: ${TMP} FIFOS ${LOGDIR} BUILD BUILDCC QTEST
 
@@ -16,6 +17,7 @@ ${TMP}:
 FIFOS:
 	rm -f ${HOSTFIFO} && mkfifo -m 600 ${HOSTFIFO}
 	rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
+	rm -f ${APPFIFO} && mkfifo -m 600 ${APPFIFO}
 
 ${LOGDIR}:
 	mkdir -p ${LOGDIR}

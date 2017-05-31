@@ -44,7 +44,7 @@ stdbuf -oL  python land/server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
 echo "land started "$land_pid
 
-sleep 2
+sleep 3
 
 # run stubtst
 
