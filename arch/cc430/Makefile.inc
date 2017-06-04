@@ -23,9 +23,9 @@ SIZE=msp430-size
 AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${MOBJ}/RfRegSettings.o \
 	${MOBJ}/mrf_uart_cc.o  ${MOBJ}/rtc_arch.o
 
-ifdef MRF_SPI_B
-      ${MOBJ}/mrf_spi_cc.o
-endif
+#ifdef MRF_SPI_B
+#      ${MOBJ}/mrf_spi_cc.o
+#endif
 
 
 ACCFLAGS= -mmcu=cc430f5137  -DMHZ_868 
