@@ -19,6 +19,7 @@ import time
 import json
 import signal
 import Queue
+from collections import OrderedDict
 
 from mrflog import mrflog_init
 from mainapp import mainapp
@@ -396,6 +397,14 @@ class MrflandServer(object):
         self.registrations["main"] = []
         for appn in self.apps.keys():
             self.registrations[appn] = []
+
+        self.weblets = OrderedDict()
+
+        for appn  in self.apps.keys():
+            for webapp in self.apps[appn].weblets.keys():
+                self.weblets[webapp] = self.apps[appn].weblets[webapp]
+                
+
     
     def web_client_command(self,wsid,app,cmd,data):
         if app not in self.apps.keys():
@@ -677,7 +686,7 @@ class MrflandServer(object):
                          (r'/ws', WebSocketHandler), 
                          (r'/pws', PubSocketHandler), 
                          (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': 'static/secure'}),
-                         (r'((/)([^/?]*)(.*))', mainapp)
+                         (r'((/)([^/?]*)(.*))', mainapp, dict(mserv=self) ) #desperate times!
         ]
 
         self._webapp = tornado.web.Application(self._web_handlers,cookie_secret="dighobalanamsamarosaddhammamavijanatam")

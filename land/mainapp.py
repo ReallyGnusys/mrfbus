@@ -60,7 +60,22 @@ def _expand_priv_js(stype):
     return ht
             
 
-def mrf_page(rh,sob,ip):
+def mrf_pills(weblets):
+    s = ""
+    for wa in weblets.keys():
+        wl = weblets[wa]
+        s += '    <li><a data-toggle="pill" href="#%s">%s</a></li>\n'%(wl.tag,wl.label)
+    return s
+
+def mrf_html(weblets):
+    s = ""
+    for wa in weblets.keys():
+        wl = weblets[wa]
+        s += wl.html()
+    return s
+
+
+def mrf_page(rh,sob,ip,wapps):
     alog.info("mrf_page: sob = "+str(sob))
     # they're in - they'll be served with a page with websocket url
     # prepared for them when they authenticated.....
@@ -72,7 +87,10 @@ def mrf_page(rh,sob,ip):
         host += "."+install.domain
 
     upsince_str = install.upsince.strftime("%c")
-    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob, host = host, upsince = upsince_str))
+    pills = mrf_pills(wapps)
+    apphtml = mrf_html(wapps)
+    
+    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob, pills = pills, apphtml = apphtml,  host = host, upsince = upsince_str))
 
 def request_ip(rh):
         rs =  rh._request_summary()
@@ -184,7 +202,8 @@ class mainapp(tornado.web.RequestHandler):
     def __init__(self,*args, **kwargs):
         tornado.web.RequestHandler.__init__(self,*args, **kwargs)
         #self.log = log
-    
+    def initialize(self, mserv):
+        self.mserv = mserv   # desperate times
     def post(self, *args, **kwargs):
         alog.info('post:'+str(self.request))
         alog.info("uri : "+self.request.uri)
@@ -244,9 +263,10 @@ class mainapp(tornado.web.RequestHandler):
             alog.info("calling logout_action")
             return logout_action(self,sob,ip)
 
+        wapps = self.mserv.weblets
 
 
-        return mrf_page(self,sob,ip)
+        return mrf_page(self,sob,ip,wapps)
      
         
         

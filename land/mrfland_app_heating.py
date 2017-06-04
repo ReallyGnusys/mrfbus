@@ -27,7 +27,8 @@ from pt1000test import *
 
 from heatbox_test import HeatboxAppCmds
 from datetime import datetime
-
+from mrfland_weblet import MrflandWeblet
+from collections import OrderedDict
 Pt1000MaxChanns = 7
 Pt1000MaxRelays = 4
 
@@ -199,11 +200,123 @@ class Pt1000State(object):
         robj = {"tempsensors" : tsensors , "relays" : self.relays() }
         self.log.info("%s curr_state returning %s"%(self.__class__.__name__,repr(robj)))
         return robj
+
+
+
+class MrfLandWebletTemps(MrflandWeblet):
+    def pane_html(self):
+        return """
+        <h2>Temps(nobbit2)</h2>
+        <table class="table">
+          <thead>
+            <tr>
+             <th>ID</th>
+             <th>label</th>
+             <th>value</th>
+             <th>time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+             <td>temp-000</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-0-value">NADA</td>
+             <td id="timedate-0">NADA</td>
+            </tr>
+            <tr>
+             <td>temp-001</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-1-value">NADA</td>
+             <td id="timedate-1">NADA</td>
+            </tr>
+            <tr>
+             <td>temp-002</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-2-value">NADA</td>
+             <td id="timedate-2">NADA</td>
+            </tr>
+            <tr>
+             <td>temp-003</td>
+             <td>Top temperature</td>
+             <td id="tempsensor-3-value">NADA</td>
+             <td id="timedate-3">NADA</td>
+            </tr>
+          </tbody>
+         </table>
+"""
+
+
+class MrfLandWebletPumps(MrflandWeblet):
+    def pane_html(self):
+         return """
+        <h2>Pumps</h2>
+        <table class="table">
+          <thead>
+            <tr>
+             <th>ID</th>
+             <th>label</th>
+             <th>value</th>
+             <th>control</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+             <td>pump-000</td>
+             <td>Main rads</td>
+             <td id="pump-0-value">NADA</td>
+             <td id="pump-0-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-0-cb" value="0"></div></td>
+            </tr>
+            <tr>
+             <td>pump-001</td>
+             <td>Underfloor</td>
+             <td id="pump-1-value">NADA</td>
+             <td id="pump-1-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-1-cb" value="1"></div></td>
+
+            </tr>
+            <tr>
+             <td>pump-002</td>
+             <td>DHW charge 1</td>
+             <td id="pump-2-value">NADA</td>
+              <td id="pump-2-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-2-cb" value="2"></div></td>
+           </tr>
+            <tr>
+             <td>pump-003</td>
+             <td>DHW charge 2</td>
+             <td id="pump-3-value">NADA</td>
+             <td id="pump-3-cntrl"><div class="checkbox" ><input type="checkbox" id="pump-3-cb" value="3"></div></td>
+            </tr>
+          </tbody>
+         </table>
+"""
+
     
+_channel_assignment = {
+    'temperatures' : { 
+        'ACC_TOP'  : { 'mrfid' : 2, 'chan': 0 }, 
+        'ACC_MID'  : { 'mrfid' : 2, 'chan': 1 },
+        'ACC_LOW'  : { 'mrfid' : 2, 'chan': 2 },
+        'MIX_MAIN' : { 'mrfid' : 2, 'chan': 3 },
+        'MIX_PUFH' : { 'mrfid'  : 2, 'chan': 4 },
+        'MIX_UFH'  : { 'mrfid'  : 2, 'chan': 5 },
+        'RET_MAIN' : { 'mrfid'  : 2, 'chan': 6 },
+        'FLOW_ST1' : { 'mrfid' : 4, 'chan': 0 }, 
+        'RET_HX1'  : { 'mrfid' : 4, 'chan': 1 }, 
+        'RET_RAD1'  : { 'mrfid' : 4, 'chan': 2 }, 
+        'DHW1_TOP'  : { 'mrfid' : 4, 'chan': 3 }, 
+        'DHW1_MID'  : { 'mrfid' : 4, 'chan': 4 }
+    }
+}
+   
+
+
+
+
 class MrflandAppHeating(MrflandApp):
 
+
+    
     def __init__(self , tag , log=None, cmd_callback=None):
-        MrflandApp.__init__( self,tag,log,cmd_callback)
+        MrflandApp.__init__( self,tag , log,cmd_callback)
         self.log.info("MrflandAppHeating __init__ called MrflandApp.__init__")
         self._pt1000_addrs = { 2 : Pt1000AppCmds ,4 : HeatboxAppCmds }  #set of addresses
 
@@ -214,6 +327,18 @@ class MrflandAppHeating(MrflandApp):
         for add in self._pt1000_addrs:
             self.pt1000state[add] = Pt1000State(add,self.log)
 
+
+        self.weblets['temps'] =  MrfLandWebletTemps(self.log, {'tag':'temps','label':'Temperatures'})
+        self.weblets['pumps'] =  MrfLandWebletPumps(self.log, {'tag':'pumps','label':'Pumps'})
+
+            
+                #do labels
+
+        for label in _channel_assignment['temperatures'].keys():
+            ts = _channel_assignment['temperatures'][label]
+            self.log.info("labelling temp device %s mrfid %d chan %d"%(label,ts['mrfid'],ts['chan']))
+            self.pt1000state[ts['mrfid']].temps[ts['chan']].label = label  
+        
         # set device RTC
 
         self.log.info("MrflandAppHeating __init__ exit")

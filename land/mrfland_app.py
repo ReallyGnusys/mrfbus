@@ -22,11 +22,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  support subscription mechanism for automatic updates
 """
 
+from collections import OrderedDict
 
 class MrflandApp(object):
-    def __init__(self,tag, log , cmd_callback):
+    def __init__(self,tag, log, cmd_callback):
         self.tag = tag
         self.log = log
+        self.weblets = OrderedDict()
         self.cmd_callback = cmd_callback
         self.managed_addrs = {}
 

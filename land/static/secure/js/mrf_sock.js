@@ -126,8 +126,8 @@ function init_app(){
 
 //incoming socket command handler
 function mrf_command(obj){
-    //console.log("mrf_command : got");
-    //console.log(obj);
+    console.log("mrf_command : got");
+    console.log(obj);
     if (obj.cmd == 'update-div'){
         mrf_update_div(obj.data);
 
