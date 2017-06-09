@@ -308,12 +308,13 @@ MrfSysCmds = {
 
 ## common funcs
 
+
 def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
     if rtype in cmdset.keys() and cmdset[rtype]['resp']:
-        respobj = cmdset[rtype]['resp']()
+        respobj = cmdset[rtype]['resp']()  # create an instance of the mrf_struct object
         #print "mrf_decode_buff got type  %s"%type(respobj)
         #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-        respobj.load(rbytes)
+        respobj.load(rbytes)  ## and load with raw data
         return respobj
     return None
 

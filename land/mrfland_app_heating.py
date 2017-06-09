@@ -23,15 +23,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 from mrfland_app import MrflandApp
 
-from pt1000test import *
+#from pt1000test import *
+from mrfdev_pt1000 import *
 
 from heatbox_test import HeatboxAppCmds
 from datetime import datetime
 from mrfland_weblet import MrflandWeblet
 from collections import OrderedDict
+from mrf_sens import MrfSens, MrfDev
 Pt1000MaxChanns = 7
 Pt1000MaxRelays = 4
 
+#### start new implementation here
+
+
+    
+## end of new , start of old
 
 class Pt1000TempSensor(object):
     def __init__(self,address,channel,log):
@@ -204,6 +211,19 @@ class Pt1000State(object):
 
 
 class MrfLandWebletTemps(MrflandWeblet):
+    def pane_js_cmd(self):
+        s = """
+   var nobskit = True;
+"""
+        return s
+
+
+    def pane_js(self):
+        s = """
+   var nobwit = True;
+"""
+        return s
+    
     def pane_html(self):
         return """
         <h2>Temps(nobbit2)</h2>
@@ -247,6 +267,21 @@ class MrfLandWebletTemps(MrflandWeblet):
 
 
 class MrfLandWebletPumps(MrflandWeblet):
+
+    def pane_js_cmd(self):
+        s = """
+        "state" : function();
+"""
+        return s
+
+
+    def pane_js(self):
+        s = """
+   var nobwitpump = True;
+"""
+        return s
+
+    
     def pane_html(self):
          return """
         <h2>Pumps</h2>

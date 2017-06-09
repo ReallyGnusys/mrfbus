@@ -563,7 +563,12 @@ class MrflandServer(object):
             self.log.info("not resp or struct")
             return None,None,None
 
-        
+        ## here just pass this to device model to handle
+        if self.devices.has_key(hdr.usrc):
+            self.log.warn("passing this to device model ")
+            self.devices[hdr.usrc].packet(hdr,resp)
+
+        ### all this below  tbd - device model above will handle
         param = MrfSysCmds[hdr.type]['param']()
         #print "have param type %s"%type(param)
         param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]

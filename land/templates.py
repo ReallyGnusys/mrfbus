@@ -111,8 +111,8 @@ mrf_tp = """
        username : "{{sob['username']}}",
        type     : "{{sob['type']}}"
       };
-    </script>
 
+    </script>
 
   </head>
 
@@ -143,6 +143,14 @@ mrf_tp = """
 
     <script src="static/secure/js/mrf_sock.js"></script>
 
+
+<script type="text/javascript">
+
+{% raw appjs %}
+
+{% raw weblets %}
+
+</script>
   </body>
 </html>
 

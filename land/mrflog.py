@@ -4,7 +4,7 @@ import install
 def mrf_log():
     return logging.getLogger(install.logger_name);
 
-def mrflog_init(level = install.log_level):
+def mrf_log_init(level = install.log_level):
     formatter = logging.Formatter('[%(asctime)s] %(levelname)s %(filename)s.%(lineno)d - %(message)s')
     alog = logging.getLogger(install.logger_name)
     hdlr = logging.FileHandler(install.logdir+install.mrflog)
