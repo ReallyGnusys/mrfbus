@@ -21,7 +21,7 @@ import signal
 import Queue
 from collections import OrderedDict
 
-from mrflog import mrflog_init
+from mrflog import mrf_log_init
 from mainapp import mainapp
 from public import publicapp
 from pubsock import PubSocketHandler
@@ -32,7 +32,7 @@ from mrfland_app_heating import MrflandAppHeating
 import mrfland
 
 clients = dict()
-alog = mrflog_init()
+alog = mrf_log_init()
 
 dt_handler = lambda obj: (
     obj.isoformat()
@@ -349,7 +349,7 @@ class MrflandServer(object):
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
-
+        self.devices = {}
         self._start_mrfnet(apps=apps)
         self.quiet_cnt = 0
         self._start_webapp()

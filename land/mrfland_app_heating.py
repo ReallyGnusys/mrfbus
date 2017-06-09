@@ -60,7 +60,7 @@ class Pt1000TempSensor(object):
             T = T +  sqrt(tmp)
             T = T/ (2.0 * B)
         except:
-            self.log.error("res_to_temp error chan %d  with milliohms %d"%(self.channel,milliohms))
+            self.log.error("res_to_temp error chan %d  with milliohms %d tmp was %f"%(self.channel,milliohms,tmp))
             T = -273.16
         return T
     def __repr__(self):
