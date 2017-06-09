@@ -171,7 +171,7 @@ class PktTimeDate(MrfStruct):
         self.sec  = dt.second
         self.min  = dt.minute
         self.hour = dt.hour
-        self.day  = dt.hour
+        self.day  = dt.day
         self.mon  = dt.month
         self.year = dt.year - 2000
     def to_datetime(self):
