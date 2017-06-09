@@ -31,6 +31,7 @@ from datetime import datetime
 from mrfland_weblet import MrflandWeblet
 from collections import OrderedDict
 from mrf_sens import MrfSens, MrfDev
+from math import sqrt
 Pt1000MaxChanns = 7
 Pt1000MaxRelays = 4
 
@@ -60,7 +61,7 @@ class Pt1000TempSensor(object):
             T = T +  sqrt(tmp)
             T = T/ (2.0 * B)
         except:
-            self.log.error("res_to_temp error chan %d  with milliohms %d tmp was %f"%(self.channel,milliohms,tmp))
+            self.log.error("res_to_temp error chan %d  with milliohms %d tmp was %f  T %f"%(self.channel,milliohms,tmp,T))
             T = -273.16
         return T
     def __repr__(self):
