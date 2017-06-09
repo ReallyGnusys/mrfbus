@@ -277,6 +277,14 @@ dt_handler = lambda obj: (
     if isinstance(obj, datetime) #or isinstance(obj, date)
     else None)
 
+"""
+dt_handler = lambda obj: (
+    obj.isoformat()
+    if isinstance(obj, datetime)
+    or isinstance(obj, date)
+    else None)
+"""
+
 
 def to_json(obj):
     return json.dumps(obj,default = dt_handler)

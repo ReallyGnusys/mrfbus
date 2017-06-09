@@ -30,25 +30,14 @@ from mrfland_state import MrflandState
 from mrf_structs import *
 from mrfland_app_heating import MrflandAppHeating
 import mrfland
+from mrfdev_pt1000 import Pt1000Dev
 
 clients = dict()
 alog = mrf_log_init()
 
-dt_handler = lambda obj: (
-    obj.isoformat()
-    if isinstance(obj, datetime)
-    or isinstance(obj, date)
-    else None)
-
-
-def to_json(obj):
-    return json.dumps(obj,default = dt_handler)
-
-
-
 
 def broadcast(obj):
-    msg = to_json(obj)
+    msg = mrfland.to_json(obj)
     _jso_broadcast(msg)
 
 def _jso_broadcast(raw):
@@ -63,7 +52,7 @@ def _jso_broadcast(raw):
 def send_object_to_client(id,obj):
     username = clients[id]['username']
     alog.debug( "send_object_to_client: "+username+" sent cmd "+str(obj['cmd']))
-    msg = to_json(obj)
+    msg = mrfland.to_json(obj)
     clients[id]['object'].write_message(msg+"\r\n\r\n")
 
 #conn = Connection(host='localhost')
@@ -79,57 +68,6 @@ def comm(id,ro,touch = False):
 #define("port", default=2201, help="run on the given port", type=int)
 define("port", default=install.port, help="run on the given port", type=int)
 
-def cmd_nobbit():
-    print "nobbit"
-
-dcmds = {
-    'nobbit': cmd_nobbit,
-
-    }
-
-
-def action_client_cmd(id,username,msgob):
-    if not msgob.has_key('ccmd'):
-        errmsg = "socket id "+id+" assigned to "+username+" sent invalid packet:"+str(msgob)
-        alog.error(errmsg)
-        return
-
-    cmd = msgob['ccmd']
-    if dcmds.has_key(cmd):
-        alog.debug(cmd+":evaluating action")
-        #ro = eval(ccmds[cmd])
-        try:
-            msgob['data']['ssid'] = id
-            ro = dcmds[cmd](aconn,mrfland.comm.clients[id]['sid'],msgob['data'] )
-        except Exception,e: 
-            import traceback
-            details = traceback.format_exc()
-
-            errmsg = "despatcher exception : socket id "+id+" assigned to "+username+" obj :"+str(msgob)+", exception:"+str(e)+"\n+Details:\n"+details
-            alog.error(errmsg)
-            #mrfland.asa_error(aconn,'py','general',errmsg)
-            return
-
-        if asa_prims.is_asa_ret_obj(ro):
-            mrfland.comm.comm(id,ro)
-        else:
-            errmsg = "no retobj returned from command"+cmd
-            alog.error(errmsg)
-            #mrfland.asa_error(aconn,'py','general',errmsg)
-    else:
-        errmsg = "socket id "+id+" assigned to "+username+" sent unrecognised command :"+str(cmd)
-        alog.error(errmsg)
-        #mrfland.asa_error(aconn,'py','general',errmsg)
-        return
-      
-    return
-
-def json_parse(str):
-    try:
-        ob = json.loads(str)        
-    except:
-        return None
-    return ob
 
 
 server = None  # FIXME this is shonky just to get to our own methods added to  server from handlers
@@ -180,7 +118,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         
     def on_message(self, message):
         alog.info("client message on wsid ="+self.id+" "+str(message))
-        cobj = json_parse(message)
+        cobj = mrfland.json_parse(message)
 
         if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
             alog.info("decoded client command %s"%repr(cobj))
@@ -248,7 +186,7 @@ class SimpleTcpClient(object):
                 self.log.info("got line %s"%line)
                 #s = line.decode('utf-8').strip()
                 #self.log('got |%s|' % repr(s))
-                ob = json_parse(line)
+                ob = mrfland.json_parse(line)
                 if ob:
                     data = None
                     self.log.info("json ob : %s"%repr(ob))
@@ -336,7 +274,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
 
 class MrflandServer(object):
 
-    def __init__(self,log,apps={}):
+    def __init__(self,log,apps={} , devs = {}):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
@@ -349,7 +287,7 @@ class MrflandServer(object):
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
-        self.devices = {}
+        self.devices = devs
         self._start_mrfnet(apps=apps)
         self.quiet_cnt = 0
         self._start_webapp()
@@ -766,7 +704,10 @@ if __name__ == '__main__':
     parse_command_line()
     alog.info("Mrfland web server starting on port "+str(options.port))
     
+    clabels = { 'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"] }
+            
+    hb0 = Pt1000Dev("pt1000_boiler_room", 2, clabels, alog)
 
-    ml =  MrflandServer(alog,apps = {'heating' : MrflandAppHeating })
+    ml =  MrflandServer(alog, apps = {'heating' : MrflandAppHeating }  , devs = { 'hb0' : hb0} )
 
 
