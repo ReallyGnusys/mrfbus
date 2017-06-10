@@ -274,13 +274,14 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
 
 class MrflandServer(object):
 
-    def __init__(self,log,apps={} , devs = {}):
+    def __init__(self,rm,log,apps={} , devs = {}):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
         global server
         self.log = log
+        self.rm = rm
         self._timeout_handle = None
         server = self  # FIXME ouch
         self.apps = apps
@@ -288,6 +289,10 @@ class MrflandServer(object):
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
         self.devices = devs
+        self.regmgr  = mrfland.MrflandRegManager(self.log)
+        for devadd in self.devices.keys():
+            self.regmgr.device_register(self.devices[devadd])
+            
         self._start_mrfnet(apps=apps)
         self.quiet_cnt = 0
         self._start_webapp()
@@ -324,7 +329,7 @@ class MrflandServer(object):
         self.log.info("apps are %s"%repr(apps))
         papps = {}
         for appn in apps.keys():
-            papps[appn] = apps[appn]("app_"+appn,log=self.log,cmd_callback=self._callback)
+            papps[appn] = apps[appn]("app_"+appn,self.rm, log=self.log,cmd_callback=self._callback)
             #papps[appn].setlog(self.log)
         self.apps = papps
         self.log.info("apps instanced are %s"%repr(apps))
@@ -505,6 +510,7 @@ class MrflandServer(object):
         if self.devices.has_key(hdr.usrc):
             self.log.warn("passing this to device model ")
             self.devices[hdr.usrc].packet(hdr,resp)
+            
 
         ### all this below  tbd - device model above will handle
         param = MrfSysCmds[hdr.type]['param']()
@@ -708,6 +714,10 @@ if __name__ == '__main__':
             
     hb0 = Pt1000Dev("pt1000_boiler_room", 2, clabels, alog)
 
-    ml =  MrflandServer(alog, apps = {'heating' : MrflandAppHeating }  , devs = { 'hb0' : hb0} )
+    rm = mrfland.MrflandRegManager(alog)
+
+    rm.device_register(hb0)
+    
+    ml =  MrflandServer(rm, alog, apps = {'heating' : MrflandAppHeating }  , devs = {} )
 
 

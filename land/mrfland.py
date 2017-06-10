@@ -307,7 +307,35 @@ def atime():
     return mrf_cmd('datetime',datetime.utcfromtimestamp(time.time()))
  
 
+class MrflandRegManager(object):
+    """ mrfland device and sensor/actuator registration manager """
+    def __init__(self, log):
+        self.log = log
+        self.labels = {}
+        self.devices = {}  ### hash devices by label - must be unique
+        self.sensors = {}  ### hash sensors by label
+        self.senstypes = {} ### hash lists of sensors by sensor type
+        self.actuators = {} 
+        self.addresses = {}  ### hash devices by address - must be unique
+        
+    def device_register(self, dev):
+        """ register new MrfDevice"""
+        if self.devices.has_key(dev.label):
+            self.log.error("%s device_register duplicate device label %s"%dev.label)
+            return
+        self.devices[dev.label] = dev
 
+        ### now enumerate device sensors
+        for cap in dev.caps.keys():
+            for ch in range(len(dev.caps[cap])):
+                sens = dev.caps[cap][ch]
+                if self.sensors.has_key(sens.label):
+                    self.log.error("%s device_register duplicate sensor label %s"%sens.label)
+                    return
+                self.sensors[sens.label] = sens
+                if not self.senstypes.has_key(type(sens)):
+                    self.senstypes[type(sens)] = []
+                self.senstypes[type(sens)].append(sens)
 
 if __name__ == "__main__":
     print "nothing"

@@ -1,5 +1,7 @@
 from ctypes import *
 from datetime import datetime
+from collections import OrderedDict
+
 
 class MrfStruct(LittleEndianStructure):
     def fromstr(self, string):
@@ -53,7 +55,7 @@ class MrfStruct(LittleEndianStructure):
             s += "%s %s\n"%(field[0],atts)
         return s
     def dic(self):
-        dic = {}
+        dc = OrderedDict()
         for field in self._fields_:
             key = field[0]
             val = self[key]
@@ -61,8 +63,8 @@ class MrfStruct(LittleEndianStructure):
                 val = self.attstr(key)
             if str(type(val)).find('Array') > -1:
                 val = self.attstr(key)
-            dic[key ] = val
-        return dic
+            dc[key ] = val
+        return dc
 
     def dic_set(self,dic):
         for attr in dic.keys():

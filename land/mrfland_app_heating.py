@@ -31,6 +31,7 @@ from datetime import datetime
 from mrfland_weblet import MrflandWeblet
 from collections import OrderedDict
 from mrf_sens import MrfSens, MrfDev
+from mrfland_weblet_temps import MrfLandWebletTemps
 from math import sqrt
 Pt1000MaxChanns = 7
 Pt1000MaxRelays = 4
@@ -211,7 +212,7 @@ class Pt1000State(object):
 
 
 
-class MrfLandWebletTemps(MrflandWeblet):
+class MrfLandWebletTBDTemps(MrflandWeblet):
     def pane_js_cmd(self):
         s = """
    var nobskit = True;
@@ -351,8 +352,8 @@ class MrflandAppHeating(MrflandApp):
 
 
     
-    def __init__(self , tag , log=None, cmd_callback=None):
-        MrflandApp.__init__( self,tag , log,cmd_callback)
+    def __init__(self , tag , rm,  log=None, cmd_callback=None):
+        MrflandApp.__init__( self,tag , rm, log, cmd_callback)
         self.log.info("MrflandAppHeating __init__ called MrflandApp.__init__")
         self._pt1000_addrs = { 2 : Pt1000AppCmds ,4 : HeatboxAppCmds }  #set of addresses
 
@@ -363,9 +364,10 @@ class MrflandAppHeating(MrflandApp):
         for add in self._pt1000_addrs:
             self.pt1000state[add] = Pt1000State(add,self.log)
 
+        self.weblets['temps'] =  MrfLandWebletTemps(self.rm, self.log, {'tag':'temps','label':'Temperatures'})
 
-        self.weblets['temps'] =  MrfLandWebletTemps(self.log, {'tag':'temps','label':'Temperatures'})
-        self.weblets['pumps'] =  MrfLandWebletPumps(self.log, {'tag':'pumps','label':'Pumps'})
+        self.weblets['tempstbd'] =  MrfLandWebletTBDTemps(self.rm, self.log, {'tag':'tempstbd','label':'TemperaturesTBD'})
+        self.weblets['pumps'] =  MrfLandWebletPumps(self.rm, self.log, {'tag':'pumps','label':'Pumps'})
 
             
                 #do labels

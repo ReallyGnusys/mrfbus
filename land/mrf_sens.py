@@ -49,6 +49,8 @@ class MrfDev(object):
         self.label = label
         self.sys = {} # aims to contain all sys info responses from device_info upwards
         self.log = log
+        self.skey = 0
+        self.subscribers = dict()
 
         self.caps = {}
 
@@ -62,8 +64,13 @@ class MrfDev(object):
                 self.caps[clab].append(self._capspec[clab](slab, self.address, chan, self.log))
                 chan += 1
             
-
-                
+        
+    def subscribe(self,callback):
+        key = self.skey
+        self.subscribers[key] = callback
+        self.skey += 1
+        return key
+               
                 
     def packet(self,hdr,rsp):  # server interface - all packets from this device are sent here
         if hdr.usrc != self.address :
@@ -72,10 +79,10 @@ class MrfDev(object):
                         
         param = MrfSysCmds[hdr.type]['param']()
         #print "have param type %s"%type(param)
-        param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
+        param_data = bytes(rsp)[len(hdr):len(hdr)+len(param)]
         param.load(param_data)
         #print "resp should be %s"%repr(param)
-        respdat = bytes(resp)[len(hdr)+len(param):]
+        respdat = bytes(rsp)[len(hdr)+len(param):]
 
         #self.log.info(" have response or struct object %s"%repr(param))
 
@@ -96,15 +103,25 @@ class MrfDev(object):
             
 
 
-class MrfSens(object):
+class MrfSens(object):    
     def __init__(self, label, address,channel,log):
         self.label = label
         self.address = address        
         self.channel = channel
         self.log = log
-        self.skey = 0
         self.inval = None
+        self.skey = 0
         self.subscribers = dict()
+
+        self._input = OrderedDict()
+        for fld in self._in_flds_:
+            self._input[fld[0]] = fld[1]
+
+        self._output = OrderedDict()
+        for fld in self._out_flds_:
+            self._output[fld[0]] = fld[1]
+            
+    
         
     def subscribe(self,callback):
         key = self.skey

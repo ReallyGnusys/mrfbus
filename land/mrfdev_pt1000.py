@@ -4,7 +4,7 @@ from datetime import datetime
 import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test
-
+from math import sqrt
 
 
 
@@ -126,28 +126,31 @@ Pt1000AppCmds = {
 
 
 class MrfSensPt1000(MrfSens):
-    _input = { 'date' :  PktTimeDate ,
-               'milliohms' : c_uint32 }
+    _in_flds_ = [ ('date', PktTimeDate) ,
+                  ('milliohms' , long) ]  # hmpff
     
-    _output = { 'send_date' : datetime.now,
-                'recd_date' : datetime.now,
-                'milliohms' : int,
-                'temp'      : float
-                }
+    _out_flds_ = [ ('send_date' , datetime.now ),
+                   ('recd_date' , datetime.now),
+                   ('milliohms' , int ),
+                   ('temp'      , float) ]
+
     def res_to_temp(self,milliohms):
         R = milliohms/1000.0
+
+        if R > 2000.0:
+            return 9999.9
         A=3.9083e-3
         B=-5.775e-7
         R0 = 1000.0
         R=R/R0
         T=0.0-A
         tmp = (A*A) - 4.0 * B * (1.0 - R)
-        try:
-            T = T +  sqrt(tmp)
-            T = T/ (2.0 * B)
-        except:
-            self.log.error("res_to_temp error chan %d  with milliohms %d"%(self.channel,milliohms))
-            T = -273.16
+        #try:
+        T = T +  sqrt(tmp)
+        T = T/ (2.0 * B)
+        #except:
+        #    self.log.error("res_to_temp error chan %d  with milliohms %d tmp %f"%(self.channel,milliohms,tmp))
+        #    T = -273.16
         return T
 
     
@@ -155,12 +158,11 @@ class MrfSensPt1000(MrfSens):
         self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.now()
-        outdata['milliohms']  = int(indata['milliohms'].value)
+        outdata['milliohms']  = int(indata['milliohms'])
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
         self.log.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         return outdata
         
-
 
 
     
@@ -170,4 +172,16 @@ class Pt1000Dev(MrfDev):
     _capspec = { 'temp' : MrfSensPt1000 }                 
     _cmdset = Pt1000AppCmds
 
+    def app_packet(self, hdr, param , resp):
+        self.log.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        
+        self.log.warn("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
+        if param.type == mrf_cmd_read_state:
+
+            for ch in range(len(resp.milliohms)):
+                self.log.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                inp = { 'date' : resp.td,
+                        'milliohms' : resp.milliohms[ch]
+                }
+                self.caps['temp'][ch].input(inp)
