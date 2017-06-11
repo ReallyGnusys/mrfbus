@@ -22,12 +22,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  subclasses must implement pane_html() and js() method
 """
 
-def MrflandObjectTable(app,tab, odict,rows):
+from collections import OrderedDict
+
+def MrflandObjectTable(app,tab, odict, rows, postcontrols = []):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
           <thead>
             <tr>"""%(app,tab)
+
+    for cntrl in postcontrols:
+        odict[cntrl[0]] = cntrl[1]
+    s += """
+             <th>%s</th>"""%("tag")
     for fld in odict.keys():
         s += """
              <th>%s</th>"""%(fld)
@@ -38,8 +45,14 @@ def MrflandObjectTable(app,tab, odict,rows):
     for row in rows:
         s += """
            <tr>"""
+        s += """
+            <td class="app-%s tab-%s row-%s">%s</td>"""%(app,tab,str(row),str(row))
         for fld in odict.keys():
-            s += """
+            if odict[fld] == '_mrf_ctrl_cb':
+                s += """
+            <td class="app-%s tab-%s row-%s fld-%s"><div class="checkbox" ><input type="checkbox" id="pump-1-cb" value="1"></td>"""%(app,tab,str(row),fld)
+            else:
+                s += """
             <td class="app-%s tab-%s row-%s fld-%s"></td>"""%(app,tab,str(row),fld)
         s += """
             </tr>"""

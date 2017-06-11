@@ -32,6 +32,7 @@ from mrfland_weblet import MrflandWeblet
 from collections import OrderedDict
 from mrf_sens import MrfSens, MrfDev
 from mrfland_weblet_temps import MrfLandWebletTemps
+from mrfland_weblet_relays import MrfLandWebletRelays
 from math import sqrt
 Pt1000MaxChanns = 7
 Pt1000MaxRelays = 4
@@ -365,6 +366,7 @@ class MrflandAppHeating(MrflandApp):
             self.pt1000state[add] = Pt1000State(add,self.log)
 
         self.weblets['temps'] =  MrfLandWebletTemps(self.rm, self.log, {'tag':'temps','label':'Temperatures'})
+        self.weblets['relays'] =  MrfLandWebletRelays(self.rm, self.log, {'tag':'relays','label':'Relays'})
 
         self.weblets['tempstbd'] =  MrfLandWebletTBDTemps(self.rm, self.log, {'tag':'tempstbd','label':'TemperaturesTBD'})
         self.weblets['pumps'] =  MrfLandWebletPumps(self.rm, self.log, {'tag':'pumps','label':'Pumps'})

@@ -50,6 +50,7 @@ class MrfDev(object):
         self.sys = {} # aims to contain all sys info responses from device_info upwards
         self.log = log
         self.skey = 0
+        self.lastmsgid = -1
         self.subscribers = dict()
 
         self.caps = {}
@@ -75,8 +76,14 @@ class MrfDev(object):
     def packet(self,hdr,rsp):  # server interface - all packets from this device are sent here
         if hdr.usrc != self.address :
             self.log.error("MrfDev %s addr %s got wrong fyi"%(self.label,self.address))
-            return None
-                        
+            return None, None
+
+        ## try and catch duplicate msgids - retransmissions , pending debug.. hmpff
+        if hdr.msgid == self.lastmsgid:
+            self.log.error("MrfDev %s addr %s duplicate msgid %d"%(self.label,self.address,hdr.msgid))
+            return None , None
+        self.lastmsgid = hdr.msgid
+        
         param = MrfSysCmds[hdr.type]['param']()
         #print "have param type %s"%type(param)
         param_data = bytes(rsp)[len(hdr):len(hdr)+len(param)]

@@ -151,6 +151,8 @@ class MrfSensPt1000(MrfSens):
         #except:
         #    self.log.error("res_to_temp error chan %d  with milliohms %d tmp %f"%(self.channel,milliohms,tmp))
         #    T = -273.16
+        T = (int)(T*100)   # only 2 DP makes sense
+        T = T/100.0
         return T
 
     
@@ -164,24 +166,53 @@ class MrfSensPt1000(MrfSens):
         return outdata
         
 
+class MrfSensPtRelay(MrfSens):
+    _in_flds_ = [ ('date', PktTimeDate) ,
+                  ('relay' , int) ]  # hmpff
+    
+    _out_flds_ = [ ('send_date' , datetime.now ),
+                   ('recd_date' , datetime.now),
+                   ('relay' , int )
+    ]
+
+    
+    def genout(self,indata,outdata):
+        #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        outdata['send_date'] = indata['date'].to_datetime()
+        outdata['recd_date'] = datetime.now()
+        outdata['relay']  = int(indata['relay'])
+        return outdata
+        
+
 
     
         
 class Pt1000Dev(MrfDev):
 
-    _capspec = { 'temp' : MrfSensPt1000 }                 
+    _capspec = {
+        'temp' : MrfSensPt1000,
+        'relay' : MrfSensPtRelay}                 
     _cmdset = Pt1000AppCmds
 
     def app_packet(self, hdr, param , resp):
-        self.log.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        self.log.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        self.log.warn("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        self.log.info("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                self.log.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                self.log.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }
                 self.caps['temp'][ch].input(inp)
+
+
+            for ch in range(len(self.caps['relay'])):
+                (resp.relay_state >> ch) & 0x01
+                inp = { 'date' : resp.td,
+                        'relay' :  (resp.relay_state >> ch) & 0x01
+                }
+                self.caps['relay'][ch].input(inp)
+                

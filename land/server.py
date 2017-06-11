@@ -31,6 +31,7 @@ from mrf_structs import *
 from mrfland_app_heating import MrflandAppHeating
 import mrfland
 from mrfdev_pt1000 import Pt1000Dev
+from mrfdev_host import MrfDevHost
 
 clients = dict()
 alog = mrf_log_init()
@@ -506,7 +507,7 @@ class MrflandServer(object):
         ## here just pass this to rm device model to handle
 
         param, rsp = self.rm.packet(hdr,resp)
-
+        
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
             ro.b(mrfland.mrf_cmd('web-update',wup))
@@ -515,7 +516,7 @@ class MrflandServer(object):
         
         return hdr , param , rsp 
 
-    def handle_response(self,hdr,rsp, robj,response=False):
+    def handle_response(self,hdr,param, robj,response=False):
         # test if sys command response or data
         if response:
             self.log.info("handle_response hdr %s",repr(hdr))
@@ -549,9 +550,12 @@ class MrflandServer(object):
                     c.send(rv)
             """
         # check response is for active_cmd
-        if response and self.active_cmd and hdr.usrc == self.active_cmd.dest and rsp.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
+
+        if type(param) == type(None):
+            self.log.error("failed to get resp for packet with header %s"%repr(hdr))            
+        elif response and self.active_cmd and hdr.usrc == self.active_cmd.dest and param.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))
-            self.log.info("rsp %s"%(rsp))
+            self.log.info("rsp %s"%(param))
             if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                 self.log.info("response for tcp client %d"%self.active_cmd.tag)
                 self.log.info("robj dic is %s"%repr(robj.dic()))
@@ -564,21 +568,21 @@ class MrflandServer(object):
         self.log.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
-        hdr , rsp, robj  = self.parse_input(resp)
+        hdr , param, resp  = self.parse_input(resp)
 
-        if hdr:                    
-            self.log.info("received object %s response from  %d robj %s"%(type(rsp),hdr.usrc,type(robj)))
-            self.handle_response(hdr, rsp , robj, response=True )
+        if hdr  and param and resp:                    
+            self.log.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+            self.handle_response(hdr, param , resp, response=True )
 
     def _struct_handler(self,*args, **kwargs):
         self.log.info("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)
 
-        hdr , rsp, robj = self.parse_input(resp)
+        hdr , param, resp = self.parse_input(resp)
 
-        if hdr:                    
-            self.log.info("received object %s response from  %d"%(type(rsp),hdr.usrc))
-            self.handle_response(hdr, rsp , robj)
+        if hdr and param and resp :                    
+            self.log.info("received object %s response from  %d"%(type(resp),hdr.usrc))
+            self.handle_response(hdr, param , resp)
             
     def _connect_to_mrfnet(self):
         self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
@@ -689,12 +693,17 @@ if __name__ == '__main__':
     parse_command_line()
     alog.info("Mrfland web server starting on port "+str(options.port))
     
-    clabels = { 'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"] }
-            
+    clabels = {
+        'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
+        'relay' : ["UFH_PUMP", "MAIN_RAD_PUMP"]
+        }
+
+    host = MrfDevHost("host", 1, {}, alog)
+    
     hb0 = Pt1000Dev("pt1000_boiler_room", 2, clabels, alog)
 
     rm = mrfland.MrflandRegManager(alog)
-
+    rm.device_register(host)
     rm.device_register(hb0)
     
     ml =  MrflandServer(rm, alog, apps = {'heating' : MrflandAppHeating }  , devs = {} )
