@@ -37,7 +37,13 @@ class MrfLandWebletTemps(MrflandWeblet):
             self.slabs.append(s.label)
             self.sens[s.label] = s
         self.log.info("MrfSensPt1000 : %s"%repr(self.slabs))
-            
+
+        for s in self.sens.keys():
+            self.sens[s].subscribe(self.sens_callback)
+    def sens_callback(self, label, data ):
+        self.log.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        self.rm.webupdate(self.mktag('temp', label), data)
+                          
         
     def pane_js_cmd(self):
         s = """

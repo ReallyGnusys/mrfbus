@@ -168,6 +168,7 @@ class mrf_comm(object):
         nobs = len(bobs)
         alog.info("have %d obs to broadcast"%nobs)
         for ob in ro.b():
+            alog.info(repr(ob))
             self.broadcast(ob)                
         return 1
 
@@ -313,11 +314,20 @@ class MrflandRegManager(object):
         self.log = log
         self.labels = {}
         self.devices = {}  ### hash devices by label - must be unique
+        self.devmap  = {} ## hash devices by address
         self.sensors = {}  ### hash sensors by label
         self.senstypes = {} ### hash lists of sensors by sensor type
         self.actuators = {} 
         self.addresses = {}  ### hash devices by address - must be unique
+        self.wups = []  ## webupdates from weblets to send to browsers
+    def webupdate(self, tag , data):
+        self.wups.append({ 'tag': tag , 'data': data})
         
+    def packet(self,hdr,resp):
+        if self.devmap.has_key(hdr.usrc):
+            return self.devmap[hdr.usrc].packet(hdr,resp)
+        else:
+            return None, None
     def device_register(self, dev):
         """ register new MrfDevice"""
         if self.devices.has_key(dev.label):
@@ -325,6 +335,7 @@ class MrflandRegManager(object):
             return
         self.devices[dev.label] = dev
 
+        self.devmap[dev.address] = dev
         ### now enumerate device sensors
         for cap in dev.caps.keys():
             for ch in range(len(dev.caps[cap])):

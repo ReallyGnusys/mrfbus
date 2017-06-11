@@ -97,6 +97,8 @@ class MrfDev(object):
             self.log.error("%s failed to decode packet , hdr was %s"%(self.__class__.__name__,repr(hdr)))
             return
         self.app_packet(hdr,param,resp)  # this must be defined in derived class
+
+        return param, resp
         
         
         
@@ -131,7 +133,7 @@ class MrfSens(object):
 
     def input(self, indata):
         # input sanity check for keys and types 
-        self.log.info("new item for sens %s - %s"%(self.label,repr(indata)))
+        #self.log.info("new item for sens %s - %s"%(self.label,repr(indata)))
         for ditem in indata.keys():
             if not self._input.has_key(ditem):
                 self.log.error("%s input invalid indata , no key %s in %s"%(self.__class__.__name__, ditem, repr(indata)))
@@ -155,3 +157,6 @@ class MrfSens(object):
 
         self.output = odata
         
+
+        for s in self.subscribers.keys():
+            self.subscribers[s](self.label,self.output)

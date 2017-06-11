@@ -22,12 +22,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
  subclasses must implement pane_html() and js() method
 """
 
-def MrflandObjectTable(app,tname, odict,rows):
+def MrflandObjectTable(app,tab, odict,rows):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
           <thead>
-            <tr>"""%(app,tname)
+            <tr>"""%(app,tab)
     for fld in odict.keys():
         s += """
              <th>%s</th>"""%(fld)
@@ -40,7 +40,7 @@ def MrflandObjectTable(app,tname, odict,rows):
            <tr>"""
         for fld in odict.keys():
             s += """
-            <td class="app-%s tb-%s rw-%s fld-%s"></td>"""%(app,tname,str(row),fld)
+            <td class="app-%s tab-%s row-%s fld-%s"></td>"""%(app,tab,str(row),fld)
         s += """
             </tr>"""
     s += """
@@ -67,7 +67,8 @@ class MrflandWeblet(object):
         self.data = data
         if hasattr(self, 'post_init'):
             self.post_init()
-            
+    def mktag(self, tab, row):
+        return { 'app' : self.tag, 'tab' : tab , 'row' : row }
     def pane_html_header(self):
         return '    <div id="%s" class="tab-pane fade">'%self.tag
     def pane_html_footer(self):

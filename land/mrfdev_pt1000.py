@@ -155,12 +155,12 @@ class MrfSensPt1000(MrfSens):
 
     
     def genout(self,indata,outdata):
-        self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.now()
         outdata['milliohms']  = int(indata['milliohms'])
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
-        self.log.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
+        #self.log.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         return outdata
         
 

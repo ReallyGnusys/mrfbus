@@ -289,9 +289,6 @@ class MrflandServer(object):
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
         self.devices = devs
-        self.regmgr  = mrfland.MrflandRegManager(self.log)
-        for devadd in self.devices.keys():
-            self.regmgr.device_register(self.devices[devadd])
             
         self._start_mrfnet(apps=apps)
         self.quiet_cnt = 0
@@ -506,42 +503,24 @@ class MrflandServer(object):
             self.log.info("not resp or struct")
             return None,None,None
 
-        ## here just pass this to device model to handle
-        if self.devices.has_key(hdr.usrc):
-            self.log.warn("passing this to device model ")
-            self.devices[hdr.usrc].packet(hdr,resp)
-            
+        ## here just pass this to rm device model to handle
 
-        ### all this below  tbd - device model above will handle
-        param = MrfSysCmds[hdr.type]['param']()
-        #print "have param type %s"%type(param)
-        param_data = bytes(resp)[len(hdr):len(hdr)+len(param)]
-        param.load(param_data)
-        #print "resp should be %s"%repr(param)
-        respdat = bytes(resp)[len(hdr)+len(param):]
+        param, rsp = self.rm.packet(hdr,resp)
 
-
-        #self.log.info(" have response or struct object %s"%repr(param))
-
-
-        resp = mrf_decode_buff(param.type,respdat)
-
-        if not resp:
-            appcmds = self._app_cmd_set(hdr.usrc)
-            if appcmds:
-                resp = mrf_decode_buff(param.type,respdat,cmdset=appcmds)
-            else:
-                self.log.warn("failed to find app cmds for address 0x02x",hdr.usrc)
+        for wup in self.rm.wups:
+            ro = mrfland.RetObj()
+            ro.b(mrfland.mrf_cmd('web-update',wup))
+            mrfland.comm.comm(None,ro)
+        self.rm.wups = []
         
-            
-        #FIXME - this should be decoded here...somehow .. or passed to applications
-        
-        return hdr , param , resp 
+        return hdr , param , rsp 
 
     def handle_response(self,hdr,rsp, robj,response=False):
         # test if sys command response or data
         if response:
             self.log.info("handle_response hdr %s",repr(hdr))
+
+            """
         rv = self.state.fyi(hdr,rsp, robj)  # state sees everything
         if rv:
             self.log.warn("we have response from main app fyi %s"%repr(rv))
@@ -568,7 +547,7 @@ class MrflandServer(object):
                 for fd in self.registrations[appn]:  # send to registered clients
                     c = self.conns[fd]
                     c.send(rv)
-                
+            """
         # check response is for active_cmd
         if response and self.active_cmd and hdr.usrc == self.active_cmd.dest and rsp.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
             self.log.info("got response for active command %s"%repr(self.active_cmd))

@@ -73,6 +73,36 @@ function mrf_update_div(obj){
 }
 
 
+function mrf_web_update(obj){
+    if (!obj.hasOwnProperty('tag')){
+        console.error("mrf_web_update - no tag in ");
+        console.error(obj);
+        return;
+    }
+
+    if (!obj.hasOwnProperty('data')){
+        console.error("mrf_web_update - no data in ");
+        console.error(obj);
+        return;
+    }
+    tag = obj.tag;
+    data = obj.data;
+    console.log("got tag");
+    console.log(tag);
+    sl = '.app-'+tag.app+'.tab-'+tag.tab+'.row-'+tag.row;
+
+    for (var fld in data){
+        jsl = sl + '.fld-'+fld;
+        console.log("tried to update select "+jsl);
+        $(jsl).html(data[fld]);
+            
+    }
+        
+}
+
+
+
+
 function mrf_heating_tempsensors(data){
 
     for (var ch in data){
@@ -128,7 +158,10 @@ function init_app(){
 function mrf_command(obj){
     console.log("mrf_command : got");
     console.log(obj);
-    if (obj.cmd == 'update-div'){
+    if (obj.cmd == 'web-update'){
+        mrf_web_update(obj.data);
+
+    } else if (obj.cmd == 'update-div'){
         mrf_update_div(obj.data);
 
     } else if (obj.cmd == 'tempsensors'){
