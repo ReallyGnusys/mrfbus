@@ -216,3 +216,13 @@ class Pt1000Dev(MrfDev):
                 }
                 self.caps['relay'][ch].input(inp)
                 
+
+        elif  param.type == mrf_cmd_set_relay or param.type == mrf_cmd_get_relay:
+            now = datetime.now()
+            td =  PktTimeDate()
+            td.set(now)
+            inp = { 'date' : td,
+                    'relay' :  resp.val
+            }
+            self.caps['relay'][resp.chan].input(inp)
+            

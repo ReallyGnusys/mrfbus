@@ -135,24 +135,8 @@ function mrf_heating_relays(data){
 
 
 function init_app(){
-    for (var ch = 0 ; ch < _NUM_RELAYS ; ch++){
-        //channel = Number(ch)
-        // legacy app style TBD
-    
-        $(".pump-"+ch+"-cb").change(
-            function(){
-                console.log("cb changed checked "+this.checked);
-                if (this.checked){
-                    val = 1;
-                }
-                else{
-                    val = 0;
-                }
-                ws.send(mrf_ccmd("heating","relay_set",{"chan": Number(this.value) , "val" :val }));
-            });
-
-        //new controls
-        $(".mrfctrl_cb").change(
+    //new controls
+    $(".mrfctrl_cb").change(
             function(){
                 console.log(" mrf cb changed checked "+this.checked);
                 if (this.checked){
@@ -172,7 +156,6 @@ function init_app(){
 
                 ws.send(mrf_ccmd(app,"mrfctrl",cdata));
             });        
-    }
     
 
 }
