@@ -348,10 +348,10 @@ class MrflandServer(object):
 
     
     def web_client_command(self,wsid,app,cmd,data):
-        if app not in self.apps.keys():
-            self.log.error("web_client_command unknown app %s from wsid %d"%(app,wsid))
+        if app not in self.weblets.keys():
+            self.log.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
-        self.apps[app].cmd(cmd,data)
+        self.weblets[app].cmd(cmd,data)
 
     def _set_timeout(self,s):
         if self._timeout_handle:
@@ -361,7 +361,7 @@ class MrflandServer(object):
           
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if True or not self._active:
-            self.log.warn("activating!")
+            self.log.warn("activating! qsize %s"%self.q.qsize())
             self.active_timer = 0
             self._active = True
             self._set_timeout(0.02)
@@ -412,20 +412,20 @@ class MrflandServer(object):
             self.log.info("app supplied command set for dest %d param is %s"%(cobj.dest,repr(paramtype)))
             
         else:
-            self.log.info("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
+            self.log.error("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
             return -1
 
         
         if type(cobj.dstruct) == type(None) and type(paramtype) != type(None):
-            self.log.info("No param sent , expected %s"%type(paramtype))
+            self.log.error("No param sent , expected %s"%type(paramtype))
             return -1
         
         if type(paramtype) == type(None) and type(cobj.dstruct) != type(None):
-            self.log.info("Param sent ( type %s ) but None expected"%type(cobj.dstruct))
+            self.log.error("Param sent ( type %s ) but None expected"%type(cobj.dstruct))
             return -1
 
         if type(cobj.dstruct) != type(None) and type(cobj.dstruct) != type(paramtype()):
-            self.log.info("Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype())))
+            self.log.error("Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype())))
             return -1
 
         mlen = 4
@@ -513,6 +513,16 @@ class MrflandServer(object):
             ro.b(mrfland.mrf_cmd('web-update',wup))
             mrfland.comm.comm(None,ro)
         self.rm.wups = []
+
+
+        for dup in self.rm.dups:
+            self.log.warn("%s calling _callback"%(self.__class__.__name__))
+            self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
+        self.rm.dups = []
+
+
+        
+
         
         return hdr , param , rsp 
 
@@ -602,7 +612,7 @@ class MrflandServer(object):
         self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
 
     def _callback(self, tag, dest, cmd,data=None):
-        self.log.info("_callback tag %s dest %d cmd %s  data %s"%(tag,dest,cmd,repr(data)))
+        self.log.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
     def _start_tcp_service(self):
@@ -645,10 +655,10 @@ class MrflandServer(object):
 
     def _check_if_anything(self):
         if self.q.empty():
-            self.log.info("_check_if_anything -queue empty")
+            self.log.warn("_check_if_anything -queue empty")
             self._deactivate()
         else:
-            self.log.info("_check_if_anything : running next command")
+            self.log.warn("_check_if_anything : running next command")
             self._next_cmd(self.q.get())
       
 
@@ -659,9 +669,9 @@ class MrflandServer(object):
             if self.active_cmd == None:
                 self.log.info("tick can run another cmd")
             else:
-                self.log.info("time_tick active resp_timer %d"%self.resp_timer)
+                self.log.warn("time_tick active resp_timer %d"%self.resp_timer)
                 self.resp_timer += 1
-                if self.resp_timer > 55:
+                if self.resp_timer > 20:
                     self.log.warn("give up waiting for response for %s"%( self.active_cmd))
                     if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                         self.log.info("response for tcp client %d"%self.active_cmd.tag)
@@ -677,7 +687,7 @@ class MrflandServer(object):
 
 
         if self._active:
-            self._set_timeout(0.2)
+            self._set_timeout(0.1)
             self.quiet_cnt = 0
         else:
             self.log.info("inactive - setting 5 secs - quiet_cnt %d"%self.quiet_cnt)

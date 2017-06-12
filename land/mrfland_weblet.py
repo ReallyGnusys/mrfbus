@@ -50,7 +50,7 @@ def MrflandObjectTable(app,tab, odict, rows, postcontrols = []):
         for fld in odict.keys():
             if odict[fld] == '_mrf_ctrl_cb':
                 s += """
-            <td class="app-%s tab-%s row-%s fld-%s"><div class="checkbox" ><input type="checkbox" id="pump-1-cb" value="1"></td>"""%(app,tab,str(row),fld)
+            <td class="app-%s tab-%s row-%s fld-%s"><div class="checkbox" ><input type="checkbox" class="mrfctrl_cb" app="%s" tab="%s" row="%s" fld="%s"></div></td>"""%(app, tab, str(row), fld, app, tab, str(row),fld)
             else:
                 s += """
             <td class="app-%s tab-%s row-%s fld-%s"></td>"""%(app,tab,str(row),fld)
@@ -117,3 +117,10 @@ var mrf_weblet_%s = new function() {
         self.log = log
 
     
+    def cmd(self,cmd, data=None):
+        fn = 'cmd_'+cmd
+        if hasattr(self, fn):
+            self.log.info( "OK you can go")
+            return getattr(self,fn)(data)
+        else:
+            self.log.info("you're not coming in here")

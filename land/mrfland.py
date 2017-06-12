@@ -320,8 +320,14 @@ class MrflandRegManager(object):
         self.actuators = {} 
         self.addresses = {}  ### hash devices by address - must be unique
         self.wups = []  ## webupdates from weblets to send to browsers
+        self.dups = []  ## device updates : from weblets to send to devices
     def webupdate(self, tag , data):
         self.wups.append({ 'tag': tag , 'data': data})
+
+    def devupdate(self,tag, dest, cmd, data = {}):
+        self.log.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
+        self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
+        
         
     def packet(self,hdr,resp):
         if self.devmap.has_key(hdr.usrc):

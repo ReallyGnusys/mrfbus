@@ -87,13 +87,13 @@ function mrf_web_update(obj){
     }
     tag = obj.tag;
     data = obj.data;
-    console.log("got tag");
-    console.log(tag);
+    //console.log("got tag");
+    //console.log(tag);
     sl = '.app-'+tag.app+'.tab-'+tag.tab+'.row-'+tag.row;
 
     for (var fld in data){
         jsl = sl + '.fld-'+fld;
-        console.log("tried to update select "+jsl);
+        //console.log("tried to update select "+jsl);
         $(jsl).html(data[fld]);
             
     }
@@ -137,7 +137,9 @@ function mrf_heating_relays(data){
 function init_app(){
     for (var ch = 0 ; ch < _NUM_RELAYS ; ch++){
         //channel = Number(ch)
-        $("#pump-"+ch+"-cb").change(
+        // legacy app style TBD
+    
+        $(".pump-"+ch+"-cb").change(
             function(){
                 console.log("cb changed checked "+this.checked);
                 if (this.checked){
@@ -148,6 +150,28 @@ function init_app(){
                 }
                 ws.send(mrf_ccmd("heating","relay_set",{"chan": Number(this.value) , "val" :val }));
             });
+
+        //new controls
+        $(".mrfctrl_cb").change(
+            function(){
+                console.log(" mrf cb changed checked "+this.checked);
+                if (this.checked){
+                    val = 1;
+                }
+                else{
+                    val = 0;
+                }
+                console.log(this)
+                app = $(this).attr('app');
+                tab = $(this).attr('tab');
+                row = $(this).attr('row');
+                fld = $(this).attr('fld');
+                cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
+                console.log(" mrf cb app :"+app );
+                console.log(cdata)
+
+                ws.send(mrf_ccmd(app,"mrfctrl",cdata));
+            });        
     }
     
 
@@ -156,8 +180,8 @@ function init_app(){
 
 //incoming socket command handler
 function mrf_command(obj){
-    console.log("mrf_command : got");
-    console.log(obj);
+    //console.log("mrf_command : got");
+    //console.log(obj);
     if (obj.cmd == 'web-update'){
         mrf_web_update(obj.data);
 
@@ -200,8 +224,8 @@ function init_socket(){
 	    if ( obj) {
 		//console.log(obj);
 		if(typeof obj.cmd == "string"){    
-                    if ( obj.cmd != 'datetime')
-                        console.log("mrf_sock : got cmd "+obj.cmd+" calling mrf_command");
+                    //if ( obj.cmd != 'datetime')
+                    //    console.log("mrf_sock : got cmd "+obj.cmd+" calling mrf_command");
                     //console.log(obj);
 		    mrf_command(obj);
                 }

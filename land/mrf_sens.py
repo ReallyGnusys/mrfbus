@@ -114,7 +114,7 @@ class MrfDev(object):
 
 class MrfSens(object):    
     def __init__(self, label, address,channel,log):
-        self.label = label
+        self.label = label  ## fix me this should be tag - maybe should have label as well
         self.address = address        
         self.channel = channel
         self.log = log
