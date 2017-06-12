@@ -30,6 +30,7 @@ from datetime import datetime
 import install
 from mrflog import mrf_log
 from mrfland_state import MrflandState
+from mrfland_weblet import MrflandWeblet
 
 from mrf_structs import *
 
@@ -321,6 +322,8 @@ class MrflandRegManager(object):
         self.addresses = {}  ### hash devices by address - must be unique
         self.wups = []  ## webupdates from weblets to send to browsers
         self.dups = []  ## device updates : from weblets to send to devices
+        self.weblets = OrderedDict()  # has weblets by tag
+        
     def webupdate(self, tag , data):
         self.wups.append({ 'tag': tag , 'data': data})
 
@@ -334,6 +337,16 @@ class MrflandRegManager(object):
             return self.devmap[hdr.usrc].packet(hdr,resp)
         else:
             return None, None
+
+    def weblet_register(self, weblet):
+        if self.weblets.has_key(weblet.tag):
+            self.log.error("weblet_register - key error %s"%weblet.tag)
+            return
+
+        self.weblets[weblet.tag] = weblet
+        self.log.warn("weblet_register -registered new weblet %s"%weblet.tag)
+
+        
     def device_register(self, dev):
         """ register new MrfDevice"""
         if self.devices.has_key(dev.label):

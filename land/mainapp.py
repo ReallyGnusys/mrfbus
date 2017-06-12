@@ -287,7 +287,7 @@ class mainapp(tornado.web.RequestHandler):
             alog.info("calling logout_action")
             return logout_action(self,sob,ip)
 
-        wapps = self.mserv.weblets
+        wapps = self.mserv.rm.weblets 
 
 
         return mrf_page(self,sob,ip,wapps)

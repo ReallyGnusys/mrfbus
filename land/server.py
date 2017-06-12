@@ -32,6 +32,10 @@ from mrfland_app_heating import MrflandAppHeating
 import mrfland
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_host import MrfDevHost
+from mrfland_weblet_temps import MrfLandWebletTemps
+from mrfland_weblet_relays import MrfLandWebletRelays
+
+
 
 clients = dict()
 alog = mrf_log_init()
@@ -112,9 +116,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                  }
         mrfland.comm.add_client(self.id,cdata)
 
-        ro = server.welcomepack()  # FIXME little ugly
         
-        mrfland.comm.comm(self.id,ro)
 
         
     def on_message(self, message):
@@ -275,7 +277,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
 
 class MrflandServer(object):
 
-    def __init__(self,rm,log,apps={} , devs = {}):
+    def __init__(self,rm,log):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             self.log.warn( "CTRL-C pressed , quitting")
@@ -285,13 +287,11 @@ class MrflandServer(object):
         self.rm = rm
         self._timeout_handle = None
         server = self  # FIXME ouch
-        self.apps = apps
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
-        self.devices = devs
             
-        self._start_mrfnet(apps=apps)
+        self._start_mrfnet()
         self.quiet_cnt = 0
         self._start_webapp()
         self._start_tcp_service()
@@ -307,7 +307,7 @@ class MrflandServer(object):
         print "do we ever get here?"
 
 
-    def _start_mrfnet (self, stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str',apps = {}, netid = 0x25):
+    def _start_mrfnet (self, stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str', netid = 0x25):
         self.hostaddr = 1
         self.netid = netid
 
@@ -324,34 +324,17 @@ class MrflandServer(object):
         self._connect_to_mrfnet()
 
 
-        self.log.info("apps are %s"%repr(apps))
-        papps = {}
-        for appn in apps.keys():
-            papps[appn] = apps[appn]("app_"+appn,self.rm, log=self.log,cmd_callback=self._callback)
-            #papps[appn].setlog(self.log)
-        self.apps = papps
-        self.log.info("apps instanced are %s"%repr(apps))
-        for appn in self.apps.keys():
-            self.apps[appn].post_init()
 
-        self.registrations = {}
-        self.registrations["main"] = []
-        for appn in self.apps.keys():
-            self.registrations[appn] = []
 
-        self.weblets = OrderedDict()
 
-        for appn  in self.apps.keys():
-            for webapp in self.apps[appn].weblets.keys():
-                self.weblets[webapp] = self.apps[appn].weblets[webapp]
                 
 
     
     def web_client_command(self,wsid,app,cmd,data):
-        if app not in self.weblets.keys():
+        if app not in self.rm.weblets.keys():
             self.log.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
-        self.weblets[app].cmd(cmd,data)
+        self.rm.weblets[app].cmd(cmd,data)
 
     def _set_timeout(self,s):
         if self._timeout_handle:
@@ -378,10 +361,10 @@ class MrflandServer(object):
     def queue_cmd(self,tag, dest, cmd_code,dstruct=None):
         cobj = MrfCmdObj(tag, dest, cmd_code,dstruct)
         if self.active_cmd:
-            self.log.info("queuing cmd %s"%repr(cobj))
+            self.log.warn("queuing cmd %s"%repr(cobj))
             self.q.put(cobj)
         else:
-            self.log.info("running cmd %s"%repr(cobj))
+            self.log.warn("running cmd immediately %s"%repr(cobj))
             self._next_cmd(cobj)
             self._activate()
 
@@ -397,14 +380,21 @@ class MrflandServer(object):
             app = self.apps[appn]
             if self.apps[appn].i_manage(dest):
                 return self.apps[appn].cmd_set(dest)
-        
+
+    def _dev_cmd_set(self,dest):
+        if not self.rm.devmap.has_key(dest):
+            self.log.error("no device %d found in rm"%dest)
+            return None
+
+        return self.rm.devmap[dest]._cmdset
+    
     def _run_cmd(self,cobj):
         self.log.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
         if cobj.dest > 255:
             print "dest > 255"
             return -1
 
-        appcmds = self._app_cmd_set(cobj.dest)
+        appcmds = self._dev_cmd_set(cobj.dest)
         if cobj.cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
         elif (appcmds):
@@ -460,17 +450,6 @@ class MrflandServer(object):
         #self.app_fifo.close()
         self.log.info("written to app_fifo")
         
-    def welcomepack(self):  #  build welcome pack of objects from each app
-        ro = mrfland.RetObj()
-        
-        for appn in self.apps.keys():
-            ob = self.apps[appn].curr_state()
-            self.log.info("welcomepack app %s curr_state %s"%(appn,ob))
-            for cmdobj in ob:
-                for mcmd in cmdobj.keys():
-                    ro.a(mrfland.mrf_cmd(mcmd,cmdobj[mcmd]))
-
-            return ro
 
     def parse_input(self,resp):
         """
@@ -531,34 +510,6 @@ class MrflandServer(object):
         if response:
             self.log.info("handle_response hdr %s",repr(hdr))
 
-            """
-        rv = self.state.fyi(hdr,rsp, robj)  # state sees everything
-        if rv:
-            self.log.warn("we have response from main app fyi %s"%repr(rv))
-            ro = mrfland.RetObj()
-            for mcmd in rv.keys():
-                ro.b(mrfland.mrf_cmd(mcmd,rv[mcmd]))
-            mrfland.comm.comm(None,ro)
-            for fd in self.registrations["main"]:  # send to registered clients
-                c = self.conns[fd]
-                c.send(rv)
-        self.log.info("handle_response apps.keys %s "%repr(self.apps.keys()))
-        for appn in self.apps.keys(): # apps see everything
-            rv = self.apps[appn].fyi(hdr,rsp, robj)
-            if rv:
-                self.log.debug("app %s fyi returned"%appn)
-                self.log.debug(repr(rv))
-                
-                ro = mrfland.RetObj()
-                self.log.info("creating ro for appn %s"%appn)
-                for mcmd in rv.keys():
-                     ro.b(mrfland.mrf_cmd(mcmd,rv[mcmd]))
-                mrfland.comm.comm(None,ro)
-                
-                for fd in self.registrations[appn]:  # send to registered clients
-                    c = self.conns[fd]
-                    c.send(rv)
-            """
         # check response is for active_cmd
 
         if type(param) == type(None):
@@ -715,7 +666,14 @@ if __name__ == '__main__':
     rm = mrfland.MrflandRegManager(alog)
     rm.device_register(host)
     rm.device_register(hb0)
+
+    wat = MrfLandWebletTemps(rm, alog, {'tag':'temps','label':'Temperatures'})
+    war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})
+    rm.weblet_register(wat)
+    rm.weblet_register(war)
     
-    ml =  MrflandServer(rm, alog, apps = {'heating' : MrflandAppHeating }  , devs = {} )
+    
+    
+    ml =  MrflandServer(rm, alog )
 
 
