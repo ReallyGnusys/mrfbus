@@ -28,7 +28,6 @@ from pubsock import PubSocketHandler
 
 from mrfland_state import MrflandState
 from mrf_structs import *
-from mrfland_app_heating import MrflandAppHeating
 import mrfland
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_host import MrfDevHost
@@ -667,10 +666,15 @@ if __name__ == '__main__':
     rm.device_register(host)
     rm.device_register(hb0)
 
-    wat = MrfLandWebletTemps(rm, alog, {'tag':'temps','label':'Temperatures'})
-    war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})
-    rm.weblet_register(wat)
-    rm.weblet_register(war)
+    #wat = MrfLandWebletTemps(rm, alog, {'tag':'temps','label':'Temperatures'})
+    #war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})
+
+
+    rm.weblet_register(MrfLandWebletTemps(rm, alog,
+                                          {'tag':'temps','label':'Temperatures'}))
+
+    rm.weblet_register(MrfLandWebletRelays(rm, alog,
+                                           {'tag':'relays','label':'Relays'})
     
     
     
