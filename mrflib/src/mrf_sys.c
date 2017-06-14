@@ -302,7 +302,7 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
  else
    hdr->hdest = route.relay;
  hdr->usrc = 0;
- hdr->hsrc = _mrfid;
+ hdr->hsrc = 0;
  hdr->netid = MRFNET; 
  hdr->msgid = _txmsgid++;
  hdr->type = type;
@@ -348,12 +348,22 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
 
  // turning buffer around - deliver to usrc
  hdr->udest = hdr->usrc; 
+
+ // turnaround buffer and add response
  hdr->usrc = _mrfid;
  hdr->hsrc = _mrfid;
 
+ resp->rlen = rlen;
+ resp->type = hdr->type;
+ hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
+ hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
+
+
+ 
 #ifdef HOST_STUB
  mrf_debug("HOST_STUB defined _mrfid %d  hdr->udest %d\n",_mrfid, hdr->udest);
  if ((_mrfid == 1 ) && (hdr->udest == 0 )){
+   hdr->hdest = 0;
    mrf_debug("calling response to app for bnum %d\n",bnum);
    response_to_app(bnum);
    _mrf_buff_free(bnum);
@@ -364,16 +374,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  
  mrf_nexthop(&route,_mrfid,hdr->usrc);
 
- // turnaround buffer and add response
  hdr->hdest = route.relay;
- hdr->usrc = _mrfid;
- hdr->hsrc = _mrfid;
-
- resp->rlen = rlen;
- resp->type = hdr->type;
- hdr->type = mrf_cmd_resp; //_mrf_response_type(hdr->type);
- hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + rlen;
-
 
  const MRF_IF *ifp = mrf_if_ptr(route.i_f);
  mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);

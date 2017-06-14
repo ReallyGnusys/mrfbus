@@ -32,8 +32,8 @@ public_cookie = "MFLANDPUBLICID"
 session_timeout = 60*60*24  # seconds
 import logging
 
-#log_level = logging.INFO
-log_level = logging.WARN
+log_level = logging.INFO
+#log_level = logging.WARN
 logger_name = 'mrfland'
 
 

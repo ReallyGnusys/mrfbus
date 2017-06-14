@@ -477,11 +477,10 @@ class MrflandServer(object):
             self.log.info("not our us")
             return None,None,None
 
-        
-        if not (hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
+        if not (hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
             self.log.info("not resp or struct")
+            self.log.info("hdr : %s"%repr(hdr))
             return None,None,None
-
         ## here just pass this to rm device model to handle
 
         param, rsp = self.rm.packet(hdr,resp)

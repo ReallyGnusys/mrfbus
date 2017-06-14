@@ -7,7 +7,9 @@ LOGDIR=${TMP}/log
 [ ! -d ${LOGDIR} ]  && mkdir -p ${LOGDIR} 
 
 #stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
-stdbuf -o0 -i0 examples/host/bin/host_0x01 > ${LOGDIR}/mrfland.log #host_0x01.log &
+
+echo "" > ${LOGDIR}/mrfland.log 
+stdbuf -o0 -i0 examples/host/bin/host_0x01 >> ${LOGDIR}/mrfland.log #host_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
