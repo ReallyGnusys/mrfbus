@@ -143,6 +143,8 @@ uint8 mrf_alloc_if(I_F i_f){
         return i;
       }
   }
+  mrf_debug("mrf_alloc_if : ERROR failed to alloc buffer for i/f %d!!!\n",i_f);
+ 
   return _MRF_BUFFS;
 }
 

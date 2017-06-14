@@ -197,7 +197,7 @@ class Pt1000Dev(MrfDev):
     def app_packet(self, hdr, param , resp):
         self.log.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        self.log.info("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        self.log.warn("Pt1000Dev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
 

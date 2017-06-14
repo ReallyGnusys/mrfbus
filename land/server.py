@@ -164,7 +164,7 @@ class SimpleTcpClient(object):
         self.disconnect = disconnect
         self.id = SimpleTcpClient.client_id
         #print "SimpleTcpClient constuctor %d"%self.id
-        self.log.info("SimpleTcpClient constuctor %d"%self.id)
+        self.log.info("SimpleTcpClient constructor %d"%self.id)
         self.stream = stream
  
         self.stream.socket.setsockopt(
@@ -299,14 +299,16 @@ class MrflandServer(object):
 
         #ct = time.time() + 5  # start tick
         #self.ioloop.add_timeout(ct,self.time_tick)
-        self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
-        self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
+        self.log.warn("adding self.rfd = %d to ioloop"%self.rfd)
+        #self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
+        self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
+        #self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
         
         tornado.ioloop.IOLoop.instance().start()
         print "do we ever get here?"
 
 
-    def _start_mrfnet (self, stub_out_resp_path='/tmp/mrf_bus/0-app-out',stub_out_str_path='/tmp/mrf_bus/0-app-str', netid = 0x25):
+    def _start_mrfnet (self,  netid = 0x25):
         self.hostaddr = 1
         self.netid = netid
 
@@ -316,8 +318,6 @@ class MrflandServer(object):
         self.active_timer = 0
 
         self.state = MrflandState(self)
-        self.stub_out_resp_path = stub_out_resp_path
-        self.stub_out_str_path = stub_out_str_path
         
 
         self._connect_to_mrfnet()
@@ -444,10 +444,10 @@ class MrflandServer(object):
         self._app_fifo_write(msg)
         return 0
     def _app_fifo_write(self,msg):
-        self.app_fifo.write(msg)
-        self.app_fifo.flush()
+        n = self.nsock.send(msg)
+        #self.nsock.flush()
         #self.app_fifo.close()
-        self.log.info("written to app_fifo")
+        self.log.warn("written %d bytes to app_fifo"%n)
         
 
     def parse_input(self,resp):
@@ -545,21 +545,22 @@ class MrflandServer(object):
             self.handle_response(hdr, param , resp)
             
     def _connect_to_mrfnet(self):
-        self.rfd =  os.open(self.stub_out_resp_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.rfd == -1:
-            self._error_exit("could not open response fifo %s"%self.stub_out_resp_path)
-        else:
-            self.log.info("opened response fifo %d"%self.rfd)
 
-        self.sfd =  os.open(self.stub_out_str_path, os.O_RDONLY | os.O_NONBLOCK)
-        if self.sfd == -1:
-            self._error_exit("could not open structure fifo %s"%self.stub_out_str_path)
-        else:
-            self.log.info("opened data fifo %d"%self.sfd)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(("127.0.0.1", install.host_mrfbus_port))
+        sfno = s.fileno()
 
-        self.log.info( "trying to open pipe to stub")
-        self.app_fifo = open("/tmp/mrf_bus/0-app-in","w")
-        self.log.info( "app_fifo opened %d"%self.app_fifo.fileno())
+        self.log.warn("_connect_to_mrfnet - firststage  %d"%s.fileno())
+
+        if sfno > 0:
+            self.rfd = sfno
+            self.nsock = s
+            self.log.warn("opened response socket %d"%self.rfd)
+            self.log.warn("_connect_to_mrfnet - got sfno %d"%sfno)
+            self.queue_cmd('server', 1, mrf_cmd_device_info)
+        else:
+            self.log.error("_connect_to_mrfnet - failed to connect got sfno %d"%sfno)
+            sys.exit(-1)
 
     def _callback(self, tag, dest, cmd,data=None):
         self.log.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
@@ -674,7 +675,7 @@ if __name__ == '__main__':
                                           {'tag':'temps','label':'Temperatures'}))
 
     rm.weblet_register(MrfLandWebletRelays(rm, alog,
-                                           {'tag':'relays','label':'Relays'})
+                                           {'tag':'relays','label':'Relays'}))
     
     
     

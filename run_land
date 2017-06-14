@@ -7,13 +7,13 @@ LOGDIR=${TMP}/log
 [ ! -d ${LOGDIR} ]  && mkdir -p ${LOGDIR} 
 
 #stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
-stdbuf -o0 -i0 examples/host/bin/host_0x01 > ${LOGDIR}/host_0x01.log &
+stdbuf -o0 -i0 examples/host/bin/host_0x01 > ${LOGDIR}/mrfland.log #host_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
-stdbuf -o0 -i0  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
-stub_pid=$!
-echo $stub_pid
+#stdbuf -o0 -i0  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
+#stub_pid=$!
+#echo $stub_pid
 
 
 function ctrl_c() {
@@ -42,7 +42,7 @@ echo "quitting"
 
 sleep 2
 
-kill $h01_pid $stub_pid
+kill $h01_pid
 
 sleep 1
 

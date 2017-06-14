@@ -126,6 +126,10 @@ int mrf_tx_bnum(I_F i_f,uint8 bnum){
 int mrf_sack(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
+ if (hdr->hsrc == 0 ){
+   mrf_debug("mrf_sack : never acking address 0  0x%02x\n",hdr->hsrc);
+   return 0;
+ }
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  mrf_debug("mrf_sack : for addr %d msgid 0x%02x\n",hdr->hsrc,hdr->msgid);
  //mrf_debug("mrf_sack : for addr %d orig header is\n",hdr->hsrc);
@@ -149,12 +153,16 @@ int mrf_sack(uint8 bnum){
  //mrf_print_packet_header(if_ptr->ackbuff);
 
  mrf_tick_enable();
+ return 0;
 }
 
 // send segment retry for buffer
 int mrf_sretry(uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
+ if (hdr->hsrc == 0 )  // never ack or retry 0 
+   return 0;
+ 
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
@@ -175,6 +183,10 @@ int mrf_sretry(uint8 bnum){
 int mrf_retry(I_F i_f,uint8 bnum){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
+ if (hdr->hsrc == 0 )  // never ack or retry 0 
+   return 0;
+
+
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
@@ -256,20 +268,19 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
  return 0;  
 }
 
+// this is just used by HOST_STUB application - should be conditional
 
 int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
   uint8 bnum;
   uint8 i;
   MRF_ROUTE route;
-  mrf_debug("\nmrf_send_command :  bnum %d  len %d\n",bnum,len);
 
- // deliver buffer to dest
-
-  mrf_nexthop(&route,_mrfid,dest);
 
   if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
+    mrf_debug("%s","ERROR : failed to alloc  buffer in mrf_send_command..fatal");    
     return -1;
   }
+  mrf_debug("mrf_send_command :  using bnum %d  len %d\n",bnum,len);
 
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
   uint8 *pl = (uint8 *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
@@ -278,16 +289,37 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
     *(pl + i) = data[i];
 
 
+
+ // deliver buffer to dest
+
+  mrf_nexthop(&route,_mrfid,dest);
+
+  
  //MRF_IF *ifp = mrf_if_ptr(route.i_f);
- hdr->udest = dest; 
- hdr->hdest = route.relay;
- hdr->usrc = _mrfid;
+ hdr->udest = dest;
+ if (hdr->udest == _mrfid)
+   hdr->hdest = _mrfid;
+ else
+   hdr->hdest = route.relay;
+ hdr->usrc = 0;
  hdr->hsrc = _mrfid;
  hdr->netid = MRFNET; 
  hdr->msgid = _txmsgid++;
-
  hdr->type = type;
  hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
+
+ mrf_debug("%s","mrf_send_command : this is our header\n");
+ 
+ mrf_print_packet_header(hdr);
+
+ if (dest == _mrfid) {
+   // process buffer
+   mrf_debug("%s","hold onto your hats... trying to process locally..\n");
+   _mrf_process_buff(bnum);
+   return 0;
+ }
+
+ 
  _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
    // FIXME this should increment an error stat at least , maybe leave to calling app
@@ -303,20 +335,36 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
  return 0;  
 }
 
+#ifdef HOST_STUB
+extern int response_to_app(uint8 bnum);
 
+#endif
 
 int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
  MRF_ROUTE route;
- mrf_debug("\nmrf_send_response :  bnum %d  rlen %d\n",bnum,rlen);
+ mrf_debug("mrf_send_response :  bnum %d  rlen %d\n",bnum,rlen);
 
  // turning buffer around - deliver to usrc
+ hdr->udest = hdr->usrc; 
+ hdr->usrc = _mrfid;
+ hdr->hsrc = _mrfid;
 
+#ifdef HOST_STUB
+ mrf_debug("HOST_STUB defined _mrfid %d  hdr->udest %d\n",_mrfid, hdr->udest);
+ if ((_mrfid == 1 ) && (hdr->udest == 0 )){
+   mrf_debug("calling response to app for bnum %d\n",bnum);
+   response_to_app(bnum);
+   _mrf_buff_free(bnum);
+   return 0;
+ }
+ 
+#endif
+ 
  mrf_nexthop(&route,_mrfid,hdr->usrc);
 
  // turnaround buffer and add response
- hdr->udest = hdr->usrc; 
  hdr->hdest = route.relay;
  hdr->usrc = _mrfid;
  hdr->hsrc = _mrfid;
@@ -342,7 +390,6 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
      //mrf_print_packet_header(hdr);
      mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
    }
-
  return 0;
 }
 
@@ -442,6 +489,16 @@ int _mrf_buff_forward(uint8 bnum){
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
 
+#ifdef HOST_STUB
+ if ((_mrfid == 1 ) && (pkt->udest == 0 ))
+   mrf_debug("mrf_buff_forward: this one is for app/server udest is  %d our _mrfid = %X  \n",pkt->udest,_mrfid);
+   response_to_app(bnum);
+   _mrf_buff_free(bnum);
+   return 0;
+ 
+#endif
+
+  
   MRF_ROUTE route;
   mrf_nexthop(&route,_mrfid,pkt->udest);
   const MRF_IF *ifp = mrf_if_ptr(route.i_f);
@@ -489,10 +546,12 @@ int _mrf_process_buff(uint8 bnum)
   // begin desperate
   
   // a response can substitute for an ack - if usrc and hsrc are same
-  if (((pkt->type) == mrf_cmd_resp) && ((pkt->usrc) == (pkt->hsrc))){
+  // note : this func is called by mrf_send_command - stub app - but can't hit this block in that sitn
+  // unless the server has gone bonkers .. or possibly a test client... FIXME!
+  if ((pkt->usrc !=  0) && (pkt->type == mrf_cmd_resp) && (pkt->usrc == pkt->hsrc)){
     // act like we received an ack
     mrf_debug("%s","got resp_should count as ack \n");
-      mrf_task_ack(pkt->type,bnum,ifp);
+    mrf_task_ack(pkt->type,bnum,ifp);
   }
   // end desperate
 
@@ -500,7 +559,7 @@ int _mrf_process_buff(uint8 bnum)
 
   if ( pkt->udest == _mrfid){
 
-      // lookup command
+    // lookup command
     const MRF_CMD *cmd = _mrf_cmd(type);
   
     if(cmd == NULL){  // how to manage packets that don't execute - i.e. unsolicited datagrams from sensors, that don't have any meaning in our app. For stub/hub applications we need to pass them to python regardless.
@@ -512,26 +571,23 @@ int _mrf_process_buff(uint8 bnum)
     mrf_debug("looked up command %d %s\n",pkt->type,cmd->str);
  
 
-    //if(type >= mrf_cmd_resp)
-    //   ifp->status->stats.rx_pkts++;     // FIXME this is already incremented in mrf_buff_loaded, we need a separate stat
-    // for command packets executed by us
-      if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
-        mrf_debug("%s","executing packet in intr\n");
-        _mrf_ex_packet(bnum, pkt, cmd, ifp); 
-      } else {
-        mrf_debug("%s","pushing to app queue\n");
-        int rv = mrf_app_queue_push(bnum);
-        if (rv == 0){
-          mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
-          if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
-            mrf_debug("%s","sending segment ack\n");
-            mrf_sack(bnum);   
-          }
-        } else {
-          mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
-            mrf_sretry(bnum); 
+    if(cmd->cflags & MRF_CFLG_INTR) { // execute in this intr handler
+      mrf_debug("%s","executing packet in intr\n");
+      _mrf_ex_packet(bnum, pkt, cmd, ifp); 
+    } else {
+      mrf_debug("%s","pushing to app queue\n");
+      int rv = mrf_app_queue_push(bnum);
+      if (rv == 0){
+        mrf_debug("buffer %d pushed to app queue ok rv= %d  \n",bnum,rv);
+        if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
+          mrf_debug("%s","sending segment ack\n");
+          mrf_sack(bnum);   
         }
+      } else {
+        mrf_debug("buffer %d  app queue full, retrying rv = %d  \n",bnum,rv);
+        mrf_sretry(bnum); 
       }
+    }
   } else if ( valid_cmd(pkt->type)) {
     //otherwise send segment ack then forward on network
     //if((cmd->cflags & MRF_CFLG_NO_ACK) == 0){
@@ -539,22 +595,6 @@ int _mrf_process_buff(uint8 bnum)
       mrf_sack(bnum);   
     }
     return _mrf_buff_forward(bnum);
-    /*
-    MRF_ROUTE route;
-    mrf_nexthop(&route,_mrfid,pkt->udest);
-    MRF_IF *ifp = mrf_if_ptr(route.i_f);
-    pkt->hdest = route.relay;
-    pkt->hsrc = _mrfid;
-
-    mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
-
-    if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
-      mrf_retry(route.i_f,bnum);
-    else{
-
-      mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
-    }
-    */
   }
   
 }

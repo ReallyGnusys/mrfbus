@@ -76,6 +76,8 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->state = S_START;
     break;
   case  S_LEN:
+    mrf_debug("mrf_uart_rx_byte : S_SLEN  recieved by 0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
+
     if ((rxbyte <= _MRF_BUFFLEN) && (rxbyte >= sizeof(MRF_PKT_HDR))){
       rxstate->state = S_ADDR;
       rxstate->bindex = 0;
@@ -87,6 +89,9 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       _dbg_len(rxbyte);
       rxstate->state = S_START;
     }
+    else
+      rxstate->state = S_START;  // hmpff
+
     break;
   case  S_ADDR:
       rxstate->state = S_NETID;

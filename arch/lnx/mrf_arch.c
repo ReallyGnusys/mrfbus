@@ -34,6 +34,10 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 
 //mrfbus
 #include <mrf_debug.h>
@@ -49,6 +53,12 @@
 
 #define DEFSTR(s) STR(s)
 #define STR(s) #s
+
+
+#ifndef LISTEN_ON
+#define LISTEN_ON  8915
+#endif
+
 
 //FIXME debug tmp
 extern const MRF_CMD const *mrf_sys_cmds;
@@ -146,27 +156,96 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
 }
 
 
-static MRF_APP_CALLBACK app_callback;
 
+
+int make_listener_socket (uint16_t port)
+{
+  int sock;
+  struct sockaddr_in name;
+
+  /* Create the socket. */
+  sock = socket (PF_INET, SOCK_STREAM, 0);
+  if (sock < 0)
+    {
+      mrf_debug("%s","sock creation error");
+      return -1;
+    }
+
+  /* Give the socket a name. */
+  name.sin_family = AF_INET;
+  name.sin_port = htons (port);
+  name.sin_addr.s_addr = htonl (INADDR_ANY);
+  name.sin_addr.s_addr = inet_addr("127.0.0.1");
+  if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
+    {
+      mrf_debug("%s","bind error for port");
+      return -1;
+    }
+
+  return sock;
+}
+
+
+static MRF_APP_CALLBACK app_callback;
 static int app_callback_fd;
 
+// slightly desperate for now - need 2 sockets - one for initial connection
+static MRF_APP_CALLBACK app_ccallback;
+static int app_ccallback_fd;
 
-int mrf_arch_app_callback(int fd, MRF_APP_CALLBACK callback){
+
+
+
+int mrf_arch_app_callback(MRF_APP_CALLBACK callback){
   // allow mrf_app_init to set fd and callback to add to epoll loop
-  app_callback_fd = fd;
   app_callback    = callback;
-
   return 0;
 
 }
+
+static int num_fds = NUM_INTERFACES+2;
+static  int efd, lisfd , servfd;
+static  struct epoll_event ievent[NUM_INTERFACES + 3];
+
+
+int mrf_arch_servfd(){
+  return servfd;
+}
+
+
+
 int mrf_arch_boot(){
-  // allow mrf_app_init to set fd and callback to add to epoll loop
+  // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
-  app_callback_fd = -1;
-  
+  lisfd  = -1;
+  servfd = -1;
+
+  return 0;
   
 }
 int mrf_arch_run(){
+
+  // if app_callback is set we establish a simple server, to wait for connections from python land server
+  if ( app_callback != NULL ){
+    mrf_debug("%s","creating listening socket\n");
+    lisfd = make_listener_socket(LISTEN_ON);
+
+    if (listen (lisfd, 1) < 0)
+      {
+        mrf_debug("%s","failed to listen socket\n");
+        return -1;
+      }
+    
+    mrf_debug("opened listener socket fd = %d\n\n", lisfd);
+    if (lisfd < 1 ) {
+    
+      mrf_debug("failed to open socket fd = %d\n\n",lisfd);
+    
+      return -1;
+    }
+
+  }
+
   
   _print_mrf_cmd(mrf_cmd_device_info);
   printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
@@ -211,6 +290,9 @@ char buff[2048];
 #define TICK_DISABLE "tick_disable"
 #define TICK_ENABLE "tick_enable"
 
+
+
+
  void *_sys_loop(void *arg){
   
   struct itimerspec new_value;
@@ -219,7 +301,6 @@ char buff[2048];
   int timerfd,intfd,fd , i, tmp;
   ssize_t s;
   // input events for each i_f + one for timer tick plus optional app fifo
-  struct epoll_event ievent[NUM_INTERFACES + 3];
 
   struct epoll_event revent[NUM_INTERFACES + 3];
   int nfds;
@@ -255,7 +336,7 @@ char buff[2048];
 
   int count = 0;
 
-  int efd = epoll_create(2);
+  efd = epoll_create(2);
 
   struct epoll_event fevent,tevent;
 
@@ -288,19 +369,16 @@ char buff[2048];
   mrf_debug("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
 
 
-  // add appl pipe if initialised by appl
-  int app_event = 0;
-  int num_fds = NUM_INTERFACES+2;
-  if ( app_callback != NULL ){
+  // add server listener if initialised by appl
+  num_fds = NUM_INTERFACES+2;
+  if (( app_callback != NULL ) && (lisfd > 0)){
     num_fds = NUM_INTERFACES+3;
-    app_event = 1;
-    mrf_debug("adding epoll for app fifo %d\n",app_callback_fd); 
+    mrf_debug("adding epoll for app fifo %d\n",lisfd); 
     ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
     ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
-    epoll_ctl(efd, EPOLL_CTL_ADD, app_callback_fd , &ievent[NUM_INTERFACES+2]);
-    mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,app_callback_fd);
+    epoll_ctl(efd, EPOLL_CTL_ADD, lisfd , &ievent[NUM_INTERFACES+2]);
+    mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,lisfd);
   }
-  
 
   while(1){
    nfds = epoll_wait(efd, revent,num_fds , -1);
@@ -397,20 +475,59 @@ char buff[2048];
            
            
          }
-       } // end for
-       /*
-       buff[s] = 0;
-       trim_trailing_space(buff);
-       s = strlen(buff);
-
-       mrf_debug("\n internal control : s = %d buff = %s\n",(int)s,buff);
-       */
+       } 
      } else if (revent[i].data.u32 == NUM_INTERFACES+2){
-       // app fifo
+       // connection to server
 
-       printf("app fifo event\n");
+       ssize_t s;
+       uint8 i;
+       struct sockaddr_in clientname;
+       size_t size;
+       mrf_debug("server connection fd %d\n",fd);
+
+       int new;
+       size = sizeof (clientname);
+       new = accept (lisfd,
+                     (struct sockaddr *) &clientname,
+                     (socklen_t*)&size);
+       if (new < 0)
+         {
+           mrf_debug("%s","big trouble accepting connection");
+         }
+       else {
+         mrf_debug ("Server: connect from host %s, port %hd.\n",
+                    inet_ntoa (clientname.sin_addr),
+                    ntohs (clientname.sin_port));
+         if ( servfd == -1) {
+           servfd = new;
+           if ( app_callback != NULL ){
+             num_fds = NUM_INTERFACES+4;
+             mrf_debug("adding epoll for app c fifo %d\n",servfd); 
+             ievent[NUM_INTERFACES+3].data.u32 = NUM_INTERFACES+3;
+             ievent[NUM_INTERFACES+3].events = EPOLLIN | EPOLLET;
+             epoll_ctl(efd, EPOLL_CTL_ADD, servfd , &ievent[NUM_INTERFACES+3]);
+             mrf_debug("Server connection EPOLL  added %d u32 %u applfd %d\n",NUM_INTERFACES+3,ievent[NUM_INTERFACES+3].data.u32,servfd);
+           }
+
+         }
+         else {
+
+           mrf_debug("already have a connection ... closing %d",new);
+           close(new);
+
+           
+         }
+
+
+
+         
+       }
+     } else if (revent[i].data.u32 == NUM_INTERFACES+3){
+       // app c fifo
+
+       printf("server socket  event\n");
        if (app_callback != NULL ){
-         (*(app_callback))(app_callback_fd);
+         (*(app_callback))(servfd);
        }
      }
    }

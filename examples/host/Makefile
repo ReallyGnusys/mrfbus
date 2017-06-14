@@ -4,6 +4,7 @@ ARCH=lnx
 DEVTYPE=host
 MRFID=0x01
 MRFNET=0x25
-
+APP=host
+APPCCFLAGS=-DHOST_STUB
 include ${MRFHOME}/Makefile.inc
 
