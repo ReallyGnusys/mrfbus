@@ -7,7 +7,7 @@ LOGDIR=${TMP}/log
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+stdbuf -oL examples/hoststub/bin/hoststub_0x01 > ${LOGDIR}/hostsim_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
@@ -24,15 +24,12 @@ stdbuf -oL examples/hostsim/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
 h2f_pid=$!
 echo $h2f_pid
 
-stdbuf -oL  examples/stub/bin/hostsim_0x00 > ${LOGDIR}/stub.log&
-stub_pid=$!
-echo $stub_pid
 
 # make sure everyone is up
 
 echo "all mrf instances started"
 
-#sleep 4
+sleep 2
 
 # need to start mrfland... ho ho ho
 
