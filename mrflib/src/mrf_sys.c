@@ -297,12 +297,15 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
   
  //MRF_IF *ifp = mrf_if_ptr(route.i_f);
  hdr->udest = dest;
- if (hdr->udest == _mrfid)
+ if (hdr->udest == _mrfid){
    hdr->hdest = _mrfid;
- else
+   hdr->hsrc = _mrfid;
+ }
+ else {
    hdr->hdest = route.relay;
+   hdr->hsrc = _mrfid;
+ }
  hdr->usrc = 0;
- hdr->hsrc = 0;
  hdr->netid = MRFNET; 
  hdr->msgid = _txmsgid++;
  hdr->type = type;

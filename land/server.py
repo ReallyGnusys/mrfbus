@@ -334,6 +334,10 @@ class MrflandServer(object):
             self.log.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
         self.rm.weblets[app].cmd(cmd,data)
+        for dup in self.rm.dups:
+            self.log.warn("%s calling _callback"%(self.__class__.__name__))
+            self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
+        self.rm.dups = []
 
     def _set_timeout(self,s):
         if self._timeout_handle:
@@ -482,7 +486,7 @@ class MrflandServer(object):
             self.log.info("hdr : %s"%repr(hdr))
             return None,None,None
         ## here just pass this to rm device model to handle
-
+        self.log.info("server parse input got hdr %s"%repr(hdr))
         param, rsp = self.rm.packet(hdr,resp)
         
         for wup in self.rm.wups:

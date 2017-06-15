@@ -92,7 +92,7 @@ class MrfDev(object):
         #print "resp should be %s"%repr(param)
         respdat = bytes(rsp)[len(hdr)+len(param):]
 
-        #self.log.info(" have response or struct object %s"%repr(param))
+        self.log.info(" have response or struct object %s"%repr(param))
 
         resp = mrf_decode_buff(param.type,respdat)
         if resp:  # it's a sys command response - always keep most up to date copies
@@ -104,6 +104,8 @@ class MrfDev(object):
         if not resp:
             self.log.error("%s failed to decode packet , hdr was %s"%(self.__class__.__name__,repr(hdr)))
             return
+
+        self.log.info(" calling app packet with resp %s"%repr(resp))
         self.app_packet(hdr,param,resp)  # this must be defined in derived class
 
         return param, resp

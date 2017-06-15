@@ -247,6 +247,11 @@ mrf_cmd_spi_read = 129
 
 MrfSysCmds = {
 
+    mrf_cmd_resp : {
+        'name' : "RESPONSE",
+        'param': PktResp,
+        'resp' : None        
+    },
     mrf_cmd_device_info :  {
         'name' : "DEVICE_INFO",
         'param': None,
