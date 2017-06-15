@@ -74,13 +74,16 @@ def mrf_html(weblets):
         s += wl.html()
     return s
 
+"""
+Aiming to retire this - .js() method removed from apps now.
+ Don't want apps writers to bother with JS
 def mrf_js(weblets):
     s = ""
     for wa in weblets.keys():
         wl = weblets[wa]
         s += wl.js()
     return s
-
+"""
 
 def mrf_weblet_table(weblets):
     s = "// namespace table for weblets\n"
@@ -111,10 +114,8 @@ def mrf_page(rh,sob,ip,wapps):
     upsince_str = install.upsince.strftime("%c")
     pills = mrf_pills(wapps)
     apphtml = mrf_html(wapps)
-    appjs = mrf_js(wapps)
     
-    weblets = mrf_weblet_table(wapps)
-    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob, weblets = weblets, pills = pills, apphtml = apphtml, appjs = appjs, host = host, upsince = upsince_str))
+    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,  pills = pills, apphtml = apphtml,  host = host, upsince = upsince_str))
 
 def request_ip(rh):
         rs =  rh._request_summary()

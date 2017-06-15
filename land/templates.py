@@ -144,13 +144,6 @@ mrf_tp = """
     <script src="static/secure/js/mrf_sock.js"></script>
 
 
-<script type="text/javascript">
-
-{% raw appjs %}
-
-{% raw weblets %}
-
-</script>
   </body>
 </html>
 

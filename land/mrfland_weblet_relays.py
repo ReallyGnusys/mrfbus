@@ -45,18 +45,6 @@ class MrfLandWebletRelays(MrflandWeblet):
         self.rm.webupdate(self.mktag(self.tag, label), data)
                           
         
-    def pane_js_cmd(self):
-        s = """
-   var nobskit = True;
-"""
-        return s
-
-
-    def pane_js(self):
-        s = """
-   var nobwit = True;
-"""
-        return s
     
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""

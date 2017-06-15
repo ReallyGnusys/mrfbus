@@ -24,13 +24,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
 
-def MrflandObjectTable(app,tab, odict, rows, postcontrols = []):
+def MrflandObjectTable(app,tab, idict, rows, postcontrols = [] , mask_cols = ['recd_date']):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
           <thead>
             <tr>"""%(app,tab)
 
+    # get rid of columns we don't want to display
+    odict = OrderedDict()
+    for fld in idict.keys():
+        if fld not in mask_cols:
+            odict[fld] = idict[fld]
+    
     for cntrl in postcontrols:
         odict[cntrl[0]] = cntrl[1]
     s += """
@@ -91,25 +97,6 @@ class MrflandWeblet(object):
         s = self.pane_html_header()
         s += self.pane_html()
         s += self.pane_html_footer()
-        return s
-
-
-    def pane_js_header(self):
-        return """
-var mrf_weblet_%s = new function() {
-  this.cmd = {
-"""%self.tag
-    
-    def pane_js_footer(self):
-        return """}; //  mrf_weblet_%s \n
-"""%self.tag
-
-    def js(self):
-        s = self.pane_js_header()
-        s += self.pane_js_cmd()
-        s += "};\n"
-        s += self.pane_js()
-        s += self.pane_js_footer()
         return s
 
 

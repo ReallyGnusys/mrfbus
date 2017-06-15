@@ -45,23 +45,11 @@ class MrfLandWebletTemps(MrflandWeblet):
         self.rm.webupdate(self.mktag('temp', label), data)
                           
         
-    def pane_js_cmd(self):
-        s = """
-   var nobskit = True;
-"""
-        return s
-
-
-    def pane_js(self):
-        s = """
-   var nobwit = True;
-"""
-        return s
     
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
         s =  """
-        <h2>Temps(new style)</h2>"""
+        <h2>Temps</h2>"""
         if len(self.sl):
             s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s
