@@ -26,7 +26,6 @@ from mainapp import mainapp
 from public import publicapp
 from pubsock import PubSocketHandler
 
-from mrfland_state import MrflandState
 from mrf_structs import *
 import mrfland
 from mrfdev_pt1000 import Pt1000Dev
@@ -316,9 +315,6 @@ class MrflandServer(object):
         self.q = Queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
-
-        self.state = MrflandState(self)
-        
 
         self._connect_to_mrfnet()
 

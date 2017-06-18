@@ -41,7 +41,7 @@ class MrfLandWebletRelays(MrflandWeblet):
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
     def sens_callback(self, label, data ):
-        self.log.warn("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        self.log.info("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
                           
         
@@ -56,7 +56,7 @@ class MrfLandWebletRelays(MrflandWeblet):
 
 
     def cmd_mrfctrl(self,data):
-        self.log.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+        self.log.info( "cmd_mrfctrl here, data was %s"%repr(data))
         if not data.has_key("tab") or not data.has_key("row"):
             self.log.error("cmd_mrfctrl data problem in %s"%repr(data))
             return
@@ -76,7 +76,7 @@ class MrfLandWebletRelays(MrflandWeblet):
         param = PktRelayState()
         param.dic_set(cdata)
         
-        self.log.warn("cmd_mrfctrl have data %s"%repr(data))
+        self.log.info("cmd_mrfctrl have data %s"%repr(data))
         self.rm.devupdate(self.tag,sens.address,mrf_cmd_set_relay,param)
         """
         dest = self.rm.devices(row).address

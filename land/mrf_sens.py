@@ -74,7 +74,7 @@ class MrfDev(object):
                
                 
     def packet(self,hdr,rsp):  # server interface - all packets from this device are sent here
-        self.log.warn("MrfDev packet for label %s addr %s"%(self.label,self.address))
+        self.log.info("MrfDev packet for label %s addr %s"%(self.label,self.address))
         if hdr.usrc != self.address :
             self.log.error("MrfDev %s addr %s got wrong fyi"%(self.label,self.address))
             return None, None

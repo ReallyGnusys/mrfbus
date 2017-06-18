@@ -93,6 +93,7 @@ clean :
 	rm -rf ${MOBJ}
 	rm -rf ${BIN}
 	rm -rf ${TARG}
+	rm -rf ${LSTD}
 
 ${BIN}:
 	mkdir -p ${BIN}

@@ -260,9 +260,8 @@ class DeviceTestCase(LandTestCase):
         self.get_time_test(dest)
 
 class TestMrfBus(DeviceTestCase):
-
         
-    @unittest.skip("temp disabled - too long")
+    #unittest.skip("temp disabled - too long")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20, 0x2f]):
         devs = []
         cmd_code = mrf_cmd_device_info
@@ -284,7 +283,7 @@ class TestMrfBus(DeviceTestCase):
 
 
 
-    def test02_device_tests(self, dests=[ 0x01, 0x2,0x20, 0x2f ] ):
+    def test02_device_tests(self, dests=[ 0x01] ):
         for dest in dests:
             self.device_tests(dest)
 
@@ -293,6 +292,8 @@ class TestMrfBus(DeviceTestCase):
         for i in xrange(10):
             self.test02_device_tests()
 
+
+    
 
 if __name__ == "__main__":
     unittest.main()
