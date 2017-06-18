@@ -112,7 +112,7 @@ static int appfd , servfd;  // file desc for listener socket
 
 // this is called when read data available from python server
 
-static MRF_CMD_RES _appl_fifo_callback(int fd){
+static int  _appl_fifo_callback(int fd){
   ssize_t s;
   uint8 i;
   mrf_debug("server callback for fd %d\n",fd);
@@ -124,9 +124,15 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
 
   mrf_debug("read %d bytes\n",(int)s);
 
+
+  if ((int)s == 0 ){
+    mrf_debug("%s","_appl_callback - returning -1\n");
+    return -1;
+
+  }
   if ( s < 4){
     mrf_debug("%s","ignoring pkt with len too small \n");
-    return MRF_CMD_RES_WARN;
+    return 0;
   }
 
   _mrf_print_hex_buff(buff,s);
@@ -136,7 +142,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
   
   if (s != len){
     mrf_debug("not credible input buff[0] %u should be same as message length %u \n",len,(unsigned int)s);
-    return MRF_CMD_RES_WARN;
+    return 0;
   }
 
   uint8 csum = 0;
@@ -148,7 +154,7 @@ static MRF_CMD_RES _appl_fifo_callback(int fd){
 
   if ( csum != buff[s-1]) {
     mrf_debug("%s","packet checksum error, discarding\n");
-    return MRF_CMD_RES_WARN;
+    return 0;
 
   }
 
@@ -182,6 +188,7 @@ int structure_to_app(uint8 bnum){
     mrf_debug("error - length is bonkers %u\n",len);
     return -1;
   }
+  servfd = mrf_arch_servfd();
 
   if (servfd < 1 ){
     mrf_debug("response to app - no server fd - have %d\n",servfd);

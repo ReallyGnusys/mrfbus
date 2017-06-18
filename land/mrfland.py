@@ -327,7 +327,28 @@ class MrflandRegManager(object):
     def webupdate(self, tag , data):
         self.wups.append({ 'tag': tag , 'data': data})
 
+    def cmdcode(self, dest, cmdname):
+        if not self.devmap.has_key(dest):
+            self.log.error("cmdcode - no device at address %d"%dest)
+            return None
+        dev = self.devmap[dest]
+        if not dev.cmdnames.has_key(cmdname):
+            self.log.error("cmdcode - device at address %d has no command %s"%(dest,cmdname))
+            return None
+        return dev.cmdnames[cmdname]
+                           
+    def devupdaten(self,tag, dest, cmdname, data = {}):
+
+        cmd = self.cmdcode(dest,cmdname)  # lookup cmdcode from name
+        if not cmd:
+            return
+        
+        self.log.warn("%s devupdaten dest %s"%(self.__class__.__name__, dest))
+        self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
+        
+        
     def devupdate(self,tag, dest, cmd, data = {}):
+        
         self.log.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
         

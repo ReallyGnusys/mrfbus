@@ -55,6 +55,13 @@ class MrfDev(object):
 
         self.caps = {}
 
+        # build lookup of command names
+        self.cmdnames = {}
+
+        for ccode in self._cmdset.keys():
+            self.cmdnames[self._cmdset[ccode]['name']] = ccode
+
+        # construct sensors and actuators from capability spec
         for clab in self._capspec.keys():
             if not caplabels.has_key(clab):
                 self.log.error("%s spec labels error  no key %s in %s"%(self.__class__.__name__, clab, repr(caplabels)))

@@ -527,7 +527,11 @@ char buff[2048];
 
        printf("server socket  event\n");
        if (app_callback != NULL ){
-         (*(app_callback))(servfd);
+         if ((*(app_callback))(servfd) == -1){
+           mrf_debug("%s","looks like servers disconnected\n");
+           servfd = -1;
+           
+         }
        }
      }
    }

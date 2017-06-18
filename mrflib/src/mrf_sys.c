@@ -375,7 +375,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  
 #endif
  
- mrf_nexthop(&route,_mrfid,hdr->usrc);
+ mrf_nexthop(&route,_mrfid,hdr->udest);
 
  hdr->hdest = route.relay;
 
