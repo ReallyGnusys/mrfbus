@@ -222,14 +222,14 @@ void _rtc_get(TIMEDATE *td){
   td->year = _y16_to_y8(RTCYEAR) ;
 }
 void _rtc_set(TIMEDATE *td){
-  RTCCTL01 |= RTCHOLD  ;
+  //RTCCTL01 |= RTCHOLD  ;
   RTCSEC = td->sec  ;
   RTCMIN = td->min  ;
   RTCHOUR = td->hour  ;
   RTCDAY = td->day  ;
   RTCMON = td->mon  ;
   RTCYEAR = _y8_to_y16(td->year)  ;
-  RTCCTL01 &= ~RTCHOLD  ;
+  //RTCCTL01 &= ~RTCHOLD  ;
 
 }
 
