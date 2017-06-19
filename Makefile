@@ -24,7 +24,7 @@ ${LOGDIR}:
 
 BUILD:
 	cd examples/hoststub && make clean && make MRFID=0x01
-	cd examples/hostsim && make clean
+	cd examples/hostsim && make clean && make MRFID=0x01
 	cd examples/hostsim && make MRFID=0x02
 	cd examples/hostsim && make MRFID=0x20
 	cd examples/hostsim && make MRFID=0x2f
