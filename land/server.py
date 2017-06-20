@@ -664,19 +664,19 @@ if __name__ == '__main__':
         'relay' : ["RADS1_PUMP", "DHW1_HX_PUMP"]
         }
 
-    
-    host = MrfDevHost("host", 1, {}, alog)
-    
-    hb0 = Pt1000Dev("pt1000_boiler_room", 2, hb0labels, alog)
-
-    hb1 = DevHeatbox("heatbox_kitchen"  , 4, hb1labels, alog)
-
-    
-
     rm = mrfland.MrflandRegManager(alog)
-    rm.device_register(host)
-    rm.device_register(hb0)
-    rm.device_register(hb1)
+    
+    host = MrfDevHost(rm, "host", 1, {}, alog)
+    
+    hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels, alog)
+
+    hb1 = DevHeatbox(rm, "heatbox_kitchen"  , 4, hb1labels, alog)
+
+    
+
+    #rm.device_register(host)
+    #rm.device_register(hb0)
+    #rm.device_register(hb1)
 
     #wat = MrfLandWebletTemps(rm, alog, {'tag':'temps','label':'Temperatures'})
     #war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})

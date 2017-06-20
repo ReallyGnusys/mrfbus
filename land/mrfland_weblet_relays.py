@@ -66,18 +66,23 @@ class MrfLandWebletRelays(MrflandWeblet):
             self.log.error("cmd_mrfctrl no device %s"%str(data['row']))
             self.log.error("got %s"%repr(self.rm.sensors.keys()))
             return
-
         sens = self.rm.sensors[str(data['row'])]
+
+        sensmap = self.rm.senslookup(sens.label)
+
+        if sensmap == None:
+            self.log.error("couldn't find mapping of sensor label %s"%sens.label)
+            return
 
         cdata = {}
 
-        cdata['chan'] = sens.channel
+        cdata['chan'] = sensmap['chan']
         cdata['val'] = data['val']
         param = PktRelayState()
         param.dic_set(cdata)
         
         self.log.info("cmd_mrfctrl have data %s"%repr(data))
-        self.rm.devupdaten(self.tag,sens.address,'SET_RELAY',param)
+        self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
         """
         dest = self.rm.devices(row).address
         """

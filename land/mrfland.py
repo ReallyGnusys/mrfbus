@@ -318,12 +318,23 @@ class MrflandRegManager(object):
         self.devmap  = {} ## hash devices by address
         self.sensors = {}  ### hash sensors by label
         self.senstypes = {} ### hash lists of sensors by sensor type
-        self.actuators = {} 
+        self.actuators = {}
+        self.sensmap = {}
         self.addresses = {}  ### hash devices by address - must be unique
         self.wups = []  ## webupdates from weblets to send to browsers
         self.dups = []  ## device updates : from weblets to send to devices
         self.weblets = OrderedDict()  # has weblets by tag
-        
+
+    def senslookup(self,label):
+        if self.sensmap.has_key(label):
+            return self.sensmap[label]
+
+    def senslink(self, label, addr, chan):
+        if self.sensmap.has_key(label):
+            self.log.error("regman.senslink - already have tag %s"%label)
+            return
+        self.sensmap[label] = { 'addr' : addr, 'chan' : chan }
+
     def webupdate(self, tag , data):
         self.wups.append({ 'tag': tag , 'data': data})
 

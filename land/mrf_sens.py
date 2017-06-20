@@ -19,22 +19,6 @@ from mrf_structs import *
 
 
 
-class MrfDevCap(object):
-    """ 
-    capability of a device - e.g. temp sensing array , actuator array - array is assumed - index translates to channel throughout
-    """
-    def __init__(self, label, address, stype, slabels, log):
-        self.label = label
-        self.address = address
-        self.log = log
-        self._channels = []
-
-        for chan in xrange(len(slabels)):
-            self._channels.append(stype(slabels[chan],address,chan,log))
-
-        self.num_chans = len(self._channels)  # slightly redundant
-            
-
 
 class MrfDev(object):
     """  
@@ -44,9 +28,10 @@ class MrfDev(object):
     cmdset and dspec effectively define MrfBus physical device running a specific app
 
     """
-    def __init__(self, label, address, caplabels ,log):
+    def __init__(self, rm, label, address, caplabels ,log):
         self.address = address
         self.label = label
+        self.rm = rm
         self.sys = {} # aims to contain all sys info responses from device_info upwards
         self.log = log
         self.skey = 0
@@ -69,9 +54,11 @@ class MrfDev(object):
             self.caps[clab] = []
             chan = 0
             for slab in caplabels[clab]:
-                self.caps[clab].append(self._capspec[clab](slab, self.address, chan, self.log))
+                #self.caps[clab].append(self._capspec[clab](slab, self.address, chan, self.log))
+                self.caps[clab].append(self._capspec[clab](slab, self.log))
+                self.rm.senslink(slab, self.address ,chan)
                 chan += 1
-            
+        self.rm.device_register(self)
         
     def subscribe(self,callback):
         key = self.skey
@@ -123,10 +110,11 @@ class MrfDev(object):
 
 
 class MrfSens(object):    
-    def __init__(self, label, address,channel,log):
+    #def __init__(self, label, address,channel,log):
+    def __init__(self, label,log):
         self.label = label  ## fix me this should be tag - maybe should have label as well
-        self.address = address        
-        self.channel = channel
+        #self.address = address ## FIXME don't use this , try not to use back refs
+        #self.channel = channel ## really shouldn't use this either
         self.log = log
         self.inval = None
         self.skey = 0
