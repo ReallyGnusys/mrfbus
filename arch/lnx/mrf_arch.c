@@ -212,9 +212,37 @@ int mrf_arch_servfd(){
   return servfd;
 }
 
+void kill_signal (int sig)
+{
+  mrf_debug("%s","kill signal received\n");
+  if (lisfd != -1){
+    mrf_debug("closing lisfd %d\n",lisfd);
+    close(lisfd);
+  }
+
+  if (servfd != -1){
+    mrf_debug("closing servfd %d\n",servfd);
+    close(servfd);
+  }
+  mrf_debug("%s","ttfn\n");
+  exit(0);
+    
+}
 
 
 int mrf_arch_boot(){
+  // would like to handle sig USR1 at least for clean shutdown of sockets
+  struct sigaction usr_action;
+  sigset_t block_mask;
+
+  /* Establish the signal handler. */
+  sigfillset (&block_mask);
+  usr_action.sa_handler = kill_signal;
+  usr_action.sa_mask = block_mask;
+  usr_action.sa_flags = 0;
+  sigaction (SIGUSR1, &usr_action, NULL);
+
+  mrf_debug("%s","lnx arch boot - installed SIGUSR1 handler\n");
   // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
   lisfd  = -1;
@@ -224,7 +252,7 @@ int mrf_arch_boot(){
   
 }
 int mrf_arch_run(){
-
+  
   // if app_callback is set we establish a simple server, to wait for connections from python land server
   if ( app_callback != NULL ){
     mrf_debug("%s","creating listening socket\n");
