@@ -101,7 +101,7 @@ function mrf_web_update(obj){
 }
 
 
-
+/*
 
 function mrf_heating_tempsensors(data){
 
@@ -132,9 +132,14 @@ function mrf_heating_relays(data){
     }
 
 }
-
+*/
 
 function init_app(){
+    // init timepickers
+    $(".mrfctrl_timepick").timepicker();
+    
+
+    
     //new controls
     $(".mrfctrl_cb").change(
             function(){
@@ -171,13 +176,13 @@ function mrf_command(obj){
     } else if (obj.cmd == 'update-div'){
         mrf_update_div(obj.data);
 
-    } else if (obj.cmd == 'tempsensors'){
+    } /*else if (obj.cmd == 'tempsensors'){
         mrf_heating_tempsensors(obj.data);  // FIXME - separate APP in js!!
     }
     else if (obj.cmd == 'relays'){
         mrf_heating_relays(obj.data);  // FIXME - separate APP in js!!
     }
-    
+   */ 
     
     
 

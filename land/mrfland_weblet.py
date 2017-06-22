@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
 
-def MrflandObjectTable(app,tab, idict, rows, postcontrols = [] , mask_cols = ['recd_date']):
+def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date']):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
@@ -40,7 +40,7 @@ def MrflandObjectTable(app,tab, idict, rows, postcontrols = [] , mask_cols = ['r
     for cntrl in postcontrols:
         odict[cntrl[0]] = cntrl[1]
     s += """
-             <th>%s</th>"""%("tag")
+             <th>%s</th>"""%("tag")   # always need tag - this is row name
     for fld in odict.keys():
         s += """
              <th>%s</th>"""%(fld)
@@ -50,16 +50,30 @@ def MrflandObjectTable(app,tab, idict, rows, postcontrols = [] , mask_cols = ['r
           <tbody>"""
     for row in rows:
         s += """
-           <tr>"""
+           <tr>
+            <td class="app-%s tab-%s row-%s fld-tag">"""%(app, tab, str(row))
         s += """
-            <td class="app-%s tab-%s row-%s">%s</td>"""%(app,tab,str(row),str(row))
+            </td>"""
+
         for fld in odict.keys():
+            s += """
+            <td class="app-%s tab-%s row-%s fld-%s">"""%(app, tab, str(row), fld)
             if odict[fld] == '_mrf_ctrl_cb':
                 s += """
-            <td class="app-%s tab-%s row-%s fld-%s"><div class="checkbox" ><input type="checkbox" class="mrfctrl_cb" app="%s" tab="%s" row="%s" fld="%s"></div></td>"""%(app, tab, str(row), fld, app, tab, str(row),fld)
+                <div class="checkbox" >
+                  <input type="checkbox" class="mrfctrl_cb" app="%s" tab="%s" row="%s" fld="%s">
+                </div>
+            </td>"""%(app, tab, str(row),fld)
+            elif odict[fld] == '_mrf_ctrl_timepick':
+                s += """
+               <div class="input-group bootstrap-timepicker timepicker">
+                 <input  type="text" class="form-control input-small mrfctrl_timepick" app="%s" tab="%s" row="%s" fld="%s"">
+                 <span class="input-group-addon"><i class="glyphicon glyphicon-time"></i></span>
+               </div>
+             </td>"""%(app, tab, str(row),fld)
             else:
                 s += """
-            <td class="app-%s tab-%s row-%s fld-%s"></td>"""%(app,tab,str(row),fld)
+            </td>"""
         s += """
             </tr>"""
     s += """

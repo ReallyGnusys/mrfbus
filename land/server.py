@@ -33,6 +33,7 @@ from mrfdev_heatbox import DevHeatbox
 from mrfdev_host import MrfDevHost
 from mrfland_weblet_temps import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
+from mrfland_weblet_timers import MrfLandWebletTimers
 
 
 
@@ -687,6 +688,9 @@ if __name__ == '__main__':
 
     rm.weblet_register(MrfLandWebletRelays(rm, alog,
                                            {'tag':'relays','label':'Relays'}))
+    
+    rm.weblet_register(MrfLandWebletTimers(rm, alog,
+                                           {'tag':'timers','label':'Timers'}))
     
     
     

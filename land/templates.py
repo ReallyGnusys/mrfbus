@@ -76,7 +76,6 @@ login_tp = """<!DOCTYPE html>
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
     <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-
     <script src="static/public/js/asa/asa_login.js"></script>
 
 
@@ -102,7 +101,7 @@ mrf_tp = """
 
     <!-- Bootstrap core CSS -->
     <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    <link href="static/public/bower_components/bootstrap-timepicker/css/timepicker.min.css" rel="stylesheet">
 
     <script type="text/javascript">
        var _mrf_sdata = {  
@@ -140,7 +139,7 @@ mrf_tp = """
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
     <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-
+    <script src="static/public/bower_components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
     <script src="static/secure/js/mrf_sock.js"></script>
 
 
