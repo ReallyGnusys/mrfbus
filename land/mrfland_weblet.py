@@ -51,9 +51,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
     for row in rows:
         s += """
            <tr>
-            <td class="app-%s tab-%s row-%s fld-tag">"""%(app, tab, str(row))
-        s += """
-            </td>"""
+            <td class="app-%s tab-%s row-%s fld-tag">%s</td>"""%(app, tab, str(row), str(row))
 
         for fld in odict.keys():
             s += """
@@ -72,8 +70,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
                </div>
              </td>"""%(app, tab, str(row),fld)
             else:
-                s += """
-            </td>"""
+                s += "</td>"
         s += """
             </tr>"""
     s += """

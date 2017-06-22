@@ -51,7 +51,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         s =  """
         <h2>%s</h2>"""%self.label
         if len(self.sl):
-            s += MrflandObjectTable(self.tag,"relays",self.sl[0]._output,self.slabs, postcontrols = [("control","_mrf_ctrl_timepick")])
+            s += MrflandObjectTable(self.tag,"relays",self.sl[0]._output,self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")])
         return s
 
 
