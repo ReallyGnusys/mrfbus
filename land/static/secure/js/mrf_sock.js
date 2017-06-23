@@ -13,6 +13,7 @@ function ParseJsonString(str) {
     return obj;
 }
 
+/* retiring pending appeal ..
 
 function convert_obj_date(obj){
     if ((typeof obj == 'object') && (typeof obj.date == 'string'))
@@ -27,7 +28,7 @@ function convert_obj_date_name(obj,name){
     return obj;
 
 }
-
+*/
 
 function MrfSocket(socket){
     this.set_socket(socket);
@@ -101,46 +102,31 @@ function mrf_web_update(obj){
 }
 
 
-/*
-
-function mrf_heating_tempsensors(data){
-
-    for (var ch in data){
-        cdata = data[ch];
-        jsel = '#tempsensor-'+ch+'-value';
-        htm = ""+cdata.temperature.toFixed(3);
-        $(''+jsel).html(htm);
-        jsel = '#timedate-'+ch;
-        htm = ""+cdata.date;
-        $(''+jsel).html(htm);
-    }
-
-}
-
-_NUM_RELAYS = 4;  // ouch
-function mrf_heating_relays(data){
-
-    for (var ch = 0 ; ch < data.length ; ch++){
-        cdata = data[ch];
-        console.log("rly ch "+ch+" = "+cdata);
-        jsel = '#pump-'+ch+'-value';
-        htm = ""+cdata;
-        $(''+jsel).html(htm);
-        $("#pump-"+ch+"-cb").prop("checked",cdata !=0);
-
-        
-    }
-
-}
-*/
 
 function init_app(){
+    
     // init timepickers
     $(".mrfctrl_timepick").timepicker();
     
+    $('.mrfctrl_timepick').timepicker().on('hide.timepicker', function(e) {
+        console.log('The time is ' + e.time.value);
+        console.log('The hour is ' + e.time.hours);
+        console.log('The minute is ' + e.time.minutes);
+        console.log('The meridian is ' + e.time.meridian);
 
+        val = {"hour": e.time.hours , "minute":e.time.minutes , "second" : 0}
+        app = $(this).attr('app');
+        tab = $(this).attr('tab');
+        row = $(this).attr('row');
+        fld = $(this).attr('fld');
+        cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
+        console.log(" mrf cb app :"+app );
+        console.log(cdata)
+        
+        ws.send(mrf_ccmd(app,"mrfctrl",cdata));
+      });
     
-    //new controls
+    //checkboxes
     $(".mrfctrl_cb").change(
             function(){
                 console.log(" mrf cb changed checked "+this.checked);
@@ -173,24 +159,15 @@ function mrf_command(obj){
     if (obj.cmd == 'web-update'){
         mrf_web_update(obj.data);
 
-    } else if (obj.cmd == 'update-div'){
+    }
+    else if (obj.cmd == 'update-div'){
         mrf_update_div(obj.data);
 
-    } /*else if (obj.cmd == 'tempsensors'){
-        mrf_heating_tempsensors(obj.data);  // FIXME - separate APP in js!!
     }
-    else if (obj.cmd == 'relays'){
-        mrf_heating_relays(obj.data);  // FIXME - separate APP in js!!
-    }
-   */ 
-    
-    
-
 }
 
 function init_socket(){
     console.log("init_socket");    
-    //app_state.state = 'wait-inbox';
     if ("WebSocket" in window) {
         ws = new WebSocket(_mrf_sdata.ws_url);
         console.log("ws constructed: typeof ws = "+typeof ws);
@@ -201,7 +178,6 @@ function init_socket(){
         ws.onopen = function() {
             console.log("websocket opened : ok");
             mrf_socket.set_socket(ws);
-            //ws.send(mrf_ccmd("send-inbox",{}));
         };
         ws.onmessage = function (evt) { 
             var msg = evt.data;
@@ -212,13 +188,9 @@ function init_socket(){
 	    if ( obj) {
 		//console.log(obj);
 		if(typeof obj.cmd == "string"){    
-                    //if ( obj.cmd != 'datetime')
-                    //    console.log("mrf_sock : got cmd "+obj.cmd+" calling mrf_command");
-                    //console.log(obj);
 		    mrf_command(obj);
                 }
 	    }
-
         };
         ws.onclose = function() { 
             console.log("Connection is closed...logging out");
@@ -229,9 +201,6 @@ function init_socket(){
     } else {
         console.log("WebSocket NOT supported by your Browser!");
     }
-    
-
-
 }
 
 

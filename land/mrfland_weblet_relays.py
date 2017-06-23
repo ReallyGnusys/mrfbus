@@ -83,7 +83,4 @@ class MrfLandWebletRelays(MrflandWeblet):
         
         self.log.info("cmd_mrfctrl have data %s"%repr(data))
         self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
-        """
-        dest = self.rm.devices(row).address
-        """
     

@@ -654,6 +654,11 @@ if __name__ == '__main__':
     parse_command_line()
     alog.info("Mrfland web server starting on port "+str(options.port))
     
+    hostlabels = {
+        'timer' : ["UFH_P0","UFH_P1","RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1"]
+        }
+
+   
     hb0labels = {
         'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
         'relay' : ["UFH_PUMP", "MAIN_RAD_PUMP"]
@@ -667,7 +672,7 @@ if __name__ == '__main__':
 
     rm = mrfland.MrflandRegManager(alog)
     
-    host = MrfDevHost(rm, "host", 1, {}, alog)
+    host = MrfDevHost(rm, "host", 1, hostlabels, alog)
     
     hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels, alog)
 

@@ -14,10 +14,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
+from mrf_sens_timer import MrfSensTimer
 from mrf_sens import MrfSens, MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-
+from collections import OrderedDict
 
 class MrfLandWebletTimers(MrflandWeblet):
     def post_init(self):
@@ -25,25 +25,24 @@ class MrfLandWebletTimers(MrflandWeblet):
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
-        if not self.rm.senstypes.has_key(MrfSensPtRelay):
-            self.log.error("%s post_init failed to find sensor type MrfSensPtRelay in rm"%self.__class__.__name__)
+        if not self.rm.senstypes.has_key(MrfSensTimer):
+            self.log.error("%s post_init failed to find sensor type MrfSensTimer in rm"%self.__class__.__name__)
             return
-        self.sl = self.rm.senstypes[MrfSensPtRelay]
+        self.sl = self.rm.senstypes[MrfSensTimer]
 
-        self.log.info("num MrfSensPtRelay found was %d"%len(self.sl))
+        self.log.info("num MrfSensTimer found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
-        self.log.info("MrfSensPtRelay : %s"%repr(self.slabs))
+        self.log.info("MrfSensTimer : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
     def sens_callback(self, label, data ):
         self.log.info("TimersWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
-                          
         
     
     def pane_html(self):
@@ -51,7 +50,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         s =  """
         <h2>%s</h2>"""%self.label
         if len(self.sl):
-            s += MrflandObjectTable(self.tag,"relays",self.sl[0]._output,self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")])
+            s += MrflandObjectTable(self.tag, "timers", self.sl[0]._output, self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")])
         return s
 
 
@@ -73,17 +72,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         if sensmap == None:
             self.log.error("couldn't find mapping of sensor label %s"%sens.label)
             return
-
-        cdata = {}
-
-        cdata['chan'] = sensmap['chan']
-        cdata['val'] = data['val']
-        param = PktRelayState()
-        param.dic_set(cdata)
-        
-        self.log.info("cmd_mrfctrl have data %s"%repr(data))
-        self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
-        """
-        dest = self.rm.devices(row).address
-        """
-    
+        self.log.warn("%s cmd_mrfctrl sens = %s got data %s"%
+                      (self.__class__.__name__, sens.label,repr(data)))
+        # timer is sensor of user input more than anything
+        sens.input(data['val'])
