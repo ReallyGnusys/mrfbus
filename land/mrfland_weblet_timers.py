@@ -75,4 +75,8 @@ class MrfLandWebletTimers(MrflandWeblet):
         self.log.warn("%s cmd_mrfctrl sens = %s got data %s"%
                       (self.__class__.__name__, sens.label,repr(data)))
         # timer is sensor of user input more than anything
-        sens.input(data['val'])
+        inp = {}
+        inp['cname'] = data['fld']
+        inp['val'] = data['val']
+                
+        sens.input(inp)

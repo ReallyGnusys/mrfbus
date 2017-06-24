@@ -68,38 +68,6 @@ int init_sockaddr (struct sockaddr_in *name,
 
 
 
-int connect_to_server (uint16_t port){
-  int sock ,st;
-  struct sockaddr_in servername;
-
-  /* Create the socket. */
-  sock = socket (PF_INET, SOCK_STREAM, 0);
-  if (sock < 0)
-    {
-      mrf_debug("%s","create sock error for server connection");
-      return -1;
-
-    }
-
-  /* Connect to the server. */
-  st = init_sockaddr (&servername, "localhost", SERVER_PORT);
-  if (st != 0) {
-      return -1;
-  }
-  
-  
-  if (0 > connect (sock,
-                   (struct sockaddr *) &servername,
-                   sizeof (servername)))
-    {
-      mrf_debug("%s","connect to server failed");
-      return -1;
-    }
-
-  return sock;
-
-}
-
 
 
 int signal_handler(uint8 signal){

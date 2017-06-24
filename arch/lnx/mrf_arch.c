@@ -176,6 +176,9 @@ int make_listener_socket (uint16_t port)
   name.sin_port = htons (port);
   name.sin_addr.s_addr = htonl (INADDR_ANY);
   name.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
+  
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
       mrf_debug("%s","bind error for port");

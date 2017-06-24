@@ -120,15 +120,22 @@ class MrfSens(object):
         self.skey = 0
         self.subscribers = dict()
 
+        """ below are prototypes to type check
+            and use OrderedDict instead of list descs at runtime
+        """
         self._input = OrderedDict()
         for fld in self._in_flds_:
             self._input[fld[0]] = fld[1]
 
         self._output = OrderedDict()
+        # and also generate initial output value
+        self.output = OrderedDict()
         for fld in self._out_flds_:
             self._output[fld[0]] = fld[1]
+            self.output[fld[0]] = fld[1]()
             
-    
+
+        
         
     def subscribe(self,callback):
         key = self.skey
@@ -147,7 +154,7 @@ class MrfSens(object):
                 self.log.error("%s input indata type mismatch for key %s  %s vs %s"%(self.__class__.__name__, ditem, type(indata[ditem]), type(self._input[ditem]()) ))
                 return None
 
-        odata = self.genout(indata,{})
+        odata = self.genout(indata, self.output)
         # output sanity check for keys and types 
 
         for ditem in odata.keys():
