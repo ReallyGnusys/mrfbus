@@ -50,27 +50,26 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
           <tbody>"""
     for row in rows:
         s += """
-           <tr>
-            <td class="app-%s tab-%s row-%s fld-tag">%s</td>"""%(app, tab, str(row), str(row))
+           <tr>"""
 
         for fld in odict.keys():
-            s += """
-            <td class="app-%s tab-%s row-%s fld-%s">"""%(app, tab, str(row), fld)
             if odict[fld] == '_mrf_ctrl_cb':
+                s += """
+                <td class="app-%s tab-%s row-%s fld-%s">"""%(app, tab, str(row), fld)
                 s += """
                 <div class="checkbox" >
                   <input type="checkbox" class="mrfctrl_cb" app="%s" tab="%s" row="%s" fld="%s">
                 </div>
-            </td>"""%(app, tab, str(row),fld)
+              </td>"""%(app, tab, str(row),fld)
             elif odict[fld] == '_mrf_ctrl_timepick':
                 s += """
-               <div class="input-group bootstrap-timepicker timepicker">
-                 <input  type="text" class="form-control input-small mrfctrl_timepick" app="%s" tab="%s" row="%s" fld="%s"">
-                 <span class="input-group-addon"><i class="glyphicon glyphicon-time"></i></span>
-               </div>
-             </td>"""%(app, tab, str(row),fld)
+               <td>
+                 <div app="%s" tab="%s" row="%s" fld="%s"></div>
+                 <i class="glyphicon glyphicon-time mrfctrl_timepick" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
+              </td>"""%(app, tab, str(row),fld,app, tab, str(row),fld)
             else:
-                s += "</td>"
+                s += """<td class="app-%s tab-%s row-%s fld-tag">%s</td>"""%(app, tab, str(row), str(row))
+
         s += """
             </tr>"""
     s += """

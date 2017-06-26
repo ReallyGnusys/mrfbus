@@ -76,7 +76,7 @@ class MrfLandWebletTimers(MrflandWeblet):
                       (self.__class__.__name__, sens.label,repr(data)))
         # timer is sensor of user input more than anything
         inp = {}
-        inp['cname'] = data['fld']
+        inp['cname'] = data['fld']  
         inp['val'] = data['val']
                 
         sens.input(inp)

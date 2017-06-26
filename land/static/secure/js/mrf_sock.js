@@ -106,7 +106,7 @@ function mrf_web_update(obj){
 function init_app(){
     
     // init timepickers
-    $(".mrfctrl_timepick").timepicker();
+    $(".mrfctrl_timepick").timepicker({showMeridian : false , showInputs : false});
     
     $('.mrfctrl_timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);
@@ -114,7 +114,7 @@ function init_app(){
         console.log('The minute is ' + e.time.minutes);
         console.log('The meridian is ' + e.time.meridian);
 
-        val = {"hour": e.time.hours , "minute":e.time.minutes , "second" : 0}
+        val = {"hour": e.time.hours , "minute":e.time.minutes , "second" : 0  }
         app = $(this).attr('app');
         tab = $(this).attr('tab');
         row = $(this).attr('row');
@@ -126,6 +126,29 @@ function init_app(){
         ws.send(mrf_ccmd(app,"mrfctrl",cdata));
       });
     
+
+    $('.mrfctrl_timepick').timepicker().on('show.timepicker', function(e) {
+        
+        
+        console.log('Show : The time is ' + e.time.value);
+        console.log('The hour is ' + e.time.hours);
+        console.log('The minute is ' + e.time.minutes);
+        console.log('The meridian is ' + e.time.meridian);
+        $(this).timepicker('setTime', '11:11');
+        val = {"hour": e.time.hours , "minute":e.time.minutes , "second" : 0  }
+        app = $(this).attr('app');
+        tab = $(this).attr('tab');
+        row = $(this).attr('row');
+        fld = $(this).attr('mc-fld');
+        cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
+        console.log(" mrf cb app :"+app );
+        console.log(cdata)
+        
+        ws.send(mrf_ccmd(app,"mrfctrl",cdata));
+      });
+    
+
+
     //checkboxes
     $(".mrfctrl_cb").change(
             function(){
@@ -140,7 +163,7 @@ function init_app(){
                 app = $(this).attr('app');
                 tab = $(this).attr('tab');
                 row = $(this).attr('row');
-                fld = $(this).attr('fld');
+                fld = $(this).attr('mc-fld');
                 cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
                 console.log(" mrf cb app :"+app );
                 console.log(cdata)
