@@ -5,7 +5,6 @@ import install
 import os
 import base64
 import sys
-from datetime import datetime
 sys.path.append('../lib')
 from mrflog import mrf_log
 import templates

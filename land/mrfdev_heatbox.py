@@ -1,6 +1,6 @@
 
 from mrf_sens import MrfSens, MrfDev
-from datetime import datetime
+import datetime
 import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test
@@ -79,7 +79,7 @@ class DevHeatbox(MrfDev):
                 
 
         elif  param.type == mrf_cmd_set_relay or param.type == mrf_cmd_get_relay:
-            now = datetime.now()
+            now = datetime.datetime.now()
             td =  PktTimeDate()
             td.set(now)
             inp = { 'date' : td,

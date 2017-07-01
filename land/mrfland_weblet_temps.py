@@ -51,6 +51,7 @@ class MrfLandWebletTemps(MrflandWeblet):
         s =  """
         <h2>Temps</h2>"""
         if len(self.sl):
+            self.log.warn("labels are %s "%repr(self.slabs))
             s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s
 

@@ -26,7 +26,9 @@ import Queue
 import json
 import traceback
 import base64
-from datetime import datetime
+import datetime
+
+#from datetime import datetime 
 import install
 from mrflog import mrf_log
 from mrfland_state import MrflandState
@@ -69,7 +71,7 @@ class staff_socket(object):
         s = "%s wsid %s sessid %s username %s"%(self.__class__.__name__,self.wsid,self.sessid,self.username)
         return s
     def close(self):
-        self.closed = datetime.now()
+        self.closed = datetime.datetime.now()
         self.isopen = False
         
 class mrf_comm(object):
@@ -126,10 +128,18 @@ class mrf_comm(object):
         self.clients[id]['object'].write_message(msg+"\r\n\r\n")
     def broadcast(self,obj):
         msg = to_json(obj)
-        if obj['cmd'] == 'relays':
-            alog.info("broadcasting relay obj:"+msg)
+
+        data = obj['data']
+
+        if not data.has_key('tag'):
+            alog.error("broadcast obsolete attempt of %s"%repr(data))
+            return
+        tag = data['tag']
+        if tag['app'] == 'timers':
+            alog.warn("broadcasting timer obj:"+msg)
             alog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
-            alog.info(" clients = "+str(self.clients))    
+            alog.info(" clients = "+str(self.clients))
+    
         self._jso_broadcast(msg)
     def set_session_expire(self,id,seconds = install.session_timeout):
         self.sockets[id].expire = int(time.time() + seconds)
@@ -276,9 +286,19 @@ def staff_logout(sid,username,ip):
 
 dt_handler = lambda obj: (
     obj.isoformat()
-    if isinstance(obj, datetime) #or isinstance(obj, date)
+    if isinstance(obj, datetime.datetime) #or isinstance(obj, date)
     else None)
 
+
+def mob_handler(obj):
+    if isinstance(obj, datetime.datetime): #or isinstance(obj, date)
+        return obj.isoformat()
+    elif isinstance(obj, datetime.time): #or isinstance(obj, date)
+        return str(obj)
+    elif isinstance(obj, bool): #or isinstance(obj, date)
+        return str(obj)
+    else:
+        return obj
 """
 dt_handler = lambda obj: (
     obj.isoformat()
@@ -289,7 +309,7 @@ dt_handler = lambda obj: (
 
 
 def to_json(obj):
-    return json.dumps(obj,default = dt_handler)
+    return json.dumps(obj,default = mob_handler)
 
 def json_parse(str):
     try:
@@ -306,7 +326,7 @@ def mrf_cmd(cmd,data):
 
 # return utc time
 def atime():    
-    return mrf_cmd('datetime',datetime.utcfromtimestamp(time.time()))
+    return mrf_cmd('datetime',datetime.datetime.utcfromtimestamp(time.time()))
  
 
 class MrflandRegManager(object):

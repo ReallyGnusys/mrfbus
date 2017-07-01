@@ -24,7 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
 
-def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date']):
+def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
@@ -32,6 +32,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
             <tr>"""%(app,tab)
 
     # get rid of columns we don't want to display
+        
     odict = OrderedDict()
     for fld in idict.keys():
         if fld not in mask_cols:
@@ -51,8 +52,16 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
     for row in rows:
         s += """
            <tr>"""
-
+        s += """<td class="app-%s tab-%s row-%s ">%s</td>"""%(app, tab ,str(row),str(row))
+        if init_vals.has_key(row):
+            ivals = init_vals[row]
+        else:
+            ivals = None
         for fld in odict.keys():
+            if ivals and ivals.has_key(fld):
+                ival = ivals[fld]
+            else:
+                ival = ''
             if odict[fld] == '_mrf_ctrl_cb':
                 s += """
                 <td class="app-%s tab-%s row-%s fld-%s">"""%(app, tab, str(row), fld)
@@ -64,11 +73,11 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
             elif odict[fld] == '_mrf_ctrl_timepick':
                 s += """
                <td>
-                 <div app="%s" tab="%s" row="%s" fld="%s"></div>
+                 <div class="app-%s tab-%s row-%s fld-%s">%s</div>
                  <i class="glyphicon glyphicon-time mrfctrl_timepick" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
-              </td>"""%(app, tab, str(row),fld,app, tab, str(row),fld)
+              </td>"""%(app, tab, str(row),fld, ival, app, tab, str(row),fld)
             else:
-                s += """<td class="app-%s tab-%s row-%s fld-tag">%s</td>"""%(app, tab, str(row), str(row))
+                s += """<td class="app-%s tab-%s row-%s fld-%s">%s</td>"""%(app, tab, str(row), fld, ival)
 
         s += """
             </tr>"""

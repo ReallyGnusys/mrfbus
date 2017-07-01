@@ -1,5 +1,5 @@
 from ctypes import *
-from datetime import datetime
+import datetime
 from collections import OrderedDict
 
 
@@ -177,7 +177,7 @@ class PktTimeDate(MrfStruct):
         self.mon  = dt.month
         self.year = dt.year - 2000
     def to_datetime(self):
-        return datetime(year = self.year+2000,month=self.mon,day=self.day,hour=self.hour,minute=self.min,second=self.sec)
+        return datetime.datetime(year = self.year+2000,month=self.mon,day=self.day,hour=self.hour,minute=self.min,second=self.sec)
 
         
 class PktCmdInfo(MrfStruct):

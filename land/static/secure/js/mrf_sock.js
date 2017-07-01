@@ -94,7 +94,10 @@ function mrf_web_update(obj){
 
     for (var fld in data){
         jsl = sl + '.fld-'+fld;
-        //console.log("tried to update select "+jsl);
+        if (tag.app == 'timers'){
+            console.log("tried to update select "+jsl + " with data "+data[fld]);
+            
+        }
         $(jsl).html(data[fld]);
             
     }
@@ -118,7 +121,8 @@ function init_app(){
         app = $(this).attr('app');
         tab = $(this).attr('tab');
         row = $(this).attr('row');
-        fld = $(this).attr('fld');
+        //fld = $(this).attr('fld');
+        fld = $(this).attr('mc-fld');
         cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
         console.log(" mrf cb app :"+app );
         console.log(cdata)

@@ -14,7 +14,6 @@ sys.path.append('../lib')
 import install
 import psycopg2
 import os
-from datetime import datetime
 import time
 import json
 import signal

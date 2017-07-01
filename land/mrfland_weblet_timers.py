@@ -33,15 +33,20 @@ class MrfLandWebletTimers(MrflandWeblet):
         self.log.info("num MrfSensTimer found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
+
+        self._init_vals = {}
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
+            self._init_vals[s.label] = { 'on' : '00:00' , 'off' : '00:00' }
         self.log.info("MrfSensTimer : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
     def sens_callback(self, label, data ):
-        self.log.info("TimersWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        tag = self.mktag(self.tag, label)
+        self.log.warn("TimersWeblet : sens_callback  %s tag %s  data %s "%(label,repr(tag),repr(data)))
+        
         self.rm.webupdate(self.mktag(self.tag, label), data)
         
     
@@ -50,7 +55,8 @@ class MrfLandWebletTimers(MrflandWeblet):
         s =  """
         <h2>%s</h2>"""%self.label
         if len(self.sl):
-            s += MrflandObjectTable(self.tag, "timers", self.sl[0]._output, self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")])
+            self.log.warn("timer init_vals is %s"%repr(self._init_vals))
+            s += MrflandObjectTable(self.tag, "timers", self.sl[0]._output, self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")], init_vals = self._init_vals)
         return s
 
 

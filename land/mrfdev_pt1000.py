@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from mrf_sens import MrfSens, MrfDev
-from datetime import datetime
+import datetime
 import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test
@@ -145,8 +145,8 @@ class MrfSensPt1000(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
                   ('milliohms' , long) ]  # hmpff
     
-    _out_flds_ = [ ('send_date' , datetime.now ),
-                   ('recd_date' , datetime.now),
+    _out_flds_ = [ ('send_date' , datetime.datetime.now ),
+                   ('recd_date' , datetime.datetime.now),
                    ('milliohms' , int ),
                    ('temp'      , float) ]
 
@@ -175,7 +175,7 @@ class MrfSensPt1000(MrfSens):
     def genout(self,indata,outdata):
         #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
-        outdata['recd_date'] = datetime.now()
+        outdata['recd_date'] = datetime.datetime.now()
         outdata['milliohms']  = int(indata['milliohms'])
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
         #self.log.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
@@ -186,8 +186,8 @@ class MrfSensPtRelay(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
                   ('relay' , int) ]  # hmpff
     
-    _out_flds_ = [ ('send_date' , datetime.now ),
-                   ('recd_date' , datetime.now),
+    _out_flds_ = [ ('send_date' , datetime.datetime.now ),
+                   ('recd_date' , datetime.datetime.now),
                    ('relay' , int )
     ]
 
@@ -195,7 +195,7 @@ class MrfSensPtRelay(MrfSens):
     def genout(self,indata,outdata):
         #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
-        outdata['recd_date'] = datetime.now()
+        outdata['recd_date'] = datetime.datetime.now()
         outdata['relay']  = int(indata['relay'])
         return outdata
         
@@ -234,7 +234,7 @@ class Pt1000Dev(MrfDev):
                 
 
         elif  param.type == mrf_cmd_set_relay or param.type == mrf_cmd_get_relay:
-            now = datetime.now()
+            now = datetime.datetime.now()
             td =  PktTimeDate()
             td.set(now)
             inp = { 'date' : td,
