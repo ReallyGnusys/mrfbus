@@ -46,6 +46,7 @@ class MrfLandWebletTimers(MrflandWeblet):
     def sens_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
         self.log.warn("TimersWeblet : sens_callback  %s tag %s  data %s "%(label,repr(tag),repr(data)))
+        self._init_vals[label] = data
         
         self.rm.webupdate(self.mktag(self.tag, label), data)
         

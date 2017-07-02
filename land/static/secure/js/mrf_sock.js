@@ -133,22 +133,27 @@ function init_app(){
 
     $('.mrfctrl_timepick').timepicker().on('show.timepicker', function(e) {
         
-        
         console.log('Show : The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
         console.log('The minute is ' + e.time.minutes);
         console.log('The meridian is ' + e.time.meridian);
-        $(this).timepicker('setTime', '11:11');
         val = {"hour": e.time.hours , "minute":e.time.minutes , "second" : 0  }
         app = $(this).attr('app');
         tab = $(this).attr('tab');
         row = $(this).attr('row');
         fld = $(this).attr('mc-fld');
+
+        hval = $(".app-"+app+".tab-"+tab+".row-"+row+".fld-"+fld).html()
+        console.log("hval = "+hval)
+        $(this).timepicker('setTime', hval);
+        
+        
+
         cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
         console.log(" mrf cb app :"+app );
         console.log(cdata)
         
-        ws.send(mrf_ccmd(app,"mrfctrl",cdata));
+        //ws.send(mrf_ccmd(app,"mrfctrl",cdata));
       });
     
 
