@@ -39,10 +39,10 @@ APP ?= default
 
 MSRC=${MRFHOME}/mrflib/src
 
-MOBJ=${MRFMAKE}obj
-LSTD=${MRFMAKE}lst
+MOBJ=${MRFMAKE}${MRFID}/obj
+LSTD=${MRFMAKE}${MRFID}/lst
 
-BIN=${MRFMAKE}bin
+BIN=${MRFMAKE}${MRFID}/bin
 #APPSRC=${MRFMAKE}src
 APPDIR=${MRFHOME}/apps/${APP}
 APPSRC=${APPDIR}

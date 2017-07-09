@@ -14,13 +14,14 @@ sys.path.append('../lib')
 import install
 import psycopg2
 import os
+from datetime import datetime
 import time
 import json
 import signal
 import Queue
 from collections import OrderedDict
 
-from mrflog import mrf_log_init
+from mrflog import mrf_log_init, mrflog
 from mainapp import mainapp
 from public import publicapp
 from pubsock import PubSocketHandler
@@ -37,7 +38,6 @@ from mrfland_weblet_timers import MrfLandWebletTimers
 
 
 clients = dict()
-alog = mrf_log_init()
 
 
 def broadcast(obj):
@@ -45,17 +45,17 @@ def broadcast(obj):
     _jso_broadcast(msg)
 
 def _jso_broadcast(raw):
-    alog.debug( "_jso_broadcast : "+str(len(clients))+" clients")
-    alog.debug(" clients = "+str(clients))
-    #alog.debug("raw:"+raw);
+    mrflog.debug( "_jso_broadcast : "+str(len(clients))+" clients")
+    mrflog.debug(" clients = "+str(clients))
+    #mrflog.debug("raw:"+raw);
     for client in clients :   
-        alog.debug( "client:"+client)
+        mrflog.debug( "client:"+client)
         clients[client]['object'].write_message(raw + "\r\n\r\n")
 
 
 def send_object_to_client(id,obj):
     username = clients[id]['username']
-    alog.debug( "send_object_to_client: "+username+" sent cmd "+str(obj['cmd']))
+    mrflog.debug( "send_object_to_client: "+username+" sent cmd "+str(obj['cmd']))
     msg = mrfland.to_json(obj)
     clients[id]['object'].write_message(msg+"\r\n\r\n")
 
@@ -84,26 +84,26 @@ class IndexHandler(tornado.web.RequestHandler):
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def open(self, *args):        
         self.id = self.get_argument("Id")
-        alog.info("client attempt to open ws:Id="+self.id)
-        #alog.info("here comes websockhandler self")
+        mrflog.info("client attempt to open ws:Id="+self.id)
+        #mrflog.info("here comes websockhandler self")
         #print str(dir(self))
         #check id has been issued
-        alog.info("headers:"+str(self.request.headers))
-        #alog.debug("staff_type = "+str(stype))
+        mrflog.info("headers:"+str(self.request.headers))
+        #mrflog.debug("staff_type = "+str(stype))
 
         rs =  self._request_summary()
-        alog.debug("req_sum:"+rs)
+        mrflog.debug("req_sum:"+rs)
         regx = r'^GET /ws\?Id=%s \(([^\(]+)\)'%self.id
         #print "rs:"+rs
         #print "regx:"+regx
         mob = re.match(regx,rs)
         if mob:
             ip = mob.group(1)
-            alog.info("client ip="+ip)
+            mrflog.info("client ip="+ip)
             sob =  mrfland.comm.check_socket(self.id,ip)
         else:
             ip = 'none'
-            alog.debug("client ip not found!")
+            mrflog.debug("client ip not found!")
             return
             
         
@@ -119,19 +119,19 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         
     def on_message(self, message):
-        alog.info("client message on wsid ="+self.id+" "+str(message))
+        mrflog.info("client message on wsid ="+self.id+" "+str(message))
         cobj = mrfland.json_parse(message)
 
         if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
-            alog.info("decoded client command %s"%repr(cobj))
+            mrflog.info("decoded client command %s"%repr(cobj))
             server.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
     
     def on_close(self):
         self.id = self.get_argument("Id")
-        alog.info("*************************")
-        alog.info("client closed ws:Id="+self.id)
-        alog.info("ws handler close")
-        alog.info("*************************")
+        mrflog.info("*************************")
+        mrflog.info("client closed ws:Id="+self.id)
+        mrflog.info("ws handler close")
+        mrflog.info("*************************")
         mrfland.comm.del_client(self.id)
     
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
@@ -144,12 +144,12 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
     def get_current_user(self):
         return self.get_secure_cookie(install.sess_cookie)  
     def get(self, path):
-        alog.info("AuthStaticFileHandler.get: path = "+str(path))
+        mrflog.info("AuthStaticFileHandler.get: path = "+str(path))
         if self.current_user:
-            alog.info("authorised : returning static content");
+            mrflog.info("authorised : returning static content");
             tornado.web.StaticFileHandler.get(self, path) 
         else:
-            alog.info("unauthorised")
+            mrflog.info("unauthorised")
             self.send_error(403)
             return None
 
@@ -648,13 +648,14 @@ class MrflandServer(object):
                 #self.log.info("calling state task qc %d"%self.quiet_cnt)
                 self.quiet_cnt = 0
             
-alog.info('Application started')
 if __name__ == '__main__':
     parse_command_line()
+    alog = mrf_log_init()
+    alog.info('Application started')
     alog.info("Mrfland web server starting on port "+str(options.port))
     
     hostlabels = {
-        'timer' : ["UFH_P0","UFH_P1","RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1"]
+        'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1"]
         }
 
    
@@ -671,7 +672,7 @@ if __name__ == '__main__':
 
     rm = mrfland.MrflandRegManager(alog)
     
-    host = MrfDevHost(rm, "host", 1, hostlabels, alog)
+    host = MrfDevHost(rm, "host", 1, {}, alog)
     
     hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels, alog)
 

@@ -201,6 +201,7 @@ static int app_ccallback_fd;
 
 int mrf_arch_app_callback(MRF_APP_CALLBACK callback){
   // allow mrf_app_init to set fd and callback to add to epoll loop
+  mrf_debug("mrf_arch_app_callback mrfid %d\n",MRFID);
   app_callback    = callback;
   return 0;
 

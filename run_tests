@@ -7,20 +7,20 @@ LOGDIR=${TMP}/log
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+stdbuf -oL examples/hostsim/0x01/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
+stdbuf -oL examples/hostsim/0x02/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
 h02_pid=$!
 echo $h02_pid
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
+stdbuf -oL examples/hostsim/0x20/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
 h20_pid=$!
 echo $h20_pid
 
 
-stdbuf -oL examples/hostsim/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
+stdbuf -oL examples/hostsim/0x2f/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
 h2f_pid=$!
 echo $h2f_pid
 
@@ -51,11 +51,12 @@ rv=$?
 
 #sleep 1
 
-kill -SIGUSR1  $h01_pid $h02_pid $h20_pid $h2f_pid
-kill $land_pid
+echo kill -SIGUSR1  $h01_pid $h02_pid $h20_pid $h2f_pid
+echo kill $land_pid
+
 
 #sleep 1
-deactivate
+#deactivate
 
 
 echo "run_tests adios at $(date)  rv ="$rv
@@ -68,7 +69,7 @@ else
     echo "FAILED"
 fi
 
-exit $rv
+#exit $rv
 
 
 
