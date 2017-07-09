@@ -36,6 +36,9 @@ if __name__ == '__main__':
         }
 
     rm = mrfland.MrflandRegManager(alog)
+
+
+
     
     host = MrfDevHost(rm, "host", 1, {}, alog)
     

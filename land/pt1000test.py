@@ -244,7 +244,7 @@ class TestPt1000(DeviceTestCase):
         self.app_cmd_info_test(self.dest)
 
     
-    def test01_core_tests(self):
+    def skipped_test01_core_tests(self):
         self.set_time_test(self.dest,self.host)
         #self.get_time_test(self.host)
         return
