@@ -112,15 +112,18 @@ class DeviceTestCase(LandTestCase):
         resp = self.response(timeout=self.timeout)
         print "****got resp:\n%s"%repr(resp)
         pass_fail = self.check_attrs(resp,PktSysInfo())
+        print "****passfail is:\n%s"%repr(pass_fail)
         self.assertTrue(pass_fail)
 
         if resp['num_cmds'] != MRF_NUM_SYS_CMDS:
             pass_fail = False
+        print "****passfail(2) is:\n%s"%repr(pass_fail)
         self.assertTrue(pass_fail)
                                      
 
         if self.checkgit and gitversion != resp["mrfbus_version"]:
             pass_fail = False
+            print "****passfail(3) is:\n%s"%repr(pass_fail)
             self.assertTrue(pass_fail)
 
         if pass_fail:

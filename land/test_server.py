@@ -22,9 +22,9 @@ if __name__ == '__main__':
 
     
     sx01 = MrfDevSim(rm, "sx01", 1, {}, alog)
-    sx02 = MrfDevSim(rm, "sx02", 1, {}, alog)
-    sx20 = MrfDevSim(rm, "sx20", 1, {}, alog)
-    sxsf = MrfDevSim(rm, "sx2f", 1, {}, alog)
+    sx02 = MrfDevSim(rm, "sx02", 2, {}, alog)
+    sx20 = MrfDevSim(rm, "sx20", 0x20, {}, alog)
+    sxsf = MrfDevSim(rm, "sx2f", 0x2f, {}, alog)
     
     ml =  MrflandServer(rm, alog )
 
