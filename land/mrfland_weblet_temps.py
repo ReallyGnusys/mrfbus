@@ -36,16 +36,14 @@ class MrfLandWebletTemps(MrflandWeblet):
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
-        mrflog.info("MrfSensPt1000 : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
+
     def sens_callback(self, label, data ):
         mrflog.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag('temp', label), data)
-                          
-        
-    
+
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
         s =  """
@@ -54,4 +52,3 @@ class MrfLandWebletTemps(MrflandWeblet):
             mrflog.warn("labels are %s "%repr(self.slabs))
             s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s
-

@@ -37,7 +37,7 @@ if __name__ == '__main__':
 
     rm = mrfland.MrflandRegManager()
     
-    host = MrfDevHost(rm, "host", 1, {})
+    host = MrfDevHost(rm, "host", 1, hostlabels)
     
     hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels)
 

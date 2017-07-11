@@ -18,7 +18,7 @@ from mrf_sens import MrfSens, MrfDev
 import datetime
 import ctypes
 from mrf_structs import *
-
+import mrflog
 
 
 class MrfSensTimer(MrfSens):
@@ -39,9 +39,9 @@ class MrfSensTimer(MrfSens):
             return (outdata['on'] < nt) or ( nt < outdata['off'])
     
     def genout(self,indata, outdata):
-        #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         if not indata.has_key('cname'):
-            self.log.error("%s genout no key cname in %s"%(self.__class__.__name__, repr(indata)))
+            mrflog.error("%s genout no key cname in %s"%(self.__class__.__name__, repr(indata)))
             return
 
         
@@ -52,8 +52,8 @@ class MrfSensTimer(MrfSens):
         nt = datetime.time (nw.hour,nw.minute,nw.second)
         outdata['active'] = self.is_active(outdata)
 
-        self.log.warn("%s %s genout %s"%(self.__class__.__name__, self.label, repr(outdata)))
-        self.log.warn("%s %s subsribers = %s"%(self.__class__.__name__, self.label, repr(self.subscribers)))
+        mrflog.warn("%s %s genout %s"%(self.__class__.__name__, self.label, repr(outdata)))
+        mrflog.warn("%s %s subsribers = %s"%(self.__class__.__name__, self.label, repr(self.subscribers)))
         return outdata
         
 
