@@ -21,7 +21,7 @@ import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test
 from math import sqrt
-
+import mrflog
 
 
 class PktSpiDebug(MrfStruct):
@@ -165,7 +165,7 @@ class MrfSensPt1000(MrfSens):
         T = T +  sqrt(tmp)
         T = T/ (2.0 * B)
         #except:
-        #    self.log.error("res_to_temp error chan %d  with milliohms %d tmp %f"%(self.channel,milliohms,tmp))
+        #    mrflog.error("res_to_temp error chan %d  with milliohms %d tmp %f"%(self.channel,milliohms,tmp))
         #    T = -273.16
         T = (int)(T*100)   # only 2 DP makes sense
         T = T/100.0
@@ -173,12 +173,12 @@ class MrfSensPt1000(MrfSens):
 
     
     def genout(self,indata,outdata):
-        #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()
         outdata['milliohms']  = int(indata['milliohms'])
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
-        #self.log.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
+        #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         return outdata
         
 
@@ -193,7 +193,7 @@ class MrfSensPtRelay(MrfSens):
 
     
     def genout(self,indata,outdata):
-        #self.log.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()
         outdata['relay']  = int(indata['relay'])
@@ -211,14 +211,14 @@ class Pt1000Dev(MrfDev):
     _cmdset = Pt1000AppCmds
 
     def app_packet(self, hdr, param , resp):
-        self.log.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        self.log.info("Pt1000Dev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        mrflog.info("Pt1000Dev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                self.log.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                mrflog.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }

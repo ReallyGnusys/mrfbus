@@ -3,7 +3,8 @@
 from tornado.options import  options, parse_command_line  #yFIXME move mrfland_server.py
 
 import mrfland
-from mrflog import mrf_log_init, mrflog
+
+import mrflog
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_host import MrfDevHost
@@ -15,9 +16,8 @@ from mrfland_server import MrflandServer
             
 if __name__ == '__main__':
     parse_command_line()
-    alog = mrf_log_init()
-    alog.info('Application started')
-    alog.info("Mrfland web server starting on port "+str(options.port))
+    mrflog.info('Application started')
+    mrflog.info("Mrfland web server starting on port "+str(options.port))
     
     hostlabels = {
         'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1"]
@@ -35,13 +35,13 @@ if __name__ == '__main__':
         'relay' : ["RADS1_PUMP", "DHW1_HX_PUMP"]
         }
 
-    rm = mrfland.MrflandRegManager(alog)
+    rm = mrfland.MrflandRegManager()
     
-    host = MrfDevHost(rm, "host", 1, {}, alog)
+    host = MrfDevHost(rm, "host", 1, {})
     
-    hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels, alog)
+    hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels)
 
-    hb1 = DevHeatbox(rm, "heatbox_kitchen"  , 4, hb1labels, alog)
+    hb1 = DevHeatbox(rm, "heatbox_kitchen"  , 4, hb1labels)
 
     
 
@@ -53,17 +53,17 @@ if __name__ == '__main__':
     #war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})
 
 
-    rm.weblet_register(MrfLandWebletTemps(rm, alog,
+    rm.weblet_register(MrfLandWebletTemps(rm, 
                                           {'tag':'temps','label':'Temperatures'}))
 
-    rm.weblet_register(MrfLandWebletRelays(rm, alog,
+    rm.weblet_register(MrfLandWebletRelays(rm,
                                            {'tag':'relays','label':'Relays'}))
     
-    rm.weblet_register(MrfLandWebletTimers(rm, alog,
+    rm.weblet_register(MrfLandWebletTimers(rm, 
                                            {'tag':'timers','label':'Timers'}))
     
     
     
-    ml =  MrflandServer(rm, alog )
+    ml =  MrflandServer(rm)
 
 

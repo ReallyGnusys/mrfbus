@@ -6,7 +6,7 @@ from mrf_structs import *
 from core_tests import mrf_cmd_app_test
 from math import sqrt
 from mrfdev_pt1000 import PktPt1000State, PktRelayState, MrfSensPt1000, MrfSensPtRelay
-
+import mrflog
 
 MAX_RTDS = 7
 
@@ -56,14 +56,14 @@ class DevHeatbox(MrfDev):
     _cmdset = HeatboxAppCmds
 
     def app_packet(self, hdr, param , resp):
-        self.log.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        self.log.info("Heatbox app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        mrflog.info("Heatbox app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                self.log.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                mrflog.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }

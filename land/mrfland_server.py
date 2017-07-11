@@ -18,7 +18,7 @@ import signal
 import Queue
 from collections import OrderedDict
 
-from mrflog import mrflog
+import mrflog
 from mainapp import mainapp
 from public import publicapp
 from pubsock import PubSocketHandler
@@ -153,15 +153,14 @@ class AuthStaticFileHandler(tornado.web.StaticFileHandler):
 class SimpleTcpClient(object):
     client_id = 0
  
-    def __init__(self, stream,log, landserver,disconnect):
+    def __init__(self, stream,  landserver,disconnect):
         #super(type(self)).__init__(self)
         SimpleTcpClient.client_id += 1
-        self.log = log
         self.landserver = landserver
         self.disconnect = disconnect
         self.id = SimpleTcpClient.client_id
         #print "SimpleTcpClient constuctor %d"%self.id
-        self.log.info("SimpleTcpClient constructor %d"%self.id)
+        mrflog.info("SimpleTcpClient constructor %d"%self.id)
         self.stream = stream
  
         self.stream.socket.setsockopt(
@@ -173,7 +172,7 @@ class SimpleTcpClient(object):
  
     @tornado.gen.coroutine
     def on_disconnect(self):
-        self.log.info("tcp conn %d disconnected"%self.id)
+        mrflog.info("tcp conn %d disconnected"%self.id)
         self.disconnect(self.id)
         yield []
  
@@ -182,13 +181,13 @@ class SimpleTcpClient(object):
         try:
             while True:
                 line = yield self.stream.read_until(b'\n')
-                self.log.info("got line %s"%line)
+                mrflog.info("got line %s"%line)
                 #s = line.decode('utf-8').strip()
-                #self.log('got |%s|' % repr(s))
+                #mrflog('got |%s|' % repr(s))
                 ob = mrfland.json_parse(line)
                 if ob:
                     data = None
-                    self.log.info("json ob : %s"%repr(ob))
+                    mrflog.info("json ob : %s"%repr(ob))
                     if ob.has_key('dest') and ob.has_key('cmd'):
                         if ob.has_key('data'):
                             if ob['cmd'] in MrfSysCmds:
@@ -205,9 +204,9 @@ class SimpleTcpClient(object):
                             
                         self.landserver._callback(self.id, ob['dest'],ob['cmd'],data)
                     else:
-                        self.log.info("no valid cmd decoded in  %s"%repr(line))
+                        mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
-                    self.log.warn("no json ob decoded in %s"%repr(line))
+                    mrflog.warn("no json ob decoded in %s"%repr(line))
                 yield self.stream.write("\n")
         except tornado.iostream.StreamClosedError:
             pass
@@ -219,7 +218,7 @@ class SimpleTcpClient(object):
             raddr = '%s:%d' % self.stream.socket.getpeername()
         except Exception:
             pass
-        self.log.info('new, %s' % raddr)
+        mrflog.info('new, %s' % raddr)
  
         yield self.dispatch_client()
  
@@ -241,45 +240,43 @@ class MrfCmdObj(object):
 
 
 class MrfTcpServer(tornado.tcpserver.TCPServer):
-    def __init__(self,log,landserver):
+    def __init__(self, landserver):
         tornado.tcpserver.TCPServer.__init__(self)
-        self.log = log
         self.landserver = landserver
         self.clients = {}
 
 
     def client_disconnect(self,id):
         self.clients.pop(id)
-        self.log.info("removed tcp client %s"%repr(id))
-        self.log.info("tcp clients now %s"%repr(self.clients.keys()))
+        mrflog.info("removed tcp client %s"%repr(id))
+        mrflog.info("tcp clients now %s"%repr(self.clients.keys()))
     def tag_is_tcp_client(self,tag):
         return self.clients.has_key(tag)
     
     def write_to_client(self,id , msg):
         if not self.clients.has_key(id):
-            self.log.error("%s no client with id %d"%(self.__class__.__name__,id))
+            mrflog.error("%s no client with id %d"%(self.__class__.__name__,id))
             return
         self.clients[id].stream.write(msg)
-        self.log.info("wrote_to client %d"%id)
+        mrflog.info("wrote_to client %d"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
         """
         Called for each new connection, stream.socket is
         a reference to socket object
         """
-        connection = SimpleTcpClient(stream,self.log, self.landserver,self.client_disconnect)
+        connection = SimpleTcpClient(stream, self.landserver,self.client_disconnect)
         self.clients[connection.id] = connection
         yield connection.on_connect()  
 
 class MrflandServer(object):
 
-    def __init__(self,rm,log):
+    def __init__(self,rm):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
-            self.log.warn( "CTRL-C pressed , quitting")
+            mrflog.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
         global server
-        self.log = log
         self.rm = rm
         self._timeout_handle = None
         server = self  # FIXME ouch
@@ -296,7 +293,7 @@ class MrflandServer(object):
 
         #ct = time.time() + 5  # start tick
         #self.ioloop.add_timeout(ct,self.time_tick)
-        self.log.warn("adding self.rfd = %d to ioloop"%self.rfd)
+        mrflog.warn("adding self.rfd = %d to ioloop"%self.rfd)
         #self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
         self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
         #self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
@@ -325,11 +322,11 @@ class MrflandServer(object):
     
     def web_client_command(self,wsid,app,cmd,data):
         if app not in self.rm.weblets.keys():
-            self.log.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
+            mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
         self.rm.weblets[app].cmd(cmd,data)
         for dup in self.rm.dups:
-            self.log.warn("%s calling _callback"%(self.__class__.__name__))
+            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
         self.rm.dups = []
 
@@ -341,13 +338,13 @@ class MrflandServer(object):
           
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if True or not self._active:
-            self.log.warn("activating! qsize %s"%self.q.qsize())
+            mrflog.warn("activating! qsize %s"%self.q.qsize())
             self.active_timer = 0
             self._active = True
             self._set_timeout(0.02)
             
     def _deactivate(self):  # ramp down tick when quiet
-        self.log.warn("deactivating!")
+        mrflog.warn("deactivating!")
         self._active = False
         self.active_cmd = None
         self._set_timeout(5.0)
@@ -358,10 +355,10 @@ class MrflandServer(object):
     def queue_cmd(self,tag, dest, cmd_code,dstruct=None):
         cobj = MrfCmdObj(tag, dest, cmd_code,dstruct)
         if self.active_cmd:
-            self.log.warn("queuing cmd %s"%repr(cobj))
+            mrflog.warn("queuing cmd %s"%repr(cobj))
             self.q.put(cobj)
         else:
-            self.log.warn("running cmd immediately %s"%repr(cobj))
+            mrflog.warn("running cmd immediately %s"%repr(cobj))
             self._next_cmd(cobj)
             self._activate()
 
@@ -370,7 +367,7 @@ class MrflandServer(object):
             self.resp_timer = 0
             self.active_cmd = cobj            
         else:
-            self.log.warn("_run_cmd failed for %s"%repr(cobj))
+            mrflog.warn("_run_cmd failed for %s"%repr(cobj))
 
     def _app_cmd_set(self,dest):
         for appn in self.apps.keys():
@@ -380,13 +377,13 @@ class MrflandServer(object):
 
     def _dev_cmd_set(self,dest):
         if not self.rm.devmap.has_key(dest):
-            self.log.error("no device %d found in rm"%dest)
+            mrflog.error("no device %d found in rm"%dest)
             return None
 
         return self.rm.devmap[dest]._cmdset
     
     def _run_cmd(self,cobj):
-        self.log.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
+        mrflog.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
         if cobj.dest > 255:
             print "dest > 255"
             return -1
@@ -396,23 +393,23 @@ class MrflandServer(object):
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
         elif (appcmds):
             paramtype = appcmds[cobj.cmd_code]['param']
-            self.log.info("app supplied command set for dest %d param is %s"%(cobj.dest,repr(paramtype)))
+            mrflog.info("app supplied command set for dest %d param is %s"%(cobj.dest,repr(paramtype)))
             
         else:
-            self.log.error("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
+            mrflog.error("unrecognised cmd_code (01xs) %d"%cobj.cmd_code)
             return -1
 
         
         if type(cobj.dstruct) == type(None) and type(paramtype) != type(None):
-            self.log.error("No param sent , expected %s"%type(paramtype))
+            mrflog.error("No param sent , expected %s"%type(paramtype))
             return -1
         
         if type(paramtype) == type(None) and type(cobj.dstruct) != type(None):
-            self.log.error("Param sent ( type %s ) but None expected"%type(cobj.dstruct))
+            mrflog.error("Param sent ( type %s ) but None expected"%type(cobj.dstruct))
             return -1
 
         if type(cobj.dstruct) != type(None) and type(cobj.dstruct) != type(paramtype()):
-            self.log.error("Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype())))
+            mrflog.error("Param sent ( type %s ) but  %s expected"%(type(cobj.dstruct),type(paramtype())))
             return -1
 
         mlen = 4
@@ -438,14 +435,14 @@ class MrflandServer(object):
             csum += int(msg[i])
         csum = csum % 256
         msg[mlen - 1] = csum
-        self.log.info("msg len is %d"%len(msg))
+        mrflog.info("msg len is %d"%len(msg))
         self._app_fifo_write(msg)
         return 0
     def _app_fifo_write(self,msg):
         n = self.nsock.send(msg)
         #self.nsock.flush()
         #self.app_fifo.close()
-        self.log.warn("written %d bytes to app_fifo"%n)
+        mrflog.warn("written %d bytes to app_fifo"%n)
         
 
     def parse_input(self,resp):
@@ -468,19 +465,19 @@ class MrflandServer(object):
         #print "hdr is:\n%s\n"%repr(hdr)
 
         if hdr.netid != self.netid: # only looking for packets from this netid
-            self.log.info("not our netid")
+            mrflog.info("not our netid")
             return None,None,None
         
         if hdr.udest != 0: # only looking for packets destined for us
-            self.log.info("not our us")
+            mrflog.info("not our us")
             return None,None,None
 
         if not (hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
-            self.log.info("not resp or struct")
-            self.log.info("hdr : %s"%repr(hdr))
+            mrflog.info("not resp or struct")
+            mrflog.info("hdr : %s"%repr(hdr))
             return None,None,None
         ## here just pass this to rm device model to handle
-        self.log.info("server parse input got hdr %s"%repr(hdr))
+        mrflog.info("server parse input got hdr %s"%repr(hdr))
         param, rsp = self.rm.packet(hdr,resp)
         
         for wup in self.rm.wups:
@@ -491,7 +488,7 @@ class MrflandServer(object):
 
 
         for dup in self.rm.dups:
-            self.log.warn("%s calling _callback"%(self.__class__.__name__))
+            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
         self.rm.dups = []
 
@@ -504,41 +501,41 @@ class MrflandServer(object):
     def handle_response(self,hdr,param, robj,response=False):
         # test if sys command response or data
         if response:
-            self.log.info("handle_response hdr %s",repr(hdr))
+            mrflog.info("handle_response hdr %s",repr(hdr))
 
         # check response is for active_cmd
 
         if type(param) == type(None):
-            self.log.error("failed to get resp for packet with header %s"%repr(hdr))            
+            mrflog.error("failed to get resp for packet with header %s"%repr(hdr))            
         elif response and self.active_cmd and hdr.usrc == self.active_cmd.dest and param.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
-            self.log.info("got response for active command %s"%repr(self.active_cmd))
-            self.log.info("rsp %s"%(param))
+            mrflog.info("got response for active command %s"%repr(self.active_cmd))
+            mrflog.info("rsp %s"%(param))
             if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
-                self.log.info("response for tcp client %d"%self.active_cmd.tag)
-                self.log.info("robj dic is %s"%repr(robj.dic()))
+                mrflog.info("response for tcp client %d"%self.active_cmd.tag)
+                mrflog.info("robj dic is %s"%repr(robj.dic()))
                 rstr = mrfland.to_json(robj.dic())
                 self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
 
             self.active_cmd = None
                                 
     def _resp_handler(self,*args, **kwargs):
-        self.log.info("Input on response pipe")
+        mrflog.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
         hdr , param, resp  = self.parse_input(resp)
 
         if hdr  and param and resp:                    
-            self.log.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+            mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
             self.handle_response(hdr, param , resp, response=True )
 
     def _struct_handler(self,*args, **kwargs):
-        self.log.info("Input on data pipe")
+        mrflog.info("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)
 
         hdr , param, resp = self.parse_input(resp)
 
         if hdr and param and resp :                    
-            self.log.info("received object %s response from  %d"%(type(resp),hdr.usrc))
+            mrflog.info("received object %s response from  %d"%(type(resp),hdr.usrc))
             self.handle_response(hdr, param , resp)
             
     def _connect_to_mrfnet(self):
@@ -547,26 +544,26 @@ class MrflandServer(object):
         s.connect(("127.0.0.1", install.host_mrfbus_port))
         sfno = s.fileno()
 
-        self.log.warn("_connect_to_mrfnet - firststage  %d"%s.fileno())
+        mrflog.warn("_connect_to_mrfnet - firststage  %d"%s.fileno())
 
         if sfno > 0:
             self.rfd = sfno
             self.nsock = s
-            self.log.warn("opened response socket %d"%self.rfd)
-            self.log.warn("_connect_to_mrfnet - got sfno %d"%sfno)
+            mrflog.warn("opened response socket %d"%self.rfd)
+            mrflog.warn("_connect_to_mrfnet - got sfno %d"%sfno)
             self.queue_cmd('server', 1, mrf_cmd_device_info)
         else:
-            self.log.error("_connect_to_mrfnet - failed to connect got sfno %d"%sfno)
+            mrflog.error("_connect_to_mrfnet - failed to connect got sfno %d"%sfno)
             sys.exit(-1)
 
     def _callback(self, tag, dest, cmd,data=None):
-        self.log.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
+        mrflog.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
     def _start_tcp_service(self):
-        self.tcp_server = MrfTcpServer(log = self.log, landserver = self )
+        self.tcp_server = MrfTcpServer( landserver = self )
         self.tcp_server.listen(install.tcpport)
-        self.log.info("started tcpserver on port %d"%install.tcpport)
+        mrflog.info("started tcpserver on port %d"%install.tcpport)
     def _start_webapp(self):        
         
         self._web_static_handler = NoCacheStaticFileHandler
@@ -591,10 +588,10 @@ class MrflandServer(object):
             }
 
 
-            self.log.info("starting https server certfile %s keyfile %s"%\
+            mrflog.info("starting https server certfile %s keyfile %s"%\
                       (install._ssl_cert_file,install._ssl_key_file))
         else:
-            self.log.info("starting http server")
+            mrflog.info("starting http server")
                            
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
 
@@ -603,27 +600,27 @@ class MrflandServer(object):
 
     def _check_if_anything(self):
         if self.q.empty():
-            self.log.warn("_check_if_anything -queue empty")
+            mrflog.warn("_check_if_anything -queue empty")
             self._deactivate()
         else:
-            self.log.warn("_check_if_anything : running next command")
+            mrflog.warn("_check_if_anything : running next command")
             self._next_cmd(self.q.get())
       
 
     def time_tick(self):
         
         if self._active:
-            self.log.info("time_tick active");
+            mrflog.info("time_tick active");
             if self.active_cmd == None:
-                self.log.info("tick can run another cmd")
+                mrflog.info("tick can run another cmd")
             else:
-                self.log.warn("time_tick active resp_timer %d"%self.resp_timer)
+                mrflog.warn("time_tick active resp_timer %d"%self.resp_timer)
                 self.resp_timer += 1
                 if self.resp_timer > 20:
-                    self.log.warn("give up waiting for response for %s"%( self.active_cmd))
+                    mrflog.warn("give up waiting for response for %s"%( self.active_cmd))
                     if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
-                        self.log.info("response for tcp client %d"%self.active_cmd.tag)
-                        self.log.info("sending empty dict")
+                        mrflog.info("response for tcp client %d"%self.active_cmd.tag)
+                        mrflog.info("sending empty dict")
                         rstr = mrfland.to_json({})
                         self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
                     self.active_cmd = None
@@ -638,10 +635,10 @@ class MrflandServer(object):
             self._set_timeout(0.1)
             self.quiet_cnt = 0
         else:
-            self.log.info("inactive - setting 5 secs - quiet_cnt %d"%self.quiet_cnt)
+            mrflog.info("inactive - setting 5 secs - quiet_cnt %d"%self.quiet_cnt)
             self.quiet_cnt += 1
             self._set_timeout(5.0)
             if self.quiet_cnt % 5 == 0  :
-                #self.log.info("calling state task qc %d"%self.quiet_cnt)
+                #mrflog.info("calling state task qc %d"%self.quiet_cnt)
                 self.quiet_cnt = 0
             

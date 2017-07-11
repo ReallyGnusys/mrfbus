@@ -18,19 +18,21 @@ from mrf_sens_timer import MrfSensTimer
 from mrf_sens import MrfSens, MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from collections import OrderedDict
+import mrflog
 
 class MrfLandWebletTimers(MrflandWeblet):
     def post_init(self):
-        self.log.info("%s post_init"%(self.__class__.__name__))
+        mrflog.info("%s post_init"%(self.__class__.__name__))
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
         if not self.rm.senstypes.has_key(MrfSensTimer):
-            self.log.error("%s post_init failed to find sensor type MrfSensTimer in rm"%self.__class__.__name__)
+            mrflog.error("%s post_init failed to find sensor type MrfSensTimer in rm"%self.__class__.__name__)
+            self.sl = {}
             return
         self.sl = self.rm.senstypes[MrfSensTimer]
 
-        self.log.info("num MrfSensTimer found was %d"%len(self.sl))
+        mrflog.info("num MrfSensTimer found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
 
@@ -39,13 +41,13 @@ class MrfLandWebletTimers(MrflandWeblet):
             self.slabs.append(s.label)
             self.sens[s.label] = s
             self._init_vals[s.label] = { 'on' : '00:00' , 'off' : '00:00' }
-        self.log.info("MrfSensTimer : %s"%repr(self.slabs))
+        mrflog.info("MrfSensTimer : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
     def sens_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
-        self.log.warn("TimersWeblet : sens_callback  %s tag %s  data %s "%(label,repr(tag),repr(data)))
+        mrflog.warn("TimersWeblet : sens_callback  %s tag %s  data %s "%(label,repr(tag),repr(data)))
         self._init_vals[label] = data
         
         self.rm.webupdate(self.mktag(self.tag, label), data)
@@ -56,30 +58,30 @@ class MrfLandWebletTimers(MrflandWeblet):
         s =  """
         <h2>%s</h2>"""%self.label
         if len(self.sl):
-            self.log.warn("timer init_vals is %s"%repr(self._init_vals))
+            mrflog.warn("timer init_vals is %s"%repr(self._init_vals))
             s += MrflandObjectTable(self.tag, "timers", self.sl[0]._output, self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")], init_vals = self._init_vals)
         return s
 
 
     def cmd_mrfctrl(self,data):
-        self.log.info( "cmd_mrfctrl here, data was %s"%repr(data))
+        mrflog.info( "cmd_mrfctrl here, data was %s"%repr(data))
         if not data.has_key("tab") or not data.has_key("row"):
-            self.log.error("cmd_mrfctrl data problem in %s"%repr(data))
+            mrflog.error("cmd_mrfctrl data problem in %s"%repr(data))
             return
 
 
         if not self.rm.sensors.has_key(str(data['row'])):
-            self.log.error("cmd_mrfctrl no device %s"%str(data['row']))
-            self.log.error("got %s"%repr(self.rm.sensors.keys()))
+            mrflog.error("cmd_mrfctrl no device %s"%str(data['row']))
+            mrflog.error("got %s"%repr(self.rm.sensors.keys()))
             return
         sens = self.rm.sensors[str(data['row'])]
 
         sensmap = self.rm.senslookup(sens.label)
 
         if sensmap == None:
-            self.log.error("couldn't find mapping of sensor label %s"%sens.label)
+            mrflog.error("couldn't find mapping of sensor label %s"%sens.label)
             return
-        self.log.warn("%s cmd_mrfctrl sens = %s got data %s"%
+        mrflog.warn("%s cmd_mrfctrl sens = %s got data %s"%
                       (self.__class__.__name__, sens.label,repr(data)))
         # timer is sensor of user input more than anything
         inp = {}

@@ -1,10 +1,20 @@
 import logging
 import install
 
+
+class MrfLog(object):
+    def __init__(self, level = install.log_level):
+        formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s' , datefmt='%Y-%m-%d,%H:%M:%S')
+        self.log = logging.getLogger(install.logger_name)
+        hdlr = logging.FileHandler(install.logdir+install.mrflog)
+        hdlr.setFormatter(formatter)    
+        self.log.addHandler(hdlr) 
+        self.log.setLevel(level)  
+        
+    
 def mrf_log():
     return logging.getLogger(install.logger_name);
 
-mrflog=None
 
 """
 def logdeco(f):
@@ -18,16 +28,22 @@ def logdeco(f):
 def mrflog(*args, **kwargs)
 """           
 
+mrflog = None
+
 def mrf_log_init(level = install.log_level):
     global mrflog
+    if mrflog != None:
+        return mrflog
     formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s' , datefmt='%Y-%m-%d,%H:%M:%S')
-    alog = logging.getLogger(install.logger_name)
+    mrflog = logging.getLogger(install.logger_name)
     hdlr = logging.FileHandler(install.logdir+install.mrflog)
     hdlr.setFormatter(formatter)    
-    alog.addHandler(hdlr) 
-    alog.setLevel(level)  
-    mrflog = alog
-    return alog
+    mrflog.addHandler(hdlr) 
+    mrflog.setLevel(level)  
+    return mrflog
+
+
+
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
     ch.setLevel(level)
@@ -37,4 +53,20 @@ def mrf_log_init(level = install.log_level):
     return alog
    
 
+def debug(*args, **kwargs):
+    log = mrf_log_init()
+    log.debug(*args, **kwargs)
+
+def info(*args, **kwargs):
+    log = mrf_log_init()
+    log.info(*args, **kwargs)
+
+def warn(*args, **kwargs):
+    log = mrf_log_init()
+    log.warn(*args, **kwargs)
+
+def error(*args, **kwargs):
+    log = mrf_log_init()
+    log.error(*args, **kwargs)
+    
 

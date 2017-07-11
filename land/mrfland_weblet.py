@@ -23,6 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from collections import OrderedDict
+import mrflog
 
 def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}):
     """ utility to generate a default html table to display an ordered dict """
@@ -89,19 +90,18 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 
 
 class MrflandWeblet(object):  
-    def __init__(self, rm, log, data):
+    def __init__(self, rm, data):
         if not data.has_key('tag'):
-            log.error('weblet data does not contain tag')
+            mrflog.error('weblet data does not contain tag')
             return
         if not data.has_key('label'):
-            log.error('weblet data does not contain label')
+            mrflog.error('weblet data does not contain label')
             return
         
-        log.info("creating weblet tag %s label %s"%(data['tag'],data['label']))
+        mrflog.info("creating weblet tag %s label %s"%(data['tag'],data['label']))
         self.rm = rm
         self.tag = data['tag']
         self.label = data['label']
-        self.log = log
         self.data = data
         if hasattr(self, 'post_init'):
             self.post_init()
@@ -117,16 +117,11 @@ class MrflandWeblet(object):
         s += self.pane_html()
         s += self.pane_html_footer()
         return s
-
-
-    def setlog(self,log):
-        self.log = log
-
     
     def cmd(self,cmd, data=None):
         fn = 'cmd_'+cmd
         if hasattr(self, fn):
-            self.log.info( "OK you can go")
+            mrflog.info( "OK you can go")
             return getattr(self,fn)(data)
         else:
-            self.log.info("you're not coming in here")
+            mrflog.info("you're not coming in here")

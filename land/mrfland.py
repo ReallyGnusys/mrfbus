@@ -30,15 +30,13 @@ import datetime
 
 #from datetime import datetime 
 import install
-from mrflog import mrf_log
+import mrflog
 from mrfland_state import MrflandState
 from mrfland_weblet import MrflandWeblet
 
 from mrf_structs import *
 
-from mrflog import mrf_log
 
-alog = mrf_log()
 
 def is_mrf_obj(ob):
     if ob == None:
@@ -81,17 +79,17 @@ class mrf_comm(object):
         self.sockets = {}
 
     def prepare_socket(self,sid,wsid,sessid,username,stype,ip):
-        alog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
+        mrflog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
         self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,ip)
         
     def check_socket(self,wsid,ip):
-        alog.info("checking socket id %s  ip %s"%(wsid,ip))
+        mrflog.info("checking socket id %s  ip %s"%(wsid,ip))
         if not wsid in self.sockets.keys():
-            alog.warn("wsid not found...(%s)"%wsid)            
+            mrflog.warn("wsid not found...(%s)"%wsid)            
             return None
         skt = self.sockets[wsid]
         if skt.ip != ip:
-            alog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
+            mrflog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
             return None
             
         return socket_info(skt)
@@ -100,31 +98,31 @@ class mrf_comm(object):
         
     def add_client(self,wsid,data):
         #self.sockets[sid] = staff_socket(sid)        
-        alog.info("adding wsid %s"%wsid)
+        mrflog.info("adding wsid %s"%wsid)
         self.clients[wsid] = data
         
     def del_client(self,wsid):
-        alog.info("deleting wsid %s"%wsid)
+        mrflog.info("deleting wsid %s"%wsid)
         if wsid in self.clients:
             del self.clients[wsid]
             self.sockets[wsid].close()
 
     def _jso_broadcast(self,raw):
-        alog.debug( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
-        alog.debug(" clients = "+str(self.clients))    
+        mrflog.debug( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+        mrflog.debug(" clients = "+str(self.clients))    
         for client in self.clients :   
-            alog.debug( "client:"+client)
+            mrflog.debug( "client:"+client)
             self.clients[client]['object'].write_message(raw + "\r\n\r\n")
 
     def send_object_to_client(self,id,obj):
         if not self.clients.has_key(id):
             errstr = "asa_comm:obj to client key error, key was "+str(id)+" obj was "+str(obj)
-            alog.error(errstr)
+            mrflog.error(errstr)
             return
         username = self.clients[id]['username']
-        alog.info( "send_object_to_client: sent cmd "+str(obj['cmd'])+ " to  "+username)
+        mrflog.info( "send_object_to_client: sent cmd "+str(obj['cmd'])+ " to  "+username)
         msg = to_json(obj)
-        alog.debug(msg)
+        mrflog.debug(msg)
         self.clients[id]['object'].write_message(msg+"\r\n\r\n")
     def broadcast(self,obj):
         msg = to_json(obj)
@@ -132,13 +130,13 @@ class mrf_comm(object):
         data = obj['data']
 
         if not data.has_key('tag'):
-            alog.error("broadcast obsolete attempt of %s"%repr(data))
+            mrflog.error("broadcast obsolete attempt of %s"%repr(data))
             return
         tag = data['tag']
         if tag['app'] == 'timers':
-            alog.warn("broadcasting timer obj:"+msg)
-            alog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
-            alog.info(" clients = "+str(self.clients))
+            mrflog.warn("broadcasting timer obj:"+msg)
+            mrflog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+            mrflog.info(" clients = "+str(self.clients))
     
         self._jso_broadcast(msg)
     def set_session_expire(self,id,seconds = install.session_timeout):
@@ -167,7 +165,7 @@ class mrf_comm(object):
         
     def comm(self,id,ro):
         if not is_ret_obj(ro):
-            alog.error("mrf_comm: ro not ret_obj")
+            mrflog.error("mrf_comm: ro not ret_obj")
             return 0
         if id != None:
             for ob in ro.a():
@@ -177,13 +175,13 @@ class mrf_comm(object):
                 self.send_object_to_client(id,self.session_expire_notice(id))
         bobs= ro.b()
         nobs = len(bobs)
-        alog.info("have %d obs to broadcast"%nobs)
+        mrflog.info("have %d obs to broadcast"%nobs)
         for ob in ro.b():
-            alog.info(repr(ob))
+            mrflog.info(repr(ob))
             self.broadcast(ob)                
         return 1
 
-comm = mrf_comm(log=alog)   # FIXME! 
+comm = mrf_comm(log=mrflog)   # FIXME! 
     
 class RetObj:
     def __init__ (self,touch = False):
@@ -255,7 +253,7 @@ def staff_info():
     return rob
 
 def authenticate(username,password,ip):             
-    alog.info('authenticate_staff : username = '+username+" , ip : "+ip)
+    mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
     if username not in install.users.keys():
         return None
 
@@ -266,7 +264,7 @@ def authenticate(username,password,ip):
     
 
     
-    alog.info('authenticated ip '+ip)
+    mrflog.info('authenticated ip '+ip)
     wsid = os.urandom(16).encode('hex')  
     sessid = gen_sessid()
 
@@ -331,8 +329,7 @@ def atime():
 
 class MrflandRegManager(object):
     """ mrfland device and sensor/actuator registration manager """
-    def __init__(self, log):
-        self.log = log
+    def __init__(self):
         self.labels = {}
         self.devices = {}  ### hash devices by label - must be unique
         self.devmap  = {} ## hash devices by address
@@ -351,7 +348,7 @@ class MrflandRegManager(object):
 
     def senslink(self, label, addr, chan):
         if self.sensmap.has_key(label):
-            self.log.error("regman.senslink - already have tag %s"%label)
+            mrflog.error("regman.senslink - already have tag %s"%label)
             return
         self.sensmap[label] = { 'addr' : addr, 'chan' : chan }
 
@@ -360,11 +357,11 @@ class MrflandRegManager(object):
 
     def cmdcode(self, dest, cmdname):
         if not self.devmap.has_key(dest):
-            self.log.error("cmdcode - no device at address %d"%dest)
+            mrflog.error("cmdcode - no device at address %d"%dest)
             return None
         dev = self.devmap[dest]
         if not dev.cmdnames.has_key(cmdname):
-            self.log.error("cmdcode - device at address %d has no command %s"%(dest,cmdname))
+            mrflog.error("cmdcode - device at address %d has no command %s"%(dest,cmdname))
             return None
         return dev.cmdnames[cmdname]
                            
@@ -374,13 +371,13 @@ class MrflandRegManager(object):
         if not cmd:
             return
         
-        self.log.warn("%s devupdaten dest %s"%(self.__class__.__name__, dest))
+        mrflog.warn("%s devupdaten dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
         
         
     def devupdate(self,tag, dest, cmd, data = {}):
         
-        self.log.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
+        mrflog.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
         
         
@@ -392,17 +389,17 @@ class MrflandRegManager(object):
 
     def weblet_register(self, weblet):
         if self.weblets.has_key(weblet.tag):
-            self.log.error("weblet_register - key error %s"%weblet.tag)
+            mrflog.error("weblet_register - key error %s"%weblet.tag)
             return
 
         self.weblets[weblet.tag] = weblet
-        self.log.warn("weblet_register -registered new weblet %s"%weblet.tag)
+        mrflog.warn("weblet_register -registered new weblet %s"%weblet.tag)
 
         
     def device_register(self, dev):
         """ register new MrfDevice"""
         if self.devices.has_key(dev.label):
-            self.log.error("%s device_register duplicate device label %s"%dev.label)
+            mrflog.error("%s device_register duplicate device label %s"%dev.label)
             return
         self.devices[dev.label] = dev
 
@@ -412,7 +409,7 @@ class MrflandRegManager(object):
             for ch in range(len(dev.caps[cap])):
                 sens = dev.caps[cap][ch]
                 if self.sensors.has_key(sens.label):
-                    self.log.error("%s device_register duplicate sensor label %s"%sens.label)
+                    mrflog.error("%s device_register duplicate sensor label %s"%sens.label)
                     return
                 self.sensors[sens.label] = sens
                 if not self.senstypes.has_key(type(sens)):

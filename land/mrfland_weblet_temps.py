@@ -17,31 +17,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrfdev_pt1000 import *
 from mrf_sens import MrfSens, MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-
+import mrflog
 
 class MrfLandWebletTemps(MrflandWeblet):
     def post_init(self):
-        self.log.info("%s post_init"%(self.__class__.__name__))
+        mrflog.info("%s post_init"%(self.__class__.__name__))
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
         if not self.rm.senstypes.has_key(MrfSensPt1000):
-            self.log.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
+            mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
         self.sl = self.rm.senstypes[MrfSensPt1000]
 
-        self.log.info("num MrfSensPt1000 found was %d"%len(self.sl))
+        mrflog.info("num MrfSensPt1000 found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
-        self.log.info("MrfSensPt1000 : %s"%repr(self.slabs))
+        mrflog.info("MrfSensPt1000 : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
     def sens_callback(self, label, data ):
-        self.log.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        mrflog.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag('temp', label), data)
                           
         
@@ -51,7 +51,7 @@ class MrfLandWebletTemps(MrflandWeblet):
         s =  """
         <h2>Temps</h2>"""
         if len(self.sl):
-            self.log.warn("labels are %s "%repr(self.slabs))
+            mrflog.warn("labels are %s "%repr(self.slabs))
             s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s
 
