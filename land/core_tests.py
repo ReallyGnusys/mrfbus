@@ -124,6 +124,9 @@ class DeviceTestCase(LandTestCase):
         if self.checkgit and gitversion != resp["mrfbus_version"]:
             pass_fail = False
             print "****passfail(3) is:\n%s"%repr(pass_fail)
+            print "gitversion %s"%gitversion
+            print "respversion %s"%resp["mrfbus_version"]
+            
             self.assertTrue(pass_fail)
 
         if pass_fail:

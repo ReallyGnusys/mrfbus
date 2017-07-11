@@ -39,10 +39,12 @@ APP ?= default
 
 MSRC=${MRFHOME}/mrflib/src
 
-MOBJ=${MRFMAKE}${MRFID}/obj
-LSTD=${MRFMAKE}${MRFID}/lst
+BLDDIR=${MRFMAKE}build
 
-BIN=${MRFMAKE}${MRFID}/bin
+MOBJ=${BLDDIR}/${MRFID}/obj
+LSTD=${BLDDIR}/${MRFID}/lst
+
+BIN=${BLDDIR}/${MRFID}/bin
 #APPSRC=${MRFMAKE}src
 APPDIR=${MRFHOME}/apps/${APP}
 APPSRC=${APPDIR}
@@ -89,16 +91,14 @@ CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  
 
 ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${APPOBJS} ${TARG} ${LST} ${SIZEREP}
 
-clean : 
-	rm -rf ${MOBJ}
-	rm -rf ${BIN}
-	rm -rf ${TARG}
-	rm -rf ${LSTD}
+CLEANALL :
+	rm -rf ${BLDDIR}
 
 ${BIN}:
 	mkdir -p ${BIN}
 
 ${MOBJ}:
+	echo mkdir -p ${MOBJ}
 	mkdir -p ${MOBJ}
 
 
@@ -121,7 +121,7 @@ ${MOBJ}/%.o: ${APPDIR}/%.c
 
 
 ${MOBJ}/%.o: ${MSRC}/%.c
-	${GCC}  -c $(CCFLAGS) $< -o $@
+	echo arg $@ && echo mobj ${MOBJ}  && ${GCC}  -c $(CCFLAGS) $<  -o $@
 
 
 ${MOBJ}/%.o: ${NET}/%.c

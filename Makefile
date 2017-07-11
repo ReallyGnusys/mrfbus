@@ -22,16 +22,19 @@ FIFOS:
 ${LOGDIR}:
 	mkdir -p ${LOGDIR}
 
+CLEAN:
+	rm examples/hostsim/
 BUILD:
-	cd examples/hostsim && make clean && make MRFID=0x01
+	cd examples/hostsim && make CLEANALL
+	cd examples/hostsim && make MRFID=0x01
 	cd examples/hostsim && make MRFID=0x02
 	cd examples/hostsim && make MRFID=0x20
 	cd examples/hostsim && make MRFID=0x2f
 
 
 BUILDCC:
-	cd examples/usbrf && make clean && make
-	cd examples/pt1000usb && make clean && make
+	cd examples/usbrf && make CLEANALL && make
+	cd examples/pt1000usb && make CLEANALL && make
 
 QTEST:
 	cd mrflib/tests/iqueue && make clean && make
