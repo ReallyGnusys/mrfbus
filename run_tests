@@ -29,7 +29,7 @@ echo $h2f_pid
 
 echo "all mrf instances started"
 
-sleep 2
+sleep 3
 
 # need to start mrfland... ho ho ho
 
@@ -41,8 +41,9 @@ stdbuf -oL  python land/test_server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
 echo "land started "$land_pid
 
-sleep 3
+sleep 5
 
+echo "starting core_tests.."
 # run stubtst
 
 python land/core_tests.py
@@ -50,7 +51,7 @@ rv=$?
 
 
 #sleep 1
-
+echo "killing processes  $h01_pid $h02_pid $h20_pid $h2f_pid $land_pid"
 kill -SIGUSR1  $h01_pid $h02_pid $h20_pid $h2f_pid
 kill $land_pid
 
