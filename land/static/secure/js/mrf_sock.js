@@ -109,7 +109,7 @@ function mrf_web_update(obj){
 function init_app(){
     
     // init timepickers
-    $(".mrfctrl_timepick").timepicker({showMeridian : false , showInputs : false});
+    $(".mrfctrl_timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
     
     $('.mrfctrl_timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);

@@ -327,6 +327,7 @@ def atime():
     return mrf_cmd('datetime',datetime.datetime.utcfromtimestamp(time.time()))
  
 
+        
 class MrflandRegManager(object):
     """ mrfland device and sensor/actuator registration manager """
     def __init__(self):
@@ -341,7 +342,40 @@ class MrflandRegManager(object):
         self.wups = []  ## webupdates from weblets to send to browsers
         self.dups = []  ## device updates : from weblets to send to devices
         self.weblets = OrderedDict()  # has weblets by tag
+        self.timers = {}
+        self.server = None
 
+    def setserver(self,server):  # OUCH , we let the server set a reference to itself..for now
+        self.server = server
+
+        ## run postinit
+        for wtag in self.weblets.keys():
+            wl = self.weblets[wtag]
+            if hasattr( wl, 'run_init'):
+                mrflog.warn( "calling run_init for weblet %s "%wtag)
+                getattr(wl, 'run_init')() 
+        
+    def set_timer(self, tod, tag, act):
+        self.server.set_timer(tod,tag,act)
+        tid = tag+"."+ act
+        if not self.timers.has_key(tid):
+            self.timers[tid] = []  ## callback list
+
+    def timer_reg_callback(self, tag, act, callback):
+        tid = tag+"."+ act
+        if not self.timers.has_key(tid):
+            mrflog.error("timer_reg_callback no tid %s"%tid)
+            return
+        self.timers[tid].append(callback)
+        
+    def timer_callback(self, tag , act):
+        mrflog.warn("RegManager timer_callback, tag %s act %s",tag,act)
+        tid = tag+"."+ act
+        if not self.timers.has_key(tid):
+            mrflog.error("timer_callback no tid %s"%tid)
+            return
+        for f in self.timers[tid]:
+            f(tag,act)
     def senslookup(self,label):
         if self.sensmap.has_key(label):
             return self.sensmap[label]

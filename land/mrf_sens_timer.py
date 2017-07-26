@@ -32,24 +32,25 @@ class MrfSensTimer(MrfSens):
         if outdata == None:
             outdata = self.outdata
         nw = datetime.datetime.now()
-        nt = datetime.time (nw.hour,nw.minute,nw.second)
+        nt = datetime.time (nw.hour, nw.minute, nw.second)
         if outdata['on'] <= outdata['off']:            
             return outdata['on'] < nt < outdata['off']
         else:
-            return (outdata['on'] < nt) or ( nt < outdata['off'])
-    
+            return (outdata['on'] < nt) or ( nt > outdata['off'])
+    def expire_callback(self, on_or_off):
+        mrflog.warn("%s %s expire_callback on_or_off was %s"%(self.__class__.__name__, self.label))
+
     def genout(self,indata, outdata):
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         if not indata.has_key('cname'):
             mrflog.error("%s genout no key cname in %s"%(self.__class__.__name__, repr(indata)))
             return
-
         
         cname = indata['cname']
-        outdata[cname] = datetime.time(hour=indata['val']['hour'],minute=indata['val']['minute'], second=indata['val']['second'])
+        outdata[cname] = datetime.time(hour=indata['val']['hour'], minute=indata['val']['minute'], second=indata['val']['second'])
 
         nw = datetime.datetime.now()
-        nt = datetime.time (nw.hour,nw.minute,nw.second)
+        nt = datetime.time (nw.hour, nw.minute, nw.second)
         outdata['active'] = self.is_active(outdata)
 
         mrflog.warn("%s %s genout %s"%(self.__class__.__name__, self.label, repr(outdata)))

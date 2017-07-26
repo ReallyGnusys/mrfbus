@@ -44,13 +44,46 @@ class MrfLandWebletTimers(MrflandWeblet):
         mrflog.info("MrfSensTimer : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
-            self.sens[s].subscribe(self.sens_callback)
+            sens = self.sens[s]
+            sens.subscribe(self.sens_callback)
+
+    def run_init(self):
+        mrflog.warn("weblet %s run_init"%self.__class__.__name__)
+        for s in self.sens.keys():
+            sens = self.sens[s]
+            for act in ['on','off']:
+                tod = sens.output[act]
+                self.rm.set_timer( tod , sens.label , act)
+                self.rm.timer_reg_callback( sens.label, act, self.timer_callback)
+        
+    def timer_callback(self, label, act):
+        mrflog.warn("%s : timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
+        if not self.sens.has_key(label):
+            mrflog.error("%s no sensor with label %s"%(self.__class__.__name__, label))
+            return
+        sens = self.sens[label]
+
+        if not sens.output.has_key(act):
+            mrflog.error("%s sensor %s has now output field %s"%(self.__class__.__name__, label, act))
+            return
+
+        tod = sens.output[act]
+
+        ival = {}
+        ival[act] = {'hour':tod.hour, 'minute':tod.minute}
+        iparam = {'cname': unicode(act), 'val' : ival}
+        mrflog.warn("%s : timer_callback refreshing sensor input %s : cname %s val %s"%(self.__class__.__name__,label,
+                                                                                        act, repr(iparam)))
+        sens.input( iparam)
+        
+        
     def sens_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
         mrflog.warn("TimersWeblet : sens_callback  %s tag %s  data %s "%(label,repr(tag),repr(data)))
         self._init_vals[label] = data
         
         self.rm.webupdate(self.mktag(self.tag, label), data)
+    
         
     
     def pane_html(self):
@@ -87,5 +120,9 @@ class MrfLandWebletTimers(MrflandWeblet):
         inp = {}
         inp['cname'] = data['fld']  
         inp['val'] = data['val']
-                
+
         sens.input(inp)
+        # update ioloop timers...hmpff
+        for act in ['on','off']:
+            tod = sens.output[act]
+            self.rm.set_timer( tod , sens.label , act)
