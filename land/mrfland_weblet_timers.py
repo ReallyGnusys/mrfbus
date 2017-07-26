@@ -69,8 +69,7 @@ class MrfLandWebletTimers(MrflandWeblet):
 
         tod = sens.output[act]
 
-        ival = {}
-        ival[act] = {'hour':tod.hour, 'minute':tod.minute}
+        ival =  {'hour':tod.hour, 'minute':tod.minute, 'second': tod.second}
         iparam = {'cname': unicode(act), 'val' : ival}
         mrflog.warn("%s : timer_callback refreshing sensor input %s : cname %s val %s"%(self.__class__.__name__,label,
                                                                                         act, repr(iparam)))
