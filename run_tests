@@ -70,6 +70,7 @@ else
     echo "FAILED"
 fi
 
+exit $rv
 #exit $rv
 
 
