@@ -130,10 +130,7 @@ class MrfSens(object):
         self.output = OrderedDict()
         for fld in self._out_flds_:
             self._output[fld[0]] = fld[1]
-            self.output[fld[0]] = fld[1]()
-            
-
-        
+            self.output[fld[0]] = fld[1]()                    
         
     def subscribe(self,callback):
         key = self.skey

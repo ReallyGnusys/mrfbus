@@ -30,7 +30,7 @@ class MrfSensTimer(MrfSens):
 
     def is_active(self , outdata = None):
         if outdata == None:
-            outdata = self.outdata
+            outdata = self.output
         nw = datetime.datetime.now()
         nt = nw.time()
         if outdata['on'] == outdata['off']:

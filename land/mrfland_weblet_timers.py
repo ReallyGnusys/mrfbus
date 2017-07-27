@@ -41,10 +41,11 @@ class MrfLandWebletTimers(MrflandWeblet):
         self.sens = OrderedDict()
         self.relays = dict()
         self._init_vals = {}
+        self.relay_lut = dict()
 
+        self.shares = dict()
         re1 = re.compile(r'(.*)(_[^_]+)')
 
-        self.relay_lut = dict()
         
         for s in self.sl:
             self.slabs.append(s.label)
@@ -61,7 +62,11 @@ class MrfLandWebletTimers(MrflandWeblet):
                     mrflog.error("failed to match timer label %s to sensor %s"%(s.label,pl))
                 else:
                     mrflog.warn("matched timer label %s to sensor %s - map  %s"%(s.label,pl, repr(smap)))
-                    self.relay_lut[s.label] = smap
+                    self.relay_lut[s.label] = { 'smap' : smap , 'tag': pl }
+                    if not self.shares.has_key(pl):
+                        self.shares[pl] = []
+                    self.shares[pl].append(s.label)
+
             
         mrflog.info("MrfSensTimer : %s"%repr(self.slabs))
 
@@ -110,11 +115,21 @@ class MrfLandWebletTimers(MrflandWeblet):
         if not self.relay_lut.has_key(label):
             mrflog.error("TimersWeblet : sens_callback now relay map for timer %s"%label)
             return
-        sensmap =  self.relay_lut[label]
+        sensmap =  self.relay_lut[label]['smap']
+        pl = self.relay_lut[label]['tag']
+        ## really need to deduce control from all of timer periods - if any are active - it is active
+        ## so we'll ignore the active field passed in by timer expiry and check all periods
+        
+        is_active = False
+        for tl in self.shares[pl]:
+            tmr = self.rm.sensors[tl]
+            is_active = is_active or tmr.is_active()
+
         cdata = {}
 
         cdata['chan'] = sensmap['chan']
-        cdata['val'] = int(data['active'])
+        #cdata['val'] = int(data['active'])
+        cdata['val'] = int(is_active)
         param = PktRelayState()
         param.dic_set(cdata)
         

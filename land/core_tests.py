@@ -187,6 +187,7 @@ class DeviceTestCase(LandTestCase):
         resp = self.response(timeout=self.timeout)
         print "got resp:\n%s"%repr(resp)
         self.assertTrue(self.check_attrs(resp,PktTimeDate()))
+        self.assertTrue(self.check_attrs(resp,PktDeviceInfo()))  # try failure
 
     def set_time_test(self,dest,ref):
         print "**********************"
