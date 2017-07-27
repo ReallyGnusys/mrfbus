@@ -32,11 +32,14 @@ class MrfSensTimer(MrfSens):
         if outdata == None:
             outdata = self.outdata
         nw = datetime.datetime.now()
-        nt = datetime.time (nw.hour, nw.minute, nw.second)
-        if outdata['on'] <= outdata['off']:            
-            return outdata['on'] < nt < outdata['off']
+        nt = nw.time()
+        if outdata['on'] == outdata['off']:
+            return False
+        if outdata['on'] < outdata['off']:
+            return (outdata['on'] < nt) and (nt < outdata['off'])
         else:
-            return (outdata['on'] < nt) or ( nt > outdata['off'])
+            return (outdata['on'] < nt) or ( nt < outdata['off'])
+
     def expire_callback(self, on_or_off):
         mrflog.warn("%s %s expire_callback on_or_off was %s"%(self.__class__.__name__, self.label))
 
