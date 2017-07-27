@@ -337,7 +337,7 @@ class MrflandRegManager(object):
         self.sensors = {}  ### hash sensors by label
         self.senstypes = {} ### hash lists of sensors by sensor type
         self.actuators = {}
-        self.sensmap = {}
+        self.sensmap = {}  ## keep physical mapping here - addr, chan dict returned for each sensor label
         self.addresses = {}  ### hash devices by address - must be unique
         self.wups = []  ## webupdates from weblets to send to browsers
         self.dups = []  ## device updates : from weblets to send to devices

@@ -17,8 +17,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrf_sens_timer import MrfSensTimer
 from mrf_sens import MrfSens, MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from mrfdev_pt1000 import *
+
 from collections import OrderedDict
 import mrflog
+import re
+
 
 class MrfLandWebletTimers(MrflandWeblet):
     def post_init(self):
@@ -35,12 +39,30 @@ class MrfLandWebletTimers(MrflandWeblet):
         mrflog.info("num MrfSensTimer found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
-
+        self.relays = dict()
         self._init_vals = {}
+
+        re1 = re.compile(r'(.*)(_[^_]+)')
+
+        self.relay_lut = dict()
+        
         for s in self.sl:
             self.slabs.append(s.label)
-            self.sens[s.label] = s
+            self.sens[s.label] = s                        
             self._init_vals[s.label] = { 'on' : '00:00' , 'off' : '00:00' }
+            mob = re1.match(s.label)
+            if mob:
+                # try to find matching pump label
+                pl = mob.group(1) + "_PUMP"
+                mrflog.warn("trying to match timer label %s to pump %s"%(s.label,pl))
+
+                smap = self.rm.senslookup(pl)
+                if smap == None:
+                    mrflog.error("failed to match timer label %s to sensor %s"%(s.label,pl))
+                else:
+                    mrflog.warn("matched timer label %s to sensor %s - map  %s"%(s.label,pl, repr(smap)))
+                    self.relay_lut[s.label] = smap
+            
         mrflog.info("MrfSensTimer : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
@@ -82,7 +104,24 @@ class MrfLandWebletTimers(MrflandWeblet):
         self._init_vals[label] = data
         
         self.rm.webupdate(self.mktag(self.tag, label), data)
-    
+        if not data.has_key('active'):
+            mrflog.error("TimersWeblet : sens_callback data didn't have active field")
+            return
+        if not self.relay_lut.has_key(label):
+            mrflog.error("TimersWeblet : sens_callback now relay map for timer %s"%label)
+            return
+        sensmap =  self.relay_lut[label]
+        cdata = {}
+
+        cdata['chan'] = sensmap['chan']
+        cdata['val'] = int(data['active'])
+        param = PktRelayState()
+        param.dic_set(cdata)
+        
+        mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
+                    (sensmap['addr'] , repr(param)))
+        self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
+
         
     
     def pane_html(self):

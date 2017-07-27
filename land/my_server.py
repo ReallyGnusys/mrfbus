@@ -20,19 +20,19 @@ if __name__ == '__main__':
     mrflog.info("Mrfland web server starting on port "+str(options.port))
     
     hostlabels = {
-        'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1"]
+        'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1"]
         }
 
    
     hb0labels = {
         'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
-        'relay' : ["UFH_PUMP", "MAIN_RAD_PUMP"]
+        'relay' : ["UFH_PUMP", "RAD1_PUMP"]
         }
 
 
     hb1labels = {
         'temp' : ["DHW1_TOP", "DHW1_MID", "DHW1_BOT", "HB1_FLOW", "RADS1_RET",  "DHW1_HX_RET", "HB1_AMBIENT"],
-        'relay' : ["RADS1_PUMP", "DHW1_HX_PUMP"]
+        'relay' : ["RAD2_PUMP", "DHW1_HX_PUMP"]
         }
 
     rm = mrfland.MrflandRegManager()
