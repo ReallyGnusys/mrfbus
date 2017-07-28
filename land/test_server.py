@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from tornado.options import  options, parse_command_line  #yFIXME move mrfland_server.py
+from tornado.options import  options, parse_command_line  #FIXME move mrfland_server.py
 
 import mrfland
 import mrflog
@@ -16,9 +16,6 @@ if __name__ == '__main__':
     mrflog.info("Mrfland web server starting on port "+str(options.port))
     
     rm = mrfland.MrflandRegManager()
-
-
-
     
     sx01 = MrfDevSim(rm, "sx01", 1, {} )
     sx02 = MrfDevSim(rm, "sx02", 2, {} )

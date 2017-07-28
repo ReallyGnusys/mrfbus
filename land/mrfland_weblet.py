@@ -123,7 +123,7 @@ class MrflandWeblet(object):
     def cmd(self,cmd, data=None):
         fn = 'cmd_'+cmd
         if hasattr(self, fn):
-            mrflog.info( "OK you can go")
+            mrflog.info( "executing weblet defined cmd %s"%cmd)
             return getattr(self,fn)(data)
         else:
-            mrflog.info("you're not coming in here")
+            mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
