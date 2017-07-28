@@ -105,6 +105,8 @@ class MrflandWeblet(object):
         self.data = data
         if hasattr(self, 'post_init'):
             self.post_init()
+        rm.weblet_register(self)  # ooer!
+
     def mktag(self, tab, row):
         return { 'app' : self.tag, 'tab' : tab , 'row' : row }
     def pane_html_header(self):

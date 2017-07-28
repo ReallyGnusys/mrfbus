@@ -16,7 +16,6 @@ from mrfland_server import MrflandServer
             
 if __name__ == '__main__':
     parse_command_line()
-    mrflog.info('Application started')
     mrflog.info("Mrfland web server starting on port "+str(options.port))
     
     hostlabels = {
@@ -37,30 +36,35 @@ if __name__ == '__main__':
 
     rm = mrfland.MrflandRegManager()
     
-    host = MrfDevHost(rm, "host", 1, hostlabels)
+    MrfDevHost(rm, "host", 1, hostlabels)
     
-    hb0 = Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels)
+    Pt1000Dev(rm, "pt1000_boiler_room", 2, hb0labels)
 
-    hb1 = DevHeatbox(rm, "heatbox_kitchen"  , 4, hb1labels)
+    DevHeatbox(rm, "heatbox_kitchen"  , 4, hb1labels)
 
     
 
-    #rm.device_register(host)
-    #rm.device_register(hb0)
-    #rm.device_register(hb1)
 
-    #wat = MrfLandWebletTemps(rm, alog, {'tag':'temps','label':'Temperatures'})
-    #war = MrfLandWebletRelays(rm, alog, {'tag':'relays','label':'Relays'})
+    MrfLandWebletTemps(rm,
+                       {
+                           'tag'  : 'temps',
+                           'label': 'Temperatures'
+                       }
+    )
+    MrfLandWebletRelays(rm,
+                        {
+                            'tag':'relays',
+                            'label':'Relays'
+                        }
+    )
 
+    MrfLandWebletTimers(rm,
+                        {
+                            'tag':'timers',
+                            'label':'Timers'
+                        }
+    )
 
-    rm.weblet_register(MrfLandWebletTemps(rm, 
-                                          {'tag':'temps','label':'Temperatures'}))
-
-    rm.weblet_register(MrfLandWebletRelays(rm,
-                                           {'tag':'relays','label':'Relays'}))
-    
-    rm.weblet_register(MrfLandWebletTimers(rm, 
-                                           {'tag':'timers','label':'Timers'}))
     
     
     
