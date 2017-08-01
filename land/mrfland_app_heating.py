@@ -30,7 +30,8 @@ from heatbox_test import HeatboxAppCmds
 from datetime import datetime
 from mrfland_weblet import MrflandWeblet
 from collections import OrderedDict
-from mrf_sens import MrfSens, MrfDev
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
 from mrfland_weblet_temps import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
 from math import sqrt

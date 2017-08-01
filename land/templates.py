@@ -44,7 +44,7 @@ login_tp = """<!DOCTYPE html>
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
 
-    <title>Signin Template for Bootstrap</title>
+    <title>MRFBUS login</title>
 
     <!-- Bootstrap core CSS -->
     <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -97,7 +97,7 @@ mrf_tp = """
     <meta name="author" content="">
     <link rel="icon" href="../../favicon.ico">
 
-    <title>Fixed Top Navbar Example for Bootstrap</title>
+    <title>MRFBUS</title>
 
     <!-- Bootstrap core CSS -->
     <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">

@@ -15,7 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from mrf_sens_timer import MrfSensTimer
-from mrf_sens import MrfSens, MrfDev
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from mrfdev_pt1000 import *
 
@@ -50,7 +51,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s                        
-            self._init_vals[s.label] = { 'on' : '00:00' , 'off' : '00:00' }
+            self._init_vals[s.label] = { 'on' : '00:00' , 'off' : '00:00' , 'active' : ''}
             mob = re1.match(s.label)
             if mob:
                 # try to find matching pump label

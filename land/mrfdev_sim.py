@@ -1,5 +1,6 @@
 
-from mrf_sens import MrfSens, MrfDev
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
 from datetime import datetime
 import ctypes
 from mrf_structs import *
