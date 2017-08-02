@@ -69,7 +69,7 @@ class MrfDev(object):
     def packet(self,hdr,rsp):  # server interface - all packets from this device are sent here
         mrflog.info("MrfDev packet for label %s addr %s"%(self.label,self.address))
         if hdr.usrc != self.address :
-            mrflog.error("MrfDev %s addr %s got wrong fyi"%(self.label,self.address))
+            mrflog.error("MrfDev %s addr %s got wrong packet"%(self.label,self.address))
             return None, None
 
         ## try and catch duplicate msgids - retransmissions , pending debug.. hmpff
@@ -100,6 +100,9 @@ class MrfDev(object):
 
         mrflog.info(" calling app packet with resp %s"%repr(resp))
         self.app_packet(hdr,param,resp)  # this must be defined in derived class
+
+        for s in self.subscribers.keys():
+            self.subscribers[s](self.label,self.sys)
 
         return param, resp
         

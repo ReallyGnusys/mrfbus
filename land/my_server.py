@@ -11,6 +11,7 @@ from mrfdev_host import MrfDevHost
 from mrfland_weblet_temps import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
 from mrfland_weblet_timers import MrfLandWebletTimers
+from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_server import MrflandServer
 
             
@@ -40,6 +41,12 @@ if __name__ == '__main__':
 
     
 
+    MrfLandWebletDevs(rm,
+                       {
+                           'tag'  : 'devs',
+                           'label': 'Devices'
+                       }
+    )
 
     MrfLandWebletTemps(rm,
                        {
@@ -47,6 +54,7 @@ if __name__ == '__main__':
                            'label': 'Temperatures'
                        }
     )
+
     MrfLandWebletRelays(rm,
                         {
                             'tag':'relays',

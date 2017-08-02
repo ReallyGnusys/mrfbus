@@ -18,76 +18,45 @@ from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
+import mrflog
 
 
 class MrfLandWebletDevs(MrflandWeblet):
     def post_init(self):
-        self.log.info("%s post_init"%(self.__class__.__name__))
+        mrflog.info("%s post_init"%(self.__class__.__name__))
         # do subscriptions here
         ## looking for all devs
 
-        dadds = self.devmap.keys()
-
+        dadds = self.rm.devmap.keys()
+        mrflog.warn("got dadds %s"%repr(dadds))
         self.devs = OrderedDict()
-        dadds = dadds.sort()
+        dadds.sort()
         for dadd in dadds:
-            dev = self.devmap[dadd]
-            self.devs[dev.tag] = dev
-            self.log.warn("MrfLandWebletDevs added dev tag %s add %s"%(dev.tag, dev.address))
-        
+            dev = self.rm.devmap[dadd]
+            self.devs[dev.label] = dev
+            mrflog.warn("MrfLandWebletDevs added dev label %s add %s"%(dev.label, dev.address))
+            
+        # build prototype output data
 
+        self.pod = OrderedDict()
+        self.pod['dev_info']    =  PktDeviceInfo().dic()        
+        self.pod['dev_status']  =  PktDeviceStatus().dic()        
+        self.pod['sys_info']    =  PktSysInfo().dic()
+        self.pod['app_info']       =  PktAppInfo().dic()
+
+            
 
     def sens_callback(self, label, data ):
-        self.log.warn("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        mrflog.warn("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
-                          
-        
-    def pane_js_cmd(self):
-        s = """
-   var nobskit = True;
-"""
-        return s
-
-
-    def pane_js(self):
-        s = """
-   var nobwit = True;
-"""
-        return s
-    
+                                      
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""
         s =  """
         <h2>%s</h2>"""%self.label
-        if len(self.sl):
-            s += MrflandObjectTable(self.tag,"relays",self.sl[0]._output,self.slabs, postcontrols = [("control","_mrf_ctrl_cb")])
+        for tab in self.pod.keys():
+            s += " <h3>%s</h3>\n"%tab
+            s += MrflandObjectTable(self.label,tab, self.pod[tab],self.devs.keys())
         return s
 
 
-    def cmd_mrfctrl(self,data):
-        self.log.warn( "cmd_mrfctrl here, data was %s"%repr(data))
-        if not data.has_key("tab") or not data.has_key("row"):
-            self.log.error("cmd_mrfctrl data problem in %s"%repr(data))
-            return
-
-
-        if not self.rm.sensors.has_key(str(data['row'])):
-            self.log.error("cmd_mrfctrl no device %s"%str(data['row']))
-            self.log.error("got %s"%repr(self.rm.sensors.keys()))
-            return
-
-        sens = self.rm.sensors[str(data['row'])]
-
-        cdata = {}
-
-        cdata['chan'] = sens.channel
-        cdata['val'] = data['val']
-        param = PktRelayState()
-        param.dic_set(cdata)
-        
-        self.log.warn("cmd_mrfctrl have data %s"%repr(data))
-        self.rm.devupdate(self.tag,sens.address,mrf_cmd_set_relay,param)
-        """
-        dest = self.rm.devices(row).address
-        """
-    
