@@ -35,20 +35,35 @@ class MrfLandWebletDevs(MrflandWeblet):
             dev = self.rm.devmap[dadd]
             self.devs[dev.label] = dev
             mrflog.warn("MrfLandWebletDevs added dev label %s add %s"%(dev.label, dev.address))
-            
+            self.devs[dev.label].subscribe(self.sens_callback)
         # build prototype output data
 
         self.pod = OrderedDict()
         self.pod['dev_info']    =  PktDeviceInfo().dic()        
         self.pod['dev_status']  =  PktDeviceStatus().dic()        
         self.pod['sys_info']    =  PktSysInfo().dic()
-        self.pod['app_info']       =  PktAppInfo().dic()
+        self.pod['app_info']    =  PktAppInfo().dic()
 
             
 
     def sens_callback(self, label, data ):
         mrflog.warn("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
-        self.rm.webupdate(self.mktag(self.tag, label), data)
+        for ccode in data.keys():
+            if ccode == 3:
+                tab = 'dev_info'  # ouch
+            elif ccode == 4:
+                tab = 'dev_status'
+            elif ccode == 5:
+                tab = 'sys_info'
+            elif ccode == 11:
+                tab = 'app_info'
+            else:
+                mrflog.error("DevsWeblet unknown ccode %s"%repr(ccode))
+                continue
+            tag = self.mktag( tab, label )
+
+            mrflog.warn("trying webupdate with tag %s  data %s"%(repr(tag),repr(data[ccode])))
+            self.rm.webupdate(self.mktag( tab, label ), data[ccode])
                                       
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""
@@ -56,7 +71,7 @@ class MrfLandWebletDevs(MrflandWeblet):
         <h2>%s</h2>"""%self.label
         for tab in self.pod.keys():
             s += " <h3>%s</h3>\n"%tab
-            s += MrflandObjectTable(self.label,tab, self.pod[tab],self.devs.keys())
+            s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys())
         return s
 
 

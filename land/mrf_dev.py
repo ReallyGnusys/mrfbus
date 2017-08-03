@@ -90,7 +90,9 @@ class MrfDev(object):
         resp = mrf_decode_buff(param.type,respdat)
         if resp:  # it's a sys command response - always keep most up to date copies
             # FIXME should do some validation of the decode here
-            self.sys[param.type] = resp
+            di = dict(resp.dic())
+            self.sys[param.type] = di
+            mrflog.warn("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
                            
         else:
             resp = mrf_decode_buff(param.type, respdat, cmdset=self._cmdset)

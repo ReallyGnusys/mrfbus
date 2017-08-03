@@ -26,4 +26,4 @@ const MRF_CMD mrf_app_cmds[MRF_NUM_SYS_CMDS] = {
 
 const uint8 mrf_num_app_cmds = (uint8)MRF_NUM_APP_CMDS;
 
-const MRF_PKT_APP_INFO app_info        = {"default_app", MRF_NUM_APP_CMDS};
+const MRF_PKT_APP_INFO app_info        = {"host", MRF_NUM_APP_CMDS};

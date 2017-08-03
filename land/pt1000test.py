@@ -236,6 +236,7 @@ class TestPt1000(DeviceTestCase):
 
     def test001_dev_id_tests(self):
         self.dev_info_test(self.dest)
+        self.dev_status_test(self.dest)
         self.sys_info_test(self.dest)
 
 
