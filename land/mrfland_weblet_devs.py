@@ -38,7 +38,11 @@ class MrfLandWebletDevs(MrflandWeblet):
             self.devs[dev.label].subscribe(self.sens_callback)
         # build prototype output data
 
+        utest = OrderedDict()
+        utest['last_run'] = ''
+        utest['last_result']   = ''
         self.pod = OrderedDict()
+        self.pod['unit_test']   =  utest
         self.pod['dev_info']    =  PktDeviceInfo().dic()        
         self.pod['dev_status']  =  PktDeviceStatus().dic()        
         self.pod['sys_info']    =  PktSysInfo().dic()
@@ -67,11 +71,17 @@ class MrfLandWebletDevs(MrflandWeblet):
                                       
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""
+        cls = {'start_test' : 'glyphicon-check'}
         s =  """
         <h2>%s</h2>"""%self.label
         for tab in self.pod.keys():
+            s += "<hr>\n"
             s += " <h3>%s</h3>\n"%tab
-            s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys())
+            if tab == 'unit_test':
+                s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys(), postcontrols = [("start_test","_mrf_ctrl_butt")],iclasses=cls)
+            else:
+                s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys())
+
         return s
 
 

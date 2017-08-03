@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from collections import OrderedDict
 import mrflog
 
-def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}):
+def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}, iclasses = {}):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
@@ -59,6 +59,10 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
         else:
             ivals = None
         for fld in odict.keys():
+            if iclasses.has_key(fld):
+                cls = " %s"%iclasses[fld]
+            else:
+                cls = ''
             if ivals and ivals.has_key(fld):
                 ival = ivals[fld]
             else:
@@ -77,6 +81,12 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
                  <div class="app-%s tab-%s row-%s fld-%s">%s</div>
                  <i class="glyphicon glyphicon-time mrfctrl_timepick" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
               </td>"""%(app, tab, str(row),fld, ival, app, tab, str(row),fld)
+            elif odict[fld] == '_mrf_ctrl_butt':
+                s += """
+               <td>
+                 <div class="app-%s tab-%s row-%s fld-%s">%s</div>
+                 <button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
+              </td>"""%(app, tab, str(row),fld, ival, cls, app, tab, str(row),fld)
             else:
                 s += """<td class="app-%s tab-%s row-%s fld-%s">%s</td>"""%(app, tab, str(row), fld, ival)
 
