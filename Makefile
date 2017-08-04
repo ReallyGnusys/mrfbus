@@ -19,17 +19,25 @@ FIFOS:
 	rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
 	rm -f ${APPFIFO} && mkfifo -m 600 ${APPFIFO}
 
+
 ${LOGDIR}:
 	mkdir -p ${LOGDIR}
 
 CLEAN:
-	rm examples/hostsim/
+	rm -rf examples/hostsim/\
+
+
+
+
 BUILD:
 	cd examples/hostsim && make CLEANALL
 	cd examples/hostsim && make MRFID=0x01
 	cd examples/hostsim && make MRFID=0x02
 	cd examples/hostsim && make MRFID=0x20
 	cd examples/hostsim && make MRFID=0x2f
+	cd examples/host && make CLEANALL
+	cd examples/host && make MRFID=0x01
+
 
 
 BUILDCC:
