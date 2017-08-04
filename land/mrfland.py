@@ -450,5 +450,9 @@ class MrflandRegManager(object):
                     self.senstypes[type(sens)] = []
                 self.senstypes[type(sens)].append(sens)
 
+    def subprocess(self, arglist, callback):
+        mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))        
+        return self.server.subprocess(arglist, callback)
+                
 if __name__ == "__main__":
     print "nothing"

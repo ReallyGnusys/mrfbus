@@ -173,14 +173,26 @@ function init_app(){
                 tab = $(this).attr('tab');
                 row = $(this).attr('row');
                 fld = $(this).attr('mc-fld');
-                cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
+                cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" : val }
                 console.log(" mrf cb app :"+app );
                 console.log(cdata)
 
                 ws.send(mrf_ccmd(app,"mrfctrl",cdata));
-            });        
-    
+            });
 
+    // buttons
+
+    $(".mrfctrl_butt").click(
+        function(){
+            app = $(this).attr('app');
+            tab = $(this).attr('tab');
+            row = $(this).attr('row');
+            fld = $(this).attr('mc-fld');
+            cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" : 1 }
+            console.log(" mrf butt app :"+app );
+            console.log(cdata)
+            ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
+        });
 }
 
 

@@ -5,6 +5,7 @@ import tornado.web
 import tornado.websocket
 import tornado.httpserver
 import tornado.tcpserver
+import tornado.process
 from tornado.options import define, options, parse_command_line
 import socket
 import logging
@@ -318,7 +319,11 @@ class MrflandServer(object):
         self.active_timer = 0
 
         self._connect_to_mrfnet()
-        
+
+    def subprocess(self, arglist, callback):
+        process = tornado.process.Subprocess(arglist, stdout=tornado.process.Subprocess.STREAM, stderr=tornado.process.Subprocess.STREAM)
+        process.set_exit_callback(callback)
+    
     def timer_callback(self, *args, **kwargs):
         
         if not kwargs.has_key('tag') or not kwargs.has_key('act'):            
