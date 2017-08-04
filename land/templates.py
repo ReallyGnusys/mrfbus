@@ -119,16 +119,10 @@ mrf_tp = """
 
     <div class="container">
 <ul class="nav nav-pills">
-    <li class="active"><a data-toggle="pill" href="#home">Home</a></li>
 {% raw pills %}
   </ul>
 
   <div class="tab-content">
-    <div id="home" class="tab-pane fade in active">
-    <h3> Mrfland running on {{host}} </h3>
-    <h3>Up since {{upsince}} </h3>
-   
-    </div>
 {% raw apphtml %}
 
     </div> <!-- /container -->

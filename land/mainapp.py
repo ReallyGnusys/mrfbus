@@ -61,8 +61,16 @@ def _expand_priv_js(stype):
 
 def mrf_pills(weblets):
     s = ""
+    first = True
     for wa in weblets.keys():
         wl = weblets[wa]
+        if first:
+            lic = ' class="active"'
+            first = False
+        else:
+            lic = ''
+                
+        #s += '    <li%s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         s += '    <li><a data-toggle="pill" href="#%s">%s</a></li>\n'%(wl.tag,wl.label)
     return s
 

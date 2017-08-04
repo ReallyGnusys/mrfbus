@@ -19,6 +19,7 @@ from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 import mrflog
+import re
 
 
 class MrfLandWebletDevs(MrflandWeblet):
@@ -79,9 +80,11 @@ class MrfLandWebletDevs(MrflandWeblet):
         cls = {'start_test' : 'glyphicon-check'}
         s =  """
         <h2>%s</h2>"""%self.label
+        re1 = re.compile("_")
+        
         for tab in self.pod.keys():
             s += "<hr>\n"
-            s += " <h3>%s</h3>\n"%tab
+            s += " <h3>%s</h3>\n"%re1.sub(" ", tab)
             if tab == 'unit_test':
                 s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys(), postcontrols = [("start_test","_mrf_ctrl_butt")],iclasses=cls)
             else:

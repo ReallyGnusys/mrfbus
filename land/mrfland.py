@@ -307,7 +307,12 @@ dt_handler = lambda obj: (
 
 
 def to_json(obj):
-    return json.dumps(obj,default = mob_handler)
+    try:
+        js = json.dumps(obj,default = mob_handler)
+        return js
+    except:
+        mrflog.error("to_json error obj was %s"%repr(obj))
+        return "{}"
 
 def json_parse(str):
     try:

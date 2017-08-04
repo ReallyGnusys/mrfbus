@@ -93,6 +93,8 @@ class MrfDev(object):
             di = dict(resp.dic())
             self.sys[param.type] = di
             mrflog.warn("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
+            for s in self.subscribers.keys():  # for now only update subscribers for sys command responses
+                self.subscribers[s](self.label,self.sys)
                            
         else:
             resp = mrf_decode_buff(param.type, respdat, cmdset=self._cmdset)
@@ -103,8 +105,6 @@ class MrfDev(object):
         mrflog.info(" calling app packet with resp %s"%repr(resp))
         self.app_packet(hdr,param,resp)  # this must be defined in derived class
 
-        for s in self.subscribers.keys():
-            self.subscribers[s](self.label,self.sys)
 
         return param, resp
         
