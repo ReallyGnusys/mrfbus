@@ -57,7 +57,7 @@
 #define PINHIGH(signame)  OUTREG(signame) |= BITNAME(signame)
 #define NOPULLUP(signame) RENREG(signame) &= (~BITNAME(signame))
 
-#define ANALOGUEPIN(signame)  SELREG(signame) |= (~BITNAME(signame)) ; MAPREG(signame) = 31
+#define ANALOGUEPIN(signame)  SELREG(signame) |= BITNAME(signame) ; MAPREG(signame) = 31
 
 #define ADCPIN(signame) INPUTPIN(signame) ; NOPULLUP(signame) ; ANALOGUEPIN(signame)
 

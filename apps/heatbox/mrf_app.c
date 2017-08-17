@@ -47,11 +47,13 @@
 #define _AN3_PORT P2
 #define _AN3_BIT  3
 
-#define _AN4_PORT P2
-#define _AN4_BIT  4
 
-#define _VREFE_PORT P2
-#define _VREFE_BIT  5
+#define _VREFM_PORT P2
+#define _VREFM_BIT  4
+
+#define _VREFP_PORT P2
+#define _VREFP_BIT  5
+
 
 #define _AN6_PORT P2
 #define _AN6_BIT  6
@@ -118,54 +120,36 @@ uint16_t adc_ctl0_a,adc_ctl0_b, adc_ctl0_c;
 #define REF_EXT    2
 #define REF_DEXT   7
 
-int init_adc12(){
+int init_adc12() {
 
-  // setup port pins for analogue input
 
+   // setup port pins for analogue input
+
+  PMAPKEYID = 0x2d52;
   
   ADCPIN(AN0);
   ADCPIN(AN1);
   ADCPIN(AN2);
   ADCPIN(AN3);
-  ADCPIN(AN4);
-  ADCPIN(VREFE);
+  ADCPIN(VREFM);
+  ADCPIN(VREFP);
   ADCPIN(AN6);
   ADCPIN(AN7);
 
-#if 0
-  ADC12CTL0 = 0x8800;   //set 256 clock sample/hold time for all ADC memories
-  adc_ctl0_a = ADC12CTL0;
-  ADC12CTL1 =  ADC12CONSEQ_1  |  ADC12SHP ;  // sequence of channels ,  ADC12 clk, SHP
+  PMAPKEYID = 0x0;
 
-  ADC12CTL2 = ADC12TCOFF | ( 2 << 4 ) | ADC12SR ; // tempsens off, 12 bits,50ksps max
+  //  PORT_MAP to analogue
+/*
+  P2MAP0  = PM_ANALOG;
+  P2MAP1  = PM_ANALOG;
+  P2MAP2  = PM_ANALOG;
+  P2MAP3  = PM_ANALOG;
+  P2MAP4  = PM_ANALOG;
+  P2MAP5  = PM_ANALOG;
+  P2MAP6  = PM_ANALOG;
+  P2MAP7  = PM_ANALOG;
+*/
 
-
-
-  ADC12MCTL0 = ( REF_DEXT << 4 ) | ADC12INCH_0;                 // ref+=AVcc, channel = A0
-  ADC12MCTL1 = ( REF_DEXT << 4 ) | ADC12INCH_1;                 // ref+=AVcc, channel = A1
-  ADC12MCTL2 = ( REF_DEXT << 4 ) | ADC12INCH_2;                 // ref+=AVcc, channel = A2
-  ADC12MCTL3 = ( REF_DEXT << 4 ) | ADC12INCH_3;                 // ref+=AVcc, channel = A2
-  ADC12MCTL4 = ( REF_DEXT << 4 ) | ADC12INCH_6;                 // ref+=AVcc, channel = A2
-  ADC12MCTL5 = ( REF_DEXT << 4 ) | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
-
-  /*  
-  ADC12MCTL0 = ( REF_EXT << 4 ) |  0;   // VREFE and A0 input
-  ADC12MCTL1 = ( REF_EXT << 4 ) |  1;   // VREFE and A1 input
-  ADC12MCTL2 = ( REF_EXT << 4 ) |  2;   // VREFE and A2 input
-  ADC12MCTL3 = ( REF_EXT << 4 ) |  3;   // VREFE and A3 input
-  ADC12MCTL4 = ( REF_EXT << 4 ) |  4;   // VREFE and A4 input
-  ADC12MCTL5 = ( REF_EXT << 4 ) |  6;   // VREFE and A6 input
-  ADC12MCTL6 = ( REF_EXT << 4 ) |  7;   // VREFE and A7 input
-  ADC12MCTL7 = ADC12EOS | ( REF_EXT << 4 ) |  5;   // EOS , VREFE and A5(VREFE) input, should be FS??
-  */
-  ADC12CTL0  = adc_ctl0_a |  ADC12ON  ;  // turn on and enable
-  adc_ctl0_b = ADC12CTL0;
-  ADC12CTL0 |= ADC12ENC ;                        // Conversion enabled
-  
-  ADC12CTL0  = ADC12SC;  //  enable and start first conversion
-  adc_ctl0_c = ADC12CTL0;
-  ADC12CTL0  = adc_ctl0_b;
-#else
   //ADC12CTL0 = ADC12ON+ADC12MSC+ADC12SHT0_2; // Turn on ADC12, set sampling time
   ADC12CTL0 = ADC12ON | ADC12SHT0_2| ADC12MSC; // Turn on ADC12, set sampling time
   ADC12CTL1 = ADC12SHP+ADC12CONSEQ_1;       // Use sampling timer, single sequence
@@ -174,15 +158,13 @@ int init_adc12(){
   ADC12MCTL1 = ADC12SREF_7 | ADC12INCH_1;                 // ref+=AVcc, channel = A1
   ADC12MCTL2 = ADC12SREF_7 | ADC12INCH_2;                 // ref+=AVcc, channel = A2
   ADC12MCTL3 = ADC12SREF_7 | ADC12INCH_3;                 // ref+=AVcc, channel = A2
-  ADC12MCTL4 = ADC12SREF_7 | ADC12INCH_4;                 // ref+=AVcc, channel = A2
-  ADC12MCTL5 = ADC12SREF_7 | ADC12INCH_6;                 // ref+=AVcc, channel = A2
-  ADC12MCTL6 = ADC12SREF_7 | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
+  ADC12MCTL4 = ADC12SREF_7 | ADC12INCH_6;                 // ref+=AVcc, channel = A2
+  ADC12MCTL5 = ADC12SREF_7 | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
   //ADC12IE = 0x08;                           // Enable ADC12IFG.3
   ADC12CTL0 |= ADC12ENC;                    // Enable conversions
   ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
   adc_ctl0_c = ADC12CTL0;
 
-#endif  
 }
 
 uint64_t vri(uint64_t r){

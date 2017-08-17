@@ -91,7 +91,7 @@ CCFLAGS=-I${MRFHOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  
 
 ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${APPOBJS} ${TARG} ${LST} ${SIZEREP}
 
-CLEANALL :
+clean :
 	rm -rf ${BLDDIR}
 
 ${BIN}:

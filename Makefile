@@ -30,19 +30,19 @@ CLEAN:
 
 
 BUILD:
-	cd examples/hostsim && make CLEANALL
+	cd examples/hostsim && make clean
 	cd examples/hostsim && make MRFID=0x01
 	cd examples/hostsim && make MRFID=0x02
 	cd examples/hostsim && make MRFID=0x20
 	cd examples/hostsim && make MRFID=0x2f
-	cd examples/host && make CLEANALL
+	cd examples/host && make clean
 	cd examples/host && make MRFID=0x01
 
 
 
 BUILDCC:
-	cd examples/usbrf && make CLEANALL && make
-	cd examples/pt1000usb && make CLEANALL && make
+	cd examples/usbrf && make clean && make
+	cd examples/pt1000usb && make clean && make
 
 QTEST:
 	cd mrflib/tests/iqueue && make clean && make
