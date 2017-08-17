@@ -59,6 +59,20 @@
 #define _AN7_PORT P2
 #define _AN7_BIT  7
 
+
+
+// conversion calculation consts
+
+#define PREM 1000000
+
+
+#define RVRMIN 2490000
+#define RVRMAX 1560000
+
+#define RS  770000  //FIXME - this is frigged
+#define RB  1000000
+
+
 volatile int dbg22;
 
 volatile uint8 dbg_u8;
@@ -80,6 +94,12 @@ static uint32_t _ref_r;  // ref resistor in bridge - min expected pt1000 value 7
 static uint32_t _ref_t;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
 static uint32_t _ref_b;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
 
+
+// precalculated values for converting ADC to milliohmd
+
+static uint64_t vrmin, vrefi;
+
+
 static uint16_t _last_reading[MAX_RTDS];
 
 
@@ -96,6 +116,7 @@ uint16_t adc_ctl0_a,adc_ctl0_b, adc_ctl0_c;
 
 #define REF_SUPPLY 0
 #define REF_EXT    2
+#define REF_DEXT   7
 
 int init_adc12(){
 
@@ -120,13 +141,12 @@ int init_adc12(){
 
 
 
-  ADC12MCTL0 = ( REF_EXT << 4 ) | ADC12INCH_0;                 // ref+=AVcc, channel = A0
-  ADC12MCTL1 = ( REF_EXT << 4 ) | ADC12INCH_1;                 // ref+=AVcc, channel = A1
-  ADC12MCTL2 = ( REF_EXT << 4 ) | ADC12INCH_2;                 // ref+=AVcc, channel = A2
-  ADC12MCTL3 = ( REF_EXT << 4 ) | ADC12INCH_3;                 // ref+=AVcc, channel = A2
-  ADC12MCTL4 = ( REF_EXT << 4 ) | ADC12INCH_4;                 // ref+=AVcc, channel = A2
-  ADC12MCTL5 = ( REF_EXT << 4 ) | ADC12INCH_6;                 // ref+=AVcc, channel = A2
-  ADC12MCTL6 = ( REF_EXT << 4 ) | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
+  ADC12MCTL0 = ( REF_DEXT << 4 ) | ADC12INCH_0;                 // ref+=AVcc, channel = A0
+  ADC12MCTL1 = ( REF_DEXT << 4 ) | ADC12INCH_1;                 // ref+=AVcc, channel = A1
+  ADC12MCTL2 = ( REF_DEXT << 4 ) | ADC12INCH_2;                 // ref+=AVcc, channel = A2
+  ADC12MCTL3 = ( REF_DEXT << 4 ) | ADC12INCH_3;                 // ref+=AVcc, channel = A2
+  ADC12MCTL4 = ( REF_DEXT << 4 ) | ADC12INCH_6;                 // ref+=AVcc, channel = A2
+  ADC12MCTL5 = ( REF_DEXT << 4 ) | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
 
   /*  
   ADC12MCTL0 = ( REF_EXT << 4 ) |  0;   // VREFE and A0 input
@@ -150,13 +170,13 @@ int init_adc12(){
   ADC12CTL0 = ADC12ON | ADC12SHT0_2| ADC12MSC; // Turn on ADC12, set sampling time
   ADC12CTL1 = ADC12SHP+ADC12CONSEQ_1;       // Use sampling timer, single sequence
   //ADC12CTL1 = ADC12CONSEQ_1;       // Use sampling timer, single sequence
-  ADC12MCTL0 = ADC12SREF_2 | ADC12INCH_0;                 // ref+=AVcc, channel = A0
-  ADC12MCTL1 = ADC12SREF_2 | ADC12INCH_1;                 // ref+=AVcc, channel = A1
-  ADC12MCTL2 = ADC12SREF_2 | ADC12INCH_2;                 // ref+=AVcc, channel = A2
-  ADC12MCTL3 = ADC12SREF_2 | ADC12INCH_3;                 // ref+=AVcc, channel = A2
-  ADC12MCTL4 = ADC12SREF_2 | ADC12INCH_4;                 // ref+=AVcc, channel = A2
-  ADC12MCTL5 = ADC12SREF_2 | ADC12INCH_6;                 // ref+=AVcc, channel = A2
-  ADC12MCTL6 = ADC12SREF_2 | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
+  ADC12MCTL0 = ADC12SREF_7 | ADC12INCH_0;                 // ref+=AVcc, channel = A0
+  ADC12MCTL1 = ADC12SREF_7 | ADC12INCH_1;                 // ref+=AVcc, channel = A1
+  ADC12MCTL2 = ADC12SREF_7 | ADC12INCH_2;                 // ref+=AVcc, channel = A2
+  ADC12MCTL3 = ADC12SREF_7 | ADC12INCH_3;                 // ref+=AVcc, channel = A2
+  ADC12MCTL4 = ADC12SREF_7 | ADC12INCH_4;                 // ref+=AVcc, channel = A2
+  ADC12MCTL5 = ADC12SREF_7 | ADC12INCH_6;                 // ref+=AVcc, channel = A2
+  ADC12MCTL6 = ADC12SREF_7 | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
   //ADC12IE = 0x08;                           // Enable ADC12IFG.3
   ADC12CTL0 |= ADC12ENC;                    // Enable conversions
   ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger
@@ -165,15 +185,30 @@ int init_adc12(){
 #endif  
 }
 
+uint64_t vri(uint64_t r){
+  
+  return  (uint64_t)PREM * (uint64_t)RB/(r + (uint64_t)RB);
+}
 
 
-uint32_t eval_milliohms(uint16_t adc){  
-  uint64_t rv = (uint64_t)4095 * ((uint64_t)_ref_r + (uint64_t)_ref_t + (uint64_t)_ref_b);
+
+uint64_t v2ri(uint64_t sv){
+  uint64_t r;
+  r =  (( (uint64_t)RB*(uint64_t)PREM)/sv) - (uint64_t)RB;
+
+  return r;
+}
+
+uint32_t eval_milliohms(uint16_t adc){
+
+  
+  uint64_t rv;
   if (adc == 0)
     return ULONG_MAX;
-  
-  rv = rv / (uint64_t)adc;
-  rv = rv - ((uint64_t)_ref_t+(uint64_t)_ref_b);
+  rv = ((uint64_t)adc * vrefi) / 4095;
+  rv = rv + vrmin;
+  rv = v2ri(rv);
+  rv = rv - (uint64_t)RS;
   return (uint32_t)rv;
 }
 
@@ -282,8 +317,8 @@ void on_second(){
 }
 
 int mrf_app_init(){
-    uint8 ch;
-
+  uint8 ch;
+  uint64_t vrmax;
   dbg22 = 101;
   _tick_cnt = 0;
   _tick_err_cnt = 0;
@@ -291,6 +326,12 @@ int mrf_app_init(){
   _ref_r = (uint32_t)787*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_t = (uint32_t)787*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_b = (uint32_t)1000*(uint32_t)1000;   // nominal resistance in series with PT1000
+
+
+  vrmax = vri(RVRMAX);
+  vrmin = vri(RVRMIN);
+  vrefi  = vrmax - vrmin;
+
   init_relays();
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
     _last_reading[ch] = 0;

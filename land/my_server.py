@@ -12,6 +12,7 @@ from mrfland_weblet_temps import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
 from mrfland_weblet_timers import MrfLandWebletTimers
 from mrfland_weblet_devs   import MrfLandWebletDevs
+from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_server import MrflandServer
 
             
@@ -29,9 +30,9 @@ if __name__ == '__main__':
     
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
               {
-                  'temp' : ["ACC_TOP", "ACC_MID", "ACC_BOT", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
+                  'temp' : ["ACC_100", "ACC_50", "ACC_10", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
                   'relay' : ["UFH_PUMP", "RAD1_PUMP"]
-              } )
+              })
 
     DevHeatbox(rm, "heatbox_kitchen"  , 4,
                {
@@ -39,21 +40,26 @@ if __name__ == '__main__':
                    'relay' : ["RAD2_PUMP", "DHW1_HX_PUMP"]
                })
 
-    
-
-    MrfLandWebletDevs(rm,
-                       {
-                           'tag'  : 'devs',
-                           'label': 'Devices'
-                       }
-    )
+    MrfLandWebletStore(rm,
+                    {
+                        'tag'        : 'store',
+                        'label'      : 'Heatstore',
+                        'acc_tag'    : 'ACC_',
+                        'acc_litres' : 2200
+                           
+                    })
 
     MrfLandWebletTemps(rm,
                        {
                            'tag'  : 'temps',
                            'label': 'Temperatures'
-                       }
-    )
+                       })
+
+    MrfLandWebletTimers(rm,
+                        {
+                            'tag':'timers',
+                            'label':'Timers'
+                        })
 
     MrfLandWebletRelays(rm,
                         {
@@ -62,16 +68,10 @@ if __name__ == '__main__':
                         }
     )
 
-    MrfLandWebletTimers(rm,
-                        {
-                            'tag':'timers',
-                            'label':'Timers'
-                        }
-    )
+    MrfLandWebletDevs(rm,
+                       {
+                           'tag'  : 'devs',
+                           'label': 'Devices'
+                       })
 
-    
-    
-    
     ml =  MrflandServer(rm)
-
-

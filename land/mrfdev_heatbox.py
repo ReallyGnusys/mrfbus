@@ -57,14 +57,16 @@ class DevHeatbox(MrfDev):
     _cmdset = HeatboxAppCmds
 
     def app_packet(self, hdr, param , resp):
-        mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        mrflog.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        mrflog.info("Heatbox app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        mrflog.warn("Heatbox app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        if hasattr(resp,'td') and resp.td.day == 0:
+            resp.td.day = 16  # FIXME-just broken h/w work around
 
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                mrflog.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                mrflog.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }

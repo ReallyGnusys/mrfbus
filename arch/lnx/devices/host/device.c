@@ -30,7 +30,7 @@ static int ifd[NUM_INTERFACES]; // need fds for lnx i_f s
 
 const MRF_IF _sys_ifs[] = {
   [ PIPE0 ] =  {&_if_status[0], &mrf_pipe_lnx_if, &_if_ackbuffs[0], &ifd[0], "PIPE0"},
-  [ USB0  ] =  {&_if_status[1], &mrf_uart_lnx_if, &_if_ackbuffs[1], &ifd[1], "/dev/ttyUSB0"},
-  [ USB1  ] =  {&_if_status[2], &mrf_uart_lnx_if, &_if_ackbuffs[2], &ifd[2], "/dev/ttyUSB1"},
+  [ USB0  ] =  {&_if_status[1], &mrf_uart_lnx_if, &_if_ackbuffs[1], &ifd[1], "/dev/ttyMRF2"},
+  [ USB1  ] =  {&_if_status[2], &mrf_uart_lnx_if, &_if_ackbuffs[2], &ifd[2], "/dev/ttyMRF4"},
   [ PIPE3 ] =  {&_if_status[3], &mrf_pipe_lnx_if, &_if_ackbuffs[3], &ifd[3], "PIPE3"}
 };

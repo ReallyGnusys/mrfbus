@@ -25,7 +25,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from collections import OrderedDict
 import mrflog
 
-def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}, iclasses = {}):
+def tr_fn(inp , tr_dic):
+    if tr_dic.has_key(inp):
+        return tr_dic[inp]
+    else:
+        return inp
+
+    
+def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}, iclasses = {}, tr_hdr = {}):
     """ utility to generate a default html table to display an ordered dict """
     s = """
         <table class="table app-%s tab-%s">
@@ -42,10 +49,10 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
     for cntrl in postcontrols:
         odict[cntrl[0]] = cntrl[1]
     s += """
-             <th>%s</th>"""%("tag")   # always need tag - this is row name
+             <th>%s</th>"""%(tr_fn('tag',tr_hdr))   # always need tag - this is row name
     for fld in odict.keys():
         s += """
-             <th>%s</th>"""%(fld)
+             <th>%s</th>"""%(tr_fn(fld,tr_hdr))
     s += """
             </tr>
           </thead>
