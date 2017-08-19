@@ -108,7 +108,8 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_app_queue_push(bnum);
 }
 
-extern int _tick_count;
+extern uint32 _tick_count;
+
 MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_device_status\n");
 

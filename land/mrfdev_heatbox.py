@@ -56,6 +56,12 @@ class DevHeatbox(MrfDev):
         'relay' : MrfSensPtRelay}                 
     _cmdset = HeatboxAppCmds
 
+    def init(self):
+        mrflog.warn("%s init function"%(self.__class__.__name__))
+        for s in self.caps['temp']:
+            mrflog.warn("%s setting 5 tap filter on sens %s"%(self.__class__.__name__,s.label))
+            s.filter(10)
+
     def app_packet(self, hdr, param , resp):
         mrflog.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
@@ -66,7 +72,7 @@ class DevHeatbox(MrfDev):
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                mrflog.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                #mrflog.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }

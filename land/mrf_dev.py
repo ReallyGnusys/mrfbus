@@ -57,6 +57,9 @@ class MrfDev(object):
                 self.caps[clab].append(self._capspec[clab](slab))
                 self.rm.senslink(slab, self.address ,chan)
                 chan += 1
+
+        if hasattr(self, 'init'):  # run subclass init if defined
+            self.init()
         self.rm.device_register(self)
         
     def subscribe(self,callback):

@@ -23,6 +23,7 @@ from mrf_structs import *
 from core_tests import mrf_cmd_app_test
 from math import sqrt
 import mrflog
+from collections import deque
 
 
 class PktSpiDebug(MrfStruct):
@@ -168,16 +169,36 @@ class MrfSensPt1000(MrfSens):
         #except:
         #    mrflog.error("res_to_temp error chan %d  with milliohms %d tmp %f"%(self.channel,milliohms,tmp))
         #    T = -273.16
-        T = (int)(T*100)   # only 2 DP makes sense
-        T = T/100.0
+        T = (int)(T*10)   # only 1 DP makes sense
+        T = T/10.0
         return T
 
     
+    def filter(self, ntaps):
+        self.ftaps = deque()
+
+        for i in range(ntaps):
+            self.ftaps.append(0)
+            
+    
     def genout(self,indata,outdata):
+            
+            
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()
-        outdata['milliohms']  = int(indata['milliohms'])
+        if not hasattr(self,'ftaps'):
+            outdata['milliohms']  = int(indata['milliohms'])
+        else:
+            self.ftaps.popleft()
+            self.ftaps.append(int(indata['milliohms']))
+            tot = 0
+            for v in self.ftaps:
+                tot += v
+            mo = 1.0 * tot / len(self.ftaps)
+            outdata['milliohms']  = int(mo)
+            #mrflog.warn("genout filter res was %d  ftaps %s   "%(outdata['milliohms'],str(self.ftaps)))
+
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
         #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         return outdata
@@ -219,7 +240,7 @@ class Pt1000Dev(MrfDev):
         if param.type == mrf_cmd_read_state:
 
             for ch in range(len(resp.milliohms)):
-                mrflog.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
+                #mrflog.debug("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
                 }

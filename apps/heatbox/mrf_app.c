@@ -151,15 +151,18 @@ int init_adc12() {
 */
 
   //ADC12CTL0 = ADC12ON+ADC12MSC+ADC12SHT0_2; // Turn on ADC12, set sampling time
-  ADC12CTL0 = ADC12ON | ADC12SHT0_2| ADC12MSC; // Turn on ADC12, set sampling time
-  ADC12CTL1 = ADC12SHP+ADC12CONSEQ_1;       // Use sampling timer, single sequence
+  ADC12CTL0 = ADC12ON | ADC12SHT0_12 | ADC12SHT1_12 | ADC12MSC; // | ADC12MSC; // Turn on ADC12, set sampling time
+  ADC12CTL1 = ADC12SHP | ADC12CONSEQ_1 | ADC12DIV_7;       // Use sampling timer, single sequence
+  //ADC12CTL2 = ADC12TCOFF | ( 2 << 4 ) | ADC12SR ; // tempsens off, 12 bits,50ksps max
+  ADC12CTL2 = ADC12TCOFF | ( 2 << 4 ) ; // tempsens off, 12 bits
+
   //ADC12CTL1 = ADC12CONSEQ_1;       // Use sampling timer, single sequence
   ADC12MCTL0 = ADC12SREF_7 | ADC12INCH_0;                 // ref+=AVcc, channel = A0
   ADC12MCTL1 = ADC12SREF_7 | ADC12INCH_1;                 // ref+=AVcc, channel = A1
   ADC12MCTL2 = ADC12SREF_7 | ADC12INCH_2;                 // ref+=AVcc, channel = A2
   ADC12MCTL3 = ADC12SREF_7 | ADC12INCH_3;                 // ref+=AVcc, channel = A2
   ADC12MCTL4 = ADC12SREF_7 | ADC12INCH_6;                 // ref+=AVcc, channel = A2
-  ADC12MCTL5 = ADC12SREF_7 | ADC12INCH_7+ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
+  ADC12MCTL5 = ADC12SREF_7 | ADC12INCH_7 | ADC12EOS;        // ref+=AVcc, channel = A3, end seq.
   //ADC12IE = 0x08;                           // Enable ADC12IFG.3
   ADC12CTL0 |= ADC12ENC;                    // Enable conversions
   ADC12CTL0 |= ADC12SC;                   // Start convn - software trigger

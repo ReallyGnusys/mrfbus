@@ -604,7 +604,7 @@ int _mrf_process_buff(uint8 bnum)
 }
 
 
-int _tick_count;
+uint32  _tick_count;
 
 void mrf_sys_init(){
   _tick_count = 0;

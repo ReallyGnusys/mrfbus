@@ -315,7 +315,7 @@ class TestPt1000(DeviceTestCase):
             print "reg %x :  %02x"%(addr, resp.value)
             regvals[addr] = resp.value
 
-    def skipped_test001a_set_time(self):
+    def test001a_set_time(self):
         self.set_time_test(self.dest,self.host)
        
     def test001_dev_id_tests(self):
