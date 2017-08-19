@@ -24,6 +24,8 @@ import re
 class MrfLandWebletHotWater(MrflandWeblet):
     def post_init(self):
         mrflog.info("%s post_init"%(self.__class__.__name__))
+
+        self.state = 'IDLE'
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
@@ -170,7 +172,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         s =  """
         <h2>%s</h2>
         """%(self.label)
-        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['top_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''} )
+        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
         s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.levels, tr_hdr={ 'tag' : 'level'} )

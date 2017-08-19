@@ -214,6 +214,14 @@ void _rtc_set_error(TIMEDATE *td){
 }
 
 void _rtc_get(TIMEDATE *td){
+  /*
+  td->sec = ((TIMEDATE *)&ReadTime)->sec;
+  td->min = ((TIMEDATE *)&ReadTime)->min;
+  td->hour = ((TIMEDATE *)&ReadTime)->hour;
+  td->day = ((TIMEDATE *)&ReadTime)->day;
+  td->mon = ((TIMEDATE *)&ReadTime)->mon;
+  td->year = _y16_to_y8(((TIMEDATE *)&ReadTime)->year);
+  */
   td->sec = RTCSEC;
   td->min = RTCMIN;
   td->hour = RTCHOUR;
