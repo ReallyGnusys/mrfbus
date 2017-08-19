@@ -32,13 +32,13 @@ if __name__ == '__main__':
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
               {
                   'temp' : ["ACC_100", "ACC_50", "ACC_10", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
-                  'relay' : ["UFH_PUMP", "RAD1_PUMP"]
+                  'relay' : ["UFH_PUMP", "ACC_HEAT"]
               })
 
     DevHeatbox(rm, "heatbox_kitchen"  , 4,
                {
-                   'temp' : ["DHW1_TOP", "DHW1_MID", "DHW1_BOT", "HB1_FLOW", "RADS1_RET",  "DHW1_HX_RET", "HB1_AMBIENT"],
-                   'relay' : ["RAD2_PUMP", "DHW1_HX_PUMP"]
+                   'temp' : ["DHW1_100", "DHW1_25", "HB1_FLOW", "HB1_RET"],
+                   'relay' : ["RAD1_PUMP", "DHW1_HX_PUMP"]
                })
 
     MrfLandWebletStore(rm,
@@ -52,9 +52,10 @@ if __name__ == '__main__':
 
     MrfLandWebletHotWater(rm,
                     {
-                        'tag'        : 'dhw1',
-                        'label'      : 'DHW1',
+                        'tag'        : 'DHW1',
+                        'label'      : 'Hot Water 1',
                         'rad'        : 'RAD1',
+                        'heatbox'    : 'HB1',
                         'litres'     : 200
                            
                     })

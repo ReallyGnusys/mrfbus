@@ -71,7 +71,7 @@ class DevHeatbox(MrfDev):
 
         if param.type == mrf_cmd_read_state:
 
-            for ch in range(len(resp.milliohms)):
+            for ch in range(len(self.caps['temp'])):
                 #mrflog.warn("chan %s milliohms %d type %s"%(ch, resp.milliohms[ch], type(resp.milliohms[ch])))
                 inp = { 'date' : resp.td,
                         'milliohms' : resp.milliohms[ch]
