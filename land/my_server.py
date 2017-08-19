@@ -13,6 +13,7 @@ from mrfland_weblet_relays import MrfLandWebletRelays
 from mrfland_weblet_timers import MrfLandWebletTimers
 from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
+from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_server import MrflandServer
 
             
@@ -46,6 +47,15 @@ if __name__ == '__main__':
                         'label'      : 'Heatstore',
                         'acc_tag'    : 'ACC_',
                         'acc_litres' : 2200
+                           
+                    })
+
+    MrfLandWebletHotWater(rm,
+                    {
+                        'tag'        : 'dhw1',
+                        'label'      : 'DHW1',
+                        'rad'        : 'RAD1',
+                        'litres'     : 200
                            
                     })
 
