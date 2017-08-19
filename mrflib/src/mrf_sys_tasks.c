@@ -175,8 +175,7 @@ MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_set_time entry\n");
   td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   mrf_rtc_set(td);
-  mrf_rtc_get(&endtd);
-  mrf_data_response( bnum,(uint8 *)&endtd,sizeof(TIMEDATE));  
+  mrf_data_response( bnum,(uint8 *)td,sizeof(TIMEDATE));  
   //mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;
 }
