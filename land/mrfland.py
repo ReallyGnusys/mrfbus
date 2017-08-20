@@ -30,7 +30,7 @@ import datetime
 
 #from datetime import datetime 
 import install
-import mrflog
+from mrflog import mrflog
 from mrfland_state import MrflandState
 from mrfland_weblet import MrflandWeblet
 

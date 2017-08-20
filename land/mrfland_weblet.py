@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from collections import OrderedDict
-import mrflog
+from mrflog import mrflog
 
 def tr_fn(inp , tr_dic):
     if tr_dic.has_key(inp):

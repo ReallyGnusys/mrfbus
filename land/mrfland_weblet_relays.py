@@ -18,7 +18,7 @@ from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-import mrflog
+from mrflog import mrflog
 
 class MrfLandWebletRelays(MrflandWeblet):
     def init(self):
@@ -69,6 +69,9 @@ class MrfLandWebletRelays(MrflandWeblet):
             return
         sens = self.rm.sensors[str(data['row'])]
 
+        sens.set(data['val'])
+
+        """
         sensmap = self.rm.senslookup(sens.label)
 
         if sensmap == None:
@@ -85,3 +88,4 @@ class MrfLandWebletRelays(MrflandWeblet):
         mrflog.info("cmd_mrfctrl have data %s"%repr(data))
         self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
     
+        """

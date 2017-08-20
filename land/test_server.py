@@ -3,7 +3,7 @@
 from tornado.options import  options, parse_command_line  #FIXME move mrfland_server.py
 
 import mrfland
-import mrflog
+from mrflog import mrflog
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_sim import MrfDevSim

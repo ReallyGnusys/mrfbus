@@ -28,12 +28,8 @@ def logdeco(f):
 def mrflog(*args, **kwargs)
 """           
 
-mrflog = None
 
 def mrf_log_init(level = install.log_level):
-    global mrflog
-    if mrflog != None:
-        return mrflog
     formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s' , datefmt='%Y-%m-%d,%H:%M:%S')
     mrflog = logging.getLogger(install.logger_name)
     hdlr = logging.FileHandler(install.logdir+install.mrflog)
@@ -52,7 +48,9 @@ def mrf_log_init(level = install.log_level):
     logging.addLevelName( logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
     return alog
    
+mrflog = mrf_log_init()
 
+"""
 def debug(*args, **kwargs):
     log = mrf_log_init()
     log.debug(*args, **kwargs)
@@ -70,3 +68,4 @@ def error(*args, **kwargs):
     log.error(*args, **kwargs)
     
 
+"""

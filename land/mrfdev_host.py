@@ -6,7 +6,7 @@ from mrf_sens_timer import MrfSensTimer
 import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test, DefaultAppCmds
-import mrflog
+from mrflog import mrflog
 
     
         

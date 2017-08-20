@@ -4,7 +4,7 @@ from tornado.options import  options, parse_command_line  #yFIXME move mrfland_s
 
 import mrfland
 
-import mrflog
+from mrflog import mrflog, mrf_log_init
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_host import MrfDevHost
@@ -15,11 +15,12 @@ from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_server import MrflandServer
-
+import install
             
 if __name__ == '__main__':
+    #mrf_log_init()
     parse_command_line()
-    mrflog.info("Mrfland web server starting on port "+str(options.port))
+    mrflog.warn("Mrfland web server starting on port "+str(options.port))
     
 
     rm = mrfland.MrflandRegManager()
@@ -57,7 +58,8 @@ if __name__ == '__main__':
                         'rad'        : 'RAD1',
                         'acctop'     : 'ACC_100',
                         'heatbox'    : 'HB1',
-                        'litres'     : 200
+                        'litres'     : 200,
+                        'target_temp': 68.0
                            
                     })
 

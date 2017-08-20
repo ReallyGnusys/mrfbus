@@ -21,7 +21,7 @@ from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from mrfdev_pt1000 import *
 
 from collections import OrderedDict
-import mrflog
+from mrflog import mrflog
 import re
 
 
@@ -114,8 +114,9 @@ class MrfLandWebletTimers(MrflandWeblet):
             mrflog.error("TimersWeblet : sens_callback data didn't have active field")
             return
         if not self.relay_lut.has_key(label):
-            mrflog.error("TimersWeblet : sens_callback now relay map for timer %s"%label)
+            mrflog.error("TimersWeblet : sens_callback no relay map for timer %s"%label)
             return
+
         sensmap =  self.relay_lut[label]['smap']
         pl = self.relay_lut[label]['tag']
         ## really need to deduce control from all of timer periods - if any are active - it is active
@@ -128,6 +129,10 @@ class MrfLandWebletTimers(MrflandWeblet):
 
         cdata = {}
 
+        relay = self.rm.sensors[pl]
+
+        relay.set(is_active)
+        """
         cdata['chan'] = sensmap['chan']
         #cdata['val'] = int(data['active'])
         cdata['val'] = int(is_active)
@@ -137,7 +142,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
                     (sensmap['addr'] , repr(param)))
         self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
-
+        """
         
     
     def pane_html(self):

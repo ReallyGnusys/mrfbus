@@ -19,7 +19,7 @@ from mrf_dev  import MrfDev
 import datetime
 import ctypes
 from mrf_structs import *
-import mrflog
+from mrflog import mrflog
 
 
 class MrfSensTimer(MrfSens):

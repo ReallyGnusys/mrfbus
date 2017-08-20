@@ -18,7 +18,7 @@ from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-import mrflog
+from mrflog import mrflog
 import re
 
 

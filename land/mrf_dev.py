@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from mrf_structs import *
-import mrflog
+from mrflog import mrflog
 
 
 
@@ -54,13 +54,17 @@ class MrfDev(object):
             chan = 0
             for slab in caplabels[clab]:
                 #self.caps[clab].append(self._capspec[clab](slab, self.address, chan, mrflog))
-                self.caps[clab].append(self._capspec[clab](slab))
+                self.caps[clab].append(self._capspec[clab](slab,self.devupdate,self.address,chan))
                 self.rm.senslink(slab, self.address ,chan)
                 chan += 1
 
         if hasattr(self, 'init'):  # run subclass init if defined
             self.init()
         self.rm.device_register(self)
+
+    def devupdate(self, cmd, data = {}):
+        mrflog.warn("%s devupdate dest %s"%(self.__class__.__name__, self.address))
+        self.rm.devupdate(self.label, self.address, cmd, data = {})
         
     def subscribe(self,callback):
         key = self.skey

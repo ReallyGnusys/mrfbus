@@ -7,7 +7,7 @@ from mrf_structs import *
 from core_tests import mrf_cmd_app_test
 from math import sqrt
 from mrfdev_pt1000 import PktPt1000State, PktRelayState, MrfSensPt1000, MrfSensPtRelay
-import mrflog
+from mrflog import mrflog
 
 MAX_RTDS = 7
 

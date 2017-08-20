@@ -22,7 +22,7 @@ import ctypes
 from mrf_structs import *
 from core_tests import mrf_cmd_app_test
 from math import sqrt
-import mrflog
+from mrflog import mrflog
 from collections import deque
 
 
@@ -213,16 +213,46 @@ class MrfSensPtRelay(MrfSens):
                    ('relay' , int )
     ]
 
-    
+    def init(self):
+        self.on_off      = 0
+        self.req_val     = 0
+        self.force_val   = 0
+        self.override    = False
+        
     def genout(self,indata,outdata):
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()
         outdata['relay']  = int(indata['relay'])
         return outdata
+
+    def _cmd(self,on_off):
+        self.on_off = on_off
+        cdata = {}
+
+        cdata['chan'] = self.channel
+        cdata['val'] = int(on_off)
+        param = PktRelayState()
+        param.dic_set(cdata)
+        mrflog.warn("%s sending SET_RELAY to addr %d with param %s"%
+                    (self.__class__.__name__, self.addr , repr(param)))
+        self.devupdate('SET_RELAY',param)
+
+    def set(self, on_off):
+        self.req_val = on_off
+        if self.override == False and self.on_off != req_val:
+            self._cmd(on_off)
+
+    def force(self, on_off):
+        self.force_val = on_off
+        self.override = True
+        if self.on_off != on_off:
+            self._cmd(on_off)
         
-
-
+    def release(self):
+        self.override = False
+        if self.on_off != self.req_val:  # restore request value
+            self._cmd(self.req_val)
     
         
 class Pt1000Dev(MrfDev):

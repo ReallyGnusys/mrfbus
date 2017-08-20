@@ -18,13 +18,13 @@ from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-import mrflog
+from mrflog import mrflog
 import re
 
 class MrfLandWebletHotWater(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-
+        self.hyst = 4.0
         self.state = 'IDLE'
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
@@ -53,6 +53,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if not self.data.has_key('heatbox'):
             mrflog.error("%s , no heatbox in data"%self.__class__.__name__)
             return
+        if not self.data.has_key('target_temp'):
+            mrflog.error("%s , no target_temp in data"%self.__class__.__name__)
+            return
         if not self.data.has_key('tag'):
             mrflog.error("%s , tag"%self.__class__.__name__)
             return
@@ -61,8 +64,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
             mrflog.error("%s , litres"%self.__class__.__name__)
             return
 
-        self.litres = self.data['litres']
-
+        self.litres      = self.data['litres']
+        self.target_temp = self.data['target_temp']
+        
 
         # sort through temp sensors
         self.slabs = []
@@ -118,10 +122,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.hx_relay = s
                 self.hx_relay.subscribe(self.hx_relay_callback)
                 mrflog.warn("%s Found hx relay  %s"%(self.__class__.__name__,repr(self.hx_relay.label)))
-
+                self.hx_relay_map = self.rm.senslookup(self.hx_relay.label)
             elif rerad.match(s.label):
                 self.rad_relay = s
                 self.rad_relay.subscribe(self.rad_relay_callback)
+                self.rad_relay_map = self.rm.senslookup(self.rad_relay.label)
                 mrflog.warn("%s Found rad relay  %s"%(self.__class__.__name__,repr(self.rad_relay.label)))
 
 
@@ -138,10 +143,67 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def eval_capacity(self):
         return
 
+    def hx_relay_control(self, on_off):
+        cdata = {}
+        cdata['chan'] = self.hx_relay_map['chan']
+        #cdata['val'] = int(data['active'])
+        cdata['val'] = on_off
+        param = PktRelayState()
+        param.dic_set(cdata)       
+        mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
+                    (self.hx_relay_map['addr'] , repr(param)))
+        self.rm.devupdaten(self.tag,self.hx_relay_map['addr'],'SET_RELAY',param)
+ 
+    def rad_relay_control(self, on_off):
+        cdata = {}
+        cdata['chan'] = self.rad_relay_map['chan']
+        #cdata['val'] = int(data['active'])
+        cdata['val'] = on_off
+        param = PktRelayState()
+        param.dic_set(cdata)       
+        mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
+                    (self.rad_relay_map['addr'] , repr(param)))
+        self.rm.devupdaten(self.tag,self.rad_relay_map['addr'],'SET_RELAY',param)
 
     def state_update(self):
-        if self.state == 'IDLE':
+        next_state = self.state
+        if not hasattr(self,'store_temp'):
             return
+        if not hasattr(self,'temps'):
+            return
+        if not hasattr(self,'flow_temp'):
+            return
+        if not hasattr(self,'return_temp'):
+            return
+        
+        if self.state == 'IDLE':
+            if self.temps[100] < (self.target_temp - self.hyst):
+                if self.store_temp > (self.temps[100] + 10.0):
+                    if self.flow_temp > (self.temps[100] - 5.0):  
+                        next_state = 'CHARGING'
+                        self.hx_relay_control(1)
+                        
+                    else:
+                        next_state = 'PREPUMP'
+                        self.rad_relay_control(1)
+                        
+        elif self.state == 'PREPUMP':
+            if self.flow_temp > (self.temps[100] - 5.0):
+                self.rad_relay_control(0)
+                self.hx_relay_control(1)                
+                next_state = 'CHARGING'
+        elif self.state == 'CHARGING':
+            if self.temps[100] > self.target_temp:
+                self.hx_relay_control(0)                
+                next_state = 'IDLE'
+                
+        if next_state != self.state:
+            self.state = next_state
+            mrflog.warn("%s %s  state change to %s"%(self.__class__.__name__,self.label,self.state))
+            tg = self.mktag('hwstat', 'state')
+            dt =  { 'val' : self.state}
+            self.rm.webupdate(tg, dt)
+                    
     def tsens_callback(self,level):
         def _tscb(label,data):
             mrflog.info("weblet hot_water tsens callback for level %d label %s data %s"%(level,label, repr(data)))
@@ -155,13 +217,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.info("top tank tag is %s dt %s"%(repr(tg),repr(dt)))
                 self.rm.webupdate(tg, dt)
             self.eval_capacity()
+            self.state_update()
         return _tscb 
 
     def hx_relay_callback(self, label, data ):
         mrflog.warn("HotWaterWeblet : hx_relay_callback  %s  data %s"%(label,repr(data)))
         tag = self.mktag(self.tag, label)
-        mrflog.warn("HotWaterWeblet : hx_relay_callback  %s  data %s tag %s"%(label,repr(data),repr(tag)))
-        
+        mrflog.warn("HotWaterWeblet : hx_relay_callback  %s  data %s tag %s"%(label,repr(data),repr(tag)))        
         self.rm.webupdate(self.mktag('relays', label), data)
 
     def rad_relay_callback(self, label, data ):
@@ -172,20 +234,26 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def flow_callback(self, label, data):
         mrflog.info("weblet store flow callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'hx_flow_temp')
-        dt =  { 'val' : data['temp']} 
+        dt =  { 'val' : data['temp']}
+        self.flow_temp = data['temp']
         self.rm.webupdate(tg, dt)
+        self.state_update()
         
     def return_callback(self, label, data):
         mrflog.info("weblet store return callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'hx_return_temp')
         dt =  { 'val' : data['temp']} 
+        self.return_temp = data['temp']
         self.rm.webupdate(tg, dt)
+        self.state_update()
 
     def acc_callback(self, label, data):
         mrflog.info("weblet store acc callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'store_temp')
         dt =  { 'val' : data['temp']} 
+        self.store_temp = data['temp']
         self.rm.webupdate(tg, dt)
+        self.state_update()
         
 
     def pane_html(self):

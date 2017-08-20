@@ -16,15 +16,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 from mrf_structs import *
-import mrflog
+from mrflog import mrflog
 
 
 class MrfSens(object):    
     #def __init__(self, label, address,channel,log):
-    def __init__(self, label):
+    def __init__(self, label, devupdate, address, channel):        
         self.label = label  ## fix me this should be tag - maybe should have label as well
-        #self.address = address ## FIXME don't use this , try not to use back refs
-        #self.channel = channel ## really shouldn't use this either
+
+        self.address = address  # useful for sensor/actuator to know it's address channel
+        self.channel = channel
+        self.devupdate = devupdate  # hmpfff... need way for actuators to send commands.
         self.inval = None
         self.skey = 0
         self.subscribers = dict()
@@ -41,7 +43,12 @@ class MrfSens(object):
         self.output = OrderedDict()
         for fld in self._out_flds_:
             self._output[fld[0]] = fld[1]
-            self.output[fld[0]] = fld[1]()                    
+            self.output[fld[0]] = fld[1]()
+
+        # call optional subclass init
+
+        if hasattr(self,'init'):
+            self.init()
         
     def subscribe(self,callback):
         key = self.skey

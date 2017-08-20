@@ -19,7 +19,7 @@ import signal
 import Queue
 from collections import OrderedDict
 
-import mrflog
+from mrflog import mrflog
 from mainapp import mainapp
 from public import publicapp
 from pubsock import PubSocketHandler
