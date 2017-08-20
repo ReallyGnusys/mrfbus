@@ -120,8 +120,8 @@ class MrflandWeblet(object):
         self.tag = data['tag']
         self.label = data['label']
         self.data = data
-        if hasattr(self, 'post_init'):
-            self.post_init()
+        if hasattr(self, 'init'):
+            self.init()
         rm.weblet_register(self)  # ooer!
 
     def mktag(self, tab, row):

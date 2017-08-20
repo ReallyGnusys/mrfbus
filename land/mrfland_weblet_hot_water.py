@@ -22,8 +22,8 @@ import mrflog
 import re
 
 class MrfLandWebletHotWater(MrflandWeblet):
-    def post_init(self):
-        mrflog.info("%s post_init"%(self.__class__.__name__))
+    def init(self):
+        mrflog.info("%s init"%(self.__class__.__name__))
 
         self.state = 'IDLE'
         # do subscriptions here
@@ -126,7 +126,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
         
     def eval_capacity(self):
         return
-    
+
+
+    def state_update(self):
+        if self.state == 'IDLE':
+            return
     def tsens_callback(self,level):
         def _tscb(label,data):
             mrflog.info("weblet hot_water tsens callback for level %d label %s data %s"%(level,label, repr(data)))

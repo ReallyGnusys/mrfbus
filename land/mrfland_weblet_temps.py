@@ -21,8 +21,8 @@ from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 import mrflog
 
 class MrfLandWebletTemps(MrflandWeblet):
-    def post_init(self):
-        mrflog.info("%s post_init"%(self.__class__.__name__))
+    def init(self):
+        mrflog.info("%s init"%(self.__class__.__name__))
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
