@@ -43,11 +43,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
         rs = self.rm.senstypes[MrfSensPtRelay]
         mrflog.info("num MrfSensPtRelay found was %d"%len(rs))
 
-        # sort through temp sensors
-        self.slabs = []
-        self.sens = OrderedDict()
         if not self.data.has_key('rad'):
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
+            return
+        if not self.data.has_key('acctop'):
+            mrflog.error("%s , no acctop in data"%self.__class__.__name__)
             return
         
         if not self.data.has_key('heatbox'):
@@ -62,11 +62,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
             return
 
         self.litres = self.data['litres']
+
+
+        # sort through temp sensors
+        self.slabs = []
+        self.sens = OrderedDict()
+
         reh    = re.compile(r'%s_([0-9]+)'%self.data['tag'])
 
         mrflog.warn("reh pattern is %s"%reh.pattern)
         reflow = re.compile(r'%s(_FLOW)'%self.data['heatbox'])
         reret  = re.compile(r'%s(_RET)'%self.data['heatbox'])
+        reacc  = re.compile(r'%s'%self.data['acctop'])
 
         self.ts = {}
         self.flow_sens = None
@@ -91,6 +98,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.return_sens = s
                 self.return_sens.subscribe(self.return_callback)
                 mrflog.warn("%s Found return sensor  %s"%(self.__class__.__name__,repr(self.return_sens.label)))
+            elif reacc.match(s.label):
+                self.acc_sens = s
+                self.acc_sens.subscribe(self.acc_callback)
+                mrflog.warn("%s Found acc sensor  %s"%(self.__class__.__name__,repr(self.acc_sens.label)))
         self.levels.sort(reverse=True)
         mrflog.warn("%s has temp sensors at following levels %s"%(self.label,repr(self.levels)))
         
@@ -170,13 +181,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
         dt =  { 'val' : data['temp']} 
         self.rm.webupdate(tg, dt)
 
+    def acc_callback(self, label, data):
+        mrflog.info("weblet store acc callback for  label %s data %s"%(label, repr(data)))
+        tg = self.mktag('hwstat', 'store_temp')
+        dt =  { 'val' : data['temp']} 
+        self.rm.webupdate(tg, dt)
         
 
     def pane_html(self):
         s =  """
         <h2>%s</h2>
         """%(self.label)
-        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
+        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
         s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.levels, tr_hdr={ 'tag' : 'level'} )

@@ -55,6 +55,7 @@ if __name__ == '__main__':
                         'tag'        : 'DHW1',
                         'label'      : 'Hot Water 1',
                         'rad'        : 'RAD1',
+                        'acctop'     : 'ACC_100',
                         'heatbox'    : 'HB1',
                         'litres'     : 200
                            
