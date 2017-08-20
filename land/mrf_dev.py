@@ -63,8 +63,8 @@ class MrfDev(object):
         self.rm.device_register(self)
 
     def devupdate(self, cmd, data = {}):
-        mrflog.warn("%s devupdate dest %s"%(self.__class__.__name__, self.address))
-        self.rm.devupdate(self.label, self.address, cmd, data = {})
+        mrflog.warn("%s devupdate dest %s cmd %s data %s"%(self.__class__.__name__, self.address,cmd , repr(data)))
+        self.rm.devupdaten(self.label, self.address, cmd, data)
         
     def subscribe(self,callback):
         key = self.skey

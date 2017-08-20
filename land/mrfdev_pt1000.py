@@ -214,10 +214,11 @@ class MrfSensPtRelay(MrfSens):
     ]
 
     def init(self):
-        self.on_off      = 0
         self.req_val     = 0
         self.force_val   = 0
         self.override    = False
+        self.on_off      = 1  # yes we need this to get a turn off command sent on init
+        self.set(0)  # turn off all relays on server start
         
     def genout(self,indata,outdata):
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
@@ -234,13 +235,13 @@ class MrfSensPtRelay(MrfSens):
         cdata['val'] = int(on_off)
         param = PktRelayState()
         param.dic_set(cdata)
-        mrflog.warn("%s sending SET_RELAY to addr %d with param %s"%
-                    (self.__class__.__name__, self.addr , repr(param)))
+        mrflog.warn("%s sending SET_RELAY with param %s"%
+                    (self.__class__.__name__ , repr(param)))
         self.devupdate('SET_RELAY',param)
 
     def set(self, on_off):
         self.req_val = on_off
-        if self.override == False and self.on_off != req_val:
+        if self.override == False and self.on_off != self.req_val:
             self._cmd(on_off)
 
     def force(self, on_off):

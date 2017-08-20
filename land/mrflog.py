@@ -1,6 +1,6 @@
 import logging
 import install
-
+import datetime as dt
 
 class MrfLog(object):
     def __init__(self, level = install.log_level):
@@ -27,10 +27,21 @@ def logdeco(f):
 @logdeco
 def mrflog(*args, **kwargs)
 """           
+class MyFormatter(logging.Formatter):
+    converter=dt.datetime.fromtimestamp
+    def formatTime(self, record, datefmt=None):
+        ct = self.converter(record.created)
+        if datefmt:
+            s = ct.strftime(datefmt)
+        else:
+            t = ct.strftime("%Y-%m-%d %H:%M:%S")
+            s = "%s.%03d" % (t, record.msecs)
+        return s
 
 
 def mrf_log_init(level = install.log_level):
-    formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s' , datefmt='%Y-%m-%d,%H:%M:%S')
+    formatter = logging.Formatter(fmt='%(asctime)s] %(levelname)s %(filename)s.%(lineno)d - %(message)s')# , datefmt='%Y-%m-%d,%H:%M:%S')
+    #formatter = MyFormatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s', datefmt='%Y-%m-%d,%H:%M:%S')
     mrflog = logging.getLogger(install.logger_name)
     hdlr = logging.FileHandler(install.logdir+install.mrflog)
     hdlr.setFormatter(formatter)    

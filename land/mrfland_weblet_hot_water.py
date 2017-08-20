@@ -20,12 +20,13 @@ from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from mrflog import mrflog
 import re
+from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
         self.hyst = 4.0
-        self.state = 'IDLE'
+        self.state = 'INIT'
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
@@ -138,23 +139,50 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rs[1] = self.rad_relay
         self.rlabs.append(self.rad_relay.label)
         mrflog.warn("num rs %d  labs %s"%(len(self.rs),repr(self.rlabs)))
-        
+
+
+    def run_init(self):
+        mrflog.warn("%s run_init"%(self.__class__.__name__))
+        # start timer
+        now = datetime.now()
+        td  = timedelta(seconds = 30)
+        tod = now + td
+        self.rm.set_timer( tod.time() , self.label , 'TO')
+        self.rm.timer_reg_callback( self.label, 'TO', self.timer_callback)
+    def timer_callback(self, label, act):
+        mrflog.warn("%s : timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
+        self.state_update(timeout=True)
+
         
     def eval_capacity(self):
         return
 
     def hx_relay_control(self, on_off):
+        mrflog.warn("%s hx_relay_control on_off %d"%(self.__class__.__name__, on_off))
+        self.hx_relay.set(on_off)
+        """
         cdata = {}
         cdata['chan'] = self.hx_relay_map['chan']
-        #cdata['val'] = int(data['active'])
         cdata['val'] = on_off
         param = PktRelayState()
         param.dic_set(cdata)       
         mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
                     (self.hx_relay_map['addr'] , repr(param)))
         self.rm.devupdaten(self.tag,self.hx_relay_map['addr'],'SET_RELAY',param)
- 
-    def rad_relay_control(self, on_off):
+        """
+
+
+
+        
+    def rad_relay_force(self, on_off):
+        mrflog.warn("%s rad_relay_force on_off %d"%(self.__class__.__name__, on_off))
+        self.rad_relay.force(on_off)
+
+    def rad_relay_release(self):
+        mrflog.warn("%s rad_relay_release"%(self.__class__.__name__))
+        self.rad_relay.release
+        
+        """
         cdata = {}
         cdata['chan'] = self.rad_relay_map['chan']
         #cdata['val'] = int(data['active'])
@@ -164,8 +192,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
         mrflog.warn(" sending SET_RELAY to addr %d with param %s"%
                     (self.rad_relay_map['addr'] , repr(param)))
         self.rm.devupdaten(self.tag,self.rad_relay_map['addr'],'SET_RELAY',param)
-
-    def state_update(self):
+        """
+    def state_update(self, timeout = False):
         next_state = self.state
         if not hasattr(self,'store_temp'):
             return
@@ -175,21 +203,25 @@ class MrfLandWebletHotWater(MrflandWeblet):
             return
         if not hasattr(self,'return_temp'):
             return
-        
+        if self.state == 'INIT':
+            if timeout:
+                next_state = 'IDLE'
+                
         if self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
                 if self.store_temp > (self.temps[100] + 10.0):
-                    if self.flow_temp > (self.temps[100] - 5.0):  
+                    if self.flow_temp > (self.temps[100] - 5.0):
+                        mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.flow_temp, self.temps[100]))
                         next_state = 'CHARGING'
                         self.hx_relay_control(1)
                         
                     else:
                         next_state = 'PREPUMP'
-                        self.rad_relay_control(1)
+                        self.rad_relay_force(1)
                         
         elif self.state == 'PREPUMP':
             if self.flow_temp > (self.temps[100] - 5.0):
-                self.rad_relay_control(0)
+                self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGING'
         elif self.state == 'CHARGING':
@@ -214,10 +246,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if level == 100:
                 tg = self.mktag('hwstat', 'top_temp')
                 dt =  { 'val' : data['temp']}
-                mrflog.info("top tank tag is %s dt %s"%(repr(tg),repr(dt)))
+                mrflog.warn("top tank tag is %s dt %s"%(repr(tg),repr(dt)))
                 self.rm.webupdate(tg, dt)
+                self.state_update()
             self.eval_capacity()
-            self.state_update()
         return _tscb 
 
     def hx_relay_callback(self, label, data ):
@@ -232,7 +264,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
     
     def flow_callback(self, label, data):
-        mrflog.info("weblet store flow callback for  label %s data %s"%(label, repr(data)))
+        mrflog.warn("HotWaterWeblet flow callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'hx_flow_temp')
         dt =  { 'val' : data['temp']}
         self.flow_temp = data['temp']
@@ -240,7 +272,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.state_update()
         
     def return_callback(self, label, data):
-        mrflog.info("weblet store return callback for  label %s data %s"%(label, repr(data)))
+        mrflog.warn("HotWaterWeblet return callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'hx_return_temp')
         dt =  { 'val' : data['temp']} 
         self.return_temp = data['temp']
@@ -248,7 +280,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.state_update()
 
     def acc_callback(self, label, data):
-        mrflog.info("weblet store acc callback for  label %s data %s"%(label, repr(data)))
+        mrflog.warn("HotWaterWeblet acc callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'store_temp')
         dt =  { 'val' : data['temp']} 
         self.store_temp = data['temp']
