@@ -88,7 +88,7 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
  
   uint8 s[_MAX_PRINTLEN + 2];
   uint8 i;
-  mrf_debug("print_hex_buff : len is %u buff:",len);
+  mrf_debug("print_hex_buff : len is %u buff:\n",len);
   //if (len >  _MRF_BUFFLEN){
   if (len > _MAX_PRINTLEN ){
     mrf_debug("try len <= %u - you had %d\n",_MRF_BUFFLEN,len);
@@ -515,7 +515,7 @@ char buff[2048];
        uint8 i;
        struct sockaddr_in clientname;
        size_t size;
-       mrf_debug("server connection fd %d\n",fd);
+       mrf_debug("server connection fd %d\n",lisfd);
 
        int new;
        size = sizeof (clientname);

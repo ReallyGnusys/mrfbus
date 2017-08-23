@@ -23,7 +23,8 @@
 #include "mrf_types.h"
 #include "mrf_if.h"
 
-#define _MRF_UART_PREAMBLE 0x55
+#define _MRF_UART_PREAMBLE   0xAA
+#define _MRF_UART_PREAMBLE_1 0xAB
   // uart line state
 typedef enum _rstate {
   S_IDLE       = 0,
@@ -43,8 +44,10 @@ typedef struct {
   UART_LSTATE state;
   uint8 bnum;  // mrfbuff num
   uint8 *buff; // buff ptr kept for convenience
-  uint8 bindex; 
+  uint8 bindex;
+  uint8 cnt;
   uint16 csum;
+  uint16 rxcsum;
   uint16 errors;
 } UART_CSTATE;
 

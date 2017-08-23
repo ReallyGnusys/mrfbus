@@ -182,8 +182,21 @@ static uint8  _rx_byte(){
   return last_rx;
 }
 
+void _dbg_pkt_sent(UART_CSTATE *txstate){
 
 
+}
+
+static uint8 tb8;
+static uint8 csum_ms,csum_ls;
+
+void _dbg_csum_ms(uint8 val){
+  csum_ms  = val;
+}
+
+void _dbg_csum_ls(uint8 val){
+  csum_ls  = val;
+}
 
 interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
 {
@@ -204,12 +217,19 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
-     _tx_byte(mrf_uart_tx_byte(&txstate));
+    tb8 = mrf_uart_tx_byte(&txstate);
+    _tx_byte(tb8);
+
+    if (txstate.state  == S_CSUM_LS){
+      _dbg_csum_ms(tb8);
+    }
 
     if (mrf_uart_tx_complete(&txstate) == 0)
       UCA0IE |= UCTXIE;  //re-enable this int
-    else
-      UCA0IE &= ~UCTXIE; 
+    else {
+      _dbg_pkt_sent(&txstate);
+      UCA0IE &= ~UCTXIE;
+    }
 
     /*
     if (mrf_uart_tx_complete(&txstate)){
