@@ -146,7 +146,7 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   //UCB0BRW =   72;                // 
   //UCB0BRW =   72;//
 
-  UCB0BRW =   36;// stab in dark seems good
+  UCB0BRW =   18;// stab in dark seems good
 
 
   
