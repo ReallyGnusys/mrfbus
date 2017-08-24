@@ -220,9 +220,6 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     tb8 = mrf_uart_tx_byte(&txstate);
     _tx_byte(tb8);
 
-    if (txstate.state  == S_CSUM_LS){
-      _dbg_csum_ms(tb8);
-    }
 
     if (mrf_uart_tx_complete(&txstate) == 0)
       UCA0IE |= UCTXIE;  //re-enable this int

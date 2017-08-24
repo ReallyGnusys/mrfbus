@@ -128,9 +128,9 @@ static int  _appl_fifo_callback(int fd){
 
   uint8 udest = buff[1];
   uint8 type = buff[2];
-  mrf_debug("calling send_command udest %d type %d\n",udest, type);
+  mrf_debug("calling send_command udest %d type %d  len was %d\n",udest, type, len);
   
-  return  mrf_send_command(udest, type,  &(buff[3]), len -3);
+  return  mrf_send_command(udest, type,  &(buff[3]), len - 4);   // len,dest,cmd and checksum not included in pl data
 
 }
 

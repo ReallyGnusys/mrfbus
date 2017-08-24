@@ -286,10 +286,10 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
   uint8 *pl = (uint8 *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
 
   // FIXME no payload supported
-  /*
+ 
   for (i = 0 ; i < len ; i++ )
     *(pl + i) = data[i];
-    */
+   
 
 
  // deliver buffer to dest
@@ -311,7 +311,7 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
  hdr->netid = MRFNET; 
  hdr->msgid = _txmsgid++;
  hdr->type = type;
- hdr->length = sizeof(MRF_PKT_HDR) ;  //FIXME just send headers for now - no payloads  + sizeof(MRF_PKT_RESP) + len;
+ hdr->length = sizeof(MRF_PKT_HDR) + len ;  //FIXME just send headers for now - no payloads  + sizeof(MRF_PKT_RESP) + len;
 
  mrf_debug("%s","mrf_send_command : this is our header\n");
  
