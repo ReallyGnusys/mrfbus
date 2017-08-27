@@ -174,21 +174,35 @@ uint8 ads1148_read(uint8 reg){
 }
 
 
+static int _spi_tx_err_cnt;
+static int _spi_tx_busy_cnt;
+
+static void err_spi_tx(){
+  _spi_tx_err_cnt++;
+
+}
+
 
 uint8 ads1148_write_noblock(uint8 reg,uint8 data){
   /*
   while(mrf_spi_tx_data_avail()){  // block until queue cleared
-    __delay_cycles(50);
+    _spi_tx_busy_cnt++;
+    __delay_cycles(10);
   }
   */
 
   uint8 b1 = 0x40 + ( reg & 0xf );
 
-  mrf_spi_tx(b1);
+  if (mrf_spi_tx(b1) == -1)
+    err_spi_tx();
   //__delay_cycles(10);  
-  mrf_spi_tx(0); // 1 byte
+  if (mrf_spi_tx(0) == -1)  
+    err_spi_tx();
+  //  mrf_spi_tx(0); // 1 byte
   //__delay_cycles(10);  
-  mrf_spi_tx(data);
+  if (mrf_spi_tx(data) == -1)  
+    err_spi_tx();
+  //mrf_spi_tx(data);
   //__delay_cycles(10);  
  
  
@@ -242,21 +256,28 @@ static int set_input_only(uint8 channel){
 
 }
 static int port2_icnt;
+static unsigned int _rx_flush_cnt;
 
+static int cyc_err1, cyc_err2;
 static void cycle_input(){
-  uint8 rc;
+  uint16 rc;
   uint16 rv = 0 ;
   uint8 curr_chan,next_chan; //,last_chan;
   port2_icnt++;
   curr_chan = _curr_adc_channel;
   next_chan = (_curr_adc_channel + 1 ) % 4;
-
-  mrf_spi_flush_rx();
-  ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
-  rc = mrf_spi_rx();  // get second - msb of result
+  // picking up results of last cycle
+  rc = mrf_spi_rx_noblock();  // get second - msb of result
+  if (rc == -1)
+    cyc_err1++;
   rv += (rc << 8);
-  rc = mrf_spi_rx();  // get third  - lsb of result
+  rc = mrf_spi_rx_noblock();  // get third  - lsb of result
+  if (rc == -1)
+    cyc_err2++;
   rv += rc;
+
+  _rx_flush_cnt += mrf_spi_flush_rx();
+  ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
   _last_reading[curr_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
@@ -264,6 +285,10 @@ static void cycle_input(){
 
   
   _curr_adc_channel = next_chan;
+
+  PINHIGH(START);  // pulse start
+  PINLOW(START);  
+  
 
 
   return;
@@ -282,7 +307,11 @@ int ads1148_config(){
   ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
   ads1148_write(IDAC0_OFFS,  4 );  // 500uA IDAC current
   ads1148_write(GPIOCFG_OFFS,  0);  // analogue pin functions
-  set_input_only(0);
+
+  _curr_adc_channel = 0;
+  ads1148_write(MUX0_OFFS, (_curr_adc_channel << 3) | 0x7 );
+  ads1148_write(IDAC1_OFFS,(_curr_adc_channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
+  mrf_spi_flush_rx();   
   flush_spi();
 
 }
@@ -305,13 +334,13 @@ int ads1148_init(){
   // DRDY INPUT
   INPUTPIN(DRDY);
 
-  __delay_cycles(10);
+  __delay_cycles(50);
 //PINLOW(RESET);
   PINLOW(MR);
-  __delay_cycles(100);
+  __delay_cycles(200);
 //PINHIGH(RESET);
   PINHIGH(MR);  
-  __delay_cycles(1000);
+  __delay_cycles(2000);
 
   mrf_spi_flush_rx();
 
@@ -322,10 +351,6 @@ int ads1148_init(){
 
   PINLOW(CS);  // leave SPI continually enabled in this app
 
-  ads1148_config();
-  __delay_cycles(100);
-  ads1148_config();  // temp desperation
-
   // need to enable interrupts on DRDY
   P2REN |= BITNAME(DRDY);
   P2OUT |= BITNAME(DRDY);
@@ -333,8 +358,23 @@ int ads1148_init(){
   P2IES |= BITNAME(DRDY);
   P2IFG &= ~BITNAME(DRDY);
   port2_icnt = 0;
- 
-  PINHIGH(START);  // continuous sampling
+
+
+  
+  for (i = 0; i < 200 ; i++)  
+      __delay_cycles(1000); // need to wait 16ms
+  ads1148_config();
+  __delay_cycles(200);
+  //ads1148_config();  // temp desperation
+  //__delay_cycles(100);
+  flush_spi();
+  _rx_flush_cnt = 0;
+  cyc_err1 = 0;
+  cyc_err2 = 0;
+  //PINHIGH(START);  // continuous sampling
+  PINHIGH(START);  // pulse start
+  PINLOW(START);  // continuous sampling
+  
   
 }
 
@@ -407,13 +447,23 @@ int mrf_app_init(){
   _tick_err_cnt = 0;
   _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
+
+  __delay_cycles(1000);  
+
   init_relays();
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
     _last_reading[ch] = 0;
-  
+
+  for (ch = 0 ; ch < 10 ; ch++)
+  __delay_cycles(1000);  
+
+  _spi_tx_err_cnt = 0;
   mrf_spi_init();
+  _spi_tx_busy_cnt = 0;
+
+  for (ch = 0 ; ch < 20 ; ch++)
+    __delay_cycles(1000);  
   ads1148_init();
-  
   rtc_rdy_enable(on_second);
 }
 
@@ -569,7 +619,7 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 void drdy_int(){
   uint16 rd;
-  port2_icnt++;
+  //port2_icnt++;
   cycle_input();
   //rd = ads1148_data();
   //_last_reading[curr_chan] = rd;

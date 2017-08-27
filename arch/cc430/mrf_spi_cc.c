@@ -31,6 +31,7 @@ int __attribute__ ((constructor)) mrf_spi_init() ;  // seems futile to expect in
 
 uint16 _spi_rx_int_cnt;
 uint16 _spi_tx_int_cnt;
+uint16 _spi_txrx_int_cnt;
 uint16 _spi_tx_bytes;
 uint16 _spi_rx_bytes;
 uint16 _spi_rxov_err;
@@ -40,7 +41,7 @@ static  IQUEUE _spi_rx_queue,_spi_tx_queue;
 static int _enable_spi_tx_int(){
   //UCB0IE &= ~UCTXIE;  // disable this intr
   UCB0IE |= UCTXIE;  //re-enable this intr
-  __bis_SR_register(GIE);
+  //__bis_SR_register(GIE); // possibly interesting if this is done within IRQ handler
   return 0;
 }
 
@@ -50,12 +51,13 @@ static int _enable_spi_rx_int(){
   __bis_SR_register(GIE);
   return 0;
 }
-
+static uint16_t _spi_tx_imm;
 int _start_spi_tx(){
 
   if (!queue_data_avail(&_spi_tx_queue))
     return 0;
 
+  
   if ((UCB0STAT & 1) == 0){ // UCB0 is idle
 
     int16 qdata = queue_pop(&_spi_tx_queue);
@@ -63,15 +65,20 @@ int _start_spi_tx(){
       return 0;
     UCB0TXBUF = (uint8)qdata;
     _spi_tx_bytes += 1;
+    _spi_tx_imm += 1;
   }
 
 }
+
+static _dbg_spi_tx_err1;
 int mrf_spi_tx(uint8 tx_byte){
   int rv = queue_push(&_spi_tx_queue,tx_byte);
-  if (rv == -1 )
+  if (rv == -1 ) {
+    _dbg_spi_tx_err1++;
     return -1;
-  _enable_spi_tx_int();
+  }
   _start_spi_tx();
+  _enable_spi_tx_int();
   return rv;
 }
 
@@ -88,6 +95,12 @@ uint8 mrf_spi_rx(){
   }
   return (uint8)queue_pop(&_spi_rx_queue);
 }
+
+uint16 mrf_spi_rx_noblock(){  // return -1 if nothing available
+  return queue_pop(&_spi_rx_queue);
+}
+
+
 
 int mrf_spi_flush_rx(){
   return queue_flush(&_spi_rx_queue);
@@ -124,10 +137,12 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
 
   _spi_rx_int_cnt = 0;
   _spi_tx_int_cnt = 0;
-  
+  _spi_txrx_int_cnt = 0;
+ 
   _spi_rx_bytes = 0;
   _spi_tx_bytes = 0;
   _spi_rxov_err = 0;
+  _spi_tx_imm = 0;
   queue_init(&_spi_rx_queue);
   queue_init(&_spi_tx_queue);
   
@@ -144,16 +159,18 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   // should be about 115 kb copied from uart
   UCB0CTL1 |= UCSSEL__SMCLK;
   //UCB0BRW =   72;                // 
-  //UCB0BRW =   72;//
+  UCB0BRW =   72;//
 
-  UCB0BRW =   18;// stab in dark seems good
+  //UCB0BRW =  36;// stab in dark seems good
+  //UCB0BRW =  36;// stab in dark seems good
 
-
+  
+  _dbg_spi_tx_err1 = 0;
   
   //UCB0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
   
   UCB0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
-  _enable_spi_rx_int();
+  _enable_spi_rx_int();  // think this must be done after reset released
 
   return 0;
 }
@@ -190,6 +207,7 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
         uint8 txchr = (uint8)queue_pop(&_spi_tx_queue);
         UCB0TXBUF = txchr;
         _spi_tx_bytes += 1;
+        UCB0IE |= UCTXIE;  //re-enable this int
 
         /*
         if(queue_data_avail(&_spi_tx_queue)) // re-enable this intr
@@ -200,6 +218,18 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     } else {
       UCB0IE &= ~UCTXIE; 
     }
+
+    // check RX while we're here
+    if (UCB0IFG & UCRXIFG) {
+      _spi_txrx_int_cnt++;
+      _rx_byte();
+      _spi_rx_bytes += 1;
+      __bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
+      UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
+
+
+    }
+    
     //UCB0IE |= UCTXIE;  //re-enable this int
     break;
   default: break;

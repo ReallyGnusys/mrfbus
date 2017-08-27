@@ -60,9 +60,7 @@ void init_clock(void){
 #endif
 
 
-#ifdef MCLK_12MHZ_DCO
-
-  //UCSCTL3 |= SELREF_2;                      // Set DCO FLL reference = REFO
+#ifdef MCLK_16MHZ_DCO
 
   UCSCTL3 = SELREF__XT1CLK + FLLREFDIV_0;
 
@@ -71,7 +69,7 @@ void init_clock(void){
  UCSCTL4 |=  SELA__XT1CLK ;//+ SELM__XT1CLK + SELS__XT1CLK;
  __bis_SR_register(SCG0);                  // Disable the FLL control loop
  UCSCTL0 = 0x0000;                         // Set lowest possible DCOx, MODx
- UCSCTL1 = DCORSEL_6;                      // Select DCO range 16MHz operation
+ UCSCTL1 = DCORSEL_5;                      // Select DCO range 16MHz operation
  UCSCTL2 = FLLD_1 + 255;                   // Set DCO Multiplier for 8MHz
                                             // (N + 1) * FLLRef = Fdco
                                             // (249 + 1) * 32768 = 8MHz
@@ -83,7 +81,7 @@ void init_clock(void){
   // UG for optimization.
   // 32 x 32 x 8 MHz / 32,768 Hz = 250000 = MCLK cycles for DCO to settle
   //  __delay_cycles(250000);
- for(x=0 ; x<384;x++)
+ for(x=0 ; x<255;x++)
     __delay_cycles(1000);
   // Loop until XT1,XT2 & DCO fault flag is cleared
  do
@@ -112,7 +110,7 @@ void init_clock(void){
  UCSCTL4 |=  SELA__XT1CLK ;//+ SELM__XT1CLK + SELS__XT1CLK;
  __bis_SR_register(SCG0);                  // Disable the FLL control loop
  UCSCTL0 = 0x0000;                         // Set lowest possible DCOx, MODx
- UCSCTL1 = DCORSEL_6;                      // Select DCO range 16MHz operation
+ UCSCTL1 = DCORSEL_5;                      // Select DCO range 16MHz operation
  UCSCTL2 = FLLD_1 + 255;                   // Set DCO Multiplier for 8MHz
                                             // (N + 1) * FLLRef = Fdco
                                             // (249 + 1) * 32768 = 8MHz
@@ -136,7 +134,7 @@ void init_clock(void){
 
 
  // UCSCTL4 = SELA__REFOCLK + SELS__DCOCLKDIV + SELM__DCOCLKDIV;
- UCSCTL4 = SELA__XT1CLK + SELS__DCOCLKDIV + SELM__DCOCLK;
+ UCSCTL4 = SELA__XT1CLK + SELS__DCOCLKDIV + SELM__DCOCLKDIV;
 
 #endif
 #ifdef MCLK_4MHZ_DCO

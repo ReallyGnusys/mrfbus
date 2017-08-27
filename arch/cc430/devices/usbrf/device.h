@@ -30,6 +30,6 @@ typedef  enum { UART0,
 // 8 buffs for allocation by sys
 #define _MRF_BUFFS 8
 
-#define IQUEUE_DEPTH 4
+#define IQUEUE_DEPTH 8
 
 #endif

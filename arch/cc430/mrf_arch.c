@@ -56,7 +56,7 @@ int mrf_arch_boot(){
   // sprintf(message,"");
   
 
-  SetVCore(0);   
+  SetVCore(2);   
   UCSCTL6 &= ~(XT1DRIVE0 | XT1DRIVE1);  // low power mode
 
   init_clock();

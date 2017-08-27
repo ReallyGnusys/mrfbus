@@ -439,7 +439,8 @@ class TestPt1000(DeviceTestCase):
             resp = self.response(timeout=self.timeout)            
             print "reg %x :  %02x"%(addr, resp.value)
             regvals[addr] = resp.value
-            
+
+        return
         err_tot = 0
         errs = {}
         chks = 0
