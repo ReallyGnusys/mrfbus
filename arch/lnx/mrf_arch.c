@@ -425,11 +425,11 @@ char buff[2048];
        //it's an input stream
        fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
-       mrf_debug("event on fd %d\n",fd);
+       //mrf_debug("event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
-       mrf_debug("read %d bytes\n",(int)s);
+       //mrf_debug("read %d bytes\n",(int)s);
        //mrf_debug("%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
        uint8 bind;
@@ -438,7 +438,7 @@ char buff[2048];
        if (*(mrf_if_ptr(inif)->type->funcs.buff) != NULL){
          //use interface method to copy to buff 
          int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s);
-         mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
+         //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
