@@ -20,15 +20,16 @@
 #ifndef _MRF_TYPES_INCLUDED_
 #define _MRF_TYPES_INCLUDED_
 #include "stddef.h"
+#include "stdint.h"
 
-#define uint32 unsigned  int
-#define int32  int
+#define uint32 uint32_t
+#define int32  int32_t
 
-#define uint16 unsigned short int
+#define uint16 uint16_t
 
-#define int16 short int
-#define uint8 unsigned char
-#define int8  char
+#define int16 int16_t
+#define uint8 uint8_t
+#define int8  int8_t
 
 //#define uint uint16
 typedef void  (*VFUNCPTR)(void);

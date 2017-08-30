@@ -306,7 +306,7 @@ class MrflandServer(object):
         #self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
         
         tornado.ioloop.IOLoop.instance().start()
-        print "do we ever get here?"
+        mrflog.error( "do we ever get here?")
 
 
     def _start_mrfnet (self,  netid = 0x25):
