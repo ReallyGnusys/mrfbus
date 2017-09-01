@@ -32,7 +32,9 @@
 #include <strings.h>
 #include <sys/ioctl.h>
 #include <linux/usbdevice_fs.h>
-#define BAUDRATE  B115200 
+#include <linux/serial.h>
+#define BAUDRATE B115200
+//#define BAUDRATE B57600
 //#define BAUDRATE B9600
 //#ifdef LP_115200
 //#undef LP_115200
@@ -100,6 +102,10 @@ static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen){
 void _dbg_txbuff(){
 
 }
+
+
+
+
 static int _usb_if_send_func(I_F i_f, uint8 *buff){
   char spath[64];
   uint8 txbuff[_MRF_BUFFLEN+8];
@@ -135,7 +141,12 @@ static int _usb_if_send_func(I_F i_f, uint8 *buff){
   /*
   bc = write(fd,"muppets\n",sizeof("muppets\n"));
   mrf_debug("attempted to send buff len %lu written %d\n",sizeof("muppets\n"),bc);
+  tb = 64 - bc;
+  bc = write(fd, txbuff,tb);
+  mrf_debug("written %d blank bytes , requested %d\n",bc,tb);
   */
+
+  
   fsync(fd);
   //printf("bc = %d  fd = %d\n",bc,fd);
 }
@@ -147,6 +158,7 @@ static struct termios _oldtio;
 
 int usb_open(const char *dev){
   struct termios newtio,chktio;
+  struct serial_struct ser_info;
   //int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC); 
   int fd = open((char *)dev, O_RDWR); 
   if (fd < 0) {
@@ -188,6 +200,29 @@ int usb_open(const char *dev){
   mrf_debug("chktio.c_oflag %x chktio.c_iflag %x chktio.c_cflag %x chktio.c_lflag %x\n",
          chktio.c_oflag, chktio.c_iflag,chktio.c_cflag,chktio.c_lflag);
 
+
+#define LOW_LATENCY_FTDI
+#ifdef LOW_LATENCY_FTDI
+  ioctl(fd, TIOCGSERIAL, &ser_info);
+  mrf_debug("serial_struct ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
+  ser_info.flags |= ASYNC_LOW_LATENCY;
+  mrf_debug("serial_struct.xmit_fifo_size %d\n",ser_info.xmit_fifo_size);
+ 
+
+  ioctl(fd, TIOCSSERIAL, &ser_info);
+  ioctl(fd, TIOCGSERIAL, &ser_info);
+  mrf_debug("serial_struct (after set..before close) ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
+  
+  close(fd);
+  fd = open((char *)dev, O_RDWR); 
+  if (fd < 0) {
+    mrf_debug("failed to re-open %s\n",dev);
+    perror(dev); 
+    return -1; 
+  }
+  ioctl(fd, TIOCGSERIAL, &ser_info);
+  mrf_debug("after re-open serial_struct ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
+#endif
   return fd;
 }
 

@@ -30,6 +30,7 @@
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(UART0,buff)
 #define mrf_alloc() mrf_alloc_if(UART0)
 #define LP_115200
+//#define LP_57600
 
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff);
 static int mrf_uart_init_cc(I_F i_f);
@@ -128,11 +129,17 @@ static int mrf_uart_init_cc(I_F i_f){
   UCA0BR1 = 0x00;                           //
   UCA0MCTL = UCBRS_3+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
 #else
+#ifdef LP_57600
+  UCA0CTL1 |= UCSSEL__SMCLK;
+  UCA0BRW =   145;       // trying 96              // 
+  UCA0MCTL = UCBRS_5+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
+#else
 #ifdef LP_115200
   UCA0CTL1 |= UCSSEL__SMCLK;
   UCA0BRW =   72;       // trying 96              // 
   UCA0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
 #else
+    
   UCA0CTL1 |= UCSSEL__SMCLK;
   //UCA0BR0 = 69;                         //
   UCA0BR0 = 72;                           //
@@ -145,7 +152,8 @@ static int mrf_uart_init_cc(I_F i_f){
   UCA0MCTL = UCBRS_0+UCBRF_0;               // Modulation UCBRSx=0, UCBRFx=0
 #endif
 #endif
-  
+#endif
+ 
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
   UCA0IE |= UCRXIE;        // enable RX interrupt 
   _ubindex = 0; // dbg

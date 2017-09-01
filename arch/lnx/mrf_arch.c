@@ -425,11 +425,11 @@ char buff[2048];
        //it's an input stream
        fd = *(mrf_if_ptr(inif)->fd);
        //sanity check
-       //mrf_debug("event on fd %d\n",fd);
+       mrf_debug("event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
-       //mrf_debug("read %d bytes\n",(int)s);
+       mrf_debug("read %d bytes\n",(int)s);
        //mrf_debug("%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
        uint8 bind;

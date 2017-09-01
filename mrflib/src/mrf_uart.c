@@ -20,6 +20,7 @@
 #include "mrf_sys.h"
 #include "mrf_debug.h"
 #include "mrf_uart.h"
+#include "mrf_arch.h"
 
 int mrf_uart_init_rx_state(I_F i_f,UART_CSTATE *rxstate){
   rxstate->state = S_START;
@@ -168,6 +169,9 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     else {
       mrf_debug("mrf_uart_rx_byte : csum 2 error   recieved  0x%x  bindex %d rxstate %p expected 0x%x\n",rxbyte, rxstate->bindex,
                 rxstate, rxstate->csum/ 256);
+#ifdef MRF_ARCH_lnx   
+      _mrf_print_hex_buff(rxstate->buff,(uint16)(rxstate->buff)[0]);
+#endif      
       _dbg_csum(rxstate);
     }
     break;
