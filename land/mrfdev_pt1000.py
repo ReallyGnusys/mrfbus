@@ -215,7 +215,11 @@ class MrfSensPtRelay(MrfSens):
 
     def init(self):
         self.req_val     = 0
+        self.on_off      = 0
         self.force_val   = 0
+        self.override    = False
+        #self.clear()  # this doesn't work at sens init, as network is not up... but called again by weblet relays run_init
+    def clear(self):
         self.override    = False
         self.on_off      = 1  # yes we need this to get a turn off command sent on init
         self.set(0)  # turn off all relays on server start
@@ -242,6 +246,7 @@ class MrfSensPtRelay(MrfSens):
     def set(self, on_off):
         self.req_val = on_off
         if self.override == False and self.on_off != self.req_val:
+            mrflog.warn("%s %s changing relay state to %d"%(self.__class__.__name__,self.label,self.req_val))
             self._cmd(on_off)
 
     def force(self, on_off):

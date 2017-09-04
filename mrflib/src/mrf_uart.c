@@ -91,6 +91,8 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     }
     else {
       rxstate->state = S_START;
+      mrf_debug("uart_rx_byte : preamble sync error on preamble2 state got 0x%02x expected 0x%02x\n",
+                rxbyte,_MRF_UART_PREAMBLE_1);
       _dbg_preamble(rxbyte);
     }
     break;
@@ -167,8 +169,8 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     if (rxstate->rxcsum == rxstate->csum)
       return 1;
     else {
-      mrf_debug("mrf_uart_rx_byte : csum 2 error   recieved  0x%x  bindex %d rxstate %p expected 0x%x\n",rxbyte, rxstate->bindex,
-                rxstate, rxstate->csum/ 256);
+      mrf_debug("mrf_uart_rx_byte : csum 2 error    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
+                rxstate, rxstate->csum, rxstate->rxcsum, rcsum[0],rcsum[1]);
 #ifdef MRF_ARCH_lnx   
       _mrf_print_hex_buff(rxstate->buff,(uint16)(rxstate->buff)[0]);
 #endif      

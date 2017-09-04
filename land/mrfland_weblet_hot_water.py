@@ -149,6 +149,15 @@ class MrfLandWebletHotWater(MrflandWeblet):
         tod = now + td
         self.rm.set_timer( tod.time() , self.label , 'TO')
         self.rm.timer_reg_callback( self.label, 'TO', self.timer_callback)
+
+    def set_timeout(self,seconds):
+        # start timer
+        mrflog.warn("%s : set_timeout seconds  %d  "%(self.__class__.__name__,seconds))
+        now = datetime.now()
+        td  = timedelta(seconds = seconds)
+        tod = now + td
+        self.rm.set_timer( tod.time() , self.label , 'TO')
+        
     def timer_callback(self, label, act):
         mrflog.warn("%s : timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
         self.state_update(timeout=True)
@@ -203,11 +212,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
             return
         if not hasattr(self,'return_temp'):
             return
-        if self.state == 'INIT':
+
+        if timeout:   # catchall timeout - needs to be enabled on sts
+            mrflog.warn("state_update timeout")
+            self.state = "IDLE"
+            self.rad_relay_release()
+            self.hx_relay_control(0)
+            
+        elif self.state == 'INIT':
             if timeout:
                 next_state = 'IDLE'
                 
-        if self.state == 'IDLE':
+        elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
                 if self.store_temp > (self.temps[100] + 10.0):
                     if self.flow_temp > (self.temps[100] - 5.0):
@@ -218,12 +234,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
                     else:
                         next_state = 'PREPUMP'
                         self.rad_relay_force(1)
+                        self.set_timeout(120)
                         
         elif self.state == 'PREPUMP':
             if self.flow_temp > (self.temps[100] - 5.0):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGING'
+                
         elif self.state == 'CHARGING':
             if self.temps[100] > self.target_temp:
                 self.hx_relay_control(0)                

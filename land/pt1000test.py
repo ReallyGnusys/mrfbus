@@ -26,6 +26,7 @@ from mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
+from datetime import datetime
 
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 

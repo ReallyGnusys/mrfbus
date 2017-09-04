@@ -285,7 +285,6 @@ class MrflandServer(object):
         self.rm.setserver(server)  # double OUCH
 
 
-        
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
@@ -338,7 +337,7 @@ class MrflandServer(object):
             return
         tinf = self.timers[tid]
         self.rm.timer_callback(tag=tag, act=act)
-        self.set_timer(tinf['tod'], tinf['tag'], tinf['act'])
+        #self.set_timer(tinf['tod'], tinf['tag'], tinf['act'])
         
 
     def set_timer(self, tod , tag , act ):
@@ -663,7 +662,7 @@ class MrflandServer(object):
       
 
     def time_tick(self):
-        
+
         if self._active:
             mrflog.info("time_tick active");
             if self.active_cmd == None:

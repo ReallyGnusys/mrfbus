@@ -372,7 +372,8 @@ class MrflandRegManager(object):
             mrflog.error("timer_reg_callback no tid %s"%tid)
             return
         self.timers[tid].append(callback)
-        
+        mrflog.error("%s registering callback for  tid %s ( total cbs %d )"%(self.__class__.__name__,tid,len(self.timers[tid])))
+
     def timer_callback(self, tag , act):
         mrflog.warn("RegManager timer_callback, tag %s act %s",tag,act)
         tid = tag+"."+ act

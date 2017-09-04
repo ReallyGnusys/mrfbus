@@ -41,6 +41,11 @@ class MrfLandWebletRelays(MrflandWeblet):
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
+    def run_init(self):
+        mrflog.warn("%s run_init .. clearing relay states")
+        for s in self.sens.keys():
+            self.sens[s].clear()
+        
     def sens_callback(self, label, data ):
         mrflog.info("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
