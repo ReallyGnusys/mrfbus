@@ -134,7 +134,7 @@ static void print_elapsed_time(void)
 
 //static pthread_t _sys_loop_pthread;
 
-static void *_sys_loop(void *arg);
+//static void *_sys_loop(void *arg);
 
 void sig_handler(int signum)
 {
@@ -208,25 +208,28 @@ int mrf_arch_app_callback(MRF_APP_CALLBACK callback){
 }
 
 static int num_fds = NUM_INTERFACES+2;
-static  int efd, lisfd , servfd;
+
+int _servfd, _lisfd;
+
+static  int efd;
 static  struct epoll_event ievent[NUM_INTERFACES + 3];
 
 
 int mrf_arch_servfd(){
-  return servfd;
+  return _servfd;
 }
 
 void kill_signal (int sig)
 {
   mrf_debug("%s","kill signal received\n");
-  if (lisfd != -1){
-    mrf_debug("closing lisfd %d\n",lisfd);
-    close(lisfd);
+  if (_lisfd != -1){
+    mrf_debug("closing _lisfd %d\n",_lisfd);
+    close(_lisfd);
   }
 
-  if (servfd != -1){
-    mrf_debug("closing servfd %d\n",servfd);
-    close(servfd);
+  if (_servfd != -1){
+    mrf_debug("closing _servfd %d\n",_servfd);
+    close(_servfd);
   }
   mrf_debug("%s","ttfn\n");
   exit(0);
@@ -249,42 +252,14 @@ int mrf_arch_boot(){
   mrf_debug("%s","lnx arch boot - installed SIGUSR1 handler\n");
   // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
-  lisfd  = -1;
-  servfd = -1;
+  _lisfd  = -1;
+  _servfd = -1;
 
   return 0;
   
+
 }
-int mrf_arch_run(){
-  
-  // if app_callback is set we establish a simple server, to wait for connections from python land server
-  if ( app_callback != NULL ){
-    mrf_debug("%s","creating listening socket\n");
-    lisfd = make_listener_socket(LISTEN_ON);
 
-    if (listen (lisfd, 1) < 0)
-      {
-        mrf_debug("%s","failed to listen socket\n");
-        return -1;
-      }
-    
-    mrf_debug("opened listener socket fd = %d\n\n", lisfd);
-    if (lisfd < 1 ) {
-    
-      mrf_debug("failed to open socket fd = %d\n\n",lisfd);
-    
-      return -1;
-    }
-
-  }
-
-  
-  _print_mrf_cmd(mrf_cmd_device_info);
-  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
-  (*_sys_loop)(NULL);
-
- return 0;
-}
 
 int is_hex_digit(uint8 dig){
   if (( dig >= '0') && ( dig <= '9'))
@@ -325,19 +300,57 @@ char buff[2048];
 
 
 
- void *_sys_loop(void *arg){
+ int mrf_arch_run(){
   
   struct itimerspec new_value;
   struct timespec now;
   uint64_t exp, tot_exp; 
-  int timerfd,intfd,fd , i, tmp;
+  int timerfd,intfd,lisfd,fd , i,j, bi, l, tmp;
   ssize_t s;
+  char token[64];  // we must split tokens
+  int _sfd = -1;
   // input events for each i_f + one for timer tick plus optional app fifo
 
   struct epoll_event revent[NUM_INTERFACES + 3];
   int nfds;
   uint32 inif;
   char sname[64];
+  int count = 0;
+  struct epoll_event fevent,tevent;
+  const MRF_IF *ifp;
+  int rv;
+  struct sockaddr_in clientname;
+  size_t size;
+  int ncon;
+
+
+  // if app_callback is set we establish a simple server, to wait for connections from python land server
+  if ( app_callback != NULL ){
+    mrf_debug("%s","creating listening socket\n");
+    lisfd = make_listener_socket(LISTEN_ON);
+
+    if (listen (lisfd, 1) < 0)
+      {
+        mrf_debug("%s","failed to listen socket\n");
+        return -1;
+      }
+    
+    mrf_debug("opened listener socket fd = %d\n\n", lisfd);
+    if (lisfd < 1 ) {
+    
+      mrf_debug("failed to open socket fd = %d\n\n",lisfd);
+    
+      return -1;
+    }
+    _lisfd = lisfd;
+
+  }
+
+  
+  _print_mrf_cmd(mrf_cmd_device_info);
+  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
+
+  
   printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
 
   new_value.it_value.tv_sec = 0;
@@ -359,24 +372,21 @@ char buff[2048];
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  mrf_debug("created pipe %s res %d",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
   mrf_debug("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
 
   mrf_debug("mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
 
-  int count = 0;
 
   efd = epoll_create(2);
 
-  struct epoll_event fevent,tevent;
 
 
   // devices must have been initialised - we're getting fds from _sys_if
   // lnx arch drivers must set an fd for input stream
   // add i_f events + cntrl if
-  const MRF_IF *ifp;
   for ( i = 0 ; i <  NUM_INTERFACES ; i++){
     ifp = mrf_if_ptr(i);
     ievent[i].data.u32 = i;
@@ -432,30 +442,30 @@ char buff[2048];
        mrf_debug("read %d bytes\n",(int)s);
        //mrf_debug("%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
-       uint8 bind;
        //bind = mrf_alloc_if(inif);
 
        if (*(mrf_if_ptr(inif)->type->funcs.buff) != NULL){
          //use interface method to copy to buff 
-         int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s);
+         rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s);
          //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
          mrf_debug("%s","ERROR ERROR ERROR : lnx - no input/buff function\n\n");
+         /*
          if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
            mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);  
              _mrf_buff_free(bind);
          } else 
            mrf_buff_loaded(bind);           
-
+         */
        }
      }
    
      else if (revent[i].data.u32 == NUM_INTERFACES){
        // timer tick
        s = 1;
-       int l = 0;
+       l = 0;
        // while (s > 0){
        s = read(timerfd, buff, 1024);
        buff[s] = 0;
@@ -474,8 +484,7 @@ char buff[2048];
 
      else if (revent[i].data.u32 == NUM_INTERFACES+1){
        // internal cntrl
-       char token[64];  // we must split tokens
-       int bi, j = 0;
+       j = 0;
        s = read(intfd, buff, 1024);
        mrf_debug("internal control (1) : s = %d buff = %s\n",(int)s,buff);
 
@@ -511,41 +520,37 @@ char buff[2048];
      } else if (revent[i].data.u32 == NUM_INTERFACES+2){
        // connection to server
 
-       ssize_t s;
-       uint8 i;
-       struct sockaddr_in clientname;
-       size_t size;
        mrf_debug("server connection fd %d\n",lisfd);
 
-       int new;
        size = sizeof (clientname);
-       new = accept (lisfd,
+       ncon = accept (lisfd,
                      (struct sockaddr *) &clientname,
                      (socklen_t*)&size);
-       if (new < 0)
+       if (ncon < 0)
          {
            mrf_debug("%s","big trouble accepting connection");
          }
        else {
-         mrf_debug ("Server: connect from host %s, port %hd.\n",
+         mrf_debug ("Server: connect from host %s, port %hd. %u - newfd is %d\n",
                     inet_ntoa (clientname.sin_addr),
-                    ntohs (clientname.sin_port));
-         if ( servfd == -1) {
-           servfd = new;
+                    ntohs (clientname.sin_port),clientname.sin_port ,ncon);
+         if ( _sfd == -1) {
+           _sfd = ncon;
+           _servfd = _sfd;
            if ( app_callback != NULL ){
              num_fds = NUM_INTERFACES+4;
-             mrf_debug("adding epoll for app c fifo %d\n",servfd); 
+             mrf_debug("adding epoll for mrfland %d\n",_sfd); 
              ievent[NUM_INTERFACES+3].data.u32 = NUM_INTERFACES+3;
              ievent[NUM_INTERFACES+3].events = EPOLLIN | EPOLLET;
-             epoll_ctl(efd, EPOLL_CTL_ADD, servfd , &ievent[NUM_INTERFACES+3]);
-             mrf_debug("Server connection EPOLL  added %d u32 %u applfd %d\n",NUM_INTERFACES+3,ievent[NUM_INTERFACES+3].data.u32,servfd);
+             epoll_ctl(efd, EPOLL_CTL_ADD, _sfd , &ievent[NUM_INTERFACES+3]);
+             mrf_debug("Server connection EPOLL  added %d u32 %u _sfd %d\n",NUM_INTERFACES+3,ievent[NUM_INTERFACES+3].data.u32,_sfd);
            }
 
          }
          else {
 
-           mrf_debug("already have a connection ... closing %d",new);
-           close(new);
+           mrf_debug("already have a connection ... closing %d",ncon);
+           close(ncon);
 
            
          }
@@ -557,11 +562,11 @@ char buff[2048];
      } else if (revent[i].data.u32 == NUM_INTERFACES+3){
        // app c fifo
 
-       printf("server socket  event\n");
+       mrf_debug("server socket  event on _sfd %d\n",_sfd);
        if (app_callback != NULL ){
-         if ((*(app_callback))(servfd) == -1){
+         if ((*(app_callback))(_sfd) == -1){
            mrf_debug("%s","looks like servers disconnected\n");
-           servfd = -1;
+           _sfd = -1;
            
          }
        }
@@ -569,7 +574,7 @@ char buff[2048];
    }
   }
        
-  return NULL;
+  return 0;
 
 }
 
