@@ -99,6 +99,10 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             ip = mob.group(1)
             mrflog.info("client ip="+ip)
             sob =  mrfland.comm.check_socket(self.id,ip)
+            if sob == None:
+                mrflog.debug("check socket failed for ip %s  self.id %s"%(str(ip),self.id))
+                return
+                
         else:
             ip = 'none'
             mrflog.debug("client ip not found!")

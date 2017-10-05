@@ -48,17 +48,10 @@
 //#define _RESET_BIT  3
 
 #define _DRDY_PORT P2
-#define _DRDY_BIT 5
 
-
-#define _SCLK_PORT P1
-#define _SCLK_BIT 4
-
-#define _SDAO_PORT P1
-#define _SDAO_BIT 3
-
-#define _SDAI_PORT P1
-#define _SDAI_BIT 3
+#ifndef _DRDY_BIT 
+ #define _DRDY_BIT 3
+#endif
 
 
 // ADS1148 reg offsets
