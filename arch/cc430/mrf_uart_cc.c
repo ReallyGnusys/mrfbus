@@ -29,8 +29,8 @@
 
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(UART0,buff)
 #define mrf_alloc() mrf_alloc_if(UART0)
-#define LP_115200
-//#define LP_57600
+//#define LP_115200
+#define LP_57600
 
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff);
 static int mrf_uart_init_cc(I_F i_f);
