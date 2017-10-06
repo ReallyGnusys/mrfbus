@@ -89,10 +89,11 @@ static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen){
     sta =  rxstate[i_f].state;
     //mrf_debug("i %d char %x stb %d sta %d rv %d\n",i,inbuff[i],stb,sta,rv);
     if(rv){
-      mrf_debug("%s","lnx_uart input - think we got a buffer\n");
-        mrf_buff_loaded(rxstate[i_f].bnum);
+      //mrf_debug("%s","mrf_buff_loaded returned 1 lnx_uart input - think we got a buffer\n");
+      mrf_buff_loaded(rxstate[i_f].bnum);
         // need to alloc next buffer;
-        mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));
+      mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));
+      //mrf_debug("%s","mrf_buff_loaded  1  processing complete \n");
       }
   }
   return i;

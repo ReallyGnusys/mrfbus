@@ -81,6 +81,9 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
   case  S_START:
     if (rxbyte == _MRF_UART_PREAMBLE)
       rxstate->state = S_PREAMBLE_1;
+    else
+      mrf_debug("mrf_uart_rx_byte : still syncing looking for preamble 1 got 0x%02x\n",
+                rxbyte);
     break;
   case  S_PREAMBLE_1:
     if (rxbyte == _MRF_UART_PREAMBLE_1){
@@ -91,13 +94,13 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     }
     else {
       rxstate->state = S_START;
-      mrf_debug("uart_rx_byte : preamble sync error on preamble2 state got 0x%02x expected 0x%02x\n",
+      mrf_debug("mrf_uart_rx_byte : preamble sync error on preamble2 state got 0x%02x expected 0x%02x\n",
                 rxbyte,_MRF_UART_PREAMBLE_1);
       _dbg_preamble(rxbyte);
     }
     break;
   case  S_LEN:
-    mrf_debug("mrf_uart_rx_byte : S_SLEN  recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
+    //mrf_debug("mrf_uart_rx_byte : S_SLEN  recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
 
     if ((rxbyte <= _MRF_BUFFLEN) && (rxbyte >= sizeof(MRF_PKT_HDR))){
       rxstate->state = S_ADDR;
@@ -128,7 +131,8 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->buff[rxstate->bindex++] = rxbyte;
       rxstate->csum += rxbyte;
     } else {
-      mrf_debug("mrf_uart_rx_byte : netid error   recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
+      mrf_debug("mrf_uart_rx_byte : netid error   recieved  0x%x  bindex %d rxstate %p\n",
+                rxbyte, rxstate->bindex, rxstate);
       _dbg_wrongid(rxbyte);
       rxstate->state = S_START;
     }
@@ -149,25 +153,18 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     rxstate->rxcsum = ((uint16)rxbyte << 8);
     rcsum[0] = rxbyte;
     rxstate->state = S_CSUM_LS;
-    /*
-    if ( rxbyte == rxstate->csum/ 256){
-      rxstate->state = S_CSUM_LS;
-    }
-    else {
-      mrf_debug("mrf_uart_rx_byte : csum 1 error   recieved  0x%x  bindex %d rxstate %p expected 0x%x  csum 0x%04x  buff0 0x%02x\n",
-                rxbyte, rxstate->bindex,rxstate, rxstate->csum/ 256, rxstate->csum,(rxstate->buff)[0]);
-      _dbg_csum(0);
-      rxstate->state = S_START;
-    }
-    */
     break;
   case  S_CSUM_LS:
     rxstate->state = S_START;
     rcsum[1] = rxbyte;
     rxstate->rxcsum |= (uint16)rxbyte ;
 
-    if (rxstate->rxcsum == rxstate->csum)
+    if (rxstate->rxcsum == rxstate->csum){
+      mrf_debug("mrf_uart_rx_byte : csum PASS    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
+                rxstate, rxstate->csum, rxstate->rxcsum, rcsum[0],rcsum[1]);
       return 1;
+
+    }
     else {
       mrf_debug("mrf_uart_rx_byte : csum 2 error    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
                 rxstate, rxstate->csum, rxstate->rxcsum, rcsum[0],rcsum[1]);

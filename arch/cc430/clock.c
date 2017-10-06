@@ -70,7 +70,7 @@ void init_clock(void){
  __bis_SR_register(SCG0);                  // Disable the FLL control loop
  UCSCTL0 = 0x0000;                         // Set lowest possible DCOx, MODx
  UCSCTL1 = DCORSEL_5;                      // Select DCO range 16MHz operation
- UCSCTL2 = FLLD_1 + 255;                   // Set DCO Multiplier for 8MHz
+ UCSCTL2 = FLLD_1 + 256;                   // Set DCO Multiplier for 8MHz
                                             // (N + 1) * FLLRef = Fdco
                                             // (249 + 1) * 32768 = 8MHz
                                             // Set FLL Div = fDCOCLK/2

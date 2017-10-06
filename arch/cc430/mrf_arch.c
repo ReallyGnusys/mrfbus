@@ -47,6 +47,8 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
   // should not be calling this in cross platform code.. only during debug.. 
 }
 
+extern void init_clock(void);
+
 int mrf_arch_boot(){
 
    int i,j,on;

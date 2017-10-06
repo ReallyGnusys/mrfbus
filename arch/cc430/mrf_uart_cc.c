@@ -135,9 +135,9 @@ static int mrf_uart_init_cc(I_F i_f){
   UCA0MCTL = UCBRS_5+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
 #else
 #ifdef LP_115200
-  UCA0CTL1 |= UCSSEL__SMCLK;
+  UCA0CTL1 |= UCSSEL__SMCLK;  // SMCLK should be 8192 * 1024 Hz  8388608Hz
   UCA0BRW =   72;       // trying 96              // 
-  UCA0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
+  UCA0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=7, UCBRFx=0
 #else
     
   UCA0CTL1 |= UCSSEL__SMCLK;
