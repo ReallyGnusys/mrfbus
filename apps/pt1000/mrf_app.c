@@ -438,7 +438,7 @@ int mrf_app_init(){
   dbg22 = 101;
   _tick_cnt = 0;
   _tick_err_cnt = 0;
-  _ref_r = (uint32_t)3560*(uint32_t)1000; // nominal resistance between ref+ and ref-
+  _ref_r = (uint32_t)2490*(uint32_t)1000; // nominal resistance between ref+ and ref-
   _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
 
   __delay_cycles(1000);  
