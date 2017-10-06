@@ -33,8 +33,8 @@
 #include <sys/ioctl.h>
 #include <linux/usbdevice_fs.h>
 #include <linux/serial.h>
-//#define BAUDRATE B115200
-#define BAUDRATE B57600
+#define BAUDRATE B115200
+//#define BAUDRATE B57600
 //#define BAUDRATE B9600
 //#ifdef LP_115200
 //#undef LP_115200
