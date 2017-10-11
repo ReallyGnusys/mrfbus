@@ -252,13 +252,17 @@ static int port2_icnt;
 static unsigned int _rx_flush_cnt;
 
 static int cyc_err1, cyc_err2;
+
 static void cycle_input(){
   uint16 rc;
   uint16 rv = 0 ;
-  uint8 curr_chan,next_chan; //,last_chan;
+  uint8 curr_chan,next_chan,last_chan; //,last_chan;
   port2_icnt++;
   curr_chan = _curr_adc_channel;
-  next_chan = (_curr_adc_channel + 1 ) % 4;
+  next_chan = (_curr_adc_channel + 1 ) % MAX_RTDS;
+  last_chan = (_curr_adc_channel - 1 );
+  if (last_chan >  ( MAX_RTDS-1))
+    last_chan = ( MAX_RTDS-1);
   // picking up results of last cycle
   rc = mrf_spi_rx_noblock();  // get second - msb of result
   if (rc == -1)
@@ -271,7 +275,7 @@ static void cycle_input(){
 
   _rx_flush_cnt += mrf_spi_flush_rx();
   ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
-  _last_reading[curr_chan] = rv;
+  _last_reading[last_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
   
