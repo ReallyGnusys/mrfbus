@@ -407,14 +407,30 @@ int build_state(MRF_PKT_PT1000_STATE *state){
 #define APP_SIG_SECOND  0
 static int _tick_cnt;
 static int _tick_err_cnt;
-static MRF_PKT_PT1000_STATE _state; 
+static MRF_PKT_PT1000_STATE _state[2];
+
+int state_diff(MRF_PKT_PT1000_STATE *sta, MRF_PKT_PT1000_STATE *stb){
+  int ch;
+  if (sta->relay_state != stb->relay_state)
+    return 1;
+
+  for ( ch = 0 ; ch < MAX_RTDS ; ch++)
+    if (sta->milliohms[ch] != stb->milliohms[ch]) 
+      return 1;
+  return 0;
+}
 
 int tick_task(){
+  int stind;
   _tick_cnt++;
   //return 0;
-  build_state(&_state);
 
-  mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state, sizeof(MRF_PKT_PT1000_STATE));
+  stind = _tick_cnt % 2;
+    build_state(&_state[stind]);
+
+  // only send struct if readings or relays changed
+  if ((_tick_cnt > 2) && state_diff(&_state[0], &_state[1]))
+    mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state[stind], sizeof(MRF_PKT_PT1000_STATE));
   return 0;
   
 }

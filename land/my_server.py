@@ -33,7 +33,7 @@ if __name__ == '__main__':
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
               {
                   'temp' : ["ACC_100", "ACC_50", "ACC_10", "ACC_FLOW", "ACC_RET", "MIX_1", "UFH_MIX"],
-                  'relay' : ["UFH_PUMP", "ACC_HEAT"]
+                  'relay' : ["UFH_PUMP", "UNUSED_PUMP", "ACC_HEAT"]
               })
 
     DevHeatbox(rm, "heatbox_kitchen"  , 4,
@@ -59,7 +59,7 @@ if __name__ == '__main__':
                         'acctop'     : 'ACC_100',
                         'heatbox'    : 'HB1',
                         'litres'     : 200,
-                        'target_temp': 68.0
+                        'target_temp': 62.0
                            
                     })
 
