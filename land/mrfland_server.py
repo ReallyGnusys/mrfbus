@@ -674,7 +674,7 @@ class MrflandServer(object):
             else:
                 mrflog.warn("time_tick active resp_timer %d"%self.resp_timer)
                 self.resp_timer += 1
-                if self.resp_timer > 20:
+                if self.resp_timer > 5:
                     mrflog.warn("give up waiting for response for %s"%( self.active_cmd))
                     if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                         mrflog.info("response for tcp client %d"%self.active_cmd.tag)

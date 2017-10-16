@@ -124,18 +124,26 @@ class MrfLandWebletDevs(MrflandWeblet):
             mrflog.warn( "unit_test already active for device  %s"%repr(dn))
             return
 
-        mrflog.warn( "starting unit_test for device  %s"%repr(dn))
+        if not self.rm.devices.has_key(dn):
+            mrflog.warn( "can't find device  %s registered"%repr(dn))
+            return
+            
+        tdev = self.rm.devices[dn]
+        address = tdev.address
+        
+        mrflog.warn( "starting unit_test for device  %s address 0x%x"%(repr(dn),address))
+
         
         if dn == 'host':  #FIXME this shouldn't be hardcoded - and needs mrfid as param
             tp =  'hosttest.py'
         elif dn == 'pt1000_boiler_room':
             tp = 'pt1000test.py'
-        elif dn == 'heatbox_kitchen':
-            tp = 'heatbox_test.py'
+        elif dn == 'pt1000_kitchen':
+            tp = 'pt1000test.py'
         else:
             mrflog.error("weblet devs cmd_mrfctrl unexpected dev name %s : no idea which unit_test"%dn)
             return
-        rv = self.rm.subprocess(['/usr/bin/python', tp ] , self.subproc_callback(dn))
+        rv = self.rm.subprocess(['/usr/bin/python', tp , hex(address)] , self.subproc_callback(dn))
         mrflog.warn("subprocess returned")
         
                          

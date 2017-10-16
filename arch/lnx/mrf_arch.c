@@ -631,4 +631,8 @@ int mrf_wake(){
 
 }
 int mrf_sleep(){
+  return 0;
+}
+void mrf_reset(){
+
 }

@@ -59,12 +59,13 @@ def eval_temp(n):
 
 
 class TestPt1000(DeviceTestCase):
+    DEST = 0x02
     def host_test(self):
         self.devname = 'hostsim'
         self.num_ifs = 4
         self.num_buffs = 16
         self.timeout = 0.6
-        self.dest =0x01
+        self.dest = TestPt1000.DEST
         self.app_cmds = DefaultAppCmds
 
     def setUp(self):
@@ -73,7 +74,7 @@ class TestPt1000(DeviceTestCase):
         self.num_ifs = 2
         self.num_buffs = 8
         self.timeout = 0.6
-        self.dest =0x02
+        self.dest = TestPt1000.DEST
         self.host= 0x01
         #self.app_cmds = Pt1000AppCmds
         self.app_cmds = copy(MrfSysCmds)
@@ -327,6 +328,21 @@ class TestPt1000(DeviceTestCase):
         self.assertTrue(self.check_attrs(resp,PktPt1000State()))
         print "pt1000 read_state test PASSED"
 
+    def skipped_test06_reset(self):
+        print "**********************"
+        print "* pt1000 reset test (dest 0x%02x)"%self.dest
+        print "**********************"
+       
+        ccode = mrf_cmd_reset
+        self.cmd(self.dest,ccode)
+        resp = self.response(timeout=self.timeout)
+
+
+        self.get_time_test(self.dest)
+        self.set_time_test(self.dest,self.host)
+        self.get_time_test(self.dest)
+
+        
     def skipped_test06_set_relay(self):
         print "**********************"
         print "* pt1000 set relay test (dest 0x%02x)"%self.dest
@@ -484,4 +500,7 @@ class TestPt1000(DeviceTestCase):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+       TestPt1000.DEST = int(sys.argv.pop(),16)
+       print "setting dest to 0x%x"%TestPt1000.DEST
     unittest.main()

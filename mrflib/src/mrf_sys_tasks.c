@@ -253,3 +253,15 @@ MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
   return MRF_CMD_RES_OK;  
 }
+
+void mrf_reset();
+
+
+MRF_CMD_RES mrf_task_reset(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+
+
+  mrf_reset();  // must be defined by arch
+  
+  return MRF_CMD_RES_OK;  // ho ho 
+
+}

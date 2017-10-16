@@ -49,6 +49,9 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
 
 extern void init_clock(void);
 
+
+
+
 int mrf_arch_boot(){
 
    int i,j,on;
@@ -136,3 +139,9 @@ int mrf_sleep(){
   __bis_SR_register(LPM3_bits  + GIE);
 
 }
+
+void mrf_reset(){
+  WDTCTL = 0xDEAD;
+}
+
+

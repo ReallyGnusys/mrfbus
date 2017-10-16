@@ -237,7 +237,8 @@ mrf_cmd_app_cmd_info = 12
 mrf_cmd_test_1 = 13 
 mrf_cmd_usr_struct = 14
 mrf_cmd_usr_resp = 15
-MRF_NUM_SYS_CMDS = 16
+mrf_cmd_reset = 16
+MRF_NUM_SYS_CMDS = 17
 
 
 ## some app commands for the time being here.. ideally would be auto discovered codes
@@ -305,6 +306,11 @@ MrfSysCmds = {
     mrf_cmd_usr_resp : {
         'name' : "USR_RESP",
         'param': PktResp,
+        'resp' : None        
+    },
+    mrf_cmd_reset : {
+        'name' : "RESET",
+        'param': None,
         'resp' : None        
     }
 }

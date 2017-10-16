@@ -213,16 +213,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if not hasattr(self,'return_temp'):
             return
 
-        if timeout:   # catchall timeout - needs to be enabled on sts
-            mrflog.warn("state_update timeout")
-            self.state = "IDLE"
-            self.rad_relay_release()
-            self.hx_relay_control(0)
             
-        elif self.state == 'INIT':
+        if self.state == 'INIT':
             if timeout:
                 next_state = 'IDLE'
                 
+        elif True:
+            next_state = 'INIT'
+
         elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
                 if self.store_temp > (self.temps[100] + 10.0):
@@ -237,10 +235,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
                         self.set_timeout(120)
                         
         elif self.state == 'PREPUMP':
-            if self.flow_temp > (self.temps[100] - 5.0):
+            if timeout or self.flow_temp > (self.temps[100] - 5.0):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGING'
+                self.set_timeout(120)
                 
         elif self.state == 'CHARGING':
             if self.temps[100] > self.target_temp:
