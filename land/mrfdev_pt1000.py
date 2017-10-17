@@ -52,6 +52,11 @@ class PktSpiDebug(MrfStruct):
         ("ucb0_cntrl0", c_uint8),
         ("ucb0_cntrl1", c_uint8),
         ("ucb0_stat", c_uint8),
+        ("rx_flush_cnt", c_uint16),
+        ("cyc_err1", c_uint16),
+        ("cyc_err2", c_uint16),
+        ("p2_icnt", c_uint16),
+        
 
        
     ]
@@ -74,6 +79,11 @@ class PktRelayState(MrfStruct):
         ("val", c_uint8),
         ]
 
+class PktAddrVal(MrfStruct):
+    _fields_ = [
+        ("addr", c_uint8),
+        ("val", c_uint8),
+        ]
     
 
 mrf_app_cmd_test = 128
@@ -85,6 +95,7 @@ mrf_cmd_config_adc  = 133
 mrf_cmd_read_state  = 134
 mrf_cmd_get_relay   = 135
 mrf_cmd_set_relay   = 136
+mrf_cmd_samp_ctrl   = 137
 
 
 Pt1000AppCmds = {
@@ -102,7 +113,7 @@ Pt1000AppCmds = {
     mrf_cmd_spi_write : {
         
         'name'  : "SPI_WRITE",
-        'param' : PktUint8_2,
+        'param' : PktAddrVal,
         'resp'  : None
     },
     mrf_cmd_spi_debug : {
@@ -135,6 +146,12 @@ Pt1000AppCmds = {
         'name'  : "SET_RELAY",
         'param' : PktRelayState,
         'resp'  : PktRelayState
+    },
+    mrf_cmd_samp_ctrl : {
+        
+        'name'  : "SAMP_CTRL",
+        'param' : PktUint8,
+        'resp'  : None
     },
 
 }

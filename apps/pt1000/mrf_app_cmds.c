@@ -24,7 +24,7 @@
 const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
   [ mrf_app_cmd_test      ] = {"APP_TEST"  , 0 , 0                        , sizeof(MRF_PKT_TIMEDATE)  ,  NULL  , mrf_app_task_test  },
   [ mrf_app_cmd_spi_read  ] = {"SPI_READ"  , 0    , sizeof(MRF_PKT_UINT8)    , sizeof(MRF_PKT_UINT8)  ,  NULL  , mrf_app_spi_read   },
-  [ mrf_app_cmd_spi_write ] = {"SPI_WRITE" , 0    , sizeof(MRF_PKT_UINT8_2)  , 0         ,  NULL  , mrf_app_spi_write    },
+  [ mrf_app_cmd_spi_write ] = {"SPI_WRITE" , 0    , sizeof(MRF_PKT_ADDR_VAL)  , 0         ,  NULL  , mrf_app_spi_write    },
   [ mrf_app_cmd_spi_debug ] = {"SPI_DEBUG" , 0    , 0    , sizeof(MRF_PKT_SPI_DEBUG)     ,  NULL  , mrf_app_spi_debug    },
   [ mrf_app_cmd_spi_data  ] = {"SPI_DATA"  , 0    , 0    , sizeof(MRF_PKT_UINT16)        ,  NULL  , mrf_app_spi_data     },
   [ mrf_app_cmd_config_adc] = {"CONFIG_ADC", 0  , 0    , 0                             ,  NULL  , mrf_app_config_adc   },
@@ -32,6 +32,7 @@ const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
 
   [ mrf_app_cmd_get_relay ]  = {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_get_relay   },
   [ mrf_app_cmd_set_relay ]  = {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_set_relay   },
+  [ mrf_app_cmd_samp_ctrl ] = {"SAMPLE_CTRL", 0    , sizeof(MRF_PKT_UINT8)   , 0         ,  NULL  , mrf_app_samp_ctrl    },
   
 };
 

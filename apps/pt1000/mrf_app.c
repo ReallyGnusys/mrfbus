@@ -169,6 +169,8 @@ uint8 ads1148_read(uint8 reg){
 
 static int _spi_tx_err_cnt;
 static int _spi_tx_busy_cnt;
+static int _samp_en;
+
 
 static void err_spi_tx(){
   _spi_tx_err_cnt++;
@@ -248,13 +250,13 @@ static int set_input_only(uint8 channel){
   return rv;
 
 }
-static int port2_icnt;
-static unsigned int _rx_flush_cnt;
+static uint16 port2_icnt;
+static uint16 _rx_flush_cnt;
 
-static int cyc_err1, cyc_err2;
+static uint16 cyc_err1, cyc_err2;
 
-static void cycle_input(){
-  uint16 rc;
+static void cycle_input(int capture){
+  int16 rc;
   uint16 rv = 0 ;
   uint8 curr_chan,next_chan,last_chan; //,last_chan;
   port2_icnt++;
@@ -272,10 +274,11 @@ static void cycle_input(){
   if (rc == -1)
     cyc_err2++;
   rv += rc;
+  if (capture)
+    _last_reading[last_chan] = rv;
 
   _rx_flush_cnt += mrf_spi_flush_rx();
   ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
-  _last_reading[last_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
   
@@ -283,14 +286,27 @@ static void cycle_input(){
   
   _curr_adc_channel = next_chan;
 
-  PINHIGH(START);  // pulse start
-  PINLOW(START);  
   
 
 
   return;
 
 }
+
+
+void sample_enable(){
+  _samp_en = 1;
+  //cycle_input(0);
+
+  PINHIGH(START);  // pulse start
+  PINLOW(START);  
+
+}
+void sample_disable(){
+  _samp_en = 0;
+}
+
+
 
 int ads1148_config(){
   // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
@@ -348,13 +364,8 @@ int ads1148_init(){
 
   PINLOW(CS);  // leave SPI continually enabled in this app
 
-  // need to enable interrupts on DRDY
-  P2REN |= BITNAME(DRDY);
-  P2OUT |= BITNAME(DRDY);
-  P2IE  |= BITNAME(DRDY);  
-  P2IES |= BITNAME(DRDY);
-  P2IFG &= ~BITNAME(DRDY);
-  port2_icnt = 0;
+  _samp_en = 1;
+  
 
 
   
@@ -369,8 +380,26 @@ int ads1148_init(){
   cyc_err1 = 0;
   cyc_err2 = 0;
   //PINHIGH(START);  // continuous sampling
-  PINHIGH(START);  // pulse start
-  PINLOW(START);  // continuous sampling
+
+
+
+  // need to enable interrupts on DRDY
+  P2REN |= BITNAME(DRDY);
+  P2OUT |= BITNAME(DRDY);
+  P2IE  |= BITNAME(DRDY);  
+  P2IES |= BITNAME(DRDY);
+  P2IFG &= ~BITNAME(DRDY);
+  port2_icnt = 0;
+
+  
+  sample_enable();
+  //ads1148_config();
+
+  //PINHIGH(START);  // pulse start
+  //PINLOW(START);  // continuous sampling
+
+
+
   
   
 }
@@ -527,8 +556,8 @@ MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 MRF_CMD_RES mrf_app_spi_write(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_spi_write entry bnum %d\n",bnum);
-  MRF_PKT_UINT8_2 *data = (MRF_PKT_UINT8_2 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
-  ads1148_write(data->d0,data->d1);
+  MRF_PKT_ADDR_VAL *addval = (MRF_PKT_ADDR_VAL *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  ads1148_write(addval->addr,addval->val);
   //mrf_send_response(bnum,0);
   _mrf_buff_free(bnum);
   mrf_debug("mrf_app_task_app_write_spi exit\n");
@@ -601,6 +630,12 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   pkt.ucb0_cntrl1 = UCB0CTL1;
   pkt.ucb0_stat = UCB0STAT;
 
+  pkt.rx_flush_cnt  = _rx_flush_cnt;
+  pkt.cyc_err1 = cyc_err1;
+  pkt.cyc_err2 = cyc_err2;
+  pkt.p2_icnt = port2_icnt;
+  
+    
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 
@@ -629,11 +664,32 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 
 
+MRF_CMD_RES mrf_app_samp_ctrl(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+
+  //toggle_cs();
+  mrf_debug("mrf_app_samp_ctrl entry bnum %d\n",bnum);
+  MRF_PKT_UINT8 *data = (MRF_PKT_UINT8 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  if (( data->value == 1 ) && (_samp_en == 0))
+    sample_enable();
+  else if (( data->value == 0 ) && (_samp_en == 1))
+    sample_disable();
+  
+  _mrf_buff_free(bnum);
+  
+  return MRF_CMD_RES_OK;
+}
+
 
 void drdy_int(){
   uint16 rd;
-  //port2_icnt++;
-  cycle_input();
+  port2_icnt++;
+
+  cycle_input(1);
+
+  if (_samp_en) {
+    PINHIGH(START);  // pulse start
+    PINLOW(START);  
+  }
   //rd = ads1148_data();
   //_last_reading[curr_chan] = rd;
   

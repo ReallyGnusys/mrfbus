@@ -47,6 +47,10 @@ typedef struct  __attribute__ ((packed))   {
   uint8  ucb0_cntrl0;
   uint8  ucb0_cntrl1;
   uint8  ucb0_stat;
+  uint16 rx_flush_cnt;
+  uint16 cyc_err1;
+  uint16 cyc_err2;
+  uint16 p2_icnt;
   //uint16 pad2;
 
 } MRF_PKT_SPI_DEBUG;
@@ -66,7 +70,13 @@ typedef struct  __attribute__ ((packed))   {
   uint8 chan;  
   uint8 val;  
 } MRF_PKT_RELAY_STATE;
-    
+
+
+typedef struct  __attribute__ ((packed))   {
+  uint8 addr;  
+  uint8 val;  
+} MRF_PKT_ADDR_VAL;
+     
 
 /* mrf_app_task_test
    returns current MRF_PKT_TIMEDATE 
@@ -83,5 +93,8 @@ MRF_CMD_RES mrf_app_read_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp); // read ptd device state
 MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay
 MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay state
+MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay state
+
+MRF_CMD_RES mrf_app_samp_ctrl(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // turn on/off sampling
 
 #endif

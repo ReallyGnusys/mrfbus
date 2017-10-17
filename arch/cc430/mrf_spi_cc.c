@@ -53,15 +53,18 @@ static int _enable_spi_rx_int(){
 }
 static uint16_t _spi_tx_imm;
 int _start_spi_tx(){
-
+  int16 qdata;
   if (!queue_data_avail(&_spi_tx_queue))
     return 0;
 
   
   if ((UCB0STAT & 1) == 0){ // UCB0 is idle
-
-    int16 qdata = queue_pop(&_spi_tx_queue);
-    if (qdata == -1)
+    if (queue_data_avail(&_spi_tx_queue)) {
+      qdata = queue_pop(&_spi_tx_queue);
+      if (qdata == -1)
+        return 0;
+    }
+    else
       return 0;
     UCB0TXBUF = (uint8)qdata;
     _spi_tx_bytes += 1;
@@ -96,8 +99,11 @@ uint8 mrf_spi_rx(){
   return (uint8)queue_pop(&_spi_rx_queue);
 }
 
-uint16 mrf_spi_rx_noblock(){  // return -1 if nothing available
-  return queue_pop(&_spi_rx_queue);
+int16 mrf_spi_rx_noblock(){  // return -1 if nothing available
+  if (queue_data_avail(&_spi_rx_queue))
+    return queue_pop(&_spi_rx_queue);
+  else
+    return -1;
 }
 
 
@@ -219,6 +225,7 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
       UCB0IE &= ~UCTXIE; 
     }
 
+    
     // check RX while we're here
     if (UCB0IFG & UCRXIFG) {
       _spi_txrx_int_cnt++;

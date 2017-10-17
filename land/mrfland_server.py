@@ -200,14 +200,15 @@ class SimpleTcpClient(object):
                                     data = MrfSysCmds[ob['cmd']]['param']()
                                     data.dic_set(ob['data'])
                             else:
-                                appcmdset = self.landserver._app_cmd_set(ob['dest'])
-                                if appcmdset:
-                                    if appcmdset[ob['cmd']]['param'] != None:
-                                        data = appcmdset[ob['cmd']]['param']()
+                                devcmdset = self.landserver._dev_cmd_set(ob['dest'])
+                                if devcmdset:
+                                    if devcmdset[ob['cmd']]['param'] != None:
+                                        data = devcmdset[ob['cmd']]['param']()
                                         data.dic_set(ob['data'])
                                 
                             
                         self.landserver._callback(self.id, ob['dest'],ob['cmd'],data)
+                        mrflog.warn("tcp client sending cmd %d to dest %d  data is %s"%( ob['dest'],ob['cmd'],data))
                     else:
                         mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
@@ -428,10 +429,14 @@ class MrflandServer(object):
             mrflog.warn("_run_cmd failed for %s"%repr(cobj))
 
     def _app_cmd_set(self,dest):
-        for appn in self.apps.keys():
-            app = self.apps[appn]
-            if self.apps[appn].i_manage(dest):
-                return self.apps[appn].cmd_set(dest)
+
+        dev = self.rm.devmap[dest]
+
+        if dev == None:
+            mrflog.error("_app_cmd_set failed to find dev mapped to address %d"%dest)
+            return None
+        return dev._cmd_set
+    
 
     def _dev_cmd_set(self,dest):
         if not self.rm.devmap.has_key(dest):
