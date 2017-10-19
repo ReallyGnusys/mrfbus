@@ -154,12 +154,14 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   P1SEL |= BIT2 + BIT3 + BIT4; // spi function. shouldn't need STE +  BIT7 ; // spi function
 
   
-  UCB0CTL0 = UCMODE_0 + UCMST + UCMSB; // + UCSYNC + UCCKPH;
-  
+  UCB0CTL0 = UCMODE_0 + UCMST + UCMSB + UCSYNC; //  + UCCKPH; // + UCSYNC
+
+
   // should be about 115 kb copied from uart
   UCB0CTL1 |= UCSSEL__SMCLK;
   //UCB0BRW =   72;                // 
   UCB0BRW =   72;//
+  //UCB0BRW =   144;//   back off clock searching for better noise immunity
 
   //UCB0BRW =  36;// stab in dark seems good
   //UCB0BRW =  36;// stab in dark seems good

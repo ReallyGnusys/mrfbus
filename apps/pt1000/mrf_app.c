@@ -284,6 +284,7 @@ static void cycle_input(){
   _curr_adc_channel = next_chan;
 
   PINHIGH(START);  // pulse start
+  __delay_cycles(8);
   PINLOW(START);  
   
 
@@ -358,7 +359,7 @@ int ads1148_init(){
 
 
   
-  for (i = 0; i < 200 ; i++)  
+  for (i = 0; i < 2 ; i++)  
       __delay_cycles(1000); // need to wait 16ms
   ads1148_config();
   __delay_cycles(200);
@@ -370,6 +371,7 @@ int ads1148_init(){
   cyc_err2 = 0;
   //PINHIGH(START);  // continuous sampling
   PINHIGH(START);  // pulse start
+  __delay_cycles(8);
   PINLOW(START);  // continuous sampling
   
   

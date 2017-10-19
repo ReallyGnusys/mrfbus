@@ -268,6 +268,8 @@ class Pt1000Dev(MrfDev):
         'relay' : MrfSensPtRelay}                 
     _cmdset = Pt1000AppCmds
 
+    def init(self):
+        self.filt_ind = 0 
     def app_packet(self, hdr, param , resp):
         mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
