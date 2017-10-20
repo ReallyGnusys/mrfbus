@@ -273,8 +273,12 @@ static void cycle_input(){
   if (rc == -1)
     cyc_err2++;
   rv += rc;
+  PINHIGH(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
 
   _rx_flush_cnt += mrf_spi_flush_rx();
+
+  PINLOW(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
+
   ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
   _last_reading[last_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
@@ -355,10 +359,8 @@ int ads1148_init(){
   INPUTPIN(DRDY);
 
   __delay_cycles(50);
-//PINLOW(RESET);
   PINLOW(MR);
   __delay_cycles(200);
-//PINHIGH(RESET);
   PINHIGH(MR);  
   __delay_cycles(2000);
 
@@ -376,8 +378,8 @@ int ads1148_init(){
 
   int i,j;
   for (i = 0; i < 1000 ; i++)  
-    for (j = 0; j < 2 ; j++)  
-      __delay_cycles(1000); // need to wait 16ms
+    for (j = 0; j < 4 ; j++)  
+      __delay_cycles(1000); //should only need to wait 16ms
 
 
 
@@ -387,8 +389,9 @@ int ads1148_init(){
   ads1148_config();
   __delay_cycles(200);
   flush_spi();
-  __delay_cycles(200);
-  ads1148_config();  // temp desperation
+  for (i = 0; i < 2 ; i++)  
+      __delay_cycles(1000); // need to wait 16ms
+  //ads1148_config();  // temp desperation
   __delay_cycles(100);
   _rx_flush_cnt = 0;
   cyc_err1 = 0;
