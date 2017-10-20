@@ -384,13 +384,13 @@ class TestPt1000(DeviceTestCase):
 
 
 
-    def skipped_test06_toggle_relay(self):
+    def toggle_relay(self,chan):
         print "**********************"
-        print "* pt1000 toggle relay test (dest 0x%02x)"%self.dest
+        print "* pt1000 toggle relay test (dest 0x%02x) chan %d"%(self.dest,chan)
         print "**********************"
        
         data = PktRelayState()
-        data.chan = 0
+        data.chan = chan
         data.val = 0
         ## get initial relay state for chan 0
         self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
@@ -416,8 +416,12 @@ class TestPt1000(DeviceTestCase):
         self.assertTrue(self.check_attrs(rst,PktPt1000State()))
         
         
-        
-           
+
+    def skipped_relay_long(self):
+       for tst in range(200):
+         for chan in range(3):
+            self.toggle_relay(chan)
+            time.sleep(1)
         
     def skipped_test02a_spi_write_test(self):
         self.if_status()
@@ -501,6 +505,11 @@ class TestPt1000(DeviceTestCase):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
+       print "sys.argv = %s"%repr(sys.argv)
+       #pa = sys.argv.pop()
+       #print "pa is %s"%repr(pa)
+       #print "sys.argv = %s"%repr(sys.argv)
+       
        TestPt1000.DEST = int(sys.argv.pop(),16)
        print "setting dest to 0x%x"%TestPt1000.DEST
     unittest.main()
