@@ -299,7 +299,7 @@ static void cycle_input(){
 }
 
 void sample_start(){
- uint8 b1 = 0x16;
+ uint8 b1 = 0x14;
   mrf_spi_flush_rx();   
 
  if (mrf_spi_tx(b1) == -1)

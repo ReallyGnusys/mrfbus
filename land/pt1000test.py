@@ -396,6 +396,10 @@ class TestPt1000(DeviceTestCase):
         self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
         resp = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp)
+
+        if not self.check_attrs(resp,PktRelayState()):
+           print "ERROR : abort chan %d test (1)"%chan
+           return -1
         self.assertTrue(self.check_attrs(resp,PktRelayState()))
 
         # toggle relay state
@@ -407,8 +411,13 @@ class TestPt1000(DeviceTestCase):
         self.cmd(self.dest,mrf_cmd_set_relay,dstruct=data)
         resp2 = self.response(timeout=self.timeout)
         print "resp %s"%repr(resp2)
+        if not self.check_attrs(resp2,data,checkval=True):
+           print "ERROR : abort chan %d test (1)"%chan
+           return -1
+           
         self.assertTrue(self.check_attrs(resp2,data,checkval=True))
 
+        return 0
         ## check pt1000state has updated
         self.cmd(self.dest,mrf_cmd_read_state)
         rst = self.response(timeout=self.timeout)
@@ -418,11 +427,16 @@ class TestPt1000(DeviceTestCase):
         
 
     def skipped_relay_long(self):
+       chan_errs = [0,0,0]
        for tst in range(200):
          for chan in range(3):
-            self.toggle_relay(chan)
+            if (self.toggle_relay(chan) != 0):
+               chan_errs[chan] += 1
+            
+            print "chan %d loop %d"%(chan,tst)
             time.sleep(1)
-        
+       print "chan errs %s"%repr(chan_errs)
+       print "test complete"
     def skipped_test02a_spi_write_test(self):
         self.if_status()
         self.read_write_spi_test()
