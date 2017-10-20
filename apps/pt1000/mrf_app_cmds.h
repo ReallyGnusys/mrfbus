@@ -31,7 +31,9 @@ typedef enum mrf_app_cmd_code
    mrf_app_cmd_read_state  = 6,
    mrf_app_cmd_get_relay  = 7,
    mrf_app_cmd_set_relay  = 8,
-   MRF_NUM_APP_CMDS = 9
+   mrf_app_cmd_sample_start  = 9,
+   mrf_app_cmd_sample_stop  = 10,
+   MRF_NUM_APP_CMDS = 11
  } MRF_APP_CMD_CODE;
 
 #endif

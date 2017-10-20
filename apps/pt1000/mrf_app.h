@@ -83,5 +83,7 @@ MRF_CMD_RES mrf_app_read_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp); // read ptd device state
 MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay
 MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay state
+MRF_CMD_RES mrf_app_sample_start(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
+MRF_CMD_RES mrf_app_sample_stop(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 
 #endif

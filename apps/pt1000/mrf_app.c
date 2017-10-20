@@ -70,6 +70,7 @@ volatile int dbg22;
 
 volatile uint8 dbg_u8;
 volatile uint8 _rxcnt;
+static uint8 sampling, sample_stop_flg;
 
 void debfunc(uint8 data){
   dbg_u8 = data;
@@ -186,18 +187,18 @@ uint8 ads1148_write_noblock(uint8 reg,uint8 data){
 
   uint8 b1 = 0x40 + ( reg & 0xf );
 
-  if (mrf_spi_tx(b1) == -1)
+  if (mrf_spi_txq(b1) == -1)
     err_spi_tx();
   //__delay_cycles(10);  
-  if (mrf_spi_tx(0) == -1)  
+  if (mrf_spi_txq(0) == -1)  
     err_spi_tx();
   //  mrf_spi_tx(0); // 1 byte
   //__delay_cycles(10);  
-  if (mrf_spi_tx(data) == -1)  
+  if (mrf_spi_txq(data) == -1)  
     err_spi_tx();
   //mrf_spi_tx(data);
   //__delay_cycles(10);  
- 
+  mrf_spi_start_tx();
  
   return 0;
 }
@@ -251,24 +252,24 @@ static int set_input_only(uint8 channel){
 static int port2_icnt;
 static unsigned int _rx_flush_cnt;
 
-static int cyc_err1, cyc_err2;
+static int cyc_err1, cyc_err2, cyc_cnt;
 
 static void cycle_input(){
   uint16 rc;
   uint16 rv = 0 ;
   uint8 curr_chan,next_chan,last_chan; //,last_chan;
-  port2_icnt++;
+  cyc_cnt++;
   curr_chan = _curr_adc_channel;
   next_chan = (_curr_adc_channel + 1 ) % MAX_RTDS;
   last_chan = (_curr_adc_channel - 1 );
   if (last_chan >  ( MAX_RTDS-1))
     last_chan = ( MAX_RTDS-1);
   // picking up results of last cycle
-  rc = mrf_spi_rx_noblock();  // get second - msb of result
+  rc = mrf_spi_rx_noblock();  // get first - msb of result
   if (rc == -1)
     cyc_err1++;
   rv += (rc << 8);
-  rc = mrf_spi_rx_noblock();  // get third  - lsb of result
+  rc = mrf_spi_rx_noblock();  // get second  - lsb of result
   if (rc == -1)
     cyc_err2++;
   rv += rc;
@@ -284,14 +285,35 @@ static void cycle_input(){
   _curr_adc_channel = next_chan;
 
   PINHIGH(START);  // pulse start
-  __delay_cycles(8);
-  PINLOW(START);  
+  // __delay_cycles(8);
+  //PINLOW(START);  
   
 
 
   return;
 
 }
+
+void sample_start(){
+ uint8 b1 = 0x16;
+  mrf_spi_flush_rx();   
+
+ if (mrf_spi_tx(b1) == -1)
+   err_spi_tx();
+
+ sampling = 1;
+
+}
+
+void sample_stop(){  // stop continous sampling command
+ uint8 b1 = 0x16;
+  mrf_spi_flush_rx();   
+
+ if (mrf_spi_tx(b1) == -1)
+   err_spi_tx();
+ sampling = 0;
+}
+
 
 int ads1148_config(){
   // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
@@ -341,14 +363,8 @@ int ads1148_init(){
   __delay_cycles(2000);
 
   mrf_spi_flush_rx();
-
-  int i,j;
-  for (i = 0; i < 1000 ; i++)  
-    for (j = 0; j < 2 ; j++)  
-      __delay_cycles(1000); // need to wait 16ms
-
   PINLOW(CS);  // leave SPI continually enabled in this app
-
+  PINHIGH(START);  // device needs to be awake to access config
   // need to enable interrupts on DRDY
   P2REN |= BITNAME(DRDY);
   P2OUT |= BITNAME(DRDY);
@@ -356,23 +372,31 @@ int ads1148_init(){
   P2IES |= BITNAME(DRDY);
   P2IFG &= ~BITNAME(DRDY);
   port2_icnt = 0;
+  cyc_cnt = 0;
+
+  int i,j;
+  for (i = 0; i < 1000 ; i++)  
+    for (j = 0; j < 2 ; j++)  
+      __delay_cycles(1000); // need to wait 16ms
 
 
-  
+
+
   for (i = 0; i < 2 ; i++)  
       __delay_cycles(1000); // need to wait 16ms
   ads1148_config();
   __delay_cycles(200);
-  //ads1148_config();  // temp desperation
-  //__delay_cycles(100);
   flush_spi();
+  __delay_cycles(200);
+  ads1148_config();  // temp desperation
+  __delay_cycles(100);
   _rx_flush_cnt = 0;
   cyc_err1 = 0;
   cyc_err2 = 0;
   //PINHIGH(START);  // continuous sampling
-  PINHIGH(START);  // pulse start
-  __delay_cycles(8);
-  PINLOW(START);  // continuous sampling
+  //PINHIGH(START);  // pulse start
+  //  __delay_cycles(8);
+  //PINLOW(START);  // continuous sampling
   
   
 }
@@ -454,9 +478,10 @@ void on_second(){
 
 }
 
-int mrf_app_init(){
-    uint8 ch;
 
+int mrf_app_init(){
+  uint8 ch;
+  sample_stop_flg = 0;
   dbg22 = 101;
   _tick_cnt = 0;
   _tick_err_cnt = 0;
@@ -479,6 +504,9 @@ int mrf_app_init(){
   for (ch = 0 ; ch < 20 ; ch++)
     __delay_cycles(1000);  
   ads1148_init();
+  sampling = 1;
+  //PINHIGH(START);  // start continous sampling
+
   rtc_rdy_enable(on_second);
 }
 
@@ -630,6 +658,18 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 
+MRF_CMD_RES mrf_app_sample_start(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+
+  sample_start();
+  _mrf_buff_free(bnum);
+  return MRF_CMD_RES_OK;
+}
+MRF_CMD_RES mrf_app_sample_stop(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+
+  sample_stop_flg = 1;
+  _mrf_buff_free(bnum);
+  return MRF_CMD_RES_OK;
+}
 
 
 void drdy_int(){
@@ -648,6 +688,11 @@ interrupt(PORT2_VECTOR) PORT2_ISR()
 {
   
   P2IFG &= ~BITNAME(DRDY);                          // DRDY int cleared
-
-  drdy_int();
+  port2_icnt++;
+  if (sample_stop_flg) {
+    sample_stop();
+    sample_stop_flg = 0;
+  }
+  else if(sampling)
+    drdy_int();
 }

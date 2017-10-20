@@ -200,7 +200,7 @@ class SimpleTcpClient(object):
                                     data = MrfSysCmds[ob['cmd']]['param']()
                                     data.dic_set(ob['data'])
                             else:
-                                appcmdset = self.landserver._app_cmd_set(ob['dest'])
+                                appcmdset = self.landserver._dev_cmd_set(ob['dest'])
                                 if appcmdset:
                                     if appcmdset[ob['cmd']]['param'] != None:
                                         data = appcmdset[ob['cmd']]['param']()
@@ -427,7 +427,7 @@ class MrflandServer(object):
         else:
             mrflog.warn("_run_cmd failed for %s"%repr(cobj))
 
-    def _app_cmd_set(self,dest):
+    def TBD_app_cmd_set(self,dest):
         for appn in self.apps.keys():
             app = self.apps[appn]
             if self.apps[appn].i_manage(dest):

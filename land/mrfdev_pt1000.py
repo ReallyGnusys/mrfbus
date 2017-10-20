@@ -85,6 +85,8 @@ mrf_cmd_config_adc  = 133
 mrf_cmd_read_state  = 134
 mrf_cmd_get_relay   = 135
 mrf_cmd_set_relay   = 136
+mrf_cmd_sample_start   = 137
+mrf_cmd_sample_stop   = 138
 
 
 Pt1000AppCmds = {
@@ -135,6 +137,16 @@ Pt1000AppCmds = {
         'name'  : "SET_RELAY",
         'param' : PktRelayState,
         'resp'  : PktRelayState
+    },
+    mrf_cmd_sample_start : {
+        'name'  : "SAMPLE_START",
+        'param' : None,
+        'resp'  : None
+    },
+    mrf_cmd_sample_stop : {
+        'name'  : "SAMPLE_STOP",
+        'param' : None,
+        'resp'  : None
     },
 
 }

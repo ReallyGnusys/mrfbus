@@ -29,7 +29,7 @@ typedef struct  {
   volatile uint8 items;
   volatile uint8 push_errors;
   volatile uint8 pop_errors;
-  uint8 buffer[IQUEUE_DEPTH];
+  volatile uint8 buffer[IQUEUE_DEPTH];
 } IQUEUE;
 
 void queue_init(IQUEUE *q);

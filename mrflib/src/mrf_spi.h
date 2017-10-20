@@ -21,6 +21,8 @@
 #define _MRF_SPI_INCLUDED_
 
 int mrf_spi_tx(uint8 tx_byte);
+int mrf_spi_txq(uint8 tx_byte);
+void mrf_spi_start_tx();
 uint8 mrf_spi_rx();
 uint16 mrf_spi_rx_noblock();
 int mrf_spi_flush_rx();

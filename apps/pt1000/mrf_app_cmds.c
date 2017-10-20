@@ -32,6 +32,8 @@ const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
 
   [ mrf_app_cmd_get_relay ]  = {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_get_relay   },
   [ mrf_app_cmd_set_relay ]  = {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_set_relay   },
+  [ mrf_app_cmd_sample_start ]  = {"SAMPLE_START" , 0  , 0                     , 0                             ,  NULL  , mrf_app_sample_start   },
+  [ mrf_app_cmd_sample_stop ]  = {"SAMPLE_STOP" , 0  , 0                     , 0                             ,  NULL  , mrf_app_sample_stop   },
   
 };
 
