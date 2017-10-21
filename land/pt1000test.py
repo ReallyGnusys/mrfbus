@@ -26,6 +26,7 @@ from mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
+import random
 from datetime import datetime
 
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
@@ -429,12 +430,12 @@ class TestPt1000(DeviceTestCase):
     def skipped_relay_long(self):
        chan_errs = [0,0,0]
        for tst in range(200):
-         for chan in range(3):
+         for chan in range(2):
             if (self.toggle_relay(chan) != 0):
                chan_errs[chan] += 1
             
             print "chan %d loop %d"%(chan,tst)
-            time.sleep(1)
+            time.sleep(0.2 + random.random()/2.0)
        print "chan errs %s"%repr(chan_errs)
        print "test complete"
     def skipped_test02a_spi_write_test(self):

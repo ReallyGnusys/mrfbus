@@ -104,7 +104,10 @@ void putchar(char c){
 int mrf_arch_run(){
   int i;
   while(1){
+    WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
+
     i = mrf_foreground();
+    mrf_sleep();
   }
   return 0;
 }
@@ -132,10 +135,14 @@ int mrf_tick_disable(){
 }
 int  mrf_wake()  {
   // clear LPM3 on reti
+    WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
   __bic_SR_register(LPM3_bits);
 
 }
 int mrf_sleep(){
+  // disable WDT
+    WDTCTL = WDTPW + WDTHOLD; 
+
   __bis_SR_register(LPM3_bits  + GIE);
 
 }

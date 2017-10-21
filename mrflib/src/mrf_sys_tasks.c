@@ -33,10 +33,6 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_HDR *txhdr; 
   MRF_BUFF_STATE *bs;
 
-  if (!queue_data_avail(qp)){
-
-
-  }
   
   //if ( ifp->status->state != MRF_ST_WAITSACK){  
   if (!queue_data_avail(qp)){
