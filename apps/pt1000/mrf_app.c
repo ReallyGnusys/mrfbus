@@ -273,18 +273,50 @@ static void cycle_input(){
   if (rc == -1)
     cyc_err2++;
   rv += rc;
+  _last_reading[last_chan] = rv;
+
+
   PINHIGH(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
 
   _rx_flush_cnt += mrf_spi_flush_rx();
 
   PINLOW(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
 
+  uint8 b1 = 0x40 + ( IDAC0_OFFS & 0xf );
+
+  if (mrf_spi_txq(0x40 + ( IDAC0_OFFS & 0xf )) == -1)  // write at IDAC0
+    err_spi_tx();
+  if (mrf_spi_txq(2) == -1)   // 3 regs
+    err_spi_tx();
+  if (mrf_spi_txq(0x04) == -1)   // IDAC0
+    err_spi_tx();
+  if (mrf_spi_txq(0x0f | (next_chan << 4)) == -1)   // IDAC1
+    err_spi_tx();
+  if (mrf_spi_txq(0x00) == -1)   // GPIOCFG
+    err_spi_tx();
+  
+  if (mrf_spi_txq(0x40 + ( MUX0_OFFS & 0xf )) == -1)  // write at MUX0
+    err_spi_tx();
+  if (mrf_spi_txq(3) == -1)   // 4 regs
+    err_spi_tx();
+  if (mrf_spi_txq(0x07 | (next_chan << 3)) == -1)   // MUX0
+    err_spi_tx();
+  if (mrf_spi_txq(0x00) == -1)   // VBIAS
+    err_spi_tx();
+  if (mrf_spi_txq(1 << 5) == -1)   // MUX1
+    err_spi_tx();
+  if (mrf_spi_txq(0x00) == -1)   // SYS0
+    err_spi_tx();
+  mrf_spi_start_tx();
+
+  /*
+  
   ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
   _last_reading[last_chan] = rv;
   //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
   ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
   
-
+  */
   
   _curr_adc_channel = next_chan;
 
@@ -318,6 +350,10 @@ void sample_stop(){  // stop continous sampling command
  sampling = 0;
 }
 
+
+
+  
+  
 
 int ads1148_config(){
   // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
