@@ -89,8 +89,8 @@ class mrf_comm(object):
             return None
         skt = self.sockets[wsid]
         if skt.ip != ip:
-            mrflog.warn("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
-            return None
+            mrflog.error("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
+            #return None
             
         return socket_info(skt)
 
