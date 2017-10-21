@@ -193,12 +193,18 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   // should be about 115 kb copied from uart
   UCB0CTL1 |= UCSSEL__SMCLK;
   //UCB0BRW =   72;                // 
-  UCB0BRW =   72;// really a magic number... along with 74... hard to find another!
+  //UCB0BRW =   72;// really a magic number... along with 74... hard to find another!
+
+  
+  
+  //UCB0BRW =   96;//   back off clock searching for better noise immunity  - works but doesn't seem better than 72
+
+  UCB0BRW =   50;//   speed up clock! searching for better noise immunity
+  
 
   //UCB0BRW =   256;//
 
   
-  //UCB0BRW =   144;//   back off clock searching for better noise immunity
 
   //UCB0BRW =  36;// stab in dark seems good
   //UCB0BRW =  36;// stab in dark seems good
