@@ -39,23 +39,18 @@ class PktSpiDebug(MrfStruct):
         ("spi_tx_queue_data_avail", c_uint8),
         ("spi_rxq_qip", c_uint8),
         ("spi_rxq_qop", c_uint8),
-        ("spi_rxq_items", c_uint8),
         ("spi_rxq_push_errors", c_uint8),
         ("spi_rxq_pop_errors", c_uint8),
         ("spi_txq_qip", c_uint8),
         ("spi_txq_qop", c_uint8),
-        ("spi_txq_items", c_uint8),
         ("spi_txq_push_errors", c_uint8),
         ("spi_txq_pop_errors", c_uint8),
-        ("ucb0_ifg", c_uint8),
-        ("ucb0_ie", c_uint8),
-        ("ucb0_cntrl0", c_uint8),
-        ("ucb0_cntrl1", c_uint8),
-        ("ucb0_stat", c_uint8),
+        ("cyc_cnt",  c_uint32),
         ("cyc_err1", c_uint32),
         ("cyc_err2", c_uint32),
         ("cyc_err3", c_uint32),
-        ("chan_err_last", c_uint8),       
+        ("chan_err_last", c_uint8),
+        
     ]
 
 MAX_RTDS = 7

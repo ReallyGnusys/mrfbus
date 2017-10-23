@@ -613,27 +613,21 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   IQUEUE *spi_rx_q = mrf_spi_rx_queue();
   pkt.rxq_qip = spi_rx_q->qip;
   pkt.rxq_qop = spi_rx_q->qop;
-  pkt.rxq_items = spi_rx_q->items;
   pkt.rxq_push_errors = spi_rx_q->push_errors;
   pkt.rxq_pop_errors = spi_rx_q->pop_errors;
 
   IQUEUE *spi_tx_q = mrf_spi_tx_queue();
   pkt.txq_qip = spi_tx_q->qip;
   pkt.txq_qop = spi_tx_q->qop;
-  pkt.txq_items = spi_tx_q->items;
   pkt.txq_push_errors = spi_tx_q->push_errors;
   pkt.txq_pop_errors = spi_tx_q->pop_errors;
 
-  pkt.ucb0_ifg = UCB0IFG;
-  pkt.ucb0_ie = UCB0IE;
-  pkt.ucb0_cntrl0 = UCB0CTL0;
-  pkt.ucb0_cntrl1 = UCB0CTL1;
-  pkt.ucb0_stat = UCB0STAT;
 
   pkt.cyc_err1 = cyc_err1;
   pkt.cyc_err2 = cyc_err2;
   pkt.cyc_err3 = cyc_err3;
-  pkt.cyc_err3 = cyc_cnt;
+  pkt.cyc_cnt = cyc_cnt;
+
   pkt.chan_err_last = chan_err_last;
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
