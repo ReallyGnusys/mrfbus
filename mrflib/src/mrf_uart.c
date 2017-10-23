@@ -44,7 +44,7 @@ int mrf_uart_init_tx_state(I_F i_f,UART_CSTATE *txstate){
   txstate->buff = NULL;
   txstate->bnum = 0;
   txstate->cnt  = 0;
-
+  return 0;
 }
 
 /*
@@ -261,6 +261,7 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
     return 0;
   default :
     txstate->state = S_IDLE;
+    return 0; // should never get here
   }
 }
 

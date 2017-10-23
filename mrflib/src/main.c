@@ -28,6 +28,7 @@ const MRF_PKT_SYS_INFO sys_info        = {  SYM_NAME(GITSH), SYM_NAME(MRFBLD), (
 
 
 int main(void){
-  mrf_init();  
+  mrf_init();
+  return 0;
 }
 

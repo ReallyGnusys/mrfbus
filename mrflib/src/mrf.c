@@ -33,8 +33,11 @@ int mrf_init(){
 }
 
 
+/*
 int mrf_time(char *buff){
   TIMEDATE td;
   mrf_rtc_get(&td);
   return sprintf(buff,"%02d:%02d:%02d %02d-%02d-%04d",td.hour,td.min,td.sec,td.day,td.mon,td.year+2000);
 }
+
+*/

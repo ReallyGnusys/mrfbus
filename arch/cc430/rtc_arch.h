@@ -40,6 +40,7 @@ typedef enum{
 void rtc_ps0_init(RTCDIVCODE div,VFUNCPTR func);
 void rtc_ps0_enable(VFUNCPTR func);
 void rtc_ps0_disable();
+void rtc_rdy_enable(VFUNCPTR func);
 
 int _rtc_td_is_valid(TIMEDATE *td); 
 void rtc_clear_alarm();

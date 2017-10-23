@@ -25,7 +25,6 @@
 #include  <msp430.h>
 #include <legacymsp430.h>
 #include "cc430f5137.h"
-
 #include "mrf_pinmacros.h"
 
 #define NUM_RELAY_CHANNELS 8
@@ -78,18 +77,13 @@ void debfunc(uint8 data){
 }
 
 
-volatile static __attribute__((noinline)) uint8 toggle_cs() {
-  PINLOW(CS);
-  PINHIGH(CS);
-}
 
-uint8 _dbg_rxdata[4];
 
 // these must retain ability to be tweaked - so non constant
 
 // all units in milliohms
-static uint32_t _ref_r;  // the resistor value between ref+ and ref
-static uint32_t _ref_i;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
+const static uint32_t _ref_r = 2490000;  // the resistor value between ref+ and ref
+const static uint32_t _ref_i = 47000;  // the inline resistance with the PT1000 - at least 47 ohm + lead resistance with EVM
 
 static uint16_t _last_reading[MAX_RTDS];
 
@@ -101,37 +95,21 @@ uint16 ads1148_data(){
   */
   uint8  b1 = 0x12;  // read data once
   uint16 rv = 0 ;
-  uint16 lc = 0;
   uint8  i = 0;
   _rxcnt = 0 ;
   //PINHIGH(START);  // leave continuous sampling
-//toggle_cs();
   PINLOW(CS);
   //__delay_cycles(10);
   mrf_spi_flush_rx(); 
-  /*  
-  while((lc < 100) && (INPUTVAL(DRDY))){
-    lc++;
-    __delay_cycles(10);
-    
-  }
-  */
-  //if (lc == 100){
-  //  return 0xeeee;
-  //}
-  //mrf_spi_tx(b1);
   mrf_spi_tx(0xff); // NOP
   mrf_spi_tx(0xff); // NOP
   //b1 = mrf_spi_rx();  // discard first
-  //_dbg_rxdata[i++] = b1;
   //debfunc(b1);
   b1 = mrf_spi_rx();  // get second - msb of result
   rv += (b1 << 8);
-  _dbg_rxdata[i++] = b1;
   debfunc(b1);
   b1 = mrf_spi_rx();  // get third  - lsb of result
   rv += b1;
-  _dbg_rxdata[i++] = b1;
 
   
   //PINLOW(START);  // leave continuous sampling
@@ -148,7 +126,6 @@ uint8 ads1148_read(uint8 reg){
   */
   _rxcnt = 0 ;
   uint8 b1 = 0x20 + ( reg & 0xf );
-//toggle_cs();
   //PINLOW(CS);
   //__delay_cycles(10);
   mrf_spi_flush_rx();
@@ -228,37 +205,29 @@ uint8 ads1148_write(uint8 reg,uint8 data){
 }
 
 
-#define NUM_ADC_INPUTS 7
 
 
-static uint8 _curr_adc_channel;
+static uint8 _curr_adc_channel,chan_err_last;
 
-
-static int set_input_only(uint8 channel){
-  uint8 rc;
-  uint16 rv = 0 ;
-
-  if ( channel > NUM_ADC_INPUTS){
-    return -1;
-  }
-  mrf_spi_flush_rx();
-  ads1148_write_noblock(MUX0_OFFS, (channel << 3) | 0x7 );
-  ads1148_write_noblock(IDAC1_OFFS,(channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
-  _curr_adc_channel = channel;
-  mrf_spi_flush_rx(); 
-  return rv;
-
-}
 static int port2_icnt;
 static unsigned int _rx_flush_cnt;
 
-static int cyc_err1, cyc_err2, cyc_cnt;
+static int cyc_err1, cyc_err2, cyc_err3, cyc_cnt;
 
 static void cycle_input(){
   uint16 rc;
   uint16 rv = 0 ;
-  uint8 curr_chan,next_chan,last_chan; //,last_chan;
+  uint8 curr_chan,next_chan,last_chan, discard; //,last_chan;
   cyc_cnt++;
+  if (_curr_adc_channel > ( MAX_RTDS-1)){
+    // this should never happen .. only if _curr_adc_channel has got corrupted
+    chan_err_last = _curr_adc_channel;
+    cyc_err3++;
+    _curr_adc_channel = 0;
+    discard = 1;
+  }
+  else
+    discard = 0;
   curr_chan = _curr_adc_channel;
   next_chan = (_curr_adc_channel + 1 ) % MAX_RTDS;
   last_chan = (_curr_adc_channel - 1 );
@@ -273,7 +242,8 @@ static void cycle_input(){
   if (rc == -1)
     cyc_err2++;
   rv += rc;
-  _last_reading[last_chan] = rv;
+  if (discard == 0)
+    _last_reading[last_chan] = rv;
 
 
   PINHIGH(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
@@ -282,7 +252,6 @@ static void cycle_input(){
 
   PINLOW(CS); // reset SPI each cycle in case clock was glitched...hmpfff...
 
-  uint8 b1 = 0x40 + ( IDAC0_OFFS & 0xf );
 
   if (mrf_spi_txq(0x40 + ( IDAC0_OFFS & 0xf )) == -1)  // write at IDAC0
     err_spi_tx();
@@ -309,20 +278,10 @@ static void cycle_input(){
     err_spi_tx();
   mrf_spi_start_tx();
 
-  /*
-  
-  ads1148_write_noblock(MUX0_OFFS, (next_chan << 3) | 0x7 );
-  _last_reading[last_chan] = rv;
-  //ads1148_write(IDAC0_OFFS, 4 ); // 500uA
-  ads1148_write_noblock(IDAC1_OFFS,(next_chan << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
-  
-  */
   
   _curr_adc_channel = next_chan;
 
-  PINHIGH(START);  // pulse start
-  // __delay_cycles(8);
-  //PINLOW(START);  
+  PINHIGH(START);  // pulse start - start should actually stay high 
   
 
 
@@ -432,6 +391,8 @@ int ads1148_init(){
   _rx_flush_cnt = 0;
   cyc_err1 = 0;
   cyc_err2 = 0;
+  cyc_err3 = 0;
+  chan_err_last = 0;
   //PINHIGH(START);  // continuous sampling
   //PINHIGH(START);  // pulse start
   //  __delay_cycles(8);
@@ -464,7 +425,7 @@ int build_state(MRF_PKT_PT1000_STATE *state){
   (*state).relay_cmd   = 0;
   (*state).relay_state = relay_state();
   //(*state).milliohms[0]= eval_milliohms(0);  // temp  
-
+  return 0;
 }
 
 
@@ -506,6 +467,7 @@ int signal_handler(uint8 signal){
 
   if (signal == APP_SIG_SECOND)
     return tick_task();
+  return 0;
   
 }
 
@@ -524,8 +486,8 @@ int mrf_app_init(){
   dbg22 = 101;
   _tick_cnt = 0;
   _tick_err_cnt = 0;
-  _ref_r = (uint32_t)2490*(uint32_t)1000; // nominal resistance between ref+ and ref-
-  _ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
+  //_ref_r = (uint32_t)2490*(uint32_t)1000; // nominal resistance between ref+ and ref-
+  //_ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
 
   __delay_cycles(1000);  
 
@@ -556,6 +518,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
+  return MRF_CMD_RES_OK;
 }
 
 MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -569,7 +532,6 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
-  //toggle_cs();
   mrf_debug("mrf_app_read_spi entry bnum %d\n",bnum);
   MRF_PKT_UINT8 *data = (MRF_PKT_UINT8 *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   uint8 rd = ads1148_read(data->value);
@@ -583,7 +545,6 @@ MRF_CMD_RES mrf_app_spi_read(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 MRF_CMD_RES mrf_app_spi_data(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
-  //toggle_cs();
   mrf_debug("mrf_app_spi_data entry bnum %d\n",bnum);
   uint16 rd = ads1148_data();
   MRF_PKT_UINT16 *rbuff = (MRF_PKT_UINT16 *)mrf_response_buffer(bnum);
@@ -619,7 +580,6 @@ MRF_CMD_RES mrf_app_config_adc(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
-  //toggle_cs();
   mrf_debug("mrf_app_read_state entry bnum %d\n",bnum);
   MRF_PKT_PT1000_STATE *state = (MRF_PKT_PT1000_STATE *)mrf_response_buffer(bnum);
   build_state(state);
@@ -670,6 +630,11 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   pkt.ucb0_cntrl1 = UCB0CTL1;
   pkt.ucb0_stat = UCB0STAT;
 
+  pkt.cyc_err1 = cyc_err1;
+  pkt.cyc_err2 = cyc_err2;
+  pkt.cyc_err3 = cyc_err3;
+  pkt.cyc_err3 = cyc_cnt;
+  pkt.chan_err_last = chan_err_last;
 
   mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
 
@@ -711,15 +676,6 @@ MRF_CMD_RES mrf_app_sample_stop(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 
-void drdy_int(){
-  uint16 rd;
-  //port2_icnt++;
-  cycle_input();
-  //rd = ads1148_data();
-  //_last_reading[curr_chan] = rd;
-  
-
-}
 
 
 
@@ -733,5 +689,5 @@ interrupt(PORT2_VECTOR) PORT2_ISR()
     sample_stop_flg = 0;
   }
   else if(sampling)
-    drdy_int();
+    cycle_input();
 }

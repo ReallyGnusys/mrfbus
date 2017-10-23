@@ -76,8 +76,10 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
+// FIXME - what is this for. This sys command is not used or valid.
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_retry..doing nothing yet\n");
+  return MRF_CMD_RES_OK;
 
 }
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
@@ -98,10 +100,12 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   // now put in application queue as MRF_CMD_USR_RESP
   
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
-  MRF_PKT_RESP *rsp1 = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+ sizeof(MRF_PKT_HDR));
-  mrf_debug("resp->rlen %u resp->type %u resp->msgid %u\n",rsp1->rlen,rsp1->type,rsp1->msgid);
+  //MRF_PKT_RESP *rsp1 = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+ sizeof(MRF_PKT_HDR));
+  //mrf_debug("resp->rlen %u resp->type %u resp->msgid %u\n",rsp1->rlen,rsp1->type,rsp1->msgid);
   hdr1->type = mrf_cmd_usr_resp;
   mrf_app_queue_push(bnum);
+  return MRF_CMD_RES_OK;
+
 }
 
 extern uint32 _tick_count;
@@ -119,7 +123,6 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *if
   info.buffs_free  = mrf_buff_num_free();
   info.tick_count = _tick_count;
   I_F i;
-  uint32 rxp,txp;
   const MRF_IF *i_f;
   for ( i = 0 ; i < NUM_INTERFACES ; i++ ) {
     i_f = mrf_if_ptr(i);
@@ -167,7 +170,7 @@ MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  TIMEDATE *td,endtd;
+  TIMEDATE *td;
   mrf_debug("%s","mrf_task_set_time entry\n");
   td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   mrf_rtc_set(td);
@@ -227,12 +230,6 @@ MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp
 }
 
 
-MRF_CMD_RES mrf_task_read_sensor(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  mrf_debug("%s","mrf_task_get_sensor_data exit\n");
-  mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
-  return MRF_CMD_RES_OK;
-}
-
 MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_test_1 entry\n");
   TIMEDATE *rbuff = (TIMEDATE *)mrf_response_buffer(bnum);
@@ -242,13 +239,6 @@ MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   return MRF_CMD_RES_OK;  
 }
 
-MRF_CMD_RES mrf_task_test_2(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  mrf_debug("%s","mrf_task_test_2\n");
-  uint8 *rbuff = mrf_response_buffer(bnum);
- 
-  mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
-  return MRF_CMD_RES_OK;  
-}
 
 void mrf_reset();
 

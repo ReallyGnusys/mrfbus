@@ -52,8 +52,10 @@ class PktSpiDebug(MrfStruct):
         ("ucb0_cntrl0", c_uint8),
         ("ucb0_cntrl1", c_uint8),
         ("ucb0_stat", c_uint8),
-
-       
+        ("cyc_err1", c_uint32),
+        ("cyc_err2", c_uint32),
+        ("cyc_err3", c_uint32),
+        ("chan_err_last", c_uint8),       
     ]
 
 MAX_RTDS = 7

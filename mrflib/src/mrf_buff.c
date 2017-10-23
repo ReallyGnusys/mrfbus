@@ -113,10 +113,11 @@ const char * mrf_buff_state_name(uint8 bnum){
 
 void _mrf_buff_print(){
   int i;
+  MRF_BUFF_STATE *bst;
   mrf_debug("_mrf_buff_print warning is %s\n",illegal_state_warning);
   mrf_debug("free?  %s\n",mrf_buff_state_name(0));
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
-    MRF_BUFF_STATE *bst = _mrf_buff_state(i);
+    bst = _mrf_buff_state(i);
     mrf_debug("buff %d state %d (%s) owner %d\n",i,bst->state,mrf_buff_state_name(i),_mrf_buffst[i].owner);    
   }
 }

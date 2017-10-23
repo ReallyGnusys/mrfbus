@@ -77,7 +77,6 @@ uint8 queue_head(IQUEUE *q){
 
 
 int queue_push(IQUEUE *q, uint8 data){
-  int i;
   if (queue_full(q)){
     q->push_errors++;
     return -1;

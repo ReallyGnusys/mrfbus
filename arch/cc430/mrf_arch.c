@@ -21,6 +21,7 @@
 #include  <msp430.h>
 #include <legacymsp430.h>
 #include <rtc_arch.h>
+#include "hal_pmm.h"
 
 extern uint8 _mrfid;
 
@@ -37,10 +38,11 @@ inline void mrf_intr_entry(){
 
 
 //FIXME shouldn't need putchar to make printf etc link. Shouldn't have printf
-
+/*
 int putchar(int c){
+  return 0;
 }
-
+*/
 
 int _print_mrf_cmd(MRF_CMD_CODE cmd){
   // empty for cc
@@ -54,52 +56,40 @@ extern void init_clock(void);
 
 int mrf_arch_boot(){
 
-   int i,j,on;
   WDTCTL = WDTPW + WDTHOLD; 
-  //receiving = 0;
-  //transmitting = 0;
-  // sprintf(message,"");
   
 
   SetVCore(2);   
   UCSCTL6 &= ~(XT1DRIVE0 | XT1DRIVE1);  // low power mode
 
   init_clock();
-  // RSTAT=GetRF1ASTATB();
-  //InitButtonLeds();
 
   P3OUT = 0x00;
   P3DIR = 0x00;
   // LCD1x9_Initialize();
  
 
-  _mrf_receive_enable();
-  //rtc_ps0_init(DIV64,ps0_handler);
-  //starttimer_aclk();
-  // __delay_cycles(10000);
-  //get_ta_value(&delay_timer);
   rtc_init();
   rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
 
-  //rtc_ps0_enable(ps0_handler);
-
-
-  //rtc_rdy_enable(rdy_handler);
-
- //cdisplaytime();
-  // xbus_init();
- // rtc_set(&time1);
   __bis_SR_register(GIE);
-  // xb_receive_on();
  
   return 0;
 }
 
-/*
-void putchar(char c){
+int  mrf_wake()  {
+  // clear LPM3 on reti
+  WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
+  __bic_SR_register(LPM3_bits);
+  return 0;
 }
+int mrf_sleep(){
+  // disable WDT
+  WDTCTL = WDTPW + WDTHOLD; 
 
-*/
+  __bis_SR_register(LPM3_bits  + GIE);
+  return 0;
+}
 
 int mrf_arch_run(){
   int i;
@@ -132,19 +122,6 @@ int mrf_tick_disable(){
   rtc_ps0_disable();
 
   return 0;
-}
-int  mrf_wake()  {
-  // clear LPM3 on reti
-    WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
-  __bic_SR_register(LPM3_bits);
-
-}
-int mrf_sleep(){
-  // disable WDT
-    WDTCTL = WDTPW + WDTHOLD; 
-
-  __bis_SR_register(LPM3_bits  + GIE);
-
 }
 
 void mrf_reset(){

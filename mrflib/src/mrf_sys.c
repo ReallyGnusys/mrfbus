@@ -57,7 +57,6 @@ const MRF_CMD *mrf_cmd_ptr(uint8 type){
 const MRF_CMD * _mrf_cmd(uint8 type){
   /*return mrf cmd for type hdr param*/
     // lookup command
-  const MRF_CMD *cmd;
   uint8 app_cnum = type - _MRF_APP_CMD_BASE;
   if(type < MRF_NUM_SYS_CMDS){
     return &(mrf_sys_cmds[type]);
@@ -101,7 +100,8 @@ uint16 mrf_copy(void *src,void *dst, size_t nbytes){
   uint16 i;
   for ( i = 0 ; i < nbytes ; i++ ){
     *((uint8 *)dst + i) =  *((uint8 *)src + i);
-  } 
+  }
+  return i;
 }
 uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
   uint16 i;
@@ -111,16 +111,10 @@ uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
     *((uint8 *)dst + i) =  sc;
     if (sc == '\0')
       break;
-  } 
+  }
+  return i;
 }
 
-int mrf_tx_bnum(I_F i_f,uint8 bnum){
-  //mrf_debug("mrf_tx_buff : i_f %d  bnum %d\n",i_f,bnum);
-  const MRF_IF *if_ptr = mrf_if_ptr(i_f);
-  uint8 *buff = _mrf_buff_ptr(bnum);
-  (*(if_ptr->type->funcs.send))(i_f,buff);
-  
-}
 
 // send segment ack for buffer
 int mrf_sack(uint8 bnum){
@@ -178,6 +172,7 @@ int mrf_sretry(uint8 bnum){
 
  if_ptr->status->state = MRF_ST_ACKDELAY;
  mrf_tick_enable();
+ return 0;
 }
 
 int mrf_retry(I_F i_f,uint8 bnum){
@@ -200,6 +195,7 @@ int mrf_retry(I_F i_f,uint8 bnum){
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
  mrf_debug("mrf_retry : freeing initial buffer %d\n",bnum);
  _mrf_buff_free(bnum);
+ return 0;
 }
 
 uint8 *mrf_response_buffer(uint8 bnum){
@@ -435,8 +431,8 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF
       if(cmd->func != NULL){
         mrf_debug("%s","executing cmd func\n");
         (*(cmd->func))(pkt->type,bnum,ifp);
-        return 0;
       }
+      return 0;
 }
 
 int mrf_app_queue_push(uint8 bnum){
@@ -520,14 +516,13 @@ int _mrf_buff_forward(uint8 bnum){
     mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
   }
 
-  
+  return 0;
 }
 
 
 
 int _mrf_process_buff(uint8 bnum)
 {
-  uint8 len;
   MRF_PKT_HDR *pkt;
   uint8 type;
   I_F owner = mrf_buff_owner(bnum);
@@ -602,7 +597,8 @@ int _mrf_process_buff(uint8 bnum)
     }
     return _mrf_buff_forward(bnum);
   }
-  
+
+  return 0; // if not our address we come here... should have stat
 }
 
 
@@ -654,12 +650,10 @@ int _mrf_if_can_tx(IF_STATE istate){
 void _mrf_tick(){
   const MRF_IF *mif; 
   I_F i;
-  uint8 j;
   uint8 *tb;
   MRF_BUFF_STATE *bs;
   uint8 bnum;
   IF_STATE istate;
-  int count = 0;
   uint8 if_busy = 0;
   IQUEUE *qp;
   _tick_count++;

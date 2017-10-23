@@ -84,7 +84,6 @@ void _mrf_if_print_all(){
 }
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
-  int i;
   const MRF_IF *mif = mrf_if_ptr(i_f);
   MRF_BUFF_STATE *mbst = _mrf_buff_state(bnum);
   IQUEUE *qp = &(mif->status->txqueue);

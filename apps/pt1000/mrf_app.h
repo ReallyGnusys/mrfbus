@@ -47,6 +47,10 @@ typedef struct  __attribute__ ((packed))   {
   uint8  ucb0_cntrl0;
   uint8  ucb0_cntrl1;
   uint8  ucb0_stat;
+  uint32 cyc_err1;
+  uint32 cyc_err2;
+  uint32 cyc_err3;
+  uint8  chan_err_last;
   //uint16 pad2;
 
 } MRF_PKT_SPI_DEBUG;

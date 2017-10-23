@@ -29,5 +29,5 @@ AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${M
 
 
 ACCFLAGS= -mmcu=cc430f5137  -DMHZ_868 
-
+ALDFLAGS= -nostdlib -lgcc
 # -g
