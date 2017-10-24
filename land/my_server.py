@@ -32,7 +32,7 @@ if __name__ == '__main__':
     
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
               {
-                  'temp' : ["ACC_100", "ACC_50", "ACC_10", "MAIN_MIX", "UFH_FLOW", "UFH_RET", "ACC_RET"],
+                  'temp' : ["ACC_100", "ACC_60", "ACC_30", "MAIN_MIX", "ACC_RET" , "UFH_FLOW", "UFH_RET"],
                   'relay' : ["UFH_PUMP", "UNUSED_PUMP", "ACC_HEAT"]
               })
 
