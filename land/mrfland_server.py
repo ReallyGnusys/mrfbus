@@ -323,8 +323,8 @@ class MrflandServer(object):
 
         self._connect_to_mrfnet()
 
-    def subprocess(self, arglist, callback):
-        process = tornado.process.Subprocess(arglist, stdout=tornado.process.Subprocess.STREAM, stderr=tornado.process.Subprocess.STREAM)
+    def subprocess(self, arglist, callback):  # FIXME - we just collect exit code for running unittest clients 
+        process = tornado.process.Subprocess(arglist, stdout=None, stderr=None)
         process.set_exit_callback(callback)
     
     def timer_callback(self, *args, **kwargs):
