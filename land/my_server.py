@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     Pt1000Dev(rm, "pt1000_kitchen"  , 4,
                {
-                   'temp' : ["DHW1_100", "DHW1_25", "HB1_FLOW", "HB1_RET", "HB1_UNUSED1", "HB1_UNUSED2","HB2_UNUSED3"],
+                   'temp' : ["DHW1_100",  "HB1_FLOW", "HB1_RET", "RAD1_RET", "DHW1_HX_RET",  "HB1_AMBIENT","LOUNGE_AMBIENT"],
                    'relay' : ["RAD1_PUMP", "DHW1_HX_PUMP" , "DHW1_HEAT"]
                })
 
