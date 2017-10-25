@@ -77,7 +77,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         mrflog.warn("reh pattern is %s"%reh.pattern)
         reflow = re.compile(r'%s(_FLOW)'%self.data['heatbox'])
-        reret  = re.compile(r'%s(_RET)'%self.data['heatbox'])
+        reret  = re.compile(r'%s(_HX_RET)'%self.data['tag'])
         reacc  = re.compile(r'%s'%self.data['acctop'])
 
         self.ts = {}
@@ -189,7 +189,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
     def rad_relay_release(self):
         mrflog.warn("%s rad_relay_release"%(self.__class__.__name__))
-        self.rad_relay.release
+        self.rad_relay.release()
         
         """
         cdata = {}
@@ -217,7 +217,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if self.state == 'INIT':
             if timeout:
                 next_state = 'IDLE'
-        elif True:
+        elif False:
             next_state = 'DISABLED'
         elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
@@ -226,7 +226,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                         mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.flow_temp, self.temps[100]))
                         next_state = 'CHARGE1'
                         self.hx_relay_control(1)
-                        self.set_timeout(120)
+                        self.set_timeout(60*10)
 
                     else:
                         next_state = 'PREPUMP'
@@ -238,19 +238,54 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGE1'
-                self.set_timeout(120)
+                self.set_timeout(60*10)
 
         elif self.state == 'CHARGE1':
-            if timeout or self.temps[100] > self.target_temp  or self.temps[100] < (self.flow_temp - 10.0):
+            if timeout:
+                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'CHARGING'
-                self.set_timeout(90*60)
+                self.set_timeout(90*60)   #90 mins max for now
+            elif self.temps[100] > self.target_temp :
+                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
+                next_state = 'INIT'
+                self.set_timeout(60*60*2)   # wait 2 hours before checking again
+                self.hx_relay_control(0)                
+
+
+
+            elif self.temps[100] < (self.flow_temp - 10.0):
+                mrflog.warn("%s %s flow temp (%.2f) insufficient - giving up in state %s"%
+                            (self.__class__.__name__,self.label,self.flow_temp,self.state))
+                next_state = 'INIT'
+                self.hx_relay_control(0)                
+                self.set_timeout(60*60*2)   # wait 2 hours before checking again
+
 
                 
         elif self.state == 'CHARGING':
-            if self.temps[100] > self.target_temp  or self.temps[100] > (self.flow_temp - 10.0):
+
+            trans = False
+
+            if timeout:
+                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
+                trans = True
+                
+            elif self.temps[100] > self.target_temp:
+                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
+                trans = True
+            elif self.temps[100] > (self.flow_temp - 4.0):
+                mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
+                            (self.__class__.__name__,self.label,self.temps[100],self.flow_temp,self.state))
+                trans = True
+            elif self.return_temp > 44.0:  # don't want return to get too high
+                mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
+                            (self.__class__.__name__,self.label, self.return_temp,self.state))
+                trans = True
+
+            if trans:
                 self.hx_relay_control(0)                
                 next_state = 'INIT'
-                self.set_timeout(60*30)   # wait 30 mins before checking again
+                self.set_timeout(60*60*2)   # wait 2 hours before checking again
 
         if next_state != self.state:
             self.state = next_state
