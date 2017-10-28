@@ -87,6 +87,12 @@ function mrf_web_update(obj){
         return;
     }
     tag = obj.tag;
+
+    if (tag.app == 'auto_graph') {
+        mrf_auto_graph(tag.tab, obj.data)
+        return;
+    }
+        
     data = obj.data;
     //console.log("got tag");
     //console.log(tag);
@@ -102,6 +108,50 @@ function mrf_web_update(obj){
             
     }
         
+}
+
+
+
+function mrf_auto_graph(label, data){
+    console.log("graph update "+label);
+    console.log(data);
+    if (!(label in _sensor_averages)){
+        console.error("auto graph for label "+label+"  not found");
+        return;
+    }
+
+
+    for (var fld in data) {
+        
+        if (fld != 'ts')
+        {
+            if (typeof(_sensor_averages[label][fld]) == 'undefined'){
+                console.error("failed to find fld  "+fld+"  in averages for "+label);
+                return;
+            }
+                
+            console.log("have fld "+fld);
+            _sensor_averages[label][fld].value.push(data[fld]);
+            _sensor_averages[label][fld].ts.push(data['ts']);
+
+            dt = new Date(data['ts']);
+            console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
+            console.log(dt);
+
+            limms = dt.getTime() - _sensor_hist_seconds * 1000;
+            
+            fd =  new Date(_sensor_averages[label][fld].ts[0]);
+
+            while (fd.getTime() < limms ) {
+                _sensor_averages[label][fld].ts.shift();
+                _sensor_averages[label][fld].value.shift();
+                console.log("deleted old value for "+label+" fld "+fld+" "+fd);
+                fd =  new Date(_sensor_averages[label][fld].ts[0]);
+
+            }
+        }       
+    }
+
 }
 
 
@@ -202,6 +252,10 @@ function mrf_command(obj){
     //console.log(obj);
     if (obj.cmd == 'web-update'){
         mrf_web_update(obj.data);
+
+    }
+    else if (obj.cmd == 'update-graph'){
+        mrf_update_graph(obj.data);
 
     }
     else if (obj.cmd == 'update-div'){

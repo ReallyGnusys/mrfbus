@@ -59,7 +59,9 @@ if __name__ == '__main__':
                         'acctop'     : 'ACC_100',
                         'heatbox'    : 'HB1',
                         'litres'     : 200,
-                        'target_temp': 62.0
+                        'target_temp': 60.0,
+                        'min_wait_mins' : 6*60  # aim to run every six hours
+                        
                            
                     })
 

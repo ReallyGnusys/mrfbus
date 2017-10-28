@@ -161,6 +161,9 @@ class MrfSensPt1000(MrfSens):
                    ('milliohms' , int ),
                    ('temp'      , float) ]
 
+    _history_ =  { 'fields' : ['temp']
+                 } 
+
     def res_to_temp(self,milliohms):
         R = milliohms/1000.0
 
@@ -189,7 +192,15 @@ class MrfSensPt1000(MrfSens):
         for i in range(ntaps):
             self.ftaps.append(0)
             
-    
+    def filter_out(self,newval): # cheap and nasty filter option
+        self.ftaps.popleft()
+        self.ftaps.append(newval)
+        tot = 0
+        for v in self.ftaps:
+            tot += v
+        mo = 1.0 * tot / len(self.ftaps)
+        return int(mo)
+        
     def genout(self,indata,outdata):
             
             
@@ -199,14 +210,7 @@ class MrfSensPt1000(MrfSens):
         if not hasattr(self,'ftaps'):
             outdata['milliohms']  = int(indata['milliohms'])
         else:
-            self.ftaps.popleft()
-            self.ftaps.append(int(indata['milliohms']))
-            tot = 0
-            for v in self.ftaps:
-                tot += v
-            mo = 1.0 * tot / len(self.ftaps)
-            outdata['milliohms']  = int(mo)
-            #mrflog.warn("genout filter res was %d  ftaps %s   "%(outdata['milliohms'],str(self.ftaps)))
+            outdata['milliohms']  = self.filter_out(int(indata['milliohms']))
 
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
         #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
@@ -221,6 +225,8 @@ class MrfSensPtRelay(MrfSens):
                    ('recd_date' , datetime.datetime.now),
                    ('relay' , int )
     ]
+    _history_ =  { 'fields' : ['relay']
+                 } 
 
     def init(self):
         self.req_val     = 0

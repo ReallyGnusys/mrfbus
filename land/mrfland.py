@@ -33,7 +33,7 @@ import install
 from mrflog import mrflog
 from mrfland_state import MrflandState
 from mrfland_weblet import MrflandWeblet
-
+from mrf_sens import MrfSens
 from mrf_structs import *
 
 
@@ -348,18 +348,34 @@ class MrflandRegManager(object):
         self.dups = []  ## device updates : from weblets to send to devices
         self.weblets = OrderedDict()  # has weblets by tag
         self.timers = {}
+        self.sgraphs = {}  # support graph data for these sensors during this mrfland service
         self.server = None
+        
 
     def setserver(self,server):  # OUCH , we let the server set a reference to itself..for now
-        self.server = server
-
+        self.server = server   # Please only let a mrfland_server or subclass ever call this function
         ## run postinit
         for wtag in self.weblets.keys():
             wl = self.weblets[wtag]
             if hasattr( wl, 'run_init'):
                 mrflog.warn( "calling run_init for weblet %s "%wtag)
-                getattr(wl, 'run_init')() 
-        
+                getattr(wl, 'run_init')()
+        ## rm should connect graph callbacks here
+        for sl in self.sgraphs.keys():
+            self.sensors[sl].subscribe_minutes(self.graph_callback)
+    def graph_callback(self, label, data):
+        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+        tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
+        self.webupdate(tag,data)
+    def graph_req(self,slab):  #for weblets to request graph data capture for sensors
+        if not self.sensors.has_key(slab):
+            mrflog.error("%s graph_req no sensor named  %s "%(self.__class__.__name__,slab))
+            return
+                         
+        if not self.sgraphs.has_key(slab):
+            self.sgraphs[slab] = True # no need for sensor ref here
+            mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
+
     def set_timer(self, tod, tag, act):
         self.server.set_timer(tod,tag,act)
         tid = tag+"."+ act
@@ -459,6 +475,35 @@ class MrflandRegManager(object):
     def subprocess(self, arglist, callback):
         mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))        
         return self.server.subprocess(arglist, callback)
-                
+
+    def sensor_average_js(self):  # generate sensor average history js
+        s = ""
+        s += """
+var _sensor_hist_seconds = %d;"""%self.sensors[self.sensors.keys()[0]]._HISTORY_SECONDS_
+        s += """
+var _sensor_averages = {"""
+        for slab in self.sensors.keys():
+            sens = self.sensors[slab]
+            if hasattr(sens,"history"):
+                his = sens.averages
+                s += """
+     %s : {\n"""%(slab)
+                for hfld in his.keys():
+                    if hfld == 'ts':
+                        continue
+                    s+= """
+         %s :  {"""%hfld
+                    s+= """
+                  ts : %s, """%to_json(his['ts'])
+                    s+= """
+                  %s : %s """%('value',to_json(his[hfld]))
+                    s+= """
+                }
+            },"""
+        s += """
+         }"""
+
+        return s
+            
 if __name__ == "__main__":
     print "nothing"
