@@ -19,6 +19,7 @@ from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from mrflog import mrflog
+import re
 
 class MrfLandWebletTemps(MrflandWeblet):
     def init(self):
@@ -34,9 +35,14 @@ class MrfLandWebletTemps(MrflandWeblet):
         mrflog.info("num MrfSensPt1000 found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
+        self.graph_temps = []
+        reg    = re.compile(r'(.+)(_AMBIENT)')   # reg to match sensors for graphing
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
+            if reg.match(s.label):
+                self.rm.graph_req(s.label)  # ask for managed graph
+                self.graph_temps.append(s.label)
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
@@ -51,5 +57,9 @@ class MrfLandWebletTemps(MrflandWeblet):
         <h2>Temps</h2>"""
         if len(self.sl):
             mrflog.warn("labels are %s "%repr(self.slabs))
+            s += self.rm.graph_inst({
+                "temp" : self.graph_temps
+            })
+           
             s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s

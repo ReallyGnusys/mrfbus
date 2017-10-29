@@ -60,14 +60,12 @@ class MrfLandWebletStore(MrflandWeblet):
                 self.temps[level] = 0
                 self.levels.append(level)
                 self.ts[level].subscribe(self.tsens_callback(level))                
-            elif reflow.match(s.label):
-                self.flow_sens = s
-                self.flow_sens.subscribe(self.flow_callback)
-                mrflog.warn("Found flow sensor  %s"%repr(self.flow_sens.label))
+                self.rm.graph_req(s.label)  # ask for managed graph
 
             elif reret.match(s.label):
                 self.return_sens = s
                 self.return_sens.subscribe(self.return_callback)
+                self.rm.graph_req(s.label)  # ask for managed graph
                 mrflog.warn("Found return sensor  %s"%repr(self.return_sens.label))
         self.levels.sort(reverse=True)
         mrflog.warn("Store has temp sensors at following levels %s"%repr(self.levels))
@@ -90,11 +88,6 @@ class MrfLandWebletStore(MrflandWeblet):
             self.eval_capacity()
         return _tscb 
   
-    def flow_callback(self, label, data):
-        mrflog.info("weblet store flow callback for  label %s data %s"%(label, repr(data)))
-        tg = self.mktag('accstat', 'flow_temp')
-        dt =  { 'val' : data['temp']} 
-        self.rm.webupdate(tg, dt)
         
     def return_callback(self, label, data):
         mrflog.info("weblet store return callback for  label %s data %s"%(label, repr(data)))
@@ -106,10 +99,22 @@ class MrfLandWebletStore(MrflandWeblet):
 
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
+        
         s =  """
-        <h2>Heatstore</h2>
+        <h2>"""+self.label+"""</h2>
         """
-        s += MrflandObjectTable(self.tag,"accstat", { 'val': {0}} ,['top_temp','flow_temp','return_temp'], tr_hdr={ 'tag' : '', 'val': ''} )
+        sensors = []
+        for level in self.levels:
+            sensors.append(self.ts[level].label)
+
+            
+        sensors.append(self.return_sens.label)
+         
+        s += self.rm.graph_inst({
+            "temp" : sensors
+        })
+
+        s += MrflandObjectTable(self.tag,"accstat", { 'val': {0}} ,['top_temp','return_temp'], tr_hdr={ 'tag' : '', 'val': ''} )
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
         s += MrflandObjectTable(self.tag,"acctemp", { 'temp': {0.0}} ,self.levels, tr_hdr={ 'tag' : 'level'} )

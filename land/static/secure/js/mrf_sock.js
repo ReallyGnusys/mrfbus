@@ -151,8 +151,63 @@ function mrf_auto_graph(label, data){
             }
         }       
     }
+    // need to update all plots that graph this sensor
+    var plots = $(".mrf-graphs-"+label);
 
+    for (var idx = 0 ; idx < plots.length ; idx++){
+        plot = plots[idx];
+        var divid = plot.getAttribute("id");
+        var dl = plot_data_layout($(plot).data("sensors"));
+        console.log("trying to update plot "+divid);
+        Plotly.update(divid,dl.data,dl.layout);
+        console.log("updated plot "+divid);
+    }
 }
+
+function plot_data_layout(sensors){
+
+       var data = [];
+        var layout = {
+            yaxis: {title: 'temp'},
+        };
+        for (tid in sensors.temp) {
+            tsens = sensors.temp[tid];
+            console.log("trying tsens "+tsens)
+            data.push( {
+                x : _sensor_averages[tsens].temp.ts,
+                y : _sensor_averages[tsens].temp.value,
+                name : tsens,
+                type : 'scatter'                
+            });
+        }
+        // support optional graphing or relays on RHS second Y axis
+        if (typeof(sensors.relay) != 'undefined'){
+            layout.yaxis2 =  {
+                title: 'relay',
+                overlaying: 'y',
+                side: 'right'
+            };
+            for (tid in sensors.relay) {
+            console.log("trying relay "+tsens)
+                tsens = sensors.relay[tid];
+                data.push( {
+                    x : _sensor_averages[tsens].relay.ts,
+                    y : _sensor_averages[tsens].relay.value,
+                    name : tsens,
+                    yaxis : 'y2',
+                    type : 'linear',
+                    autorange : false,
+                    rangemode : 'nonnegative',
+                    range : [0,1],
+                    type : 'scatter'                    
+                });
+            }
+        }
+ 
+    return { data : data ,  layout : layout};
+}
+
+
 
 function init_graphs(){
 
@@ -161,43 +216,58 @@ function init_graphs(){
     for (var idx=0 ; idx < plots.length ; idx = idx+1 ){
 
         var plot = plots[idx];
-        var sensor = plot.getAttribute('sensor')
         var divid =  plot.getAttribute('id')
+        var sensors = $(plot).data('sensors')
+        console.log("graph "+divid+" got sensors ");
 
-        var data = []
+        dl = plot_data_layout(sensors);
 
-        var yname = ''
-        for (fld in  _sensor_averages[sensor] ){
-            if (fld == 'ts')
-                continue;
-            
-            yname = fld;
-
-            console.log("using x data as follows - sensor "+sensor+" fld "+fld);
-            console.log( _sensor_averages[sensor][fld].ts);
+        /*
+        console.log("graph "+divid+" got sensors ");
+        console.log(sensors);
+        // do temp first - expect temp always... hmpff
+        var data = [];
+        var layout = {
+            yaxis: {title: 'temp'},
+        };
+        for (tid in sensors.temp) {
+            tsens = sensors.temp[tid];
+            console.log("trying tsens "+tsens)
             data.push( {
-                x : _sensor_averages[sensor][fld].ts,
-                y : _sensor_averages[sensor][fld].value,
-                type : 'line'                
+                x : _sensor_averages[tsens].temp.ts,
+                y : _sensor_averages[tsens].temp.value,
+                name : tsens,
+                type : 'scatter'                
             });
         }
-            
-        var layout =  {
-            title: "'"+sensor+"'",
-            xaxis: {
-                showgrid: false,
-                zeroline: false
-            },
-            yaxis: {
-                title: "'"+yname+"'",
-                showline: false
+        // support optional graphing or relays on RHS second Y axis
+        if (typeof(sensors.relay) != 'undefined'){
+            layout.yaxis2 =  {
+                title: 'relay',
+                overlaying: 'y',
+                side: 'right'
+            };
+            for (tid in sensors.relay) {
+            console.log("trying relay "+tsens)
+                tsens = sensors.relay[tid];
+                data.push( {
+                    x : _sensor_averages[tsens].relay.ts,
+                    y : _sensor_averages[tsens].relay.value,
+                    name : tsens,
+                    yaxis : 'y2',
+                    type : 'linear',
+                    autorange : false,
+                    rangemode : 'nonnegative',
+                    range : [0,1],
+                    type : 'scatter'                    
+                });
             }
-        };
-            
+        }
+        */
         console.log("creating new plot in div "+divid+" with data");
-        console.log(data);
+        console.log(dl.data);
         
-        Plotly.newPlot(divid,data,layout);
+        Plotly.newPlot(divid,dl.data,dl.layout);
     }
     
 }
@@ -289,6 +359,9 @@ function init_app(){
             console.log(cdata)
             ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
         });
+
+    //graphs
+    init_graphs();
 }
 
 

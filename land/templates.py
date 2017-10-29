@@ -114,31 +114,7 @@ mrf_tp = """
     </script>
 
   </head>
-
-  <body>
-
-    <div class="container">
-<ul class="nav nav-pills">
-{% raw pills %}
-  </ul>
-
-  <div class="tab-content">
-{% raw apphtml %}
-
-    </div> <!-- /container -->
-
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="static/public/bower_components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
-    <script src="static/public/bower_components/plotly.js/dist/plotly.min.js"></script>
-    <script src="static/secure/js/mrf_sock.js"></script>
-
-
-  </body>
+{% raw html_body %}
 </html>
 
 """

@@ -107,7 +107,7 @@ def mrf_weblet_table(weblets):
 
 
 
-def mrf_page(rh,sob,ip,wapps,sens_avg_js):
+def mrf_page(rh,sob,ip,html_body):
     alog.info("mrf_page: sob = "+str(sob))
     # they're in - they'll be served with a page with websocket url
     # prepared for them when they authenticated.....
@@ -118,18 +118,8 @@ def mrf_page(rh,sob,ip,wapps,sens_avg_js):
     if install.domain:
         host += "."+install.domain
 
-    upsince_str = install.upsince.strftime("%c")
-    pills = mrf_pills(wapps)
-    apphtml = mrf_html(wapps)
-    apphtml += """
-<script type="text/javascript">
-%s
-</script>
-    """%sens_avg_js
 
-
-
-    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,  pills = pills, apphtml = apphtml,  host = host, upsince = upsince_str))
+    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,  html_body=html_body))
 
 def request_ip(rh):
         rs =  rh._request_summary()
@@ -302,11 +292,9 @@ class mainapp(tornado.web.RequestHandler):
             alog.info("calling logout_action")
             return logout_action(self,sob,ip)
 
-        wapps = self.mserv.rm.weblets 
-        sens_avg_js = self.mserv.rm.sensor_average_js()
+        html_body = self.mserv.rm.html_body()
 
-
-        return mrf_page(self,sob,ip,wapps,sens_avg_js)
+        return mrf_page(self,sob,ip,html_body)
      
         
         

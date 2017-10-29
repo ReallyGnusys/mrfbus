@@ -20,7 +20,7 @@ from mrflog import mrflog
 import math
 
 class MrfSens(object):
-    _HISTORY_SECONDS_ = 60*60*12   # keep a day of history by default .. one minute averages
+    _HISTORY_SECONDS_ = 60*60*24   # keep a day of history by default .. one minute averages
     #def __init__(self, label, address,channel,log):
     def __init__(self, label, devupdate, address, channel):        
         self.label = label  ## fix me this should be tag - maybe should have label as well

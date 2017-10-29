@@ -335,9 +335,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
         
     def pane_html(self):
         s =  """
-        <h2>%s</h2>
-        """%(self.label)
-        s += self.rm.graph_inst(self.ts[100].label)
+        <h2>"""+self.label+"""</h2>
+        """
+        
+        s += self.rm.graph_inst({
+            "temp" : [self.ts[100].label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
+            "relay": [self.hx_relay.label, self.rad_relay.label]
+        })
         s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"

@@ -377,14 +377,18 @@ class MrflandRegManager(object):
             self.sgraphs[slab] = True # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
 
-    def graph_inst(self,sensor, width = 600, height = 80):
-        if not self.sensors.has_key(sensor):
-            mrflog.error("%s graph_inst no sensor %s"%(self.__class__.__name__,sensor))
-            return ""
+    def graph_inst(self,sensors, width = 600, height = 80):
+        snames = []
+
+        graphs = ""
+        for stype in sensors.keys():
+            for sname in sensors[stype]:
+                graphs += "mrf-graphs-"+sname+" "
+                
         
         s = """
-     <div id="mrf-graph-%d" class="mrf-graph sensor-%s" sensor="%s" width="%d" height="%d"> </div>
-"""%(self.graph_insts,sensor,sensor,width,height)
+     <div id="mrf-graph-%d" class="mrf-graph %s" data-sensors='%s' width="%d" height="%d"> </div>
+"""%(self.graph_insts,graphs,to_json(sensors),width,height)
         self.graph_insts += 1  # they need unique ids for plotly
         return s
 
@@ -464,7 +468,57 @@ class MrflandRegManager(object):
         self.weblets[weblet.tag] = weblet
         mrflog.warn("weblet_register -registered new weblet %s"%weblet.tag)
 
-        
+    def html_pills(self):
+        """ generate bootstrap pills """
+        s = ""
+        first = True
+        for wa in self.weblets.keys():
+            wl = self.weblets[wa]
+            if first:
+                lic = ' class="active"'
+                first = False
+            else:
+                lic = ''
+            
+            s += '    <li><a data-toggle="pill" href="#%s">%s</a></li>\n'%(wl.tag,wl.label)
+        return s
+
+    def html_body(self):
+        """ generate the html body """
+        self.graph_insts = 0  # UGLY
+        s = """
+  <body>
+    <div class="container">
+       <ul class="nav nav-pills">
+"""+self.html_pills()+"""
+       </ul>
+
+       <div class="tab-content">
+"""
+        for wa in self.weblets.keys():
+            wl = self.weblets[wa]
+            s += wl.html()
+        s += """
+       </div> <!-- /tab-content -->
+
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="static/public/bower_components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
+    <script src="static/public/bower_components/plotly.js/dist/plotly.min.js"></script>
+    <script src="static/secure/js/mrf_sock.js"></script>
+
+    <script type="text/javascript">
+"""+self.sensor_average_js()+"""
+    </script>
+  </body>
+"""
+        return s
     def device_register(self, dev):
         """ register new MrfDevice"""
         if self.devices.has_key(dev.label):
@@ -495,7 +549,8 @@ class MrflandRegManager(object):
 var _sensor_hist_seconds = %d;"""%self.sensors[self.sensors.keys()[0]]._HISTORY_SECONDS_
         s += """
 var _sensor_averages = {"""
-        for slab in self.sensors.keys():
+
+        for slab in self.sgraphs.keys():
             sens = self.sensors[slab]
             if hasattr(sens,"history"):
                 his = sens.averages
