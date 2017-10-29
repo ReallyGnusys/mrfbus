@@ -349,6 +349,7 @@ class MrflandRegManager(object):
         self.weblets = OrderedDict()  # has weblets by tag
         self.timers = {}
         self.sgraphs = {}  # support graph data for these sensors during this mrfland service
+        self.graph_insts = 0
         self.server = None
         
 
@@ -376,6 +377,18 @@ class MrflandRegManager(object):
             self.sgraphs[slab] = True # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
 
+    def graph_inst(self,sensor, width = 600, height = 80):
+        if not self.sensors.has_key(sensor):
+            mrflog.error("%s graph_inst no sensor %s"%(self.__class__.__name__,sensor))
+            return ""
+        
+        s = """
+     <div id="mrf-graph-%d" class="mrf-graph sensor-%s" sensor="%s" width="%d" height="%d"> </div>
+"""%(self.graph_insts,sensor,sensor,width,height)
+        self.graph_insts += 1  # they need unique ids for plotly
+        return s
+
+            
     def set_timer(self, tod, tag, act):
         self.server.set_timer(tod,tag,act)
         tid = tag+"."+ act

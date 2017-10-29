@@ -154,7 +154,53 @@ function mrf_auto_graph(label, data){
 
 }
 
+function init_graphs(){
 
+    var plots = $(".mrf-graph");
+
+    for (var idx=0 ; idx < plots.length ; idx = idx+1 ){
+
+        var plot = plots[idx];
+        var sensor = plot.getAttribute('sensor')
+        var divid =  plot.getAttribute('id')
+
+        var data = []
+
+        var yname = ''
+        for (fld in  _sensor_averages[sensor] ){
+            if (fld == 'ts')
+                continue;
+            
+            yname = fld;
+
+            console.log("using x data as follows - sensor "+sensor+" fld "+fld);
+            console.log( _sensor_averages[sensor][fld].ts);
+            data.push( {
+                x : _sensor_averages[sensor][fld].ts,
+                y : _sensor_averages[sensor][fld].value,
+                type : 'line'                
+            });
+        }
+            
+        var layout =  {
+            title: "'"+sensor+"'",
+            xaxis: {
+                showgrid: false,
+                zeroline: false
+            },
+            yaxis: {
+                title: "'"+yname+"'",
+                showline: false
+            }
+        };
+            
+        console.log("creating new plot in div "+divid+" with data");
+        console.log(data);
+        
+        Plotly.newPlot(divid,data,layout);
+    }
+    
+}
 
 function init_app(){
     

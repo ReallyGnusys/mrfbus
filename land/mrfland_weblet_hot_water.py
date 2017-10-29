@@ -83,6 +83,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.ts = {}
         self.flow_sens = None
         self.return_sens = None
+        self.top_sens = None
+        self.acc_sens = None
         self.temps = {}  # hashed by hw level (%)
         self.levels = []
         for s in ts:
@@ -93,7 +95,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("reh matched  %s"%s.label)
                 self.temps[level] = 0
                 self.levels.append(level)
-                self.ts[level].subscribe(self.tsens_callback(level))                
+                self.ts[level].subscribe(self.tsens_callback(level))
+                if level == 100:
+                    self.rm.graph_req(s.label)  # ask for managed graph
+                    
             elif reflow.match(s.label):
                 self.flow_sens = s
                 self.flow_sens.subscribe(self.flow_callback)
@@ -197,7 +202,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if self.state == 'REST':
             if timeout:
                 next_state = 'IDLE'
-        elif True:
+        elif False:
             next_state = 'DISABLED'
         elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
@@ -332,6 +337,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         s =  """
         <h2>%s</h2>
         """%(self.label)
+        s += self.rm.graph_inst(self.ts[100].label)
         s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"

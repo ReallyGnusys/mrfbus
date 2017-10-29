@@ -134,6 +134,7 @@ mrf_tp = """
     <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
     <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="static/public/bower_components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
+    <script src="static/public/bower_components/plotly.js/dist/plotly.min.js"></script>
     <script src="static/secure/js/mrf_sock.js"></script>
 
 
