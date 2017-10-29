@@ -365,7 +365,7 @@ class MrflandRegManager(object):
         for sl in self.sgraphs.keys():
             self.sensors[sl].subscribe_minutes(self.graph_callback)
     def graph_callback(self, label, data):
-        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+        mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
         self.webupdate(tag,data)
     def graph_req(self,slab):  #for weblets to request graph data capture for sensors
@@ -377,7 +377,7 @@ class MrflandRegManager(object):
             self.sgraphs[slab] = True # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
 
-    def graph_inst(self,sensors, width = 600, height = 80):
+    def graph_inst(self,sensors, width = "80%", height = "80"):
         snames = []
 
         graphs = ""
@@ -387,7 +387,7 @@ class MrflandRegManager(object):
                 
         
         s = """
-     <div id="mrf-graph-%d" class="mrf-graph %s" data-sensors='%s' width="%d" height="%d"> </div>
+     <div id="mrf-graph-%d" class="mrf-graph %s" data-sensors='%s' width="%s" height="%s"> </div>
 """%(self.graph_insts,graphs,to_json(sensors),width,height)
         self.graph_insts += 1  # they need unique ids for plotly
         return s
