@@ -377,7 +377,7 @@ class MrflandRegManager(object):
             self.sgraphs[slab] = True # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
 
-    def graph_inst(self,sensors, width = "80%", height = "80"):
+    def graph_inst(self,sensors, width = "80%", height = "80%"):
         snames = []
 
         graphs = ""

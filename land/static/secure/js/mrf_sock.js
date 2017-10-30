@@ -2,14 +2,24 @@ $(document).ready(function() {
     console.log("inbox.index : typeof sock = "+ typeof sock);
     init_app();
     init_socket();
+    //var plots = $(".mrf-graph");
 
-    var plots = $(".mrf-graph");    
-    for (var idx = 0 ; idx < plots.length ; idx++){
-        var divid = plots[idx].getAttribute("id");
-        console.log("adding window resize listener for "+divid);
-        window.addEventListener('resize', function() { Plotly.Plots.resize(divid); });
-        Plotly.Plots.resize(divid);
+
+    function onresize(){
+        var plots = $(".mrf-graph");
+        for (var idx = 0 ; idx < plots.length ; idx++){
+            console.log("resizing plot "+plots[idx].getAttribute("id"));
+            Plotly.Plots.resize( plots[idx]);  //.getAttribute("id")
+        }
+
+
     }
+    window.addEventListener('resize', onresize);
+    
+    $(document).on('shown.bs.tab', onresize);
+
+    onresize();
+    
     
 });
 
