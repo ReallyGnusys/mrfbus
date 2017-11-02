@@ -31,11 +31,6 @@ def tr_fn(inp , tr_dic):
     else:
         return inp
 
-def MrflandGraph(sensor, width = 600, height = 80):
-    s = """
-     <div class="mrf-graph sensor-%s" sensor="%s" width="%d" height="%d" </div>
-"""%(sensor,sensor,width,height)
-    return s
     
 def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , mask_cols = ['recd_date'], init_vals = {}, iclasses = {}, tr_hdr = {}):
     """ utility to generate a default html table to display an ordered dict """

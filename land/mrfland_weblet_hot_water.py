@@ -23,6 +23,8 @@ import re
 from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
+
+    
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
         self.hyst = 4.0
@@ -36,6 +38,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
         ts = self.rm.senstypes[MrfSensPt1000]
         mrflog.info("num MrfSensPt1000 found was %d"%len(ts))
 
+        ## this app must have a params block supplied
+
+        if not self.data.has_key('rad'):
+            mrflog.error("%s , no rad in data"%self.__class__.__name__)
+            return
+        
+        
         ## looking for all MrfSensPtRelay types
 
         if not self.rm.senstypes.has_key(MrfSensPtRelay):
@@ -207,7 +216,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
                 if self.store_temp > (self.temps[100] + 12.0):
-                    if self.flow_temp > (self.temps[100] - 5.0):
+                    if self.flow_temp > (self.temps[100] - 3.0):
                         mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.flow_temp, self.temps[100]))
                         next_state = 'CHARGE1'
                         self.hx_relay_control(1)
@@ -216,10 +225,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
                     else:
                         next_state = 'PREPUMP'
                         self.rad_relay_force(1)
-                        self.set_timeout(120)
+                        self.set_timeout(60*4)
                         
         elif self.state == 'PREPUMP':
-            if timeout or self.flow_temp > (self.temps[100]):
+            if timeout or self.flow_temp > (self.temps[100] - 3.0):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGE1'

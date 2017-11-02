@@ -480,7 +480,7 @@ class MrflandRegManager(object):
             else:
                 lic = ''
             
-            s += '    <li><a data-toggle="pill" href="#%s">%s</a></li>\n'%(wl.tag,wl.label)
+            s += '    <li %s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         return s
 
     def html_body(self):

@@ -27,7 +27,7 @@ if __name__ == '__main__':
     
     MrfDevHost(rm, "host", 1,
                 {
-                    'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1"]
+                    'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0"]
                 })
     
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
@@ -61,8 +61,6 @@ if __name__ == '__main__':
                         'litres'     : 200,
                         'target_temp': 60.0,
                         'min_wait_mins' : 6*60  # aim to run every six hours
-                        
-                           
                     })
 
     MrfLandWebletTemps(rm,

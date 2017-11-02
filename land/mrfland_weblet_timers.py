@@ -60,7 +60,19 @@ class MrfLandWebletTimers(MrflandWeblet):
 
                 smap = self.rm.senslookup(pl)
                 if smap == None:
-                    mrflog.error("failed to match timer label %s to sensor %s"%(s.label,pl))
+                    pl = mob.group(1) + "_HEAT"
+                    mrflog.warn("trying to match timer label %s to heater %s"%(s.label,pl))
+                    smap = self.rm.senslookup(pl)
+
+                if smap == None:
+                    pl = mob.group(1) + "_SW"
+                    mrflog.warn("trying to match timer label %s to switch %s"%(s.label,pl))
+                    smap = self.rm.senslookup(pl)
+
+                    
+                
+                if smap == None:
+                    mrflog.error("failed to match control label to match  sensor %s"%(s.label))
                 else:
                     mrflog.warn("matched timer label %s to sensor %s - map  %s"%(s.label,pl, repr(smap)))
                     self.relay_lut[s.label] = { 'smap' : smap , 'tag': pl }
