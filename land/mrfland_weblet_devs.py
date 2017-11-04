@@ -60,7 +60,7 @@ class MrfLandWebletDevs(MrflandWeblet):
         mrflog.warn("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         for ccode in data.keys():
             if ccode == 3:
-                tab = 'dev_info'  # ouch
+                tab = 'dev_info'  # ouch .. this is vile
             elif ccode == 4:
                 tab = 'dev_status'
             elif ccode == 5:

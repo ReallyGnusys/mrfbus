@@ -73,6 +73,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if not self.data.has_key('litres'):
             mrflog.error("%s , litres"%self.__class__.__name__)
             return
+        if not self.data.has_key('delta_targ_rx'):
+            mrflog.error("%s , delta_targ_rx"%self.__class__.__name__)
+            return
 
         self.litres      = self.data['litres']
         self.target_temp = self.data['target_temp']
@@ -271,7 +274,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
                             (self.__class__.__name__,self.label,self.temps[100],self.flow_temp,self.state))
                 trans = True
-            elif self.return_temp > 47.0:  # don't want return to get too high
+            elif self.return_temp > (self.target_temp - self.data['delta_targ_rx']):  # don't want return to get too high
                 mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
                             (self.__class__.__name__,self.label, self.return_temp,self.state))
                 trans = True
