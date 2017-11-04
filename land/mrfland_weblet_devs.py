@@ -140,6 +140,8 @@ class MrfLandWebletDevs(MrflandWeblet):
             tp = 'pt1000test.py'
         elif dn == 'pt1000_kitchen':
             tp = 'pt1000test.py'
+        elif dn == 'pt1000_guest':
+            tp = 'pt1000test.py'
         else:
             mrflog.error("weblet devs cmd_mrfctrl unexpected dev name %s : no idea which unit_test"%dn)
             return

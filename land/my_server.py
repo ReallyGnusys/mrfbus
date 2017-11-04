@@ -41,7 +41,14 @@ if __name__ == '__main__':
                    'temp' : ["DHW1_100",  "HB1_FLOW", "HB1_RET", "RAD1_RET", "DHW1_HX_RET",  "HB1_AMBIENT","LOUNGE_AMBIENT"],
                    'relay' : ["RAD1_PUMP", "DHW1_HX_PUMP" , "DHW1_HEAT"]
                })
+    
+    Pt1000Dev(rm, "pt1000_guest"  , 6,
+               {
+                   'temp' : ["DHW2_100",  "HB2_FLOW", "HB2_RET", "RAD2_RET", "DHW2_HX_RET",  "HB2_AMBIENT","OUTSIDE_AMBIENT"],
+                   'relay' : ["RAD2_PUMP", "DHW2_HX_PUMP" , "DHW2_HEAT"]
+               })
 
+    
     MrfLandWebletStore(rm,
                     {
                         'tag'        : 'store',
