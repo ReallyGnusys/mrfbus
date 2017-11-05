@@ -44,7 +44,7 @@ if __name__ == '__main__':
     
     Pt1000Dev(rm, "pt1000_guest"  , 6,
                {
-                   'temp' : ["DHW2_100",  "HB2_FLOW", "HB2_RET", "RAD2_RET", "DHW2_HX_RET",  "HB2_AMBIENT","OUTSIDE_AMBIENT"],
+                   'temp' : ["DHW2_100",  "HB2_FLOW", "HB2_RET", "RAD2_RET", "DHW2_HX_RET",  "HB2_UNUSED_1","HB2_UNUSED_2"],
                    'relay' : ["RAD2_PUMP", "DHW2_HX_PUMP" , "DHW2_HEAT"]
                })
 
