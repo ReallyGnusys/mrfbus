@@ -44,7 +44,7 @@ if __name__ == '__main__':
     
     Pt1000Dev(rm, "pt1000_guest"  , 6,
                {
-                   'temp' : ["DHW2_100",  "HB2_FLOW", "HB2_RET", "RAD2_RET", "DHW2_HX_RET",  "HB2_UNUSED_1","HB2_UNUSED_2"],
+                   'temp' : ["DHW2_100",  "DHW2_30", "HB2_FLOW", "HB2_RET", "DHW2_HX_RET",  "HB2_AMBIENT","OUTSIDE_AMBIENT"],
                    'relay' : ["RAD2_PUMP", "DHW2_HX_PUMP" , "DHW2_HEAT"]
                })
 
@@ -68,7 +68,8 @@ if __name__ == '__main__':
                         'litres'     : 200,
                         'target_temp': 60.0,
                         'delta_targ_rx' : 8.0,
-                        'min_wait_mins' : 6*60  # aim to run every six hours
+                        'min_wait_mins' : 6*60,  # aim to run every six hours
+                        'enabled'  : False
                     })
 
     MrfLandWebletTemps(rm,

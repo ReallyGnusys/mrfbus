@@ -210,12 +210,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
             return
         if not hasattr(self,'return_temp'):
             return
+
+
+        if self.data['enabled'] == False:
+            next_state = 'DISABLED'
             
-        if self.state == 'REST':
+        elif self.state == 'REST':
             if timeout:
                 next_state = 'IDLE'
-        elif False:
-            next_state = 'DISABLED'
         elif self.state == 'IDLE':
             if self.temps[100] < (self.target_temp - self.hyst):
                 if self.store_temp > (self.temps[100] + 12.0):
