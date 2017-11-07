@@ -35,17 +35,17 @@ class MrfLandWebletStore(MrflandWeblet):
         mrflog.info("num MrfSensPt1000 found was %d"%len(ts))
         self.slabs = []
         self.sens = OrderedDict()
-        if not self.data.has_key('acc_tag'):
+        if not self.cdata.has_key('acc_tag'):
             mrflog.error("%s , no acc_tag in data")
             return
-        if not self.data.has_key('acc_litres'):
+        if not self.cdata.has_key('acc_litres'):
             mrflog.error("%s , no acc_litres in data")
             return
 
-        self.litres = self.data['acc_litres']
-        reh    = re.compile(r'%s([0-9]+)'%self.data['acc_tag'])
-        reflow = re.compile(r'%s(FLOW)'%self.data['acc_tag'])
-        reret  = re.compile(r'%s(RET)'%self.data['acc_tag'])
+        self.litres = self.cdata['acc_litres']
+        reh    = re.compile(r'%s([0-9]+)'%self.cdata['acc_tag'])
+        reflow = re.compile(r'%s(FLOW)'%self.cdata['acc_tag'])
+        reret  = re.compile(r'%s(RET)'%self.cdata['acc_tag'])
 
         self.ts = {}
         self.flow_sens = None

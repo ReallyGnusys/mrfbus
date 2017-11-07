@@ -24,10 +24,15 @@ from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
 
+    _config_ = [ ('enabled'    , bool,  False ),
+                 ('target_temp', float, 60.0, 40.0,65.0,1.0),
+                 ('delta_targ_rx', float, 8.0, 6.0,10.0,1.0),
+                 ('min_wait_mins', int , 6*60, 2*60,24*60,60),
+                 ('hysteresis' , float, 4.0, 2.0, 12.0, 1.0)
+    ]
     
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        self.hyst = 4.0
         self.state = 'REST'
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
@@ -35,12 +40,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if not self.rm.senstypes.has_key(MrfSensPt1000):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
+
+        
         ts = self.rm.senstypes[MrfSensPt1000]
         mrflog.info("num MrfSensPt1000 found was %d"%len(ts))
 
         ## this app must have a params block supplied
 
-        if not self.data.has_key('rad'):
+        if not self.cdata.has_key('rad'):
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
             return
         
@@ -53,44 +60,37 @@ class MrfLandWebletHotWater(MrflandWeblet):
         rs = self.rm.senstypes[MrfSensPtRelay]
         mrflog.info("num MrfSensPtRelay found was %d"%len(rs))
 
-        if not self.data.has_key('rad'):
+        if not self.cdata.has_key('rad'):
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
             return
-        if not self.data.has_key('acctop'):
+        if not self.cdata.has_key('acctop'):
             mrflog.error("%s , no acctop in data"%self.__class__.__name__)
             return
         
-        if not self.data.has_key('heatbox'):
+        if not self.cdata.has_key('heatbox'):
             mrflog.error("%s , no heatbox in data"%self.__class__.__name__)
             return
-        if not self.data.has_key('target_temp'):
-            mrflog.error("%s , no target_temp in data"%self.__class__.__name__)
-            return
-        if not self.data.has_key('tag'):
+        if not self.cdata.has_key('tag'):
             mrflog.error("%s , tag"%self.__class__.__name__)
             return
         
-        if not self.data.has_key('litres'):
+        if not self.cdata.has_key('litres'):
             mrflog.error("%s , litres"%self.__class__.__name__)
             return
-        if not self.data.has_key('delta_targ_rx'):
-            mrflog.error("%s , delta_targ_rx"%self.__class__.__name__)
-            return
 
-        self.litres      = self.data['litres']
-        self.target_temp = self.data['target_temp']
+        self.litres      = self.cdata['litres']
         
 
         # sort through temp sensors
         self.slabs = []
         self.sens = OrderedDict()
 
-        reh    = re.compile(r'%s_([0-9]+)'%self.data['tag'])
+        reh    = re.compile(r'%s_([0-9]+)'%self.cdata['tag'])
 
         mrflog.warn("reh pattern is %s"%reh.pattern)
-        reflow = re.compile(r'%s(_FLOW)'%self.data['heatbox'])
-        reret  = re.compile(r'%s(_HX_RET)'%self.data['tag'])
-        reacc  = re.compile(r'%s'%self.data['acctop'])
+        reflow = re.compile(r'%s(_FLOW)'%self.cdata['heatbox'])
+        reret  = re.compile(r'%s(_HX_RET)'%self.cdata['tag'])
+        reacc  = re.compile(r'%s'%self.cdata['acctop'])
 
         self.ts = {}
         self.flow_sens = None
@@ -134,8 +134,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         self.rlabs = []
         self.relays = OrderedDict()
-        rehx   = re.compile(r'%s(_HX_PUMP)'%self.data['tag'])
-        rerad  = re.compile(r'%s(_PUMP)'%self.data['rad'])
+        rehx   = re.compile(r'%s(_HX_PUMP)'%self.cdata['tag'])
+        rerad  = re.compile(r'%s(_PUMP)'%self.cdata['rad'])
 
         self.rs = {}
         for s in rs:
@@ -212,14 +212,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
             return
 
 
-        if self.data['enabled'] == False:
+        if self.vars.enabled.val == False:
             next_state = 'DISABLED'
             
         elif self.state == 'REST':
             if timeout:
                 next_state = 'IDLE'
         elif self.state == 'IDLE':
-            if self.temps[100] < (self.target_temp - self.hyst):
+            if self.temps[100] < (self.vars.target_temp.val - self.vars.hysteresis.val):
                 if self.store_temp > (self.temps[100] + 12.0):
                     if self.flow_temp > (self.temps[100] - 3.0):
                         mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.flow_temp, self.temps[100]))
@@ -244,10 +244,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'CHARGING'
                 self.set_timeout(90*60)   #90 mins max for now
-            elif self.temps[100] > self.target_temp :
+            elif self.temps[100] > self.var.target_temp.val :
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'REST'
-                self.set_timeout(60*self.data['min_wait_mins']) 
+                self.set_timeout(60*self.cdata['min_wait_mins']) 
                 self.hx_relay_control(0)                
 
             
@@ -257,7 +257,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                             (self.__class__.__name__,self.label,self.flow_temp,self.state))
                 next_state = 'REST'
                 self.hx_relay_control(0)                
-                self.set_timeout(60*self.data['min_wait_mins'])   # wait 2 hours before checking again
+                self.set_timeout(60*self.cdata['min_wait_mins'])   # wait 2 hours before checking again
             """
 
                 
@@ -269,14 +269,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
                 trans = True
                 
-            elif self.temps[100] > self.target_temp:
+            elif self.temps[100] > self.var.target_temp.val:
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
                 trans = True
             elif self.temps[100] > (self.flow_temp - 5.0):
                 mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
                             (self.__class__.__name__,self.label,self.temps[100],self.flow_temp,self.state))
                 trans = True
-            elif self.return_temp > (self.target_temp - self.data['delta_targ_rx']):  # don't want return to get too high
+            elif self.return_temp > (self.var.target_temp.val - self.vars.delta_targ_rx.val):  # don't want return to get too high
                 mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
                             (self.__class__.__name__,self.label, self.return_temp,self.state))
                 trans = True
@@ -284,7 +284,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if trans:
                 self.hx_relay_control(0)                
                 next_state = 'REST'
-                self.set_timeout(60*self.data['min_wait_mins'])   # wait 2 hours before checking again
+                self.set_timeout(60*self.cdata['min_wait_mins'])   # wait 2 hours before checking again
 
         if next_state != self.state:
             self.state = next_state

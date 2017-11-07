@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from collections import OrderedDict
 from mrflog import mrflog
+from mrfland import to_json
 
 def tr_fn(inp , tr_dic):
     if tr_dic.has_key(inp):
@@ -105,33 +106,155 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 """
     return s
 
+class MrfWebletVar(object):
+    def __init__(self, app, name, val, **kwargs): # min_val=None,max_val=None,step=None):
+        mrflog.warn("MrfWebletVar app %s name %s val %s"%(app,name,repr(val)))
+        mrflog.warn("kwargs %s"%repr(kwargs))
+        self.name = name
+        self.app = app
+        if hasattr(self,'init'):
+            self.init(val, **kwargs)
+    @property
+    def val(self):
+        return self.value()
+    
+class MrfWebletConfigVar(MrfWebletVar):
+    def init(self,val, **kwargs):
+        self._val = val  # just a simple value we keep here
+
+        print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
+        if type(self.val) != bool:
+            if 'min_val' not in kwargs == None:
+                mrflog.error("%s no min_val"%self.__class__.__name__)
+                return
+            if 'max_val' not in kwargs:
+                mrflog.error("%s no max_val"%self.__class__.__name__)
+                return
+            if 'step' not in kwargs:
+                mrflog.error("%s no step"%self.__class__.__name__)
+                return
+
+            min_val = kwargs['min_val']
+            max_val = kwargs['max_val']
+            step    = kwargs['step']
+            
+            if type(min_val) != type(self.val):
+                mrflog.error("%s min_val wrong type for var %s"%(self.__class__.__name__,self.name))
+                return
+            if type(max_val) != type(self.val):
+                mrflog.error("%s max_val wrong type"%self.__class__.__name__)
+                return
+            if type(step) != type(self.val):
+                mrflog.error("%s step wrong type"%self.__class__.__name__)
+                return
+            
+            self.max_val = max_val
+            self.min_val = min_val
+            self.step    = step
+    def value(self):
+        return self._val
+    
+    def html_ctrl(self):
+        def cb_checked(self):
+            if self.val:
+                return 'checked'
+            else:
+                return ''
+        if type(self.val) == bool:
+            return """
+            <div class="mrfvar" app="%s" name="%s" >
+                  <input type="checkbox" class="mrfvar_cb" app="%s" name="%s" %s>
+            </div>"""%(self.app, self.name,self.app, self.name, cb_checked(self))
+        if type(self.val) == int or type(self.val) == float:
+            return """
+            <div class="mrfvar" app="%s" name="%s" >
+                  <div  class="mrfvar_number" app="%s" name="%s">%s</div>
+                   <div class="glyphicon glyphicon-arrow-up" app="%s" name="%s" action="up">
+                   <div class="glyphicon glyphicon-arrow-down" app="%s" name="%s" action="down">
+            </div>"""%(self.app, self.name, self.app, self.name, repr(self.val),self.app, self.name,self.app, self.name)
+        return ""
+        
+class MrfWebletSensorVar(MrfWebletVar):
+    def init(self,val, **kwargs):
+        if 'field' not in kwargs:
+            mrflog.error("%s no field  - got %s"%self.__class__.__name__,repr(kwargs))
+            return
+        if not hasattr(val,'output'):
+            mrflog.error("%s val was not sensor - got %s"%self.__class__.__name__,repr(val))
+            return
+
+        field = kwargs['field']
+                            
+        if field not in val.output:
+            mrflog.error("%s field %s not found in sensor output  - got %s"%self.__class__.__name__,field,repr(val.output))
+            return
+            
+        self.field = field
+        self.sens = val  # must be a sensor
+    def value(self):
+        return self.sens.output[self.field]
+    
+        
+            
+        
+
+class MrflandWebletVars(object):
+    pass
+
+
 
 class MrflandWeblet(object):  
-    def __init__(self, rm, data):
-        if not data.has_key('tag'):
+    def __init__(self, rm, cdata, vdata={}):
+        if not cdata.has_key('tag'):
             mrflog.error('weblet data does not contain tag')
             return
-        if not data.has_key('label'):
+        if not cdata.has_key('label'):
             mrflog.error('weblet data does not contain label')
             return
         
-        mrflog.info("creating weblet tag %s label %s"%(data['tag'],data['label']))
+        mrflog.info("creating weblet tag %s label %s"%(cdata['tag'],cdata['label']))
         self.rm = rm
-        self.tag = data['tag']
-        self.label = data['label']
-        self.data = data
+        self.tag = cdata['tag']
+        self.label = cdata['label']
+        self.cdata = cdata
+        self.graph_insts = 0
+        self.vars = MrflandWebletVars()
+
+        if hasattr(self,'_config_'):
+            for citem in self._config_:
+                if vdata.has_key(citem[0]):
+                    init_val = vdata[citem[0]]
+                else:
+                    init_val = citem[2]
+                if citem[1] == bool:
+                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val))
+                elif citem[1] == int or citem[1] == float:
+                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val, min_val= citem[3],max_val=citem[4],step=citem[5]))
+                    
+
         if hasattr(self, 'init'):
             self.init()
         rm.weblet_register(self)  # ooer!
 
+    def add_var(self,name,v):
+        setattr(self.vars, name, v)
+
+    def has_var(self,name):
+        return name in self.vars.__dict__
+
+        
     def mktag(self, tab, row):
         return { 'app' : self.tag, 'tab' : tab , 'row' : row }
+
+
+    
     def pane_html_header(self):
         return '    <div id="%s" class="tab-pane fade">'%self.tag
     def pane_html_footer(self):
         return '    </div>  <!-- %s -->\n'%self.tag
 
     def html(self):
+        self.graph_insts = 0
         s = self.pane_html_header()
         s += self.pane_html()
         s += self.pane_html_footer()

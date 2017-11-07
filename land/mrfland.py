@@ -31,11 +31,8 @@ import datetime
 #from datetime import datetime 
 import install
 from mrflog import mrflog
-from mrfland_state import MrflandState
-from mrfland_weblet import MrflandWeblet
-from mrf_sens import MrfSens
-from mrf_structs import *
-
+#from mrf_structs import *
+from collections import OrderedDict
 
 
 def is_mrf_obj(ob):
@@ -376,8 +373,7 @@ class MrflandRegManager(object):
         if not self.sgraphs.has_key(slab):
             self.sgraphs[slab] = True # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
-
-    def graph_inst(self,sensors, width = "80%", height = "80%"):
+    def graph_inst(self,sensors, width = "80%", height = "80%"): ## FIXME should move to weblet
         snames = []
 
         graphs = ""
@@ -391,7 +387,6 @@ class MrflandRegManager(object):
 """%(self.graph_insts,graphs,to_json(sensors),width,height)
         self.graph_insts += 1  # they need unique ids for plotly
         return s
-
             
     def set_timer(self, tod, tag, act):
         self.server.set_timer(tod,tag,act)
@@ -485,7 +480,7 @@ class MrflandRegManager(object):
 
     def html_body(self):
         """ generate the html body """
-        self.graph_insts = 0  # UGLY
+        self.graph_insts = 0
         s = """
   <body>
     <div class="container">
