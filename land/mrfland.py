@@ -27,6 +27,7 @@ import json
 import traceback
 import base64
 import datetime
+import re
 
 #from datetime import datetime 
 import install
@@ -420,6 +421,41 @@ class MrflandRegManager(object):
             return
         self.sensmap[label] = { 'addr' : addr, 'chan' : chan }
 
+    def sens_search(self,label):
+        if self.sensors.has_key(label):
+            return self.sensors[label]
+        else:
+            return None
+
+    def sens_search_vector(self,stype,label):
+        svtmp = {}
+        sv = OrderedDict()
+        reh =  re.compile(r'%s_([0-9]+)'%label)
+        if self.senstypes.has_key(stype):
+            sl = self.senstypes[stype]
+        else:
+            return None
+
+        levels = []
+        for s in sl:
+            mob = reh.match(s.label)
+            if mob:
+                level = int(mob.group(1))
+                levels.append(level)
+                svtmp[level] = s
+
+        levels.sort(reverse=True)
+        
+        for l in levels:
+            sv[l] = svtmp[l]
+        return sv
+
+    def sens_search_vector_max(self,stype,label):
+        sv = self.sens_search_vector(stype,label)
+        if sv == None or len(sv) == 0:
+            return None
+        return sv[sv.keys()[0]]
+    
     def webupdate(self, tag , data):
         self.wups.append({ 'tag': tag , 'data': data})
 

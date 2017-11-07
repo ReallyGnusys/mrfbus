@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
-from mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar
 from mrflog import mrflog
 import re
 from datetime import datetime, timedelta
@@ -27,7 +27,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
     _config_ = [ ('enabled'    , bool,  False ),
                  ('target_temp', float, 60.0, 40.0,65.0,1.0),
                  ('delta_targ_rx', float, 8.0, 6.0,10.0,1.0),
-                 ('min_wait_mins', int , 6*60, 2*60,24*60,60),
+                 ('min_wait_mins', int , 16*60, 2*60,24*60,60),
                  ('hysteresis' , float, 4.0, 2.0, 12.0, 1.0)
     ]
     
@@ -85,52 +85,38 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.slabs = []
         self.sens = OrderedDict()
 
-        reh    = re.compile(r'%s_([0-9]+)'%self.cdata['tag'])
 
-        mrflog.warn("reh pattern is %s"%reh.pattern)
-        reflow = re.compile(r'%s(_FLOW)'%self.cdata['heatbox'])
-        reret  = re.compile(r'%s(_HX_RET)'%self.cdata['tag'])
-        reacc  = re.compile(r'%s'%self.cdata['acctop'])
 
-        self.ts = {}
-        self.flow_sens = None
-        self.return_sens = None
-        self.top_sens = None
-        self.acc_sens = None
-        self.temps = {}  # hashed by hw level (%)
-        self.levels = []
-        for s in ts:
-            mob = reh.match(s.label)
-            if mob:
-                level = int(mob.group(1))
-                self.ts[level] = s
-                mrflog.warn("reh matched  %s"%s.label)
-                self.temps[level] = 0
-                self.levels.append(level)
-                self.ts[level].subscribe(self.tsens_callback(level))
-                if level == 100:
-                    self.rm.graph_req(s.label)  # ask for managed graph
-                    
-            elif reflow.match(s.label):
-                self.flow_sens = s
-                self.flow_sens.subscribe(self.flow_callback)
-                self.rm.graph_req(s.label)  # ask for managed graph
-                mrflog.warn("%s Found flow sensor  %s"%(self.__class__.__name__,repr(self.flow_sens.label)))
-
-            elif reret.match(s.label):
-                self.return_sens = s
-                self.return_sens.subscribe(self.return_callback)
-                self.rm.graph_req(s.label)  # ask for managed graph
-                mrflog.warn("%s Found return sensor  %s"%(self.__class__.__name__,repr(self.return_sens.label)))
-            elif reacc.match(s.label):
-                self.acc_sens = s
-                self.acc_sens.subscribe(self.acc_callback)
-                self.rm.graph_req(s.label)  # ask for managed graph
-                mrflog.warn("%s Found acc sensor  %s"%(self.__class__.__name__,repr(self.acc_sens.label)))
-        self.levels.sort(reverse=True)
-        mrflog.warn("%s has temp sensors at following levels %s"%(self.label,repr(self.levels)))
+        self.ts = self.rm.sens_search_vector(MrfSensPt1000,self.tag)
+        self.top_ts = self.rm.sens_search_vector_max(MrfSensPt1000,self.tag)
         
-        # sort through relays
+        self.rm.graph_req(self.top_ts.label)  # ask for managed graph
+        self.add_var('tank_top',  MrfWebletSensorVar(self.tag,'tank_top',self.top_ts, field='temp'))
+
+        
+        self.flow_sens = self.rm.sens_search(self.cdata['heatbox'] + "_FLOW")
+        self.add_var('hx_flow',  MrfWebletSensorVar(self.tag,'hx_flow',self.flow_sens, field='temp'))
+        self.rm.graph_req(self.flow_sens.label)  # ask for managed graph
+        self.return_sens = self.rm.sens_search(self.tag + "_HX_RET")
+        self.add_var('hx_ret',  MrfWebletSensorVar(self.tag,'hx_ret',self.return_sens, field='temp'))
+        self.rm.graph_req(self.return_sens.label)  # ask for managed graph
+        self.acc_sens = self.rm.sens_search(self.cdata['acctop'])
+        self.add_var('acc_top',  MrfWebletSensorVar(self.tag,'acc_top',self.acc_sens, field='temp'))
+        self.rm.graph_req(self.acc_sens.label)  # ask for managed graph
+
+        
+        
+        ## temp old style callback hookup
+        self.temps = {}  # hashed by hw level (%)
+
+        for lev in self.ts.keys():
+            self.ts[lev].subscribe(self.tsens_callback(lev))
+            self.temps[lev] = 0.0
+        self.flow_sens.subscribe(self.flow_callback)
+        self.return_sens.subscribe(self.return_callback)
+        self.acc_sens.subscribe(self.acc_callback)
+        
+        # sort through relays  - old style
 
         self.rlabs = []
         self.relays = OrderedDict()
@@ -219,10 +205,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if timeout:
                 next_state = 'IDLE'
         elif self.state == 'IDLE':
-            if self.temps[100] < (self.vars.target_temp.val - self.vars.hysteresis.val):
-                if self.store_temp > (self.temps[100] + 12.0):
-                    if self.flow_temp > (self.temps[100] - 3.0):
-                        mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.flow_temp, self.temps[100]))
+            if self.vars.tank_top.val < (self.vars.target_temp.val - self.vars.hysteresis.val):
+                if self.vars.acc_top.val > (self.vars.tank_top.val + 12.0):
+                    if self.vars.hx_flow.val > (self.vars.tank_top.val - 3.0):
+                        mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.vars.hx_flow.val, self.vars.tank_top.val))
                         next_state = 'CHARGE1'
                         self.hx_relay_control(1)
                         self.set_timeout(60*10)
@@ -233,7 +219,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                         self.set_timeout(60*4)
                         
         elif self.state == 'PREPUMP':
-            if timeout or self.flow_temp > (self.temps[100] - 3.0):
+            if timeout or self.vars.hx_flow.val > (self.vars.tank_top.val - 3.0):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGE1'
@@ -244,7 +230,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'CHARGING'
                 self.set_timeout(90*60)   #90 mins max for now
-            elif self.temps[100] > self.var.target_temp.val :
+            elif self.vars.tank_top.val > self.vars.target_temp.val :
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'REST'
                 self.set_timeout(60*self.cdata['min_wait_mins']) 
@@ -252,9 +238,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
             
             """
-            elif self.temps[100] > (self.flow_temp - 10.0):
+            elif self.vars.tank_top.val > (self.vars.hx_flow.val - 10.0):
                 mrflog.warn("%s %s flow temp (%.2f) insufficient - giving up in state %s"%
-                            (self.__class__.__name__,self.label,self.flow_temp,self.state))
+                            (self.__class__.__name__,self.label,self.vars.hx_flow.val,self.state))
                 next_state = 'REST'
                 self.hx_relay_control(0)                
                 self.set_timeout(60*self.cdata['min_wait_mins'])   # wait 2 hours before checking again
@@ -269,16 +255,16 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
                 trans = True
                 
-            elif self.temps[100] > self.var.target_temp.val:
+            elif self.vars.tank_top.val > self.vars.target_temp.val:
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
                 trans = True
-            elif self.temps[100] > (self.flow_temp - 5.0):
+            elif self.vars.tank_top.val > (self.vars.hx_flow.val - 5.0):
                 mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
-                            (self.__class__.__name__,self.label,self.temps[100],self.flow_temp,self.state))
+                            (self.__class__.__name__,self.label,self.vars.tank_top.val,self.vars.hx_flow.val,self.state))
                 trans = True
-            elif self.return_temp > (self.var.target_temp.val - self.vars.delta_targ_rx.val):  # don't want return to get too high
+            elif self.vars.hx_ret.val > (self.vars.target_temp.val - self.vars.delta_targ_rx.val):  # don't want return to get too high
                 mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
-                            (self.__class__.__name__,self.label, self.return_temp,self.state))
+                            (self.__class__.__name__,self.label, self.vars.hx_ret.val,self.state))
                 trans = True
 
             if trans:
@@ -359,7 +345,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
-        s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.levels, tr_hdr={ 'tag' : 'level'} )
+        s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.ts.keys(), tr_hdr={ 'tag' : 'level'} )
         s += "<hr>\n"
         s += " <h3>Relays</h3>\n"
         s += MrflandObjectTable(self.tag,"relays",self.rs[0]._output,self.rlabs)

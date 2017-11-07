@@ -177,7 +177,7 @@ class MrfWebletConfigVar(MrfWebletVar):
 class MrfWebletSensorVar(MrfWebletVar):
     def init(self,val, **kwargs):
         if 'field' not in kwargs:
-            mrflog.error("%s no field  - got %s"%self.__class__.__name__,repr(kwargs))
+            mrflog.error("%s no field  - got %s"%(self.__class__.__name__,repr(kwargs)))
             return
         if not hasattr(val,'output'):
             mrflog.error("%s val was not sensor - got %s"%self.__class__.__name__,repr(val))

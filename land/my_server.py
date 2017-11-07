@@ -59,18 +59,20 @@ if __name__ == '__main__':
                     })
 
     MrfLandWebletHotWater(rm,
-                    {
-                        'tag'        : 'DHW1',
-                        'label'      : 'Hot Water 1',
-                        'rad'        : 'RAD1',
-                        'acctop'     : 'ACC_100',
-                        'heatbox'    : 'HB1',
-                        'litres'     : 200,
-                        'target_temp': 60.0,
-                        'delta_targ_rx' : 8.0,
-                        'min_wait_mins' : 6*60,  # aim to run every six hours
-                        'enabled'  : False
-                    })
+                          {
+                              'tag'        : 'DHW1',
+                              'label'      : 'Hot Water 1',
+                              'rad'        : 'RAD1',
+                              'acctop'     : 'ACC_100',
+                              'heatbox'    : 'HB1',
+                              'litres'     : 200
+                          },
+                          {
+                              'target_temp': 60.0,
+                              'delta_targ_rx' : 8.0,
+                              'min_wait_mins' : 16*60,  # aim to run every six hours
+                              'enabled'  : True
+                          })
 
     MrfLandWebletTemps(rm,
                        {
