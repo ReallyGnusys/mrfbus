@@ -81,12 +81,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.litres      = self.cdata['litres']
         
 
-        # sort through temp sensors
-        self.slabs = []
-        self.sens = OrderedDict()
-
-
-
+        # find temp sensors
+        
         self.ts = self.rm.sens_search_vector(MrfSensPt1000,self.tag)
         self.top_ts = self.rm.sens_search_vector_max(MrfSensPt1000,self.tag)
         
@@ -233,19 +229,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
             elif self.vars.tank_top.val > self.vars.target_temp.val :
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
                 next_state = 'REST'
-                self.set_timeout(60*self.cdata['min_wait_mins']) 
+                self.set_timeout(60*self.vars.min_wait_mins.val) 
                 self.hx_relay_control(0)                
-
             
-            """
-            elif self.vars.tank_top.val > (self.vars.hx_flow.val - 10.0):
-                mrflog.warn("%s %s flow temp (%.2f) insufficient - giving up in state %s"%
-                            (self.__class__.__name__,self.label,self.vars.hx_flow.val,self.state))
-                next_state = 'REST'
-                self.hx_relay_control(0)                
-                self.set_timeout(60*self.cdata['min_wait_mins'])   # wait 2 hours before checking again
-            """
-
                 
         elif self.state == 'CHARGING':
 
@@ -270,7 +256,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if trans:
                 self.hx_relay_control(0)                
                 next_state = 'REST'
-                self.set_timeout(60*self.cdata['min_wait_mins'])   # wait 2 hours before checking again
+                self.set_timeout(60*self.vars.min_wait_mins.val)   # wait 2 hours before checking again
 
         if next_state != self.state:
             self.state = next_state
