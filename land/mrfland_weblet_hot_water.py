@@ -102,19 +102,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.add_var('acc_top', self.acc_sens, field='temp')
         self.rm.graph_req(self.acc_sens.label)  # ask for managed graph
 
-        
-        
-        ## temp old style callback hookup
-        """
-        self.temps = {}  # hashed by hw level (%)
-
-        for lev in self.ts.keys():
-            self.ts[lev].subscribe(self.tsens_callback(lev))
-            self.temps[lev] = 0.0
-        self.flow_sens.subscribe(self.flow_callback)
-        self.return_sens.subscribe(self.return_callback)
-        self.acc_sens.subscribe(self.acc_callback)
-        """
         # sort through relays  - old style
 
         self.rlabs = []
@@ -267,23 +254,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
             tg = self.mktag('hwstat', 'state')
             dt =  { 'val' : self.state}
             self.rm.webupdate(tg, dt)
-    """
-    def tsens_callback(self,level):
-        def _tscb(label,data):
-            mrflog.info("weblet hot_water tsens callback for level %d label %s data %s"%(level,label, repr(data)))
-            self.temps[level] = data['temp']
-            tg = self.mktag('hwtemp', str(level))
-            mrflog.info("tag is %s"%(repr(tg)))
-            self.rm.webupdate(self.mktag('hwtemp', str(level)), data)
-            if level == 100:
-                tg = self.mktag('hwstat', 'top_temp')
-                dt =  { 'val' : data['temp']}
-                mrflog.info("top tank tag is %s dt %s"%(repr(tg),repr(dt)))
-                self.rm.webupdate(tg, dt)
-                self.state_update()
-            self.eval_capacity()
-        return _tscb 
-    """
     def hx_relay_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
         mrflog.info("HotWaterWeblet : hx_relay_callback  %s  data %s tag %s"%(label,repr(data),repr(tag)))        
@@ -293,34 +263,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
         mrflog.info("HotWaterWeblet : rad_relay_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag('relays', label), data)
 
-    """
-    def flow_callback(self, label, data):
-        mrflog.info("HotWaterWeblet flow callback for  label %s data %s"%(label, repr(data)))
-        tg = self.mktag('hwstat', 'hx_flow_temp')
-        dt =  { 'val' : data['temp']}
-        self.flow_temp = data['temp']
-        self.rm.webupdate(tg, dt)
-        self.state_update()
-        
-    def return_callback(self, label, data):
-        mrflog.info("HotWaterWeblet return callback for  label %s data %s"%(label, repr(data)))
-        tg = self.mktag('hwstat', 'hx_return_temp')
-        dt =  { 'val' : data['temp']} 
-        self.return_temp = data['temp']
-        self.rm.webupdate(tg, dt)
-        self.state_update()
-
-    def acc_callback(self, label, data):
-        mrflog.info("HotWaterWeblet acc callback for  label %s data %s"%(label, repr(data)))
-        tg = self.mktag('hwstat', 'store_temp')
-        dt =  { 'val' : data['temp']} 
-        self.store_temp = data['temp']
-        self.rm.webupdate(tg, dt)
-        self.state_update()
-    def avg_callback(self, label, data):
-        mrflog.warn("HotWaterWeblet average callback for  label %s data %s"%(label, repr(data)))
-
-    """
      
     def pane_html(self):
         s =  """
