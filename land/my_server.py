@@ -71,7 +71,7 @@ if __name__ == '__main__':
                               'target_temp': 60.0,
                               'delta_targ_rx' : 8.0,
                               'min_wait_mins' : 16*60,  # aim to run every six hours
-                              'enabled'  : False
+                              'enabled'  : True
                           })
 
     MrfLandWebletTemps(rm,

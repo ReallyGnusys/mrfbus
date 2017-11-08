@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from collections import OrderedDict
 from mrflog import mrflog
 from mrfland import to_json
+from mrf_sens import MrfSens
 
 def tr_fn(inp , tr_dic):
     if tr_dic.has_key(inp):
@@ -112,11 +113,25 @@ class MrfWebletVar(object):
         mrflog.warn("kwargs %s"%repr(kwargs))
         self.name = name
         self.app = app
+        if kwargs.has_key('callback'):
+            self._app_callback = kwargs['callback']
+        else:
+            self._app_callback = None
         if hasattr(self,'init'):
             self.init(val, **kwargs)
+    def updated(self): #notice that value has changed - should be no need to pass anything
+        if self._app_callback:
+            self._app_callback(self.name)
+    @property
+    def webtag(self):
+        return { 'app' : self.app, 'mrfvar' : self.name }
+        
     @property
     def val(self):
         return self.value()
+    @property
+    def html(self):
+        return """<div class="mrfvar mrfapp-%s mrfvar-%s">%s</div>"""%(self.app,self.name, repr(self.val))
     
 class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
@@ -191,6 +206,15 @@ class MrfWebletSensorVar(MrfWebletVar):
             
         self.field = field
         self.sens = val  # must be a sensor
+        self.last_val = None #  need to see if particular output field has changed , not just any in output when callback fires
+        self.sens.subscribe(self._sens_callback)
+        
+    def _sens_callback(self, label, data):
+        ##mrflog.warn("_sen_callback %s self.value %s"%(label,repr(self.val)))
+        if self.val != self.last_val:
+            self.last_val = self.val
+            self.updated()
+        
     def value(self):
         return self.sens.output[self.field]
     
@@ -222,23 +246,43 @@ class MrflandWeblet(object):
 
         if hasattr(self,'_config_'):
             for citem in self._config_:
-                if vdata.has_key(citem[0]):
+                if vdata.has_key(citem[0]):  # can override default in weblet instantiation
                     init_val = vdata[citem[0]]
                 else:
-                    init_val = citem[2]
-                if citem[1] == bool:
+                    init_val = citem[1]
+
+                self.add_var(citem[0],init_val, **citem[2])
+                """
+                if type(citem[1]) == type(False):
                     self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val))
-                elif citem[1] == int or citem[1] == float:
+                elif type(citem[1]) == type(1) or type(citem[1]) == type(1.0):
                     self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val, min_val= citem[3],max_val=citem[4],step=citem[5]))
-                    
+                """
 
         if hasattr(self, 'init'):
             self.init()
-        rm.weblet_register(self)  # ooer!
+        rm.weblet_register(self)  # ooer! .. but ugly
+        
+    def var_callback(self,name):
+        mrflog.warn("%s var_callback for %s value %s"%(self.__class__.__name__, name, self.vars.__dict__[name].val))
+        if hasattr(self,'var_changed'):
+            self.var_changed(name)
+    
+    def add_var(self, name, initval, **kwargs):
+        v = None
 
-    def add_var(self,name,v):
-        setattr(self.vars, name, v)
-
+        mrflog.warn("%s add_var name %s"%(self.__class__.__name__, name))
+        kwargs['callback'] = self.var_callback
+        
+        if issubclass(initval.__class__ , MrfSens):
+            if not kwargs.has_key('field'):
+                mrflog.error("add_var initval was sensor but no field keyword")
+                return
+            v = MrfWebletSensorVar(self.tag, name, initval, **kwargs)
+        elif initval.__class__ == int or initval.__class__ == float or initval.__class__ == bool:
+            v = MrfWebletConfigVar(self.tag, name, initval, **kwargs)
+        if v:
+            setattr(self.vars, name, v)
     def has_var(self,name):
         return name in self.vars.__dict__
 

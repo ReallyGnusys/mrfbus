@@ -113,6 +113,15 @@ function mrf_web_update(obj){
     }
         
     data = obj.data;
+
+    if(tag.hasOwnProperty('mrfvar')){
+        console.log("var update");
+        sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
+
+        $(sl).html(data.val);
+        
+        return;
+    }
     //console.log("got tag");
     //console.log(tag);
     sl = '.app-'+tag.app+'.tab-'+tag.tab+'.row-'+tag.row;

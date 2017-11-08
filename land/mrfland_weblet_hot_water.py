@@ -24,11 +24,11 @@ from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
 
-    _config_ = [ ('enabled'    , bool,  False ),
-                 ('target_temp', float, 60.0, 40.0,65.0,1.0),
-                 ('delta_targ_rx', float, 8.0, 6.0,10.0,1.0),
-                 ('min_wait_mins', int , 16*60, 2*60,24*60,60),
-                 ('hysteresis' , float, 4.0, 2.0, 12.0, 1.0)
+    _config_ = [ ('enabled'    ,  False , {}),
+                 ('target_temp',  60.0,  { 'min_val' : 40.0, 'max_val' : 65.0, 'step' : 1.0}),
+                 ('delta_targ_rx',  8.0, { 'min_val' : 6.0,  'max_val' : 10.0, 'step' : 1.0}),
+                 ('min_wait_mins',  16*60, { 'min_val' : 2*60, 'max_val' : 24*60, 'step' :60 }),
+                 ('hysteresis' ,  4.0,   {'min_val':  2.0, 'max_val': 12.0, 'step' : 1.0})
     ]
     
     def init(self):
@@ -87,22 +87,25 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.top_ts = self.rm.sens_search_vector_max(MrfSensPt1000,self.tag)
         
         self.rm.graph_req(self.top_ts.label)  # ask for managed graph
-        self.add_var('tank_top',  MrfWebletSensorVar(self.tag,'tank_top',self.top_ts, field='temp'))
+        self.add_var('tank_top',self.top_ts, field='temp')
 
         
         self.flow_sens = self.rm.sens_search(self.cdata['heatbox'] + "_FLOW")
-        self.add_var('hx_flow',  MrfWebletSensorVar(self.tag,'hx_flow',self.flow_sens, field='temp'))
+
+        
+        self.add_var('hx_flow', self.flow_sens, field='temp')
         self.rm.graph_req(self.flow_sens.label)  # ask for managed graph
         self.return_sens = self.rm.sens_search(self.tag + "_HX_RET")
-        self.add_var('hx_ret',  MrfWebletSensorVar(self.tag,'hx_ret',self.return_sens, field='temp'))
+        self.add_var('hx_ret', self.return_sens, field='temp')
         self.rm.graph_req(self.return_sens.label)  # ask for managed graph
         self.acc_sens = self.rm.sens_search(self.cdata['acctop'])
-        self.add_var('acc_top',  MrfWebletSensorVar(self.tag,'acc_top',self.acc_sens, field='temp'))
+        self.add_var('acc_top', self.acc_sens, field='temp')
         self.rm.graph_req(self.acc_sens.label)  # ask for managed graph
 
         
         
         ## temp old style callback hookup
+        """
         self.temps = {}  # hashed by hw level (%)
 
         for lev in self.ts.keys():
@@ -111,7 +114,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.flow_sens.subscribe(self.flow_callback)
         self.return_sens.subscribe(self.return_callback)
         self.acc_sens.subscribe(self.acc_callback)
-        
+        """
         # sort through relays  - old style
 
         self.rlabs = []
@@ -144,7 +147,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rlabs.append(self.rad_relay.label)
         mrflog.warn("num rs %d  labs %s"%(len(self.rs),repr(self.rlabs)))
 
-
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
         # start timer
@@ -154,6 +156,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rm.set_timer( tod.time() , self.label , 'TO')
         self.rm.timer_reg_callback( self.label, 'TO', self.timer_callback)
 
+        
     def set_timeout(self,seconds):
         # start timer
         mrflog.warn("%s : set_timeout seconds  %d  "%(self.__class__.__name__,seconds))
@@ -181,18 +184,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def rad_relay_release(self):
         mrflog.warn("%s rad_relay_release"%(self.__class__.__name__))
         self.rad_relay.release()
+
+    def var_changed(self,name):
+        mrflog.warn("%s var_changed %s - calling state_update"%(self.__class__.__name__, name))
+        self.state_update()
+        self.rm.webupdate(self.vars.__dict__[name].webtag,
+                          { 'val' : self.vars.__dict__[name].val}
+                          )
+
         
+
     def state_update(self, timeout = False):
         next_state = self.state
-        if not hasattr(self,'store_temp'):
-            return
-        if not hasattr(self,'temps'):
-            return
-        if not hasattr(self,'flow_temp'):
-            return
-        if not hasattr(self,'return_temp'):
-            return
-
 
         if self.vars.enabled.val == False:
             next_state = 'DISABLED'
@@ -264,7 +267,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             tg = self.mktag('hwstat', 'state')
             dt =  { 'val' : self.state}
             self.rm.webupdate(tg, dt)
-                    
+    """
     def tsens_callback(self,level):
         def _tscb(label,data):
             mrflog.info("weblet hot_water tsens callback for level %d label %s data %s"%(level,label, repr(data)))
@@ -280,7 +283,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.state_update()
             self.eval_capacity()
         return _tscb 
-
+    """
     def hx_relay_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
         mrflog.info("HotWaterWeblet : hx_relay_callback  %s  data %s tag %s"%(label,repr(data),repr(tag)))        
@@ -290,7 +293,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         mrflog.info("HotWaterWeblet : rad_relay_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag('relays', label), data)
 
-    
+    """
     def flow_callback(self, label, data):
         mrflog.info("HotWaterWeblet flow callback for  label %s data %s"%(label, repr(data)))
         tg = self.mktag('hwstat', 'hx_flow_temp')
@@ -314,11 +317,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.store_temp = data['temp']
         self.rm.webupdate(tg, dt)
         self.state_update()
-
     def avg_callback(self, label, data):
         mrflog.warn("HotWaterWeblet average callback for  label %s data %s"%(label, repr(data)))
 
-        
+    """
+     
     def pane_html(self):
         s =  """
         <h2>"""+self.label+"""</h2>
@@ -328,6 +331,19 @@ class MrfLandWebletHotWater(MrflandWeblet):
             "temp" : [self.ts[100].label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
             "relay": [self.hx_relay.label, self.rad_relay.label]
         })
+
+        s += """
+        <table class="table">
+          <tbody>
+            <tr><td>"""+self.vars.tank_top.name+"</td><td>"+self.vars.tank_top.html+"""</td></tr>
+            <tr><td>"""+self.vars.acc_top.name+"</td><td>"+self.vars.acc_top.html+"""</td></tr>
+            <tr><td>"""+self.vars.hx_flow.name+"</td><td>"+self.vars.hx_flow.html+"""</td></tr>
+            <tr><td>"""+self.vars.hx_ret.name+"</td><td>"+self.vars.hx_ret.html+"""</td></tr>
+            <tr><td>"""+self.vars.enabled.name+"</td><td>"+self.vars.enabled.html+"""</td></tr>
+          </tbody>
+        </table>
+        """
+
         s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
