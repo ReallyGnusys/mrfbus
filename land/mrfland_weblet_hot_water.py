@@ -185,12 +185,17 @@ class MrfLandWebletHotWater(MrflandWeblet):
                           )
         mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
-        if name == 'enabled' and self.vars.__dict__[name].val:
-            self.vars.state.set('REST')
-            now = datetime.now()
-            td  = timedelta(seconds = 30)
-            tod = now + td
-            self.rm.set_timer( tod.time() , self.label , 'TO')
+        if name == 'enabled':
+            if self.vars.__dict__[name].val:
+                self.vars.state.set('REST')
+                now = datetime.now()
+                td  = timedelta(seconds = 10)
+                tod = now + td
+                self.rm.set_timer( tod.time() , self.label , 'TO')
+            else:
+                next_state = 'DISABLED'
+                self.hx_relay_control(0)                
+  
             
         if name != 'state':  # otherwise infinite recursion!
             self.state_update()
