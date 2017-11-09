@@ -388,6 +388,30 @@ function init_app(){
             ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
         });
 
+    // new style var controls
+    //mrvar-ctrl-cb
+
+    $(".mrvar-ctrl-cb").change(
+            function(){
+                console.log(" mrfvar cb changed : checked = "+this.checked);
+                if (this.checked){
+                    val = 1;
+                }
+                else{
+                    val = 0;
+                }
+                console.log(this)
+                app = $(this).attr('app');
+                name = $(this).attr('name');
+                cdata = {"app": app , "name" : name , "op" : 'set',  "val" : this.checked }
+                console.log(cdata)
+
+                ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
+            });
+
+
+
+    
     //graphs
     init_graphs();
 }

@@ -33,7 +33,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
     
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        self.state = 'REST'
+
+        
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
@@ -134,6 +135,12 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rlabs.append(self.rad_relay.label)
         mrflog.warn("num rs %d  labs %s"%(len(self.rs),repr(self.rlabs)))
 
+        ## declare state var
+
+        self.add_var('state','REST')
+
+        
+
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
         # start timer
@@ -182,15 +189,15 @@ class MrfLandWebletHotWater(MrflandWeblet):
         
 
     def state_update(self, timeout = False):
-        next_state = self.state
+        next_state = self.vars.state.val
 
         if self.vars.enabled.val == False:
             next_state = 'DISABLED'
             
-        elif self.state == 'REST':
+        elif self.vars.state.val == 'REST':
             if timeout:
                 next_state = 'IDLE'
-        elif self.state == 'IDLE':
+        elif self.vars.state.val == 'IDLE':
             if self.vars.tank_top.val < (self.vars.target_temp.val - self.vars.hysteresis.val):
                 if self.vars.acc_top.val > (self.vars.tank_top.val + 12.0):
                     if self.vars.hx_flow.val > (self.vars.tank_top.val - 3.0):
@@ -204,43 +211,43 @@ class MrfLandWebletHotWater(MrflandWeblet):
                         self.rad_relay_force(1)
                         self.set_timeout(60*4)
                         
-        elif self.state == 'PREPUMP':
+        elif self.vars.state.val == 'PREPUMP':
             if timeout or self.vars.hx_flow.val > (self.vars.tank_top.val - 3.0):
                 self.rad_relay_release()
                 self.hx_relay_control(1)                
                 next_state = 'CHARGE1'
                 self.set_timeout(60*10)
 
-        elif self.state == 'CHARGE1':
+        elif self.vars.state.val == 'CHARGE1':
             if timeout:
-                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
+                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.vars.state.val))
                 next_state = 'CHARGING'
                 self.set_timeout(90*60)   #90 mins max for now
             elif self.vars.tank_top.val > self.vars.target_temp.val :
-                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
+                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.vars.state.val))
                 next_state = 'REST'
                 self.set_timeout(60*self.vars.min_wait_mins.val) 
                 self.hx_relay_control(0)                
             
                 
-        elif self.state == 'CHARGING':
+        elif self.vars.state.val == 'CHARGING':
 
             trans = False
 
             if timeout:
-                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.state))
+                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.vars.state.val))
                 trans = True
                 
             elif self.vars.tank_top.val > self.vars.target_temp.val:
-                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.state))
+                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.vars.state.val))
                 trans = True
             elif self.vars.tank_top.val > (self.vars.hx_flow.val - 5.0):
                 mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
-                            (self.__class__.__name__,self.label,self.vars.tank_top.val,self.vars.hx_flow.val,self.state))
+                            (self.__class__.__name__,self.label,self.vars.tank_top.val,self.vars.hx_flow.val,self.vars.state.val))
                 trans = True
             elif self.vars.hx_ret.val > (self.vars.target_temp.val - self.vars.delta_targ_rx.val):  # don't want return to get too high
                 mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
-                            (self.__class__.__name__,self.label, self.vars.hx_ret.val,self.state))
+                            (self.__class__.__name__,self.label, self.vars.hx_ret.val,self.vars.state.val))
                 trans = True
 
             if trans:
@@ -248,11 +255,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 next_state = 'REST'
                 self.set_timeout(60*self.vars.min_wait_mins.val)   # wait 2 hours before checking again
 
-        if next_state != self.state:
-            self.state = next_state
-            mrflog.warn("%s %s  state change to %s"%(self.__class__.__name__,self.label,self.state))
+        if next_state != self.vars.state.val:
+            self.vars.state.set(next_state)
+            mrflog.warn("%s %s  state change to %s"%(self.__class__.__name__,self.label,self.vars.state.val))
             tg = self.mktag('hwstat', 'state')
-            dt =  { 'val' : self.state}
+            dt =  { 'val' : self.vars.state.val}
             self.rm.webupdate(tg, dt)
     def hx_relay_callback(self, label, data ):
         tag = self.mktag(self.tag, label)
@@ -273,20 +280,32 @@ class MrfLandWebletHotWater(MrflandWeblet):
             "temp" : [self.ts[100].label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
             "relay": [self.hx_relay.label, self.rad_relay.label]
         })
+        s += "<hr>\n"
 
+        s += "<hr>\n"
         s += """
+        <h3>Status</h3>
         <table class="table">
           <tbody>
             <tr><td>"""+self.vars.tank_top.name+"</td><td>"+self.vars.tank_top.html+"""</td></tr>
             <tr><td>"""+self.vars.acc_top.name+"</td><td>"+self.vars.acc_top.html+"""</td></tr>
             <tr><td>"""+self.vars.hx_flow.name+"</td><td>"+self.vars.hx_flow.html+"""</td></tr>
             <tr><td>"""+self.vars.hx_ret.name+"</td><td>"+self.vars.hx_ret.html+"""</td></tr>
-            <tr><td>"""+self.vars.enabled.name+"</td><td>"+self.vars.enabled.html+"""</td></tr>
+            <tr><td>"""+self.vars.state.name+"</td><td>"+self.vars.state.html+"""</td></tr>
           </tbody>
-        </table>
-        """
+        </table>"""
 
-        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.state }})
+        s += """
+        <h3>Config</h3>
+        <table class="table">
+          <tbody>
+            <tr><td>"""+self.vars.enabled.name+"</td><td>"+self.vars.enabled.html+"""</td><td>"""+self.vars.enabled.html_ctrl+"""</td></tr>
+          </tbody>
+        </table>"""
+
+        
+
+        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.vars.state.val }})
         s += "<hr>\n"
         s += " <h3>Tank sensors</h3>\n"
         s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.ts.keys(), tr_hdr={ 'tag' : 'level'} )

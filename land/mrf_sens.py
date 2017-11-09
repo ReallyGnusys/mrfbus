@@ -114,6 +114,13 @@ class MrfSens(object):
         if hasattr(self, "history"):
             if indata.has_key('date'):
                 now = indata['date'].to_datetime()  # it had better be PktTimeDate!
+                ournow = datetime.datetime.now()
+            
+                if (ournow - now) > datetime.timedelta(minutes = 2) or   (now - ournow) > datetime.timedelta(minutes = 2):
+                    mrflog.warn("sensor input date is not set... setting current")
+                    now = ournow
+                
+                    
             else:
                 now = datetime.datetime.now()
             if self.history_dt == None:

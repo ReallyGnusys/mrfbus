@@ -131,14 +131,14 @@ class MrfWebletVar(object):
         return self.value()
     @property
     def html(self):
-        return """<div class="mrfvar mrfapp-%s mrfvar-%s">%s</div>"""%(self.app,self.name, repr(self.val))
+        return """<div class="mrfvar mrfapp-%s mrfvar-%s">%s</div>"""%(self.app,self.name, str(self.val))
     
 class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
         self._val = val  # just a simple value we keep here
 
         print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
-        if type(self.val) != bool:
+        if self.val.__class__ == int or self.val.__class__ == float:
             if 'min_val' not in kwargs == None:
                 mrflog.error("%s no min_val"%self.__class__.__name__)
                 return
@@ -168,25 +168,29 @@ class MrfWebletConfigVar(MrfWebletVar):
             self.step    = step
     def value(self):
         return self._val
-    
+    def set(self, value):
+        self._val = value
+    @property
     def html_ctrl(self):
         def cb_checked(self):
             if self.val:
                 return 'checked'
             else:
                 return ''
-        if type(self.val) == bool:
+        if self.val.__class__ == bool:
             return """
-            <div class="mrfvar" app="%s" name="%s" >
-                  <input type="checkbox" class="mrfvar_cb" app="%s" name="%s" %s>
-            </div>"""%(self.app, self.name,self.app, self.name, cb_checked(self))
-        if type(self.val) == int or type(self.val) == float:
+            <div  class="mrfvar-ctrl-wrap" app="%s" name="%s">
+              <input type="checkbox" class="mrfvar-ctrl mrvar-ctrl-cb" app="%s" name="%s" %s>
+            </div>
+            """%(self.app, self.name,self.app, self.name, cb_checked(self))
+        if self.val.__class__ == int or self.val.__class__ == float:
             return """
-            <div class="mrfvar" app="%s" name="%s" >
-                  <div  class="mrfvar_number" app="%s" name="%s">%s</div>
-                   <div class="glyphicon glyphicon-arrow-up" app="%s" name="%s" action="up">
-                   <div class="glyphicon glyphicon-arrow-down" app="%s" name="%s" action="down">
+            <div class="mrfvar-ctrl-wrap" app="%s" name="%s" >
+                  <div  class="mrfvar-ctrl-wrap" app="%s" name="%s">%s</div>
+                   <div class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up">
+                   <div class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down">
             </div>"""%(self.app, self.name, self.app, self.name, repr(self.val),self.app, self.name,self.app, self.name)
+        
         return ""
         
 class MrfWebletSensorVar(MrfWebletVar):
@@ -217,9 +221,7 @@ class MrfWebletSensorVar(MrfWebletVar):
         
     def value(self):
         return self.sens.output[self.field]
-    
-        
-            
+                        
         
 
 class MrflandWebletVars(object):
@@ -279,8 +281,10 @@ class MrflandWeblet(object):
                 mrflog.error("add_var initval was sensor but no field keyword")
                 return
             v = MrfWebletSensorVar(self.tag, name, initval, **kwargs)
-        elif initval.__class__ == int or initval.__class__ == float or initval.__class__ == bool:
+        elif initval.__class__ == int or initval.__class__ == float or initval.__class__ == bool or initval.__class__ == str: #FIXME!!
             v = MrfWebletConfigVar(self.tag, name, initval, **kwargs)
+        else:
+            mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:
             setattr(self.vars, name, v)
     def has_var(self,name):
@@ -311,3 +315,32 @@ class MrflandWeblet(object):
             return getattr(self,fn)(data)
         else:
             mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
+
+    def cmd_mrfvar_ctrl(self,data):
+        mrflog.warn("%s cmd_mrfvar_ctrl - data  %s"%(self.__class__.__name__,repr(data)))
+        
+        if not data.has_key('op'):
+            mrflog.error("%s cmd_mrfvar_ctrl no op specified - data  was  %s"%(self.__class__.__name__,repr(data)))
+            return
+
+        if not data.has_key('name'):
+            mrflog.error("%s cmd_mrfvar_ctrl no name specified - data  was  %s"%(self.__class__.__name__,repr(data)))
+            return
+        vn = data['name']
+        if not self.vars.__dict__.has_key(vn):
+            mrflog.error("%s cmd_mrfvar_ctrl no var found with name %s - data  was  %s"%(self.__class__.__name__,vn,repr(data)))
+            return
+
+        va = self.vars.__dict__[vn]
+        
+        if data['op'] == 'set':
+            if not data.has_key('val'):
+                mrflog.error("%s cmd_mrfvar_ctrl op was set but no val in data  %s"%(self.__class__.__name__,repr(data)))
+                return
+                
+            if hasattr(va,'set'):
+                
+                mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
+                va.set(data['val'])
+            
+            

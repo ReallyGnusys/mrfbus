@@ -382,6 +382,7 @@ class MrflandServer(object):
         if app not in self.rm.weblets.keys():
             mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
+        mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
         self.rm.weblets[app].cmd(cmd,data)
         for dup in self.rm.dups:
             mrflog.warn("%s calling _callback"%(self.__class__.__name__))
