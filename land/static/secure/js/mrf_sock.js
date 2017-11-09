@@ -115,10 +115,10 @@ function mrf_web_update(obj){
     data = obj.data;
 
     if(tag.hasOwnProperty('mrfvar')){
-        console.log("var update");
+        console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
 
-        $(sl).html(data.val);
+        $(sl).html(""+data.val);
         
         return;
     }

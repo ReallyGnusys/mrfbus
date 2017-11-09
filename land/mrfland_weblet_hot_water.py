@@ -180,11 +180,20 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rad_relay.release()
 
     def var_changed(self,name):
-        mrflog.warn("%s var_changed %s - calling state_update"%(self.__class__.__name__, name))
-        self.state_update()
         self.rm.webupdate(self.vars.__dict__[name].webtag,
                           { 'val' : self.vars.__dict__[name].val}
                           )
+        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+
+        if name == 'enabled' and self.vars.__dict__[name].val:
+            self.vars.state.set('REST')
+            now = datetime.now()
+            td  = timedelta(seconds = 30)
+            tod = now + td
+            self.rm.set_timer( tod.time() , self.label , 'TO')
+            
+        if name != 'state':  # otherwise infinite recursion!
+            self.state_update()
 
         
 
@@ -282,7 +291,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
         })
         s += "<hr>\n"
 
-        s += "<hr>\n"
         s += """
         <h3>Status</h3>
         <table class="table">
@@ -292,24 +300,19 @@ class MrfLandWebletHotWater(MrflandWeblet):
             <tr><td>"""+self.vars.hx_flow.name+"</td><td>"+self.vars.hx_flow.html+"""</td></tr>
             <tr><td>"""+self.vars.hx_ret.name+"</td><td>"+self.vars.hx_ret.html+"""</td></tr>
             <tr><td>"""+self.vars.state.name+"</td><td>"+self.vars.state.html+"""</td></tr>
-          </tbody>
+            <tr><td>"""+self.vars.enabled.name+"</td><td>"+self.vars.enabled.html+"""</td></tr>
+        </tbody>
         </table>"""
+        s += "<hr>\n"
 
         s += """
         <h3>Config</h3>
         <table class="table">
           <tbody>
-            <tr><td>"""+self.vars.enabled.name+"</td><td>"+self.vars.enabled.html+"""</td><td>"""+self.vars.enabled.html_ctrl+"""</td></tr>
+            <tr><td>"""+self.vars.enabled.name+"</td><td>"""+self.vars.enabled.html_ctrl+"""</td></tr>
           </tbody>
         </table>"""
 
-        
-
-        s += MrflandObjectTable(self.tag,"hwstat", { 'val': {0}} ,['state', 'top_temp','store_temp','hx_flow_temp','hx_return_temp'], tr_hdr={ 'tag' : '', 'val': ''}, init_vals = {'state' : {'val' : self.vars.state.val }})
-        s += "<hr>\n"
-        s += " <h3>Tank sensors</h3>\n"
-        s += MrflandObjectTable(self.tag,"hwtemp", { 'temp': {0.0}} ,self.ts.keys(), tr_hdr={ 'tag' : 'level'} )
-        s += "<hr>\n"
         s += " <h3>Relays</h3>\n"
         s += MrflandObjectTable(self.tag,"relays",self.rs[0]._output,self.rlabs)
         

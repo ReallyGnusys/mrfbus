@@ -136,7 +136,6 @@ class MrfWebletVar(object):
 class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
         self._val = val  # just a simple value we keep here
-
         print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
         if self.val.__class__ == int or self.val.__class__ == float:
             if 'min_val' not in kwargs == None:
@@ -169,7 +168,12 @@ class MrfWebletConfigVar(MrfWebletVar):
     def value(self):
         return self._val
     def set(self, value):
-        self._val = value
+        if type(value) != type(self._val):
+            mrflog.error("%s set value wrong type for var name %s"%(self.__class__.__name__,self.name))
+            return
+        if self._val != value:
+            self._val = value
+            self.updated()
     @property
     def html_ctrl(self):
         def cb_checked(self):
@@ -342,5 +346,6 @@ class MrflandWeblet(object):
                 
                 mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
                 va.set(data['val'])
+                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
             
             

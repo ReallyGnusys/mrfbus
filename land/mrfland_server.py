@@ -384,6 +384,23 @@ class MrflandServer(object):
             return
         mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
         self.rm.weblets[app].cmd(cmd,data)
+
+        self._run_updates()
+        """
+        for dup in self.rm.dups:
+            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
+            self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
+        self.rm.dups = []
+        """
+
+    def _run_updates(self):
+        for wup in self.rm.wups:
+            ro = mrfland.RetObj()
+            ro.b(mrfland.mrf_cmd('web-update',wup))
+            mrfland.comm.comm(None,ro)
+        self.rm.wups = []
+
+
         for dup in self.rm.dups:
             mrflog.warn("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
@@ -538,7 +555,10 @@ class MrflandServer(object):
         ## here just pass this to rm device model to handle
         mrflog.info("server parse input got hdr %s"%repr(hdr))
         param, rsp = self.rm.packet(hdr,resp)
-        
+
+        self._run_updates()
+
+        """
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
             ro.b(mrfland.mrf_cmd('web-update',wup))
@@ -550,7 +570,7 @@ class MrflandServer(object):
             mrflog.warn("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
         self.rm.dups = []
-
+        """
 
         
 
