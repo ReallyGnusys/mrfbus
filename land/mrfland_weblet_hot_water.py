@@ -112,6 +112,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rad_relay = self.rm.sens_search(self.cdata['rad'] + "_PUMP")
         self.rm.graph_req(self.rad_relay.label)  # ask for managed graph
         self.add_var('rad_relay',self.rad_relay, field='relay')
+
+
+        self.heat_relay = self.rm.sens_search(self.cdata['tag'] + "_HEAT")
+        self.rm.graph_req(self.heat_relay.label)  # ask for managed graph
+        self.add_var('heat_relay',self.heat_relay, field='relay')
         
 
 
@@ -248,7 +253,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         
         s += self.rm.graph_inst({
             "temp" : [self.ts[100].label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
-            "relay": [self.hx_relay.label, self.rad_relay.label]
+            "relay": [self.hx_relay.label, self.rad_relay.label, self.heat_relay.label]
         })
         s += "<hr>\n"
 
@@ -264,6 +269,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             <tr><td>"""+self.var.enabled.name+"</td><td>"+self.var.enabled.html+"""</td></tr>
             <tr><td>"""+self.var.hx_relay.name+"</td><td>"+self.var.hx_relay.html+"""</td></tr>
             <tr><td>"""+self.var.rad_relay.name+"</td><td>"+self.var.rad_relay.html+"""</td></tr>
+            <tr><td>"""+self.var.heat_relay.name+"</td><td>"+self.var.heat_relay.html+"""</td></tr>
         </tbody>
         </table>"""
 
