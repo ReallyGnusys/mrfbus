@@ -25,8 +25,8 @@ from datetime import datetime, timedelta
 class MrfLandWebletHotWater(MrflandWeblet):
 
     _config_ = [ ('enabled'    ,  False , {}),
-                 ('target_temp',  60.0,  { 'min_val' : 40.0, 'max_val' : 65.0, 'step' : 1.0}),
-                 ('delta_targ_rx',  8.0, { 'min_val' : 6.0,  'max_val' : 10.0, 'step' : 1.0}),
+                 ('target_temp',  60.0,  { 'min_val' : 40.0, 'max_val' : 65.0, 'step' : 0.5}),
+                 ('delta_targ_rx',  8.0, { 'min_val' : 6.0,  'max_val' : 10.0, 'step' : 0.5}),
                  ('min_wait_mins',  16*60, { 'min_val' : 2*60, 'max_val' : 24*60, 'step' :60 }),
                  ('hysteresis' ,  4.0,   {'min_val':  2.0, 'max_val': 12.0, 'step' : 1.0})
     ]
@@ -314,7 +314,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
         <h3>Config</h3>
         <table class="table">
           <tbody>
-            <tr><td>"""+self.vars.enabled.name+"</td><td>"""+self.vars.enabled.html_ctrl+"""</td></tr>
+            <tr><td>"""+self.vars.enabled.name+"</td><td>"""+self.vars.enabled.html+"</td><td>"""+self.vars.enabled.html_ctrl+"""</td></tr>
+            <tr><td>"""+self.vars.target_temp.name+"</td><td>"""+self.vars.target_temp.html+"</td><td>"""+self.vars.target_temp.html_ctrl+"""</td></tr>
+            <tr><td>"""+self.vars.min_wait_mins.name+"</td><td>"""+self.vars.min_wait_mins.html+"</td><td>"""+self.vars.min_wait_mins.html_ctrl+"""</td></tr>
           </tbody>
         </table>"""
 

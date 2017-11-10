@@ -131,7 +131,12 @@ class MrfWebletVar(object):
         return self.value()
     @property
     def html(self):
-        return """<div class="mrfvar mrfapp-%s mrfvar-%s">%s</div>"""%(self.app,self.name, str(self.val))
+        
+        if self.val.__class__ == str:
+            vp = self.val
+        else:
+            vp = to_json(self.val)  #hmpff
+        return """<div class="mrfvar mrfapp-%s mrfvar-%s">%s</div>"""%(self.app,self.name, vp)
     
 class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
@@ -190,10 +195,9 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self.val.__class__ == int or self.val.__class__ == float:
             return """
             <div class="mrfvar-ctrl-wrap" app="%s" name="%s" >
-                  <div  class="mrfvar-ctrl-wrap" app="%s" name="%s">%s</div>
-                   <div class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up">
-                   <div class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down">
-            </div>"""%(self.app, self.name, self.app, self.name, repr(self.val),self.app, self.name,self.app, self.name)
+                   <div class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></div>
+                   <div class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></div>
+            </div>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
         
         return ""
         
@@ -347,5 +351,29 @@ class MrflandWeblet(object):
                 mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
                 va.set(data['val'])
                 mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
-            
+
+        if data['op'] == 'up':
+            if hasattr(va,'set'):
+
+                nv = va.val + va.step
+
+                if nv > va.max_val:
+                    nv = va.max_val
+
+                va.set(nv)
+                mrflog.warn("%s cmd_mrfvar_ctrl up %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+        if data['op'] == 'down':
+            if hasattr(va,'set'):
+
+                nv = va.val - va.step
+
+                if nv < va.min_val:
+                    nv = va.min_val
+
+                va.set(nv)
+                mrflog.warn("%s cmd_mrfvar_ctrl down %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+
+                
             
