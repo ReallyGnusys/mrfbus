@@ -34,21 +34,16 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
 
-        
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
         if not self.rm.senstypes.has_key(MrfSensPt1000):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
-            return
-
-        
-
+            return    
 
         if not self.cdata.has_key('rad'):
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
             return
-        
         
         ## looking for all MrfSensPtRelay types
 
@@ -93,9 +88,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.add_var('hx_ret', self.return_sens, field='temp', graph=True)
         
         self.acc_sens = self.rm.sens_search(self.cdata['acctop'])
-        self.add_var('acc_top', self.acc_sens, field='temp', graph=True)
-
-        
+        self.add_var('acc_top', self.acc_sens, field='temp', graph=True)        
 
         # find relays
 
@@ -108,14 +101,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         self.heat_relay = self.rm.sens_search(self.cdata['tag'] + "_HEAT")
         self.add_var('heat_relay',self.heat_relay, field='relay', graph=True)
-        
+
 
 
         ## declare state var
 
         self.add_var('state','REST')
 
-        
 
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
@@ -156,8 +148,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             else:
                 next_state = 'DISABLED'
                 self.hx_relay.set(0)                
-  
-            
+              
         if name != 'state':  # otherwise infinite recursion!
             self.state_update()
 
@@ -263,8 +254,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
             ]
         )
 
-        
-        
         s += """
         <hr>
         <h3>Config</h3>"""
@@ -276,6 +265,5 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.var.min_wait_mins.name
             ]
         )
-
         
         return s
