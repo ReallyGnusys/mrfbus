@@ -295,6 +295,9 @@ class MrflandWeblet(object):
             mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:
             setattr(self.var, name, v)
+            if kwargs.has_key('graph') and kwargs['graph'] == True :  # FIXME : MUST only be sensor var
+                self.rm.graph_req(v.sens.label)  # ask for managed graph 
+
     def has_var(self,name):
         return name in self.var.__dict__
 
@@ -315,7 +318,35 @@ class MrflandWeblet(object):
         s += self.pane_html()
         s += self.pane_html_footer()
         return s
+
+    def html_var_table(self, varlist):
+        s = """
+        <table class="table">
+          <tbody>"""
+         
+        for vn in varlist:
+            s += """
+            <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+self.var.__dict__[vn].html+"</td></tr>"
+
+        s += """
+          </tbody>
+        </table>"""
+        return s
     
+    def html_var_ctrl_table(self, varlist):
+        s = """
+        <table class="table">
+          <tbody>"""
+         
+        for vn in varlist:
+            s += """
+            <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+self.var.__dict__[vn].html+"</td><td>"+self.var.__dict__[vn].html_ctrl+"</td></tr>"
+
+        s += """
+          </tbody>
+        </table>"""
+        return s
+
     def cmd(self,cmd, data=None):
         fn = 'cmd_'+cmd
         if hasattr(self, fn):
