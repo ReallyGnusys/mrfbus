@@ -252,7 +252,7 @@ class MrflandWeblet(object):
         self.label = cdata['label']
         self.cdata = cdata
         self.graph_insts = 0
-        self.vars = MrflandWebletVars()
+        self.var = MrflandWebletVars()
 
         if hasattr(self,'_config_'):
             for citem in self._config_:
@@ -274,7 +274,7 @@ class MrflandWeblet(object):
         rm.weblet_register(self)  # ooer! .. but ugly
         
     def var_callback(self,name):
-        mrflog.warn("%s var_callback for %s value %s"%(self.__class__.__name__, name, self.vars.__dict__[name].val))
+        mrflog.warn("%s var_callback for %s value %s"%(self.__class__.__name__, name, self.var.__dict__[name].val))
         if hasattr(self,'var_changed'):
             self.var_changed(name)
     
@@ -294,9 +294,9 @@ class MrflandWeblet(object):
         else:
             mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:
-            setattr(self.vars, name, v)
+            setattr(self.var, name, v)
     def has_var(self,name):
-        return name in self.vars.__dict__
+        return name in self.var.__dict__
 
         
     def mktag(self, tab, row):
@@ -335,11 +335,11 @@ class MrflandWeblet(object):
             mrflog.error("%s cmd_mrfvar_ctrl no name specified - data  was  %s"%(self.__class__.__name__,repr(data)))
             return
         vn = data['name']
-        if not self.vars.__dict__.has_key(vn):
+        if not self.var.__dict__.has_key(vn):
             mrflog.error("%s cmd_mrfvar_ctrl no var found with name %s - data  was  %s"%(self.__class__.__name__,vn,repr(data)))
             return
 
-        va = self.vars.__dict__[vn]
+        va = self.var.__dict__[vn]
         
         if data['op'] == 'set':
             if not data.has_key('val'):
