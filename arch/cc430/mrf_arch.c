@@ -23,6 +23,11 @@
 #include <rtc_arch.h>
 #include "hal_pmm.h"
 
+#include "mrf_pinmacros.h"
+#define _WAKE_PORT P2
+#define _WAKE_BIT  6
+
+
 extern uint8 _mrfid;
 
 uint16 _at_sp;
@@ -67,7 +72,10 @@ int mrf_arch_boot(){
   P3OUT = 0x00;
   P3DIR = 0x00;
   // LCD1x9_Initialize();
- 
+
+  PINHIGH(WAKE);
+  OUTPUTPIN(WAKE);
+
 
   rtc_init();
   rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
@@ -80,14 +88,16 @@ int mrf_arch_boot(){
 int  mrf_wake()  {
   // clear LPM3 on reti
   WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
+  PINHIGH(WAKE);
   __bic_SR_register(LPM3_bits);
   return 0;
 }
 int mrf_sleep(){
   // disable WDT
   WDTCTL = WDTPW + WDTHOLD; 
-
+  PINLOW(WAKE);
   __bis_SR_register(LPM3_bits  + GIE);
+  
   return 0;
 }
 
@@ -97,7 +107,7 @@ int mrf_arch_run(){
     WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
 
     i = mrf_foreground();
-    mrf_sleep();
+    //mrf_sleep();
   }
   return 0;
 }
