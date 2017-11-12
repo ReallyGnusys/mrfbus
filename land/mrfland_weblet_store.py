@@ -79,17 +79,6 @@ class MrfLandWebletStore(MrflandWeblet):
         skeys = self.var.__dict__.keys()
         skeys.sort()
 
-        """
-        st = []
-
-
-        for sk in skeys:
-            st.append(self.var.__dict__[sk])
-
-
-        mrflog.warn( "st is %s"%repr(st))
-
-        """
         s += """
         <hr>
         <h3>Temps</h3>"""
