@@ -40,71 +40,32 @@ class MrfLandWebletStore(MrflandWeblet):
             return
         if not self.cdata.has_key('acc_litres'):
             mrflog.error("%s , no acc_litres in data")
+
             return
-
         self.litres = self.cdata['acc_litres']
-        reh    = re.compile(r'%s([0-9]+)'%self.cdata['acc_tag'])
-        reflow = re.compile(r'%s(FLOW)'%self.cdata['acc_tag'])
-        reret  = re.compile(r'%s(RET)'%self.cdata['acc_tag'])
 
-        self.ts = {}
-        self.flow_sens = None
-        self.return_sens = None
-        self.temps = {}  # hashed by acc level (%)
-        self.levels = []
-        for s in ts:
-            mob = reh.match(s.label)
-            if mob:
-                level = int(mob.group(1))
-                self.ts[level] = s
-                self.temps[level] = 0
-                self.levels.append(level)
-                self.ts[level].subscribe(self.tsens_callback(level))                
-                self.rm.graph_req(s.label)  # ask for managed graph
 
-            elif reret.match(s.label):
-                self.return_sens = s
-                self.return_sens.subscribe(self.return_callback)
-                self.rm.graph_req(s.label)  # ask for managed graph
-                mrflog.warn("Found return sensor  %s"%repr(self.return_sens.label))
-        self.levels.sort(reverse=True)
-        mrflog.warn("Store has temp sensors at following levels %s"%repr(self.levels))
-        
-    def eval_capacity(self):
-        return
-    
-    def tsens_callback(self,level):
-        def _tscb(label,data):
-            mrflog.info("weblet store tsens callback for level %d label %s data %s"%(level,label, repr(data)))
-            self.temps[level] = data['temp']
-            tg = self.mktag('acctemp', str(level))
-            mrflog.info("tag is %s"%(repr(tg)))
-            self.rm.webupdate(self.mktag('acctemp', str(level)), data)
-            if level == 100:
-                tg = self.mktag('accstat', 'top_temp')
-                dt =  { 'val' : data['temp']}
-                mrflog.info("top tank tag is %s dt %s"%(repr(tg),repr(dt)))
-                self.rm.webupdate(tg, dt)
-            self.eval_capacity()
-        return _tscb 
+        self.top_ts = self.rm.sens_search_vector_max(MrfSensPt1000, self.cdata['acc_tag'])
+        self.add_var('tank_top',self.top_ts, field='temp', graph=True)
+        self.return_sens = self.rm.sens_search(self.cdata['acc_tag'] + "_RET")        
+        self.add_var('return_temp',self.return_sens, field='temp', graph=True)
+
+
+        self.ts = self.rm.sens_search_vector(MrfSensPt1000, self.cdata['acc_tag'])
+        for l in self.ts:  # 
+            s = self.ts[l]
+            self.add_var(s.label,s, field='temp', graph=True)
   
-        
-    def return_callback(self, label, data):
-        mrflog.info("weblet store return callback for  label %s data %s"%(label, repr(data)))
-        tg = self.mktag('accstat', 'return_temp')
-        dt =  { 'val' : data['temp']} 
-        self.rm.webupdate(tg, dt)
-
+        mrflog.warn("Store has temp sensors at following levels %s"%repr(self.ts.keys()))
         
 
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
         
         s =  """
-        <h2>"""+self.label+"""</h2>
-        """
+        <h2>"""+self.label+"    "+self.var.tank_top.html+" &#176;C</h2>"
         sensors = []
-        for level in self.levels:
+        for level in self.ts:
             sensors.append(self.ts[level].label)
 
             
@@ -114,9 +75,27 @@ class MrfLandWebletStore(MrflandWeblet):
             "temp" : sensors
         })
 
-        s += MrflandObjectTable(self.tag,"accstat", { 'val': {0}} ,['top_temp','return_temp'], tr_hdr={ 'tag' : '', 'val': ''} )
-        s += "<hr>\n"
-        s += " <h3>Tank sensors</h3>\n"
-        s += MrflandObjectTable(self.tag,"acctemp", { 'temp': {0.0}} ,self.levels, tr_hdr={ 'tag' : 'level'} )
+
+        skeys = self.var.__dict__.keys()
+        skeys.sort()
+
+        """
+        st = []
+
+
+        for sk in skeys:
+            st.append(self.var.__dict__[sk])
+
+
+        mrflog.warn( "st is %s"%repr(st))
+
+        """
+        s += """
+        <hr>
+        <h3>Temps</h3>"""
+        s += self.html_var_table(skeys)
+            
+
+        
 
         return s

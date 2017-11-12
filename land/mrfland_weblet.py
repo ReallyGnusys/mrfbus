@@ -320,13 +320,20 @@ class MrflandWeblet(object):
         return s
 
     def html_var_table(self, varlist):
+        mrflog.warn("%s html_var_table varlist %s"%(self.__class__.__name__, repr(varlist)))
         s = """
         <table class="table">
           <tbody>"""
          
         for vn in varlist:
+
+            if issubclass(vn.__class__, MrfSens):
+                vname = vn.name
+            else:
+                vname = vn
+                
             s += """
-            <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+self.var.__dict__[vn].html+"</td></tr>"
+            <tr><td>"""+self.var.__dict__[vname].name+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
 
         s += """
           </tbody>
@@ -334,6 +341,9 @@ class MrflandWeblet(object):
         return s
     
     def html_var_ctrl_table(self, varlist):
+
+
+        
         s = """
         <table class="table">
           <tbody>"""

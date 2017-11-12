@@ -53,7 +53,7 @@ if __name__ == '__main__':
                     {
                         'tag'        : 'store',
                         'label'      : 'Heatstore',
-                        'acc_tag'    : 'ACC_',
+                        'acc_tag'    : 'ACC',
                         'acc_litres' : 2200
                            
                     })
