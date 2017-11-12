@@ -230,7 +230,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
      
     def pane_html(self):
         s =  """
-        <h2>"""+self.label+" "+self.var.tank_top.html+"</h2>"
+        <h2>"""+self.label+"    "+self.var.tank_top.html+" &#176;C</h2>"
         
         s += self.rm.graph_inst({
             "temp" : [self.top_ts.label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
@@ -245,6 +245,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             [
                 self.var.tank_top.name,
                 self.var.acc_top.name,
+                self.var.hx_flow.name,
                 self.var.hx_ret.name,
                 self.var.state.name,
                 self.var.enabled.name,

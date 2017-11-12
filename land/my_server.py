@@ -61,7 +61,7 @@ if __name__ == '__main__':
     MrfLandWebletHotWater(rm,
                           {
                               'tag'        : 'DHW1',
-                              'label'      : 'Hot Water 1',
+                              'label'      : 'Main Hot Water',
                               'rad'        : 'RAD1',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB1',
