@@ -24,42 +24,36 @@ import re
 class MrfLandWebletTemps(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        # do subscriptions here
-        ## looking for all MrfSensPt1000 types
 
         if not self.rm.senstypes.has_key(MrfSensPt1000):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
         self.sl = self.rm.senstypes[MrfSensPt1000]
-
-        mrflog.info("num MrfSensPt1000 found was %d"%len(self.sl))
-        self.slabs = []
-        self.sens = OrderedDict()
+        
         self.graph_temps = []
-        reg    = re.compile(r'(.+)(_AMBIENT)')   # reg to match sensors for graphing
-        for s in self.sl:
-            self.slabs.append(s.label)
-            self.sens[s.label] = s
-            if reg.match(s.label):
-                self.rm.graph_req(s.label)  # ask for managed graph
-                self.graph_temps.append(s.label)
 
-        for s in self.sens.keys():
-            self.sens[s].subscribe(self.sens_callback)
+        for s in self.sl:
+            if s.label.find("_AMBIENT") != -1:
+                self.add_var(s.label, s , field='temp', graph=True)
+                self.graph_temps.append(s.label)
+            else:
+                self.add_var(s.label, s , field='temp')
 
     def sens_callback(self, label, data ):
         mrflog.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag('temp', label), data)
 
     def pane_html(self):
-        """ just want to display pt1000sens output stucture"""
         s =  """
-        <h2>Temps</h2>"""
-        if len(self.sl):
-            mrflog.warn("labels are %s "%repr(self.slabs))
-            s += self.rm.graph_inst({
-                "temp" : self.graph_temps
-            })
+        <h2>Lounge """+self.var.LOUNGE_AMBIENT.html+" &#176;C</h2>"
+
+        s += """
+        <hr> """
+
+        s += self.rm.graph_inst({
+            "temp" : self.graph_temps
+        })
+            
+        s += self.html_var_table(self.sl)
            
-            s += MrflandObjectTable("temps","temp",self.sl[0]._output,self.slabs)
         return s

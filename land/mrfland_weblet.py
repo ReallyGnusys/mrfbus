@@ -328,7 +328,7 @@ class MrflandWeblet(object):
         for vn in varlist:
 
             if issubclass(vn.__class__, MrfSens):
-                vname = vn.name
+                vname = vn.label
             else:
                 vname = vn
                 
