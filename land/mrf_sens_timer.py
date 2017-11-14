@@ -53,8 +53,8 @@ class MrfSensTimer(MrfSens):
         cname = indata['cname']
         outdata[cname] = datetime.time(hour=indata['val']['hour'], minute=indata['val']['minute'], second=indata['val']['second'])
 
-        nw = datetime.datetime.now()
-        nt = datetime.time (nw.hour, nw.minute, nw.second)
+        #nw = datetime.datetime.now()
+        #nt = datetime.time (nw.hour, nw.minute, nw.second)
         outdata['active'] = self.is_active(outdata)
 
         mrflog.warn("%s %s genout %s"%(self.__class__.__name__, self.label, repr(outdata)))

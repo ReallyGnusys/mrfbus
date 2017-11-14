@@ -24,11 +24,11 @@ from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
 
-    _config_ = [ ('enabled'    ,  False , {}),
-                 ('target_temp',  60.0,  { 'min_val' : 40.0, 'max_val' : 65.0, 'step' : 0.5}),
-                 ('delta_targ_rx',  8.0, { 'min_val' : 6.0,  'max_val' : 10.0, 'step' : 0.5}),
-                 ('min_wait_mins',  16*60, { 'min_val' : 2*60, 'max_val' : 24*60, 'step' :60 }),
-                 ('hysteresis' ,  4.0,   {'min_val':  2.0, 'max_val': 12.0, 'step' : 1.0})
+    _config_ = [ ('enabled'      ,  False , {}),
+                 ('target_temp'  ,  60.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
+                 ('delta_targ_rx',  8.0   , { 'min_val' :  6.0,  'max_val' :  10.0, 'step' : 0.5}),
+                 ('min_wait_hours',  16   , { 'min_val' :  1.0,  'max_val' :    24, 'step' : 0.5}),
+                 ('hysteresis'   ,  4.0   , { 'min_val' :  2.0,  'max_val' :  12.0, 'step' : 1.0})
     ]
     
     def init(self):
@@ -192,7 +192,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             elif self.var.tank_top.val > self.var.target_temp.val :
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 next_state = 'REST'
-                self.set_timeout(60*self.var.min_wait_mins.val) 
+                self.set_timeout(60*60*self.var.min_wait_hours.val) 
                 self.hx_relay.set(0)                
             
                 
@@ -219,7 +219,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if trans:
                 self.hx_relay.set(0)                
                 next_state = 'REST'
-                self.set_timeout(60*self.var.min_wait_mins.val)   # wait 2 hours before checking again
+                self.set_timeout(60*60*self.var.min_wait_hours.val)   # wait 2 hours before checking again
 
         if next_state != self.var.state.val:
             self.var.state.set(next_state)
@@ -263,7 +263,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             [
                 self.var.enabled.name,
                 self.var.target_temp.name,
-                self.var.min_wait_mins.name
+                self.var.min_wait_hours.name
             ]
         )
         

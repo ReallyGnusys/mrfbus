@@ -39,10 +39,12 @@ class MrfLandWebletTemps(MrflandWeblet):
             else:
                 self.add_var(s.label, s , field='temp')
 
-    def sens_callback(self, label, data ):
-        mrflog.info("TempWeblet : sens_callback  %s  data %s"%(label,repr(data)))
-        self.rm.webupdate(self.mktag('temp', label), data)
+    def var_changed(self,name):  # live display of all vars
+        self.rm.webupdate(self.var.__dict__[name].webtag,
+                          { 'val' : self.var.__dict__[name].val}
+                          )       
 
+                
     def pane_html(self):
         s =  """
         <h2>Lounge """+self.var.LOUNGE_AMBIENT.html+" &#176;C</h2>"

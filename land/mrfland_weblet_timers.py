@@ -28,9 +28,33 @@ import re
 class MrfLandWebletTimers(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        # do subscriptions here
-        ## looking for all MrfSensPt1000 types
 
+
+        # build tod vars for on off for all cdata['timers']
+
+        
+        self.tcols = OrderedDict()
+
+        self.tcols['enable'] =  []
+        self.tcols['on']  = []
+        self.tcols['off'] = []
+
+        
+        self.trnames = []
+        for tn in self.cdata['timers']:
+            self.trnames.append(tn)
+            en = tn+'_en'
+            self.add_var(en, False)
+            self.tcols['enable'].append(self.var.__dict__[en])
+            
+            for sf in ['on','off']:
+                vn = tn+'_'+sf
+                self.add_var(vn, '00:00',step='00:05')
+                self.tcols[sf].append(self.var.__dict__[vn])
+
+                
+                
+        
         if not self.rm.senstypes.has_key(MrfSensTimer):
             mrflog.error("%s post_init failed to find sensor type MrfSensTimer in rm"%self.__class__.__name__)
             self.sl = {}
@@ -155,6 +179,12 @@ class MrfLandWebletTimers(MrflandWeblet):
                     (sensmap['addr'] , repr(param)))
         self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
         """
+
+    def var_changed(self,name):  # live display of all vars
+        self.rm.webupdate(self.var.__dict__[name].webtag,
+                          { 'val' : self.var.__dict__[name].val}
+                          )       
+
         
     
     def pane_html(self):
@@ -164,6 +194,10 @@ class MrfLandWebletTimers(MrflandWeblet):
         if len(self.sl):
             mrflog.warn("timer init_vals is %s"%repr(self._init_vals))
             s += MrflandObjectTable(self.tag, "timers", self.sl[0]._output, self.slabs, postcontrols = [("on","_mrf_ctrl_timepick"),("off","_mrf_ctrl_timepick")], init_vals = self._init_vals)
+
+        s += """
+        <hr>
+        """+self.html_mc_var_table('Timer',self.trnames, self.tcols ,ctrl=True)
         return s
 
 

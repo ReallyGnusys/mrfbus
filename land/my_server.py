@@ -70,7 +70,7 @@ if __name__ == '__main__':
                           {
                               'target_temp': 60.0,
                               'delta_targ_rx' : 8.0,
-                              'min_wait_mins' : 16*60,  # aim to run every six hours
+                              'min_wait_hours' : 16, 
                               'enabled'  : False
                           })
 
@@ -83,7 +83,9 @@ if __name__ == '__main__':
     MrfLandWebletTimers(rm,
                         {
                             'tag':'timers',
-                            'label':'Timers'
+                            'label':'Timers',
+                            'timers':  [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0" ]
+                            
                         })
 
     MrfLandWebletRelays(rm,

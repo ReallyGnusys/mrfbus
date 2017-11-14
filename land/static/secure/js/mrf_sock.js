@@ -115,10 +115,20 @@ function mrf_web_update(obj){
     data = obj.data;
 
     if(tag.hasOwnProperty('mrfvar')){
-        console.log("var update "+tag.mrfvar+ " = "+data.val);
+        //console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
 
         $(sl).html(""+data.val);
+
+        // patch up check box
+
+        sel = '.mrvar-ctrl-cb[app='+tag.app+'][name='+tag.mrfvar+']'
+        cbs = $(sel)
+        if (cbs.length > 0) {
+            console.log("testing sel "+sel)
+            console.log("matched "+cbs.length+" elements , setting checked to "+data.val)       
+            cbs.prop('checked',data.val)
+        }
         
         return;
     }
@@ -141,8 +151,8 @@ function mrf_web_update(obj){
 
 
 function mrf_auto_graph(label, data){
-    console.log("graph update "+label);
-    console.log(data);
+    //console.log("graph update "+label);
+    //console.log(data);
     if (!(label in _sensor_averages)){
         console.error("auto graph for label "+label+"  not found");
         return;
@@ -158,13 +168,13 @@ function mrf_auto_graph(label, data){
                 return;
             }
                 
-            console.log("have fld "+fld);
+            //console.log("have fld "+fld);
             _sensor_averages[label][fld].value.push(data[fld]);
             _sensor_averages[label][fld].ts.push(data['ts']);
 
             dt = new Date(data['ts']);
-            console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
-            console.log(dt);
+            //console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
+            //console.log(dt);
 
             limms = dt.getTime() - _sensor_hist_seconds * 1000;
             
@@ -173,7 +183,7 @@ function mrf_auto_graph(label, data){
             while (fd.getTime() < limms ) {
                 _sensor_averages[label][fld].ts.shift();
                 _sensor_averages[label][fld].value.shift();
-                console.log("deleted old value for "+label+" fld "+fld+" "+fd);
+                //console.log("deleted old value for "+label+" fld "+fld+" "+fd);
                 fd =  new Date(_sensor_averages[label][fld].ts[0]);
 
             }
@@ -186,9 +196,9 @@ function mrf_auto_graph(label, data){
         plot = plots[idx];
         var divid = plot.getAttribute("id");
         var dl = plot_data_layout($(plot).data("sensors"));
-        console.log("trying to update plot "+divid);
+        //console.log("trying to update plot "+divid);
         Plotly.update(divid,dl.data,dl.layout);
-        console.log("updated plot "+divid);
+        //console.log("updated plot "+divid);
     }
 }
 
@@ -200,7 +210,7 @@ function plot_data_layout(sensors){
         };
         for (tid in sensors.temp) {
             tsens = sensors.temp[tid];
-            console.log("trying tsens "+tsens)
+            //console.log("trying tsens "+tsens)
             data.push( {
                 x : _sensor_averages[tsens].temp.ts,
                 y : _sensor_averages[tsens].temp.value,
@@ -216,7 +226,7 @@ function plot_data_layout(sensors){
                 side: 'right'
             };
             for (tid in sensors.relay) {
-            console.log("trying relay "+tsens)
+                //console.log("trying relay "+tsens)
                 tsens = sensors.relay[tid];
                 data.push( {
                     x : _sensor_averages[tsens].relay.ts,
@@ -420,6 +430,31 @@ function init_app(){
 
                 ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
             });
+    var timeoutId = 0;
+
+
+    function long_up(event){
+            console.log("long_up mouse held on mrfvar-ctrl-up  targ name:"+event.target.nodeName + " : "+$(event.target).attr("name"))
+          console.log(event.target)
+          set_long_up_to(event);
+    }
+
+    function set_long_up_to(event){
+
+        timeoutId = setTimeout(long_up, 1000, event);
+
+    }
+
+
+    $(".mrfvar-ctrl-up").on('mousedown', function(event) {
+
+        set_long_up_to(event);
+    }).on('mouseup mouseleave', function() {
+        clearTimeout(timeoutId);
+    });   
+
+
+    
     $(".mrfvar-ctrl-down").click(
             function(){
                 console.log(" mrfvar down clicked");

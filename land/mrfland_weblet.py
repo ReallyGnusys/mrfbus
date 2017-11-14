@@ -26,6 +26,9 @@ from collections import OrderedDict
 from mrflog import mrflog
 from mrfland import to_json
 from mrf_sens import MrfSens
+import re
+import datetime
+
 
 def tr_fn(inp , tr_dic):
     if tr_dic.has_key(inp):
@@ -107,6 +110,23 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 """
     return s
 
+_tre = re.compile(r'([0-2][0-9]):([0-5][0-9])')
+
+def parse_timestr(tstr):
+    mob = _tre.match(tstr)
+    if not mob:
+        return None
+    hour = int(mob.group(1))
+    minute = int(mob.group(2))
+    if hour > 24 or hour < 0 :
+        return None
+    if minute > 59 or minute < 0 :
+        return None
+    
+    return datetime.time(hour=hour,minute=minute)
+
+
+
 class MrfWebletVar(object):
     def __init__(self, app, name, val, **kwargs): # min_val=None,max_val=None,step=None):
         mrflog.warn("MrfWebletVar app %s name %s val %s"%(app,name,repr(val)))
@@ -142,8 +162,18 @@ class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
         self._val = val  # just a simple value we keep here
         print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
+
+        self.check_tod()
+
+        if self.tod.__class__ == datetime.time:
+            if 'step' not in kwargs:
+                mrflog.warn("%s no step"%self.__class__.__name__)
+                self.step = parse_timestr("00:05")
+            else:
+                self.step = parse_timestr(kwargs['step'])
+            return
         if self.val.__class__ == int or self.val.__class__ == float:
-            if 'min_val' not in kwargs == None:
+            if 'min_val' not in kwargs:
                 mrflog.error("%s no min_val"%self.__class__.__name__)
                 return
             if 'max_val' not in kwargs:
@@ -170,15 +200,55 @@ class MrfWebletConfigVar(MrfWebletVar):
             self.max_val = max_val
             self.min_val = min_val
             self.step    = step
+
+    def check_tod(self):  # check if self.val is tod
+
+        if self.val.__class__ == str:
+            mrflog.warn("yes it's str")
+            r = parse_timestr(self.val)
+            if r.__class__ == datetime.time:
+                mrflog.warn("yes it's time")
+            self.tod = r
+        else:
+            mrflog.warn("check_tod he say no - got class %s val %s"%(self.val.__class__, repr(self.val)))
+            self.tod = None
+        
     def value(self):
         return self._val
+
+
+    def step_value(self, num):
+        if self.tod.__class__ == datetime.time:  # tod is special case...hmpfff
+            tdel = datetime.timedelta(seconds = self.step.hour*60*60 + self.step.minute*60)
+            td = datetime.datetime.combine(datetime.datetime.today(), self.tod)
+
+            td = td + num *tdel
+
+            nv = td.strftime("%H:%M")
+        else:
+            nv = self.val + num*self.step
+            
+            if nv > self.max_val:
+                nv = self.max_val
+            if nv < self.min_val:
+                nv = self.min_val
+
+            
+        self.set(nv)
+ 
+            
+        
     def set(self, value):
         if type(value) != type(self._val):
             mrflog.error("%s set value wrong type for var name %s"%(self.__class__.__name__,self.name))
             return
         if self._val != value:
             self._val = value
+            self.check_tod()
             self.updated()
+
+        
+        
     @property
     def html_ctrl(self):
         def cb_checked(self):
@@ -198,6 +268,15 @@ class MrfWebletConfigVar(MrfWebletVar):
                    <button class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></button>
                    <button class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
             </span>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
+
+        if self.val.__class__ == str :
+            return """
+            <span class="mrfvar-ctrl-wrap" app="%s" name="%s" >
+                   <button class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></button>
+                   <button class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
+            </span>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
+
+        
         
         return ""
         
@@ -246,7 +325,7 @@ class MrflandWeblet(object):
             mrflog.error('weblet data does not contain label')
             return
         
-        mrflog.info("creating weblet tag %s label %s"%(cdata['tag'],cdata['label']))
+        mrflog.warn("creating weblet cdata %s"%(repr(cdata)))
         self.rm = rm
         self.tag = cdata['tag']
         self.label = cdata['label']
@@ -339,6 +418,44 @@ class MrflandWeblet(object):
           </tbody>
         </table>"""
         return s
+
+    def html_mc_var_table(self, hdr, rownames,  cols , ctrl=False):
+        #mrflog.warn("%s html_mc_var_table hdrs %s"%(self.__class__.__name__, repr(hdrs)))
+        s = """
+        <table class="table">
+          <thead>
+          <tbody>
+           <tr>"""
+        s+= "<th>"+hdr+"</th>"
+
+        for cn in cols.keys():
+            s+= "<th>"+cn+"</th>"
+
+        s += """
+          </tr>
+         </thead>
+         <tbody>"""
+
+        for i in range(len(rownames)):
+            s += """
+           <tr><td>"""+rownames[i]+"</td>"
+
+            for cn in cols.keys():
+                v = cols[cn][i]
+                if ctrl:
+                    if v.val.__class__ == bool:
+                        s += "<td>"+v.html_ctrl+"</td>"
+                    else:
+                        s += "<td>"+v.html+v.html_ctrl+"</td>"
+                else:
+                    s += "<td>"+v.html+"</td>"
+            s += "</tr>"                
+
+        s += """
+          </tbody>
+        </table>"""
+        return s
+
     
     def html_var_ctrl_table(self, varlist):
 
@@ -394,27 +511,17 @@ class MrflandWeblet(object):
                 mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
 
         if data['op'] == 'up':
-            if hasattr(va,'set'):
+            if hasattr(va,'step_value'):
 
-                nv = va.val + va.step
-
-                if nv > va.max_val:
-                    nv = va.max_val
-
-                va.set(nv)
-                mrflog.warn("%s cmd_mrfvar_ctrl up %s = %s"%(self.__class__.__name__,vn,repr(nv)))
-                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                va.step_value(1)
+                #mrflog.warn("%s cmd_mrfvar_ctrl up %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                #mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
         if data['op'] == 'down':
-            if hasattr(va,'set'):
+            if hasattr(va,'step_value'):
+                va.step_value(-1)
 
-                nv = va.val - va.step
-
-                if nv < va.min_val:
-                    nv = va.min_val
-
-                va.set(nv)
-                mrflog.warn("%s cmd_mrfvar_ctrl down %s = %s"%(self.__class__.__name__,vn,repr(nv)))
-                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                #mrflog.warn("%s cmd_mrfvar_ctrl down %s = %s"%(self.__class__.__name__,vn,repr(nv)))
+                #mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(nv)))
 
                 
             
