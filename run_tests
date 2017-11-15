@@ -2,7 +2,7 @@
 
 #start mrfbus instances
 TMP=/tmp/mrf_bus
-LOGDIR=${TMP}/log
+LOGDIR=log
 #
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 

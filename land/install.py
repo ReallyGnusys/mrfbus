@@ -40,11 +40,8 @@ log_level = logging.WARN
 logger_name = 'mrfland'
 
 
-tmpdir  = "/tmp/mrf_bus"
 
-
-
-logdir = tmpdir +'/log/'
+logdir = 'log/'
 mrflog = 'mrfland.log'
 
 #hard coded userdb

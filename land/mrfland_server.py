@@ -554,23 +554,14 @@ class MrflandServer(object):
             return None,None,None
         ## here just pass this to rm device model to handle
         mrflog.info("server parse input got hdr %s"%repr(hdr))
+
+        # pass packet to rm , which runs device packet handler
         param, rsp = self.rm.packet(hdr,resp)
 
+        # all webapp callbacks for packet have been run at this point
+        # so empty anything that has accrued in the queues as a result
         self._run_updates()
 
-        """
-        for wup in self.rm.wups:
-            ro = mrfland.RetObj()
-            ro.b(mrfland.mrf_cmd('web-update',wup))
-            mrfland.comm.comm(None,ro)
-        self.rm.wups = []
-
-
-        for dup in self.rm.dups:
-            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
-            self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
-        self.rm.dups = []
-        """
 
         
 
@@ -644,14 +635,20 @@ class MrflandServer(object):
         self.tcp_server.listen(install.tcpport)
         mrflog.info("started tcpserver on port %d"%install.tcpport)
     def _start_webapp(self):        
-        
+
+        if os.environ.has_key('MRFBUS_HOME'):
+            mrfhome = os.environ['MRFBUS_HOME']
+        else:
+            mrflog.error("MRFBUS_HOME not defined, webapp unlikely to work...")
+            mrfhome = ''
+            
         self._web_static_handler = NoCacheStaticFileHandler
 
-        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': 'public/css/asa/images'}),
-                         (r'/static/public/(.*)', self._web_static_handler, {'path': 'static/public'}),
+        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','public/css/asa/images')}),
+                         (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
                          (r'/ws', WebSocketHandler), 
                          (r'/pws', PubSocketHandler), 
-                         (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': 'static/secure'}),
+                         (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': os.path.join(mrfhome,'land','static/secure')}),
                          (r'((/)([^/?]*)(.*))', mainapp, dict(mserv=self) ) #desperate times!
         ]
 
