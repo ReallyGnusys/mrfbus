@@ -430,43 +430,46 @@ function init_app(){
 
                 ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
             });
-    var timeoutId = 0;
 
 
-    function long_up(event){
-            console.log("long_up mouse held on mrfvar-ctrl-up  targ name:"+event.target.nodeName + " : "+$(event.target).attr("name"))
-          console.log(event.target)
-          set_long_up_to(event);
-    }
-
-    function set_long_up_to(event){
-
-        timeoutId = setTimeout(long_up, 1000, event);
-
-    }
+    $(".mrfvar-ctrl-timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
+    
+    $('.mrfvar-ctrl-timepick').timepicker().on('hide.timepicker', function(e) {
+        console.log('The time is ' + e.time.value);
+        console.log('The hour is ' + e.time.hours);
+        console.log('The minute is ' + e.time.minutes);
+        console.log('The meridian is ' + e.time.meridian);
 
 
-    $(".mrfvar-ctrl-up").on('mousedown', function(event) {
+        val = ("0" + e.time.hours).slice(-2) +":"+("0"+e.time.minutes).slice(-2)
+        console.log('Tstr is  ' + val);
+        app = $(this).attr('app');
+        name = $(this).attr('name');
+        cdata = {"app": app , "name" : name, "op" : "set",  "val" : val }
+        console.log(" mrf cb app :"+app );
+        console.log(cdata)
+        
+        ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
+      });
+    
 
-        set_long_up_to(event);
-    }).on('mouseup mouseleave', function() {
-        clearTimeout(timeoutId);
-    });   
+    $('.mrfvar-ctrl-timepick').timepicker().on('show.timepicker', function(e) {
+        
+        console.log('Show : The time is ' + e.time.value);
+        console.log(e);
+        app = $(this).attr('app');
+        name = $(this).attr('name');
+
+        hval = $(".mrfvar-"+name).html()
+        console.log("hval = "+hval)
+        $(this).timepicker('setTime', hval);
+        
+      });
+    
+
 
 
     
-    $(".mrfvar-ctrl-down").click(
-            function(){
-                console.log(" mrfvar down clicked");
-                console.log(this)
-                app = $(this).attr('app');
-                name = $(this).attr('name');
-                cdata = {"app": app , "name" : name , "op" : 'down' }
-                console.log(cdata)
-
-                ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
-            });
-
 
     
     //graphs

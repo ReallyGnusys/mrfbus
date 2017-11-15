@@ -269,12 +269,11 @@ class MrfWebletConfigVar(MrfWebletVar):
                    <button class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
             </span>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
 
-        if self.val.__class__ == str :
+        if self.val.__class__ == str and self.tod.__class__ == datetime.time:
             return """
             <span class="mrfvar-ctrl-wrap" app="%s" name="%s" >
-                   <button class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></button>
-                   <button class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
-            </span>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
+               <i class="glyphicon glyphicon-time mrfvar-ctrl-timepick" app="%s" name="%s"></i>
+            </span>"""%(self.app, self.name, self.app, self.name)
 
         
         
@@ -505,10 +504,12 @@ class MrflandWeblet(object):
                 return
                 
             if hasattr(va,'set'):
+                sval = va.val.__class__(data['val'])
                 
-                mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
-                va.set(data['val'])
-                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(data['val'])))
+                mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s %s"%(self.__class__.__name__,vn,repr(data['val']),repr(sval)))
+                
+                va.set(sval)
+                mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(va.val)))
 
         if data['op'] == 'up':
             if hasattr(va,'step_value'):
