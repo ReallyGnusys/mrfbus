@@ -56,24 +56,20 @@ class DeviceTestCase(LandTestCase):
 
     def dev_info_test(self,dest):
         print "*********************************"
-        print "* xxx device info test (dest 0x%02x)"%dest
+        print "*  device info test (dest 0x%02x)"%dest
         print "*********************************"
         ccode = mrf_cmd_device_info
-        exp = PktDeviceInfo()
-        exp.netid = 0x25
-        exp.num_buffs = self.num_buffs
-        exp.num_ifs = self.num_ifs
-        exp.dev_name = (ctypes.c_uint8*10)(*(bytearray(self.devname)))
-        #exp.dev_name = 'host'
-        #setattr(exp,'dev_name','host')
-        #exp.dev_name = (ctypes.c_uint8*10)(*(bytearray("host")))
-        exp.mrfid = dest
         st = datetime.now()
-        rv = self.cmd_test(dest,ccode,exp,dstruct=None)
-        print "cmd_test returned"
+        self.cmd(dest,ccode,dstruct=None)
+        resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s\n"%(str(end-st))
-        self.assertEqual(rv,0)
+
+        
+
+        rv = self.check_attrs(resp,PktDeviceInfo())
+        self.assertTrue(rv)
+
+        
         if rv == 0:
             print "PASSED device info test (dest 0x%02x)"%dest
         else:
@@ -114,7 +110,11 @@ class DeviceTestCase(LandTestCase):
         print "**********************"
         print "* sys info test   (dest 0x%02x)"%dest
         print "**********************"
-        gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
+
+        if self.checkgit:
+            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.env['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
+
+        #gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
         st = datetime.now()
@@ -151,7 +151,8 @@ class DeviceTestCase(LandTestCase):
         print "**********************"
         print "* sys cmd info test   (dest 0x%02x)"%dest
         print "**********************"
-        gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
+        if self.checkgit:
+            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.env['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
         st = datetime.now()
