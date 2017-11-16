@@ -491,7 +491,9 @@ class MrflandWeblet(object):
         if not data.has_key('name'):
             mrflog.error("%s cmd_mrfvar_ctrl no name specified - data  was  %s"%(self.__class__.__name__,repr(data)))
             return
+        
         vn = data['name']
+        
         if not self.var.__dict__.has_key(vn):
             mrflog.error("%s cmd_mrfvar_ctrl no var found with name %s - data  was  %s"%(self.__class__.__name__,vn,repr(data)))
             return

@@ -30,7 +30,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         mrflog.info("%s init"%(self.__class__.__name__))
 
 
-        # build tod vars for on off for all cdata['timers']
+        # build enable tod vars for on off for all cdata['timers'] 
 
         
         self.tcols = OrderedDict()
@@ -41,7 +41,21 @@ class MrfLandWebletTimers(MrflandWeblet):
 
         
         self.trnames = []
+
+        rev = re.compile(r'^(.*)(_on|_off)$')
+        rec = re.compile(r'^(%s)(_SW|_HEAT|_PUMP)$'%'RAD1')
+
+        self.relay_lut = dict()
+        self.shares = dict()
+
+        
         for tn in self.cdata['timers']:
+            mob = rev.match(tn)
+
+            if not mob:  # expect all labels to end in _on or _off
+                mrflog.warn("%s cdata.timers has unexpected element %s"%(self.__class__.__name__, tn))
+                continue
+
             self.trnames.append(tn)
             en = tn+'_en'
             self.add_var(en, False)
@@ -49,11 +63,40 @@ class MrfLandWebletTimers(MrflandWeblet):
             
             for sf in ['on','off']:
                 vn = tn+'_'+sf
-                self.add_var(vn, '00:00',step='00:05')
+                self.add_var(vn, '00:00')
                 self.tcols[sf].append(self.var.__dict__[vn])
 
+
+            # try to find matching pump label
+            pl = mob.group(1) + "_PUMP"
+            mrflog.warn("trying to match timer label %s to pump %s"%(s.label,pl))
+
+            smap = self.rm.senslookup(pl)
+            if smap == None:
+                pl = mob.group(1) + "_HEAT"
+                mrflog.warn("trying to match timer label %s to heater %s"%(s.label,pl))
+                smap = self.rm.senslookup(pl)
+
+            if smap == None:
+                pl = mob.group(1) + "_SW"
+                mrflog.warn("trying to match timer label %s to switch %s"%(s.label,pl))
+                smap = self.rm.senslookup(pl)
+
+                    
                 
+            if smap == None:
+                mrflog.error("failed to match control label to match  sensor %s"%(s.label))
+            else:
+                mrflog.warn("matched timer label %s to sensor %s - map  %s"%(s.label,pl, repr(smap)))
+                self.relay_lut[s.label] = { 'smap' : smap , 'tag': pl }
+                if not self.shares.has_key(pl):
+                    self.shares[pl] = []
+                self.shares[pl].append(s.label)
+
+
+
                 
+        """
         
         if not self.rm.senstypes.has_key(MrfSensTimer):
             mrflog.error("%s post_init failed to find sensor type MrfSensTimer in rm"%self.__class__.__name__)
@@ -67,7 +110,6 @@ class MrfLandWebletTimers(MrflandWeblet):
         self.relays = dict()
         self._init_vals = {}
         self.relay_lut = dict()
-
         self.shares = dict()
         re1 = re.compile(r'(.*)(_[^_]+)')
 
@@ -110,7 +152,7 @@ class MrfLandWebletTimers(MrflandWeblet):
         for s in self.sens.keys():
             sens = self.sens[s]
             sens.subscribe(self.sens_callback)
-
+        """
     def run_init(self):
         mrflog.warn("weblet %s run_init"%self.__class__.__name__)
         for s in self.sens.keys():

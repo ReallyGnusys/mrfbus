@@ -134,18 +134,10 @@ class MrfLandWebletDevs(MrflandWeblet):
         mrflog.warn( "starting unit_test for device  %s address 0x%x"%(repr(dn),address))
 
         
-        if dn == 'host':  #FIXME this shouldn't be hardcoded - and needs mrfid as param
-            tp =  'hosttest.py'
-        elif dn == 'pt1000_boiler_room':
-            tp = 'pt1000test.py'
-        elif dn == 'pt1000_kitchen':
-            tp = 'pt1000test.py'
-        elif dn == 'pt1000_guest':
-            tp = 'pt1000test.py'
-        else:
-            mrflog.error("weblet devs cmd_mrfctrl unexpected dev name %s : no idea which unit_test"%dn)
-            return
-        rv = self.rm.subprocess(['/usr/bin/python', tp , hex(address)] , self.subproc_callback(dn))
+        
+
+        
+        rv = self.rm.subprocess(['/usr/bin/python', os.path.join(os.environ['MRFBUS_HOME'],'land','test_default.py' ), hex(address)] , self.subproc_callback(dn))
         mrflog.warn("subprocess returned")
         
                          
