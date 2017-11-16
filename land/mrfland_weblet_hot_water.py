@@ -133,10 +133,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
 
     def var_changed(self,name):
-        self.rm.webupdate(self.var.__dict__[name].webtag,
-                          { 'val' : self.var.__dict__[name].val}
-                          )
-        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+        #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
         if name == 'enabled':
             if self.var.__dict__[name].val:

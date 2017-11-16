@@ -59,10 +59,6 @@ class MrfLandWebletStore(MrflandWeblet):
         mrflog.warn("Store has temp sensors at following levels %s"%repr(self.ts.keys()))
 
         
-    def var_changed(self,name):  # live display of all vars
-        self.rm.webupdate(self.var.__dict__[name].webtag,
-                          { 'val' : self.var.__dict__[name].val}
-                          )       
 
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""

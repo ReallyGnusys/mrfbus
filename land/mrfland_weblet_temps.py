@@ -39,10 +39,6 @@ class MrfLandWebletTemps(MrflandWeblet):
             else:
                 self.add_var(s.label, s , field='temp')
 
-    def var_changed(self,name):  # live display of all vars
-        self.rm.webupdate(self.var.__dict__[name].webtag,
-                          { 'val' : self.var.__dict__[name].val}
-                          )       
 
                 
     def pane_html(self):
