@@ -174,7 +174,7 @@ class MrfWebletConfigVar(MrfWebletVar):
             else:
                 self.step = parse_timestr(kwargs['step'])
             return
-        if self.val.__class__ == int or self.val.__class__ == float:
+        elif self.val.__class__ == int or self.val.__class__ == float:
             if 'min_val' not in kwargs:
                 mrflog.error("%s no min_val"%self.__class__.__name__)
                 return
@@ -212,7 +212,7 @@ class MrfWebletConfigVar(MrfWebletVar):
                 mrflog.warn("yes it's time")
             self.tod = r
         else:
-            mrflog.warn("check_tod he say no - got class %s val %s"%(self.val.__class__, repr(self.val)))
+            #mrflog.warn("check_tod he say no - got class %s val %s"%(self.val.__class__, repr(self.val)))
             self.tod = None
         
     def value(self):
@@ -220,6 +220,7 @@ class MrfWebletConfigVar(MrfWebletVar):
 
 
     def step_value(self, num):
+        mrflog.warn("%s  app %s name %s num %d "%(self.__class__.__name__,self.app,self.name,num))
         if self.tod.__class__ == datetime.time:  # tod is special case...hmpfff
             tdel = datetime.timedelta(seconds = self.step.hour*60*60 + self.step.minute*60)
             td = datetime.datetime.combine(datetime.datetime.today(), self.tod)
@@ -372,8 +373,10 @@ class MrflandWeblet(object):
 
 
         
-        if hasattr(self,'_config_'):
-            for citem in self._config_:
+        if hasattr(self.__class__,'_config_'):
+            mrflog.warn("weblet has _config_ %s"%(repr(self._config_)))
+
+            for citem in self.__class__._config_:
                 if vdata.has_key(citem[0]):  # can override default in weblet instantiation
                     init_val = vdata[citem[0]]
                 else:
@@ -435,15 +438,15 @@ class MrflandWeblet(object):
         v = None
 
         mrflog.warn("%s add_var name %s"%(self.__class__.__name__, name))
-        kwargs['callback'] = self.var_callback
+        #kwargs['callback'] = self.var_callback
         
         if issubclass(initval.__class__ , MrfSens):
             if not kwargs.has_key('field'):
                 mrflog.error("add_var initval was sensor but no field keyword")
                 return
-            v = MrfWebletSensorVar(self.tag, name, initval, **kwargs)
+            v = MrfWebletSensorVar(self.tag, name, initval, callback=self.var_callback, **kwargs)
         elif initval.__class__ == int or initval.__class__ == float or initval.__class__ == bool or initval.__class__ == str: #FIXME!!
-            v = MrfWebletConfigVar(self.tag, name, initval, **kwargs)
+            v = MrfWebletConfigVar(self.tag, name, initval, callback=self.var_callback, **kwargs)
         else:
             mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:
@@ -649,13 +652,9 @@ class MrflandWeblet(object):
             tcols['on'].append(tmr.on)
             tcols['off'].append(tmr.off)
             rocols['active'].append(tmr.active)
-            
 
-        s = """
-        <hr>
-        """+self.html_mc_var_table('Timerz',self._timers.keys(), tcols ,ctrl=True,rocols=rocols)
+        return self.html_mc_var_table('Name',self._timers.keys(), tcols ,ctrl=True,rocols=rocols)
 
-        return s
 
     def cmd(self,cmd, data=None):
         fn = 'cmd_'+cmd

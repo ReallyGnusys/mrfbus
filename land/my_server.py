@@ -70,9 +70,26 @@ if __name__ == '__main__':
                           {
                               'target_temp': 60.0,
                               'delta_targ_rx' : 8.0,
-                              'min_wait_hours' : 16, 
+                              'min_wait_hours' : 16.0, 
                               'enabled'  : False
                           })
+
+    MrfLandWebletHotWater(rm,
+                          {
+                              'tag'        : 'DHW2',
+                              'label'      : 'Guest Hot Water',
+                              'rad'        : 'RAD2',
+                              'acctop'     : 'ACC_100',
+                              'heatbox'    : 'HB2',
+                              'litres'     : 200
+                          },
+                          {
+                              'target_temp': 60.0,
+                              'delta_targ_rx' : 8.0,
+                              'min_wait_hours' : 16.0, 
+                              'enabled'  : False
+                          })
+
 
     MrfLandWebletTemps(rm,
                        {
@@ -84,7 +101,7 @@ if __name__ == '__main__':
                         {
                             'tag':'timers',
                             'label':'Timers',
-                            'timers':  [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0" ]
+                            'timers':  [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
                             
                         })
 

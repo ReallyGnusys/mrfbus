@@ -431,6 +431,19 @@ function init_app(){
                 ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
             });
 
+    $(".mrfvar-ctrl-down").click(
+            function(){
+                console.log(" mrfvar down clicked");
+                console.log(this)
+                app = $(this).attr('app');
+                name = $(this).attr('name');
+                cdata = {"app": app , "name" : name , "op" : 'down' }
+                console.log(cdata)
+
+                ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
+            });
+
+    
 
     $(".mrfvar-ctrl-timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
     

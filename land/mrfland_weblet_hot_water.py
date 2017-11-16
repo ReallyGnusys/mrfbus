@@ -27,7 +27,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
     _config_ = [ ('enabled'      ,  False , {}),
                  ('target_temp'  ,  60.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
                  ('delta_targ_rx',  8.0   , { 'min_val' :  6.0,  'max_val' :  10.0, 'step' : 0.5}),
-                 ('min_wait_hours',  16   , { 'min_val' :  1.0,  'max_val' :    24, 'step' : 0.5}),
+                 ('min_wait_hours',  16.0   , { 'min_val' :  1.0,  'max_val' : 24.0, 'step' : 0.5}),
                  ('hysteresis'   ,  4.0   , { 'min_val' :  2.0,  'max_val' :  12.0, 'step' : 1.0})
     ]
     
