@@ -112,7 +112,7 @@ class DeviceTestCase(LandTestCase):
         print "**********************"
 
         if self.checkgit:
-            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.env['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
+            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.environ['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
 
         #gitversion = subprocess.check_output(["git", "rev-parse",'HEAD']).rstrip('\n')
 
