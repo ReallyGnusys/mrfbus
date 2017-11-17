@@ -152,7 +152,7 @@ class DeviceTestCase(LandTestCase):
         print "* sys cmd info test   (dest 0x%02x)"%dest
         print "**********************"
         if self.checkgit:
-            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.env['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
+            gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.environ['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
 
         ccode = mrf_cmd_sys_info
         st = datetime.now()
