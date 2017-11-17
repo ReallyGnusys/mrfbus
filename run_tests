@@ -34,7 +34,7 @@ sleep 3
 # need to start mrfland... ho ho ho
 
 
-
+[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && export MRFBUS_HOME=$(pwd)
 
 source land/venv/bin/activate
 stdbuf -oL  python land/test_server.py  > ${LOGDIR}/mrfland.log&
