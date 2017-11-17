@@ -333,18 +333,19 @@ class MrflandServer(object):
             mrflog.error("timer_callback got kwargs %s quitting"%repr(kwargs.keys))
             return
         mrflog.warn("timer_callback got kwargs %s"%repr(kwargs.keys))
+        app = kwargs['app']
         tag = kwargs['tag']
         act = kwargs['act']
-        tid = tag+"."+ act
+        tid = app+"."+tag+"."+ act
         if not self.timers.has_key(tid):
             mrflog.error("timer_callback : no timer with tid  %s"%tid)
             return
         tinf = self.timers[tid]
-        self.rm.timer_callback(tag=tag, act=act)
+        self.rm.timer_callback(app=app,tag=tag, act=act)
         #self.set_timer(tinf['tod'], tinf['tag'], tinf['act'])
         
 
-    def set_timer(self, tod , tag , act ):
+    def set_timer(self, tod , app, tag , act ):
         """
         tod : time of day, type  datetime.time
         tag : could use for example relay tag
@@ -355,7 +356,7 @@ class MrflandServer(object):
             return
         
                          
-        tid = tag+"."+ act
+        tid = app+"."+tag+"."+ act
         if self.timers.has_key(tid):
             tinf = self.timers[tid]            
             mrflog.warn("removing existing timeout for tid %s"%tid)
@@ -374,8 +375,8 @@ class MrflandServer(object):
 
         tts = time.mktime(tdt.timetuple())
         mrflog.warn("setting timer %s with ts %s"%(tid,tts))
-        th =  tornado.ioloop.IOLoop.instance().add_timeout(tts,self.timer_callback , tag=tag, act=act)
-        self.timers[tid]  = { 'thandle' : th,  'tod' : tod, 'tag' : tag , 'act' : act }
+        th =  tornado.ioloop.IOLoop.instance().add_timeout(tts,self.timer_callback , app=app, tag=tag, act=act)
+        self.timers[tid]  = { 'thandle' : th,  'tod' : tod, 'app' : app, 'tag' : tag , 'act' : act }
 
     
     def web_client_command(self,wsid,app,cmd,data):

@@ -401,10 +401,10 @@ class MrflandWeblet(object):
             tmr = self._timers[tn]
             
             if tmr.en.val:  # set timers if enabled
-                self.rm.set_timer( tmr.on.tod , tn , 'on')
-                self.rm.set_timer( tmr.off.tod , tn , 'off')
-                self.rm.timer_reg_callback( tn , 'on' , self._timer_callback)
-                self.rm.timer_reg_callback( tn , 'off' , self._timer_callback)
+                self.set_timer( tmr.on.tod , tn , 'on')
+                self.set_timer( tmr.off.tod , tn , 'off')
+                #self.rm.timer_reg_callback( tn , 'on' , self._timer_callback)
+                #self.rm.timer_reg_callback( tn , 'off' , self._timer_callback)
 
 
         
@@ -430,6 +430,12 @@ class MrflandWeblet(object):
             tn = mob.group(1)
             mrflog.warn("timer var changed %s  timer %s"%(name,tn))
             self._eval_timer(tn)
+            tmr = self._timers[tn]
+            if tmr.en.val :   # make sure timers are set
+                for act in ['on','off']:
+                    aval = tmr.__dict__[act]
+                    self.set_timer( aval.tod , tn , act)
+
         
         if hasattr(self,'var_changed'):
             self.var_changed(name)
@@ -462,7 +468,13 @@ class MrflandWeblet(object):
         return { 'app' : self.tag, 'tab' : tab , 'row' : row }
 
     _rer = re.compile(r'(.*)_([^\[]*)')
-    def switch_timer(self, name):
+
+    def set_timer(self,tod, tag,act):  # set a timer .. just prepend our
+        self.rm.set_timer(tod, self.tag, tag, act)
+        
+        
+        
+    def switch_timer(self, name):  # create a managed switch timer and associated vars
         mob = MrflandWeblet._rer.match(name)
         if not mob:  # expect all labels to end in _on or _off
             mrflog.error("%s switch_timer unexpected name %s"%(self.__class__.__name__, name))
@@ -515,17 +527,18 @@ class MrflandWeblet(object):
         
     def _timer_callback(self, label, act):
         mrflog.warn("%s : _timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
-        if not self._timers.has_key(label):
-            mrflog.error("%s _timer_callback : no timer label %s"%(self.__class__.__name__,label))
-            return
+        if self._timers.has_key(label):  # check if period timer
+            mrflog.warn("%s _timer_callback : period timer label %s"%(self.__class__.__name__,label))
 
-        self._eval_timer(self,label)
+            self._eval_timer(label)
 
-        ## reset timer if enabled
-        tmr = self._timers[label]
-
-        if tmr.en.val:
-            self.rm.set_timer( tmr.tod , label , act)
+            ## reset timer if enabled
+            tmr = self._timers[label]
+            aval = tmr.__dict__[act]
+            if tmr.en.val:
+                self.set_timer( aval.tod , label , act)
+        if hasattr(self,'timer_callback'):  # call child class callback if defined
+            self.timer_callback(label,act)
 
     def _eval_timer(self,label):
         sensmap =  self._relay_lut[label]['smap']

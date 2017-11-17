@@ -115,8 +115,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         now = datetime.now()
         td  = timedelta(seconds = 30)
         tod = now + td
-        self.rm.set_timer( tod.time() , self.label , 'TO')
-        self.rm.timer_reg_callback( self.label, 'TO', self.timer_callback)
+        self.set_timer( tod.time() , 'state' , 'TO')
 
         
     def set_timeout(self,seconds):
@@ -125,7 +124,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         now = datetime.now()
         td  = timedelta(seconds = seconds)
         tod = now + td
-        self.rm.set_timer( tod.time() , self.label , 'TO')
+        self.set_timer( tod.time() , 'state' , 'TO')
         
     def timer_callback(self, label, act):
         mrflog.warn("%s : timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
@@ -141,7 +140,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 now = datetime.now()
                 td  = timedelta(seconds = 10)
                 tod = now + td
-                self.rm.set_timer( tod.time() , self.label , 'TO')
+                self.set_timer( tod.time() , 'state' , 'TO')
             else:
                 next_state = 'DISABLED'
                 self.hx_relay.set(0)                

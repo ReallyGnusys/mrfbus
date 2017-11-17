@@ -389,13 +389,10 @@ class MrflandRegManager(object):
         self.graph_insts += 1  # they need unique ids for plotly
         return s
             
-    def set_timer(self, tod, tag, act):
-        self.server.set_timer(tod,tag,act)
-        tid = tag+"."+ act
-        if not self.timers.has_key(tid):
-            self.timers[tid] = []  ## callback list
+    def set_timer(self, tod, app, tag, act):
+        self.server.set_timer(tod,app,tag,act)
 
-    def timer_reg_callback(self, tag, act, callback):
+    def tbd_timer_reg_callback(self, tag, act, callback):
         tid = tag+"."+ act
         if not self.timers.has_key(tid):
             mrflog.error("timer_reg_callback no tid %s"%tid)
@@ -403,14 +400,16 @@ class MrflandRegManager(object):
         self.timers[tid].append(callback)
         mrflog.error("%s registering callback for  tid %s ( total cbs %d )"%(self.__class__.__name__,tid,len(self.timers[tid])))
 
-    def timer_callback(self, tag , act):
-        mrflog.warn("RegManager timer_callback, tag %s act %s",tag,act)
-        tid = tag+"."+ act
-        if not self.timers.has_key(tid):
-            mrflog.error("timer_callback no tid %s"%tid)
+    def timer_callback(self, app, tag , act):
+        mrflog.warn("RegManager timer_callback, app %s tag %s act %s",app, tag,act)
+
+        if not self.weblets.has_key(app):
+            mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
             return
-        for f in self.timers[tid]:
-            f(tag,act)
+        self.weblets[app]._timer_callback(tag, act)
+            
+        #for f in self.timers[tid]:
+        #    f(tag,act)
     def senslookup(self,label):
         if self.sensmap.has_key(label):
             return self.sensmap[label]
