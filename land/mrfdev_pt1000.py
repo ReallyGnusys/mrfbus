@@ -164,6 +164,7 @@ class MrfSensPt1000(MrfSens):
     _history_ =  { 'fields' : ['temp']
                  } 
 
+    _stype_    =  'temp'
     def res_to_temp(self,milliohms):
         R = milliohms/1000.0
 
@@ -201,9 +202,9 @@ class MrfSensPt1000(MrfSens):
         mo = 1.0 * tot / len(self.ftaps)
         return int(mo)
         
-    def genout(self,indata,outdata):
+    def genout(self,indata):
             
-            
+        outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()
@@ -213,7 +214,16 @@ class MrfSensPt1000(MrfSens):
             outdata['milliohms']  = self.filter_out(int(indata['milliohms']))
 
         outdata['temp']  = self.res_to_temp(outdata['milliohms'])
+
+        if (outdata['temp'] < -40.0)  or (outdata['temp'] > 140.0) :
+            mrflog.error("%s  %s invalid temp %.2f, discarding"%( self.__class__.__name__, self.label,  outdata['temp']))
+            return None
+
+        if hasattr(self,'last_temp')  and (abs(self.last_temp - outdata['temp'])) > 20.0:  # no way should shift 20C in one reading
+            mrflog.error("%s  %s  temp swing beyond limit got  %.2f  last was %.2f , discarding"%( self.__class__.__name__, self.label,  outdata['temp'],self.last_temp))
+            return None
         #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
+        self.last_temp = outdata['temp']
         return outdata
         
 
@@ -227,7 +237,7 @@ class MrfSensPtRelay(MrfSens):
     ]
     _history_ =  { 'fields' : ['relay']
                  } 
-
+    _stype_ = 'relay'
     def init(self):
         self.req_val     = 0
         self.on_off      = 0
@@ -239,7 +249,8 @@ class MrfSensPtRelay(MrfSens):
         self.on_off      = 1  # yes we need this to get a turn off command sent on init
         self.set(0)  # turn off all relays on server start
         
-    def genout(self,indata,outdata):
+    def genout(self,indata):
+        outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
         outdata['recd_date'] = datetime.datetime.now()

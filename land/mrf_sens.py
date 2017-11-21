@@ -28,7 +28,8 @@ class MrfSens(object):
         self.address = address  # useful for sensor/actuator to know it's address channel
         self.channel = channel
         self.devupdate = devupdate  # hmpfff... need way for actuators to send commands.
-        self.inval = None
+        self.outcount = 0
+        self.dropcount = 0
         self.skey = 0
         self.subscribers = dict()
         self.mskey = 0
@@ -94,7 +95,16 @@ class MrfSens(object):
                 mrflog.error("%s input indata type mismatch for key %s  %s vs %s"%(self.__class__.__name__, ditem, type(indata[ditem]), type(self._input[ditem]()) ))
                 return None
 
-        odata = self.genout(indata, self.output)
+        odata = self.genout(indata)
+
+
+        if odata == None:
+            mrflog.warn ("%s no output data generated for  %s"%(self.__class__.__name__, self.label ))
+            self.dropcount +=1
+            return None
+        else:
+            self.outcount += 1
+
         # output sanity check for keys and types 
 
         for ditem in odata.keys():
@@ -182,20 +192,6 @@ class MrfSens(object):
             self.history['ts'].append(now.strftime("%Y-%m-%dT%H:%M:%S"))
             for hfld in self._history_['fields']:
                 self.history[hfld].append(self.output[hfld])
-            """
-            # trim old history from front of array
-            binit = True
-            while binit:
-                firstts = self.history['ts'][0]
-                ftd = datetime.datetime.strptime(firstts,'%Y-%m-%dT%H:%M:%S')
-                tdel = now - ftd
-                if tdel.seconds > self._history_['seconds']:
-                    del self.history['ts'][0]
-                    for hfld in  self._history_['fields']:
-                        del self.history[hfld][0]
-                else:
-                    binit = False
-            """
             
         for s in self.subscribers.keys():
             self.subscribers[s](self.label,self.output)

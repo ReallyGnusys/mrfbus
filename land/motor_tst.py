@@ -7,7 +7,12 @@ from tornado import gen
 from mrflog import mrflog
 uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
 
+"""
+clear sensor data in mongo with
 
+for (n =0; n< cn.length;n++ ) { if (cn[n].search('^sensor.') == 0) { db.getCollection(cn[n]).drop();}
+
+"""
 client = motor_tornado.MotorClient(uri)
 db = client.mrfbus
 import datetime
@@ -44,7 +49,7 @@ def do_insert(**kwargs):
     coll = db.get_collection('sensor.%s.%s'%(stype,sensor_id))
 
     future = coll.update({'docdate':docdate},
-               { "$set" : { 'data.0.0' : value } })
+               { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
     #future = col.insert_one(doc)
     result = yield future
 
@@ -89,4 +94,4 @@ doc =  { 'tag' : 'L1_AMB' , 'temp' : 23.43 , 'date' : '2017-11-20T00:12:42.23294
 #IOLoop.current().run_sync(lambda: do_update_doc(collection=coll,doc=doc, docdate=docdate, hour=0, minute=0))
 
 
-IOLoop.current().run_sync(lambda: do_insert(sensor_id=sensor_id, stype=stype, docdate=docdate, hour=0, minute=0, value=255.55))
+IOLoop.current().run_sync(lambda: do_insert(sensor_id=sensor_id, stype=stype, docdate=docdate, hour=23, minute=23, value=255.55))

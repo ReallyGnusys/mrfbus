@@ -328,7 +328,40 @@ def mrf_cmd(cmd,data):
 # return utc time
 def atime():    
     return mrf_cmd('datetime',datetime.datetime.utcfromtimestamp(time.time()))
- 
+
+
+def new_sensor_day_doc(sensor_id, stype, docdate):
+    """ base doc for mongodb convering a day of minute averages """
+    if not docdate.__class__.__name__ == 'datetime':
+        mrflog.error("invalid docdate %s"%repr(docdate))
+        return None
+
+    
+    
+    doc = {
+        'sensor_id' : sensor_id,
+        'docdate' : docdate ,
+
+        'data' : []
+        
+    }
+
+    if stype == 'temp': #ouch
+        initval = -273.16
+    elif stype == 'relay':  # intval
+        initval = -1 
+        
+    else:  # assume float val
+        initval = -1.0
+        
+        
+        
+    for hour in range(24):
+        doc['data'].append([])
+        for minute in range(60):
+            doc['data'][hour].append(initval)
+    
+    return doc
 
         
 class MrflandRegManager(object):
@@ -366,6 +399,12 @@ class MrflandRegManager(object):
         mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
         self.webupdate(tag,data)
+
+        stype = self.sensors[label]._stype_
+        if data.has_key('ts') and data.has_key(stype) and self.server:
+            dt = datetime.datetime.strptime(data['ts'],"%Y-%m-%dT%H:%M:%S")
+            self.server.sensor_db_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
+            
     def graph_req(self,slab):  #for weblets to request graph data capture for sensors
         if not self.sensors.has_key(slab):
             mrflog.error("%s graph_req no sensor named  %s "%(self.__class__.__name__,slab))

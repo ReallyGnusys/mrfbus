@@ -15,11 +15,10 @@ proxy_port = 8888  # proxy port used by clients ( handled by nginx )
 
 tcpport = 8912   # port used by tcp/json test service
 host_mrfbus_port = 8915  # port of mrfbus host device ( addr 1 )
-dbname = 'asa_sys'
-dbuser = 'asa_sys'
 
-from datetime import datetime
-upsince = datetime.now()
+
+db_uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
+
 
 https_server = False
 

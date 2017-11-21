@@ -28,7 +28,8 @@ class MrfSensTimer(MrfSens):
     _out_flds_ = [ ('on' , datetime.time ),
                    ('off' , datetime.time ),
                    ('active', bool) ]
-
+    _stype_ = 'timer'
+    
     def is_active(self , outdata = None):
         if outdata == None:
             outdata = self.output
@@ -44,7 +45,8 @@ class MrfSensTimer(MrfSens):
     def expire_callback(self, on_or_off):
         mrflog.warn("%s %s expire_callback on_or_off was %s"%(self.__class__.__name__, self.label))
 
-    def genout(self,indata, outdata):
+    def genout(self,indata):
+        outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         if not indata.has_key('cname'):
             mrflog.error("%s genout no key cname in %s"%(self.__class__.__name__, repr(indata)))

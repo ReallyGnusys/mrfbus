@@ -35,6 +35,7 @@ from mrfland_weblet_timers import MrfLandWebletTimers
 
 
 
+
 clients = dict()
 
 
@@ -307,7 +308,13 @@ class MrflandServer(object):
         #self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
         self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
         #self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
-        
+
+
+        if hasattr(install,'db_uri'):
+            from motor import motor_tornado
+            self.db = motor_tornado.MotorClient(install.db_uri).mrfbus
+            mrflog.warn("opened db connection %s"%repr(self.db))
+            
         tornado.ioloop.IOLoop.instance().start()
         mrflog.error( "do we ever get here?")
 
@@ -323,6 +330,53 @@ class MrflandServer(object):
 
         self._connect_to_mrfnet()
 
+
+    @tornado.gen.coroutine
+    def sensor_db_insert(self, **kwargs):
+        
+        if not hasattr(self,'db'):
+            return
+
+        mrflog.info("do_insert : kwargs %s"%repr(kwargs))
+        sensor_id = kwargs['sensor_id']
+        stype = kwargs['stype']
+        dt = kwargs['dt']    
+        minute = dt.minute
+        hour = dt.hour
+        value  = kwargs['value']
+
+    
+        #docdate should always have zero time ..let's do this now
+        docdate = datetime.datetime.combine(dt.date(),datetime.time())
+
+        
+        coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+            
+        future = coll.update({'docdate':docdate},
+                                 { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
+        result = yield future
+
+
+        if result['updatedExisting']:
+            mrflog.info("doc update result good %s "%repr(result))
+        else:
+            mrflog.warn("result dodgy %s "%repr(result))
+            doc = mrfland.new_sensor_day_doc(sensor_id, stype, docdate)
+            future = coll.insert_one(doc)
+            result = yield future
+            mrflog.warn("insert result was %s"%repr(result))
+
+            future = coll.update({'docdate':docdate},
+                                 { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
+
+            result = yield future
+            if result['updatedExisting']:
+                mrflog.warn("doc update(2) result good %s "%repr(result))
+            else:
+                mrflog.error("result(2) bad %s "%repr(result))
+            
+
+    
     def subprocess(self, arglist, callback):  # FIXME - we just collect exit code for running unittest clients 
         process = tornado.process.Subprocess(arglist, stdout=None, stderr=None)
         process.set_exit_callback(callback)
