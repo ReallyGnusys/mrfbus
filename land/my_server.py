@@ -20,15 +20,11 @@ import install
 if __name__ == '__main__':
     #mrf_log_init()
     parse_command_line()
-    mrflog.warn("Mrfland web server starting on port "+str(options.port))
     
 
     rm = mrfland.MrflandRegManager()
-    
-    MrfDevHost(rm, "host", 1,
-                {
-                    'timer' : [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0"]
-                })
+     
+    MrfDevHost(rm, "host", 1)
     
     Pt1000Dev(rm, "pt1000_boiler_room", 2,
               {
@@ -118,4 +114,10 @@ if __name__ == '__main__':
                            'label': 'Devices'
                        })
 
-    ml =  MrflandServer(rm)
+    ml =  MrflandServer(rm,
+                        {
+                            'http_port'       : 8888,
+                            'mrfbus_host_port': install.mrfbus_host_port,
+                            'tcp_test_port'   : install.tcpport ,
+                            'db_uri'          : install.db_uri
+                        })

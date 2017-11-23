@@ -7,6 +7,7 @@ import tornado.httpserver
 import tornado.tcpserver
 import tornado.process
 from tornado.options import define, options, parse_command_line
+from tornado.concurrent import Future
 import socket
 import logging
 import re
@@ -69,7 +70,7 @@ def comm(id,ro,touch = False):
  
 
 #define("port", default=2201, help="run on the given port", type=int)
-define("port", default=install.port, help="run on the given port", type=int)
+#define("port", default=install.port, help="run on the given port", type=int)
 
 
 
@@ -275,15 +276,26 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         self.clients[connection.id] = connection
         yield connection.on_connect()  
 
+class AnyFut(Future):
+    def __init__(self, futures):
+        super(AnyFut, self).__init__()
+        for future in futures:
+            future.add_done_callback(self.done_callback)
+
+    def done_callback(self, future):
+        self.set_result(future)
+    
+        
 class MrflandServer(object):
 
-    def __init__(self,rm):
+    def __init__(self,rm, config):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             mrflog.warn( "CTRL-C pressed , quitting")
             sys.exit(0)
         global server
         self.rm = rm
+        self.config = config
         self._timeout_handle = None
         self.timers = dict()
         server = self  # FIXME ouch
@@ -293,33 +305,34 @@ class MrflandServer(object):
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
-            
-        self._start_mrfnet()
+
+        if self.config.has_key('mrfbus_host_port'):
+            self._start_mrfnet(self.config['mrfbus_host_port'])
         self.quiet_cnt = 0
         self._start_webapp()
-        self._start_tcp_service()
+        if self.config.has_key('tcp_test_port'):
+            self._start_tcp_service( self.config['tcp_test_port'])
         self.ioloop = tornado.ioloop.IOLoop.instance()
         mrflog.warn("MrflandServer tornado IOLoop starting : IOLoop.time %s"%repr(self.ioloop.time()))
         self._deactivate()  # start quiet
 
-        #ct = time.time() + 5  # start tick
-        #self.ioloop.add_timeout(ct,self.time_tick)
-        mrflog.warn("adding self.rfd = %d to ioloop"%self.rfd)
-        #self.ioloop.add_handler(self.rfd,self._resp_handler,self.ioloop.READ)
-        self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
-        #self.ioloop.add_handler(self.sfd,self._struct_handler,self.ioloop.READ)
+        if hasattr(self,'nsock'):
+            self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
 
 
-        if hasattr(install,'db_uri'):
+        if self.config.has_key('db_uri'):
             from motor import motor_tornado
-            self.db = motor_tornado.MotorClient(install.db_uri).mrfbus
+            self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))
             
+            # get sensors that have data in db
+            tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
+
         tornado.ioloop.IOLoop.instance().start()
         mrflog.error( "do we ever get here?")
 
 
-    def _start_mrfnet (self,  netid = 0x25):
+    def _start_mrfnet (self, port,  netid = 0x25):
         self.hostaddr = 1
         self.netid = netid
 
@@ -328,8 +341,76 @@ class MrflandServer(object):
         self.active_cmd = None
         self.active_timer = 0
 
-        self._connect_to_mrfnet()
+        self._connect_to_mrfnet(port)
+        
+    @tornado.gen.coroutine
+    def db_get_sensors(self,**kwargs):
 
+
+        cnames = yield self.db.collection_names()
+    
+
+        mrflog.warn("got cnames %s"%repr(cnames))
+    
+        sensors = dict()
+
+        for cn in cnames:
+            fld = cn.split('.')
+            if (fld[0] == 'sensor') and (len(fld) == 3):
+                stype = fld[1]
+                sname = fld[2]
+                if not sensors.has_key(stype):
+                    sensors[stype] = []
+                sensors[stype].append(sname)
+
+        for stype in sensors.keys():
+            sensors[stype].sort()
+        
+        mrflog.warn("got sensors %s"%repr(sensors))
+        self.db_sensors = sensors
+        
+    @tornado.gen.coroutine
+    def sensor_db_day_doc(self,**kwargs):
+
+        sensor_id = kwargs['sensor_id']
+        stype = kwargs['stype']
+        if kwargs.has_key('docdate'):
+            dt = kwargs['docdate']
+        else:
+            dt = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
+
+        docdate = datetime.datetime.combine(dt.date(),datetime.time())
+        mrflog.warn("sensor_db_day_doc sensor_id %s "%(repr(sensor_id)))
+        
+        coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+
+        start = time.time()
+
+        flist = coll.find({'docdate' : docdate}).to_list(length=5)
+
+
+        #doc = yield cur
+        mrflog.warn("got flis %s "%(repr(flist)))
+
+        futures = set([flist])
+
+        results = []
+        while futures:
+            resolved = yield AnyFut(futures)
+            end = time.time()
+            res = resolved.result()
+            print "finished in %.1f sec: %r" % (
+                end - start, res)
+            futures.remove(resolved)
+            results.append(res)
+
+
+        #doc = yield fut
+        #doc = yield coll.find_one({'docdate' : docdate})
+        mrflog.warn("got results %s "%(repr(results)))
+        raise tornado.gen.Return(results)
+        #yield cursor.to_list(length=10)
+        
 
     @tornado.gen.coroutine
     def sensor_db_insert(self, **kwargs):
@@ -337,7 +418,7 @@ class MrflandServer(object):
         if not hasattr(self,'db'):
             return
 
-        mrflog.info("do_insert : kwargs %s"%repr(kwargs))
+        mrflog.info("sensor_db_insert : kwargs %s"%repr(kwargs))
         sensor_id = kwargs['sensor_id']
         stype = kwargs['stype']
         dt = kwargs['dt']    
@@ -662,11 +743,22 @@ class MrflandServer(object):
         if hdr and param and resp :                    
             mrflog.info("received object %s response from  %d"%(type(resp),hdr.usrc))
             self.handle_response(hdr, param , resp)
+    def ws_url(self, wsid):
+        url = install.wsprot+install.host
+        if install.domain:
+            url += '.'+install.domain
+        if self.config.has_key('http_proxy_port'):
+            pport =  self.config['http_proxy_port']
+        else:
+            pport =  self.config['http_port']
+
+        url += ':'+str(pport)+'/ws?Id='+wsid
+        return url
             
-    def _connect_to_mrfnet(self):
+    def _connect_to_mrfnet(self,port):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(("127.0.0.1", install.host_mrfbus_port))
+        s.connect(("127.0.0.1", port))
         sfno = s.fileno()
 
         mrflog.warn("_connect_to_mrfnet - firststage  %d"%s.fileno())
@@ -685,10 +777,10 @@ class MrflandServer(object):
         mrflog.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
-    def _start_tcp_service(self):
+    def _start_tcp_service(self, port):
         self.tcp_server = MrfTcpServer( landserver = self )
-        self.tcp_server.listen(install.tcpport)
-        mrflog.info("started tcpserver on port %d"%install.tcpport)
+        self.tcp_server.listen(port)
+        mrflog.info("started tcpserver on port %d"%port)
     def _start_webapp(self):        
 
         if os.environ.has_key('MRFBUS_HOME'):
@@ -726,7 +818,7 @@ class MrflandServer(object):
                            
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
 
-        self.http_server.listen(options.port)
+        self.http_server.listen(self.config['http_port'])
 
 
     def _check_if_anything(self):

@@ -9,12 +9,12 @@ import socket
 host = socket.gethostname()
 #host = 'ted'
 
-port = 8888  # real port used by tornado webapp
-proxy_port = 8888  # proxy port used by clients ( handled by nginx )
+http_port = 8888  # real port served by tornado webapp
+http_proxy_port = 8888  # proxy port used by clients ( handled by nginx )
 
 
 tcpport = 8912   # port used by tcp/json test service
-host_mrfbus_port = 8915  # port of mrfbus host device ( addr 1 )
+mrfbus_host_port = 8915  # port of mrfbus host device ( addr 1 )
 
 
 db_uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"

@@ -107,7 +107,7 @@ def mrf_weblet_table(weblets):
 
 
 
-def mrf_page(rh,sob,ip,html_body):
+def mrf_page(rh,sob,ws_url, ip,html_body):
     alog.info("mrf_page: sob = "+str(sob))
     # they're in - they'll be served with a page with websocket url
     # prepared for them when they authenticated.....
@@ -119,7 +119,7 @@ def mrf_page(rh,sob,ip,html_body):
         host += "."+install.domain
 
 
-    rh.write(mrf_tp.generate(ws_url = mrfland.ws_url(sob['wsid']), sob = sob,  html_body=html_body))
+    rh.write(mrf_tp.generate(ws_url = ws_url, sob = sob,  html_body=html_body))
 
 def request_ip(rh):
         rs =  rh._request_summary()
@@ -293,8 +293,8 @@ class mainapp(tornado.web.RequestHandler):
             return logout_action(self,sob,ip)
 
         html_body = self.mserv.rm.html_body()
-
-        return mrf_page(self,sob,ip,html_body)
+        ws_url = self.mserv.ws_url(sob['wsid'])
+        return mrf_page(self,sob,ws_url,ip,html_body)
      
         
         

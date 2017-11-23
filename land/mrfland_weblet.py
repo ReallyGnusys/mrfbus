@@ -110,6 +110,11 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 """
     return s
 
+def mrfctrl_butt_html(app,tab,row,fld,cls=""):    
+    return """<button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
+        (cls,app,tab,row,fld,fld)
+
+        
 _tre = re.compile(r'([0-2][0-9]):([0-5][0-9])')
 
 def parse_timestr(tstr):

@@ -28,7 +28,7 @@ class MrfDev(object):
     cmdset and dspec effectively define MrfBus physical device running a specific app
 
     """
-    def __init__(self, rm, label, address, caplabels):
+    def __init__(self, rm, label, address, caplabels={}):
         self.address = address
         self.label = label
         self.rm = rm

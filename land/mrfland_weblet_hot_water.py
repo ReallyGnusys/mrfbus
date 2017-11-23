@@ -34,28 +34,28 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
 
-        # do subscriptions here
-        ## looking for all MrfSensPt1000 types
+        # begin sanity checks
+
+        ## expect MrfSensPt1000 types
 
         if not self.rm.senstypes.has_key(MrfSensPt1000):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return    
 
-        if not self.cdata.has_key('rad'):
-            mrflog.error("%s , no rad in data"%self.__class__.__name__)
-            return
-        
-        ## looking for all MrfSensPtRelay types
+        ## expect MrfSensPtRelay types
 
         if not self.rm.senstypes.has_key(MrfSensPtRelay):
             mrflog.error("%s post_init failed to find sensor type MrfSensPtRelay in rm"%self.__class__.__name__)
             return
-        rs = self.rm.senstypes[MrfSensPtRelay]
-        mrflog.info("num MrfSensPtRelay found was %d"%len(rs))
 
+
+        ## expect config data fields as follows
+        
         if not self.cdata.has_key('rad'):
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
             return
+        
+
         if not self.cdata.has_key('acctop'):
             mrflog.error("%s , no acctop in data"%self.__class__.__name__)
             return
@@ -71,6 +71,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
             mrflog.error("%s , litres"%self.__class__.__name__)
             return
 
+        # end sanity checks
+        
         self.litres      = self.cdata['litres']
         
 
@@ -220,9 +222,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if next_state != self.var.state.val:
             self.var.state.set(next_state)
             mrflog.warn("%s %s  state change to %s"%(self.__class__.__name__,self.label,self.var.state.val))
-            tg = self.mktag('hwstat', 'state')
-            dt =  { 'val' : self.var.state.val}
-            self.rm.webupdate(tg, dt)
+            #tg = self.mktag('hwstat', 'state')
+            #dt =  { 'val' : self.var.state.val}
+            #self.rm.webupdate(tg, dt)
      
     def pane_html(self):
         s =  """

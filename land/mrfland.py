@@ -614,6 +614,10 @@ class MrflandRegManager(object):
 
     def sensor_average_js(self):  # generate sensor average history js
         s = ""
+
+        if len(self.sensors.keys()) == 0:
+            return s
+        
         s += """
 var _sensor_hist_seconds = %d;"""%self.sensors[self.sensors.keys()[0]]._HISTORY_SECONDS_
         s += """
