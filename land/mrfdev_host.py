@@ -13,7 +13,9 @@ from mrflog import mrflog
 class MrfDevHost(MrfDev):
     #_capspec = {
     #    'timer' : MrfSensTimer
-    #                 
+    #
+    _capspec = {}
+    
     _cmdset = DefaultAppCmds
 
     def app_packet(self, hdr, param , resp):

@@ -40,7 +40,8 @@ def db_get_day_doc(**kwargs):
 
     sensor_id = kwargs['sensor_id']
     stype = kwargs['stype']
-    dt = kwargs['docdate']    
+    dt = kwargs['docdate']
+    
     docdate = datetime.datetime.combine(dt.date(),datetime.time())
 
     coll = db.get_collection('sensor.%s.%s'%(stype,sensor_id))
@@ -49,6 +50,53 @@ def db_get_day_doc(**kwargs):
 
 
     mrflog.warn("got doc %s"%repr(doc))
+
+
+
+def graph_day_data(doc,blank=None):
+    """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
+    gdata = []
+    for hour in xrange(24):
+        for minute in xrange(60):
+            
+            if blank and (doc['data'][hour][minute] == blank):  # return early
+                indnext = hour*60+minute+1
+                indprev = hour*60+minute-1
+                if (indnext/60 > 23):
+                    return gdata
+                if (indprev/60 < 0):
+                    return gdata
+                
+                if (doc['data'][indnext/60][indnext%60] != blank): #pad last valid if only one missing value
+                    gdata.append(doc['data'][indprev/60][indprev%60])
+                
+            else:
+                gdata.append(doc['data'][hour][minute])
+    return gdata
+
+
+        
+@gen.coroutine
+def db_day_graph(**kwargs):
+
+    sensor_ids = kwargs['sensor_ids']
+    stype = kwargs['stype']
+    dt = kwargs['docdate']
+    
+    docdate = datetime.datetime.combine(dt.date(),datetime.time())
+
+    gdata = {}
+    
+    for sensor_id in sensor_ids:
+        coll = db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+        doc = yield coll.find_one({'docdate' : docdate})
+
+        mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
+        gdata[sensor_id] = graph_day_data(doc,blank=-273.16)
+        mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
+
+    mrflog.warn("gdata %s"%repr(gdata))
+    
     
     
     
@@ -136,3 +184,4 @@ print "coll repr is %s"%repr(coll)
 IOLoop.current().run_sync(lambda: db_get_day_doc(sensor_id=sensor_id, stype=stype, docdate=docdate))
 
 IOLoop.current().run_sync(lambda: db_get_sensors())
+IOLoop.current().run_sync(lambda: db_day_graph(sensor_ids=[sensor_id,'OUTSIDE_AMBIENT'], stype=stype, docdate=docdate))

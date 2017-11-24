@@ -368,6 +368,26 @@ class MrflandServer(object):
         
         mrflog.warn("got sensors %s"%repr(sensors))
         self.db_sensors = sensors
+
+
+    @tornado.gen.coroutine
+    def sensor_db_graph(self,**kwargs):
+
+        sensor_ids = kwargs['sensor_ids']
+        stype = kwargs['stype']
+        if kwargs.has_key('docdate'):
+            dt = kwargs['docdate']
+        else:
+            dt = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
+
+        docdate = datetime.datetime.combine(dt.date(),datetime.time())
+        mrflog.warn("sensor_db_day_doc sensor_id %s "%(repr(sensor_id)))
+        
+        coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+        doc  = yield coll.find_one({'docdate' : docdate})
+        mrflog.warn("got doc %s "%(repr(doc)))
+
+
         
     @tornado.gen.coroutine
     def sensor_db_day_doc(self,**kwargs):
@@ -383,7 +403,11 @@ class MrflandServer(object):
         mrflog.warn("sensor_db_day_doc sensor_id %s "%(repr(sensor_id)))
         
         coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+        doc  = yield coll.find_one({'docdate' : docdate})
+        mrflog.warn("got doc %s "%(repr(doc)))
 
+
+        """
         start = time.time()
 
         flist = coll.find({'docdate' : docdate}).to_list(length=5)
@@ -410,7 +434,7 @@ class MrflandServer(object):
         mrflog.warn("got results %s "%(repr(results)))
         raise tornado.gen.Return(results)
         #yield cursor.to_list(length=10)
-        
+        """
 
     @tornado.gen.coroutine
     def sensor_db_insert(self, **kwargs):

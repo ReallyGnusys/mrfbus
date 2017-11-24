@@ -330,18 +330,31 @@ def atime():
     return mrf_cmd('datetime',datetime.datetime.utcfromtimestamp(time.time()))
 
 
+def sensor_null_val(stype):
+    if stype == 'temp': #ouch
+        initval = -273.16
+    elif stype == 'relay':  # intval
+        initval = -1 
+        
+    else:  # assume float val
+        initval = -1.0
+    return initval
+
 def new_sensor_day_doc(sensor_id, stype, docdate):
     """ base doc for mongodb convering a day of minute averages """
     if not docdate.__class__.__name__ == 'datetime':
         mrflog.error("invalid docdate %s"%repr(docdate))
         return None
-
+    
+    initval = sensor_null_val(stype)
+        
     
     
     doc = {
         'sensor_id' : sensor_id,
+        'stype' : stype,
         'docdate' : docdate ,
-
+        'nullval' : initval,
         'data' : []
         
     }

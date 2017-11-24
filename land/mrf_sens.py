@@ -138,8 +138,15 @@ class MrfSens(object):
                 self.history_dt = self.history_dt.replace(second = 0,microsecond = 0)
 
             if now.minute != self.history_dt.minute:  # roll up last minutes readings
+                # FIXME handle if more than 1 minute difference, send multiple averages
                 mrflog.info("averaging minute for sensor %s history_dt %s now %s"%
                             (self.label,repr(self.history_dt),repr(now)))
+                if (now - self.history_dt) >= datetime.timedelta(minutes = 2):
+                    mrflog.error("%s %s history not updated for %s"%(self.__class__.__name__,
+                                                                     self.label,
+                                                                     repr(now.minute - self.history_dt.minute)))
+                    mrflog.error("now %s  self.history_dt %s"%(now,self.history_dt))
+                    mrflog.error("ts = %s"%repr(self.history['ts']))
 
                 avm = {}
                 for hfld in self._history_['fields']:                
