@@ -8,4 +8,5 @@ source land/venv/bin/activate
 echo "installing requirements"
 pip install -r land/requirements.txt
 
-  
+
+export MRFBUS_HOME=$(pwd)
