@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrf_structs import *
 from mrflog import mrflog
 import math
+from mrfland import DateTimeFormat
 
 class MrfSens(object):
     _HISTORY_SECONDS_ = 60*60*24   # keep a day of history by default .. one minute averages
@@ -169,16 +170,30 @@ class MrfSens(object):
                     mrflog.info("history[%s] len is %d"%(hfld,len(self.history[hfld])))
                     
                 self.history['ts'] = []
-                avm['ts'] = self.history_dt.strftime("%Y-%m-%dT%H:%M:%S")
+                avm['ts'] = self.history_dt.strftime(DateTimeFormat)
                 self.averages['ts'].append(avm['ts'])
-                self.history_dt = now
-                self.history_dt = self.history_dt.replace(second = 0,microsecond = 0)
                 
                 mrflog.info("history len is %d averages len %d"%(len(self.history['ts']),len(self.averages['ts'])))
                 mrflog.info("%s"%repr(self.averages))
                 for s in self.minute_subscribers.keys():
                     self.minute_subscribers[s](self.label,avm)
 
+                nowm = now
+                nowm.replace(second=0,microsecond=0)
+                
+                
+
+                self.history_dt += datetime.timedelta(minutes = 1)
+
+                while self.history_dt < nowm:
+                     avm['ts']  = self.history_dt.strftime("%Y-%m-%dT%H:%M:%S")
+                     self.averages['ts'].append(avm['ts'])
+                     mrflog.warn("%s padding sensor average %s"%(self.label,repr(avm)))
+                     for s in self.minute_subscribers.keys():                         
+                         self.minute_subscribers[s](self.label,avm)
+                     self.history_dt += datetime.timedelta(minutes = 1)
+
+                #self.history_dt = self.history_dt.replace(second = 0,microsecond = 0)
 
                 # trim old history from front of array
                 binit = True

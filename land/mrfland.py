@@ -388,6 +388,7 @@ def new_sensor_day_doc(sensor_id, stype, docdate):
     
     return doc
 
+DateTimeFormat = '%Y-%m-%dT%H:%M:%S'
         
 class MrflandRegManager(object):
     """ mrfland device and sensor/actuator registration manager """

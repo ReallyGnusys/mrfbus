@@ -3,8 +3,12 @@ from tornado.ioloop import IOLoop
 
 from tornado import gen
 
+from mrfland import DateTimeFormat
+
 
 from mrflog import mrflog
+
+
 uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
 
 """
@@ -53,12 +57,22 @@ def db_get_day_doc(**kwargs):
 
 
 
-def graph_day_data(doc,blank=None):
+def graph_day_data(doc):
     """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
-    gdata = []
+    gdata = dict()
+
+    stype = doc['stype']
+    gdata[stype] = {
+        'ts'   : [],
+        'value': []
+    }
+        
+    gvals =  gdata[stype]
+    gtime = doc['docdate']
+    
     for hour in xrange(24):
         for minute in xrange(60):
-            
+            """
             if blank and (doc['data'][hour][minute] == blank):  # return early
                 indnext = hour*60+minute+1
                 indprev = hour*60+minute-1
@@ -71,8 +85,15 @@ def graph_day_data(doc,blank=None):
                     gdata.append(doc['data'][indprev/60][indprev%60])
                 
             else:
-                gdata.append(doc['data'][hour][minute])
-    return gdata
+            """
+            if doc['data'][hour][minute] == doc['nullval']:
+                print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
+                return gvals
+            
+            gvals['ts'].append(gtime.strftime(DateTimeFormat))
+            gvals['value'].append(doc['data'][hour][minute])
+            gtime = gtime + datetime.timedelta(minutes=1)
+    return gvals
 
 
         
@@ -92,7 +113,7 @@ def db_day_graph(**kwargs):
         doc = yield coll.find_one({'docdate' : docdate})
 
         mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
-        gdata[sensor_id] = graph_day_data(doc,blank=-273.16)
+        gdata[sensor_id] = graph_day_data(doc)
         mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
 
     mrflog.warn("gdata %s"%repr(gdata))

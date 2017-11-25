@@ -20,29 +20,39 @@ def check_doc_null_data(doc):
     mod = False
     for hour in xrange(24):
         for minute in xrange(60):
-            ni = hour*60 + minute + 1
+
+            dv = data[hour][minute]
             pi = hour*60 + minute - 1
 
-            if ni/60 < 24:
-                nv = data[ni/60][ni%60]
-                nn = (nv == nullval)
-            else:
-                nv = None
-                nn = False
                 
-            if pi/60 < 24:
+            if pi/60 >= 0:
                 pv = data[pi/60][pi%60]
                 pn = (pv == nullval)
             else:
                 pv = None
                 pn = False
                 
-            cn = data[hour][minute] == nullval
-            if cn and not nn and not pn and (pv != None ) and (nv != None):
-                print "%s %s check_data anomaly hour %d minute %d data %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(data[hour][minute]))
-                data[hour][minute] = (nv + pv) / 2.0
-                print "%s %s mod data %s"%(doc['sensor_id'],doc['docdate'],repr(data[hour][minute]))
-                mod = True
+            cn = (dv == nullval)
+
+            for n in xrange(4):
+                ni = hour*60 + minute + n
+                if ni/60 < 24:
+                    nv = data[ni/60][ni%60]
+                    nn = (nv == nullval)
+                else:
+                    nv = None
+                    nn = False
+
+                if cn and not nn and not pn and (pv != None ) and (nv != None):
+                    print "%s %s check_data anomaly hour %d minute %d data %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(data[hour][minute]))
+                    val = (nv + pv) / dv.__class__(2)
+                    if doc.has_key('max_dp'):
+                        val = round(val,doc['max_dp'])
+                    
+                    data[hour][minute] = val
+                    
+                    print "%s %s mod data %s"%(doc['sensor_id'],doc['docdate'],repr(data[hour][minute]))
+                    mod = True
     if mod:
         return doc
     else:
@@ -51,6 +61,41 @@ def check_doc_null_data(doc):
 
 
 
+
+
+def check_doc_data_type(doc):
+    #print "check_data nv %s got data ..e.g. %s"%(repr(nullval),repr(data[0][0]))
+
+    data = doc['data']    
+    nullval = doc['nullval']
+
+    dtype = data[0][0].__class__.__name__  # FIXME - how do we know first one is right?
+    
+    mod = False
+    for hour in xrange(24):
+        for minute in xrange(60):
+
+            dv = data[hour][minute]
+
+            if dv.__class__.__name__ != dtype:
+
+                
+                changed = data[0][0].__class__(data[hour][minute])
+                    
+                print "%s %s  data type anomaly hour %d min %d  val %s  changed to %s"%(doc['sensor_id'],
+                                                                                        doc['docdate'],hour,minute,
+                                                                                        repr(data[hour][minute]),
+                                                                                        repr(changed))
+                data[hour][minute] = changed                                
+                mod = True
+    if mod:
+        return doc
+    else:
+        return None
+
+
+
+    
 
 
 def check_doc_data_precision(doc):
@@ -136,18 +181,22 @@ for cn in cns:
         fdoc = check_doc_null_data(d2)
 
         if fdoc:
-            print "doc fixed"
+            print "doc (null data) altered %s"%fdoc['sensor_id']
             fdoc2 = check_doc_null_data(fdoc)
             if fdoc2:
-                print "Warning not fixed"
+                print "Warning not fixed in one pass %s"%fdoc['sensor_id']
             else:
                 res = col.replace_one({'_id': doc['_id'] },fdoc)
                 #print "matched "+repr(res.matched_count)
                 if res.modified_count > 0:            
                     #print d2
                     print "modified "+repr(res.modified_count)+"  null_data  "+sensor_id
+        #else:
+        #    print "doc (null data)not altered %s"%doc['sensor_id']
 
 
+        if fdoc:
+            d2 = fdoc
         fdoc = check_doc_data_precision(d2)
 
         if fdoc:
@@ -161,4 +210,20 @@ for cn in cns:
                 #print d2
                 print "modified "+repr(res.modified_count)+" data_precision "+sensor_id
 
+        if fdoc:
+            d2 = fdoc
                     
+        fdoc = check_doc_data_type(d2)
+
+        if fdoc:
+            print "doc fixed"
+            fdoc2 = check_doc_data_type(fdoc)
+            if fdoc2:
+                print "Warning not fixed"
+            res = col.replace_one({'_id': doc['_id'] },fdoc)
+            #print "matched "+repr(res.matched_count)
+            if res.modified_count > 0:            
+                #print d2
+                print "modified "+repr(res.modified_count)+" data_precision "+sensor_id
+
+
