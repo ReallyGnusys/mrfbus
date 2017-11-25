@@ -8,7 +8,7 @@ from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_sim import MrfDevSim
 from mrfland_server import MrflandServer
-
+import install
             
 if __name__ == '__main__':
     parse_command_line()
