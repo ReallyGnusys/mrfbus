@@ -340,6 +340,18 @@ def sensor_null_val(stype):
         initval = -1.0
     return initval
 
+
+def sensor_round_val(stype):
+    if stype == 'temp': #ouch
+        initval = 2
+    elif stype == 'relay':  # intval
+        initval = None 
+        
+    else:  # assume float val
+        initval = 2
+    return initval
+
+
 def new_sensor_day_doc(sensor_id, stype, docdate):
     """ base doc for mongodb convering a day of minute averages """
     if not docdate.__class__.__name__ == 'datetime':
