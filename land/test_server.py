@@ -13,7 +13,6 @@ from mrfland_server import MrflandServer
 if __name__ == '__main__':
     parse_command_line()
     mrflog.info('Application started')
-    mrflog.info("Mrfland web server starting on port "+str(options.port))
     
     rm = mrfland.MrflandRegManager()
     
