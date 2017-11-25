@@ -3,6 +3,9 @@
 #start mrfbus instances
 TMP=/tmp/mrf_bus
 LOGDIR=log
+export MRFBUS_HOME=$(pwd)
+
+
 #
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 
