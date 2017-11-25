@@ -21,6 +21,11 @@ if __name__ == '__main__':
     sx20 = MrfDevSim(rm, "sx20", 0x20, {} )
     sxsf = MrfDevSim(rm, "sx2f", 0x2f, {} )
     
-    ml =  MrflandServer(rm)
+    ml =  MrflandServer(rm,
+                        {
+                            'http_port'       : 8888,
+                            'mrfbus_host_port': install.mrfbus_host_port,
+                            'tcp_test_port'   : install.tcpport 
+                        })
 
 
