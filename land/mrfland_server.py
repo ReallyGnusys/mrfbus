@@ -64,8 +64,8 @@ def send_object_to_client(id,obj):
 
 
 
-def comm(id,ro,touch = False):
-    return mrfland.comm.comm(id,ro)
+#def comm(id,ro,touch = False):
+#    return mrfland.comm.comm(id,ro)
 
  
 
@@ -82,12 +82,17 @@ class IndexHandler(tornado.web.RequestHandler):
         self.render("index.html")
 
 class WebSocketHandler(tornado.websocket.WebSocketHandler):
-    def open(self, *args):        
+    def initialize(self,rm):
+        self.rm = rm
+        mrflog.warn("WebSocketHandler.initialize rm %s"%repr(self.rm))
+    def open(self, *args, **kwargs):        
         self.id = self.get_argument("Id")
-        mrflog.info("client attempt to open ws:Id="+self.id)
+        mrflog.warn("client attempt to open ws:Id="+self.id+" kwargs "+repr(kwargs))
         #mrflog.info("here comes websockhandler self")
         #print str(dir(self))
         #check id has been issued
+        #self.rm = kwargs['rm']
+        mrflog.warn("rm is %s"%repr(self.rm))
         mrflog.info("headers:"+str(self.request.headers))
         #mrflog.debug("staff_type = "+str(stype))
 
@@ -100,7 +105,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         if mob:
             ip = mob.group(1)
             mrflog.info("client ip="+ip)
-            sob =  mrfland.comm.check_socket(self.id,ip)
+            sob =  self.rm.comm.check_socket(self.id,ip)
             if sob == None:
                 mrflog.debug("check socket failed for ip %s  self.id %s"%(str(ip),self.id))
                 return
@@ -117,7 +122,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                  "username": sob.username,
                  "object": self 
                  }
-        mrfland.comm.add_client(self.id,cdata)
+        self.rm.comm.add_client(self.id,cdata)
 
         
 
@@ -128,7 +133,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
 
         if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
             mrflog.info("decoded client command %s"%repr(cobj))
-            server.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
+            self.rm.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
     
     def on_close(self):
         self.id = self.get_argument("Id")
@@ -136,7 +141,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         mrflog.info("client closed ws:Id="+self.id)
         mrflog.info("ws handler close")
         mrflog.info("*************************")
-        mrfland.comm.del_client(self.id)
+        self.rm.comm.del_client(self.id)
     
 class NoCacheStaticFileHandler(tornado.web.StaticFileHandler):
     def set_extra_headers(self, path):
@@ -401,26 +406,12 @@ class MrflandServer(object):
         self.timers[tid]  = { 'thandle' : th,  'tod' : tod, 'app' : app, 'tag' : tag , 'act' : act }
 
     
-    def web_client_command(self,wsid,app,cmd,data):
-        if app not in self.rm.weblets.keys():
-            mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
-            return
-        mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
-        self.rm.weblets[app].cmd(cmd,data)
-
-        self._run_updates()
-        """
-        for dup in self.rm.dups:
-            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
-            self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
-        self.rm.dups = []
-        """
 
     def _run_updates(self):
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
             ro.b(mrfland.mrf_cmd('web-update',wup))
-            mrfland.comm.comm(None,ro)
+            self.rm.comm.comm(None,ro)
         self.rm.wups = []
 
 
@@ -630,18 +621,6 @@ class MrflandServer(object):
         if hdr and param and resp :                    
             mrflog.info("received object %s response from  %d"%(type(resp),hdr.usrc))
             self.handle_response(hdr, param , resp)
-    def ws_url(self, wsid):
-        url = install.wsprot+install.host
-        if install.domain:
-            url += '.'+install.domain
-        if self.config.has_key('http_proxy_port'):
-            pport =  self.config['http_proxy_port']
-        else:
-            pport =  self.config['http_port']
-
-        url += ':'+str(pport)+'/ws?Id='+wsid
-        return url
-            
     def _connect_to_mrfnet(self,port):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -679,11 +658,11 @@ class MrflandServer(object):
         self._web_static_handler = NoCacheStaticFileHandler
 
         self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','public/css/asa/images')}),
-                         (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
-                         (r'/ws', WebSocketHandler), 
-                         (r'/pws', PubSocketHandler), 
-                         (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': os.path.join(mrfhome,'land','static/secure')}),
-                         (r'((/)([^/?]*)(.*))', mainapp, dict(mserv=self) ) #desperate times!
+                              (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
+                              (r'/ws', WebSocketHandler, dict(rm=self.rm)), # need rm to track connections and auth
+                              (r'/pws', PubSocketHandler), 
+                              (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': os.path.join(mrfhome,'land','static/secure')}),
+                              (r'((/)([^/?]*)(.*))', mainapp, dict(rm=self.rm) )
         ]
 
         self._webapp = tornado.web.Application(self._web_handlers,cookie_secret="dighobalanamsamarosaddhammamavijanatam")
@@ -705,7 +684,7 @@ class MrflandServer(object):
                            
         self.http_server = tornado.httpserver.HTTPServer(self._webapp, **self.nsettings)
 
-        self.http_server.listen(self.config['http_port'])
+        self.http_server.listen(self.rm.config['http_port'])
 
 
     def _check_if_anything(self):

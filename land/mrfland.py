@@ -179,7 +179,7 @@ class mrf_comm(object):
             self.broadcast(ob)                
         return 1
 
-comm = mrf_comm(log=mrflog)   # FIXME! 
+#comm = mrf_comm(log=mrflog)   # FIXME! 
     
 class RetObj:
     def __init__ (self,touch = False):
@@ -236,42 +236,12 @@ def search_userdb(key,value):
     
 
     
-def ws_url(wsid):
-    url = install.wsprot+install.host
-    if install.domain:
-        url += '.'+install.domain
-    url += ':'+str(install.proxy_port)+'/ws?Id='+wsid
-    #url = install.wsprot+install.host+'.'+install.domain+':'+str(install.proxy_port)+'/ws?Id='+wsid
-    return url
 
 def staff_info():
     rob = {}
     rob['cmd'] = 'staff-info'
     rob['data'] = {}
     return rob
-
-def authenticate(username,password,ip):             
-    mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
-    if username not in install.users.keys():
-        return None
-
-    uinf =  install.users[username]
-    
-    if password != uinf['password']:
-        return None
-    
-
-    
-    mrflog.info('authenticated ip '+ip)
-    wsid = os.urandom(16).encode('hex')  
-    sessid = gen_sessid()
-
-    comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],ip)    
-    comm.set_session_expire(wsid)
-    #install.users[username]['sessid'] = sessid
-    #install.users[username]['ip'] = ip
-
-    return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
 
 
 def staff_logout(sid,username,ip):
@@ -408,7 +378,7 @@ class MrflandRegManager(object):
         self.sgraphs = {}  # support graph data for these sensors during this mrfland service
         self.graph_insts = 0
         self.config = config
-
+        self.comm = mrf_comm(log=mrflog)
         if self.config.has_key('db_uri'):
             from motor import motor_tornado
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
@@ -431,7 +401,53 @@ class MrflandRegManager(object):
 
         # get sensors that have data in db
         tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
+    def authenticate(self,username,password,ip):             
+        mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
+        if username not in install.users.keys():
+            return None
 
+        uinf =  install.users[username]
+    
+        if password != uinf['password']:
+            return None
+    
+
+    
+        mrflog.warn('authenticated ip '+ip)
+        wsid = os.urandom(16).encode('hex')  
+        sessid = gen_sessid()
+
+        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],ip)    
+        self.comm.set_session_expire(wsid)
+
+        return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
+
+
+    def ws_url(self, wsid):
+        url = install.wsprot+install.host
+        if install.domain:
+            url += '.'+install.domain
+        if self.config.has_key('http_proxy_port'):
+            pport =  self.config['http_proxy_port']
+        else:
+            pport =  self.config['http_port']
+
+        url += ':'+str(pport)+'/ws?Id='+wsid
+        return url
+            
+
+    
+    def web_client_command(self,wsid,app,cmd,data):
+        if app not in self.weblets.keys():
+            mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
+            return
+        mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
+        self.weblets[app].cmd(cmd,data)
+
+        
+        self.server._run_updates()
+
+        
     def graph_callback(self, label, data):
         mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }

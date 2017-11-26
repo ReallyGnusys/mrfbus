@@ -14,9 +14,11 @@ if __name__ == '__main__':
     parse_command_line()
     
 
-    rm = mrfland.MrflandRegManager( {
-                            'db_uri'          : install.db_uri
-                        })
+    rm = mrfland.MrflandRegManager(
+        {
+            'http_port'       : 9999,
+            'db_uri'          : install.db_uri
+        })
      
     
     MrfLandWebletHistory(rm,
@@ -34,6 +36,5 @@ if __name__ == '__main__':
 
     ml =  MrflandServer(rm,
                         {
-                            'http_port'       : 9999,
                             'console'         : { 'port' : 1234}
                         })

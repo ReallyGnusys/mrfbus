@@ -11,6 +11,7 @@ import templates
 import psycopg2
 import mrfland
 alog = mrf_log()
+from mrflog import mrflog
 
 def print_everything(*args):
     alog.debug( "print *args")
@@ -193,7 +194,7 @@ def post_login(rh):
 
     alog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
  
-    authres = mrfland.authenticate(username,password,ip)
+    authres = rh.rm.authenticate(username,password,ip)
     alog.info('authenticate result = '+str(authres) )
 
     if authres == None:
@@ -220,7 +221,7 @@ def post_login(rh):
 
     ro = mrfland.RetObj()
     ro.b(mrfland.staff_info())
-    mrfland.comm.comm(None,ro)
+    rh.rm.comm.comm(None,ro)
 
 
 
@@ -230,11 +231,14 @@ def post_login(rh):
 class mainapp(tornado.web.RequestHandler):
     def __init__(self,*args, **kwargs):
         tornado.web.RequestHandler.__init__(self,*args, **kwargs)
+        mrflog.warn("mainapp init kwargs %s"%repr(kwargs))
+        self.rm = kwargs['rm']
         #self.log = log
-    def initialize(self, mserv):
-        self.mserv = mserv   # desperate times
+    def initialize(self, rm):
+        self.rm = rm   # desperate times
     def post(self, *args, **kwargs):
         alog.info('post:'+str(self.request))
+        mrflog.warn("mainapp post kwargs %s"%repr(kwargs))
         alog.info("uri : "+self.request.uri)
         uri = remarg.sub('',self.request.uri)
         alog.info("uri : "+uri)
@@ -280,7 +284,7 @@ class mainapp(tornado.web.RequestHandler):
                 return self.redirect('/login')
   
 
-        sob = mrfland.comm.session_isvalid(sessid)  # if session is valid you're in
+        sob = self.rm.comm.session_isvalid(sessid)  # if session is valid you're in
         if sob == None :
             alog.info("session is invalid")
             if page == 'login':
@@ -292,8 +296,8 @@ class mainapp(tornado.web.RequestHandler):
             alog.info("calling logout_action")
             return logout_action(self,sob,ip)
 
-        html_body = self.mserv.rm.html_body()
-        ws_url = self.mserv.ws_url(sob['wsid'])
+        html_body = self.rm.html_body()
+        ws_url = self.rm.ws_url(sob['wsid'])
         return mrf_page(self,sob,ws_url,ip,html_body)
      
         
