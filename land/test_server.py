@@ -14,7 +14,11 @@ if __name__ == '__main__':
     parse_command_line()
     mrflog.info('Application started')
     
-    rm = mrfland.MrflandRegManager()
+    rm = mrfland.MrflandRegManager(
+        {
+            'http_port'       : 8889
+        })
+     
     
     sx01 = MrfDevSim(rm, "sx01", 1, {} )
     sx02 = MrfDevSim(rm, "sx02", 2, {} )
@@ -23,7 +27,6 @@ if __name__ == '__main__':
     
     ml =  MrflandServer(rm,
                         {
-                            'http_port'       : 8888,
                             'mrfbus_host_port': install.mrfbus_host_port,
                             'tcp_test_port'   : install.tcpport 
                         })
