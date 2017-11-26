@@ -111,9 +111,17 @@ function mrf_web_update(obj){
         mrf_auto_graph(tag.tab, obj.data)
         return;
     }
+
+    
         
     data = obj.data;
 
+
+    if(tag.hasOwnProperty('mrfgraph')){
+        console.log("mrfgraph tag "+tag+ " data "+data);
+        return;
+    }
+    
     if(tag.hasOwnProperty('mrfvar')){
         //console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;

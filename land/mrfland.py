@@ -166,6 +166,7 @@ class mrf_comm(object):
             mrflog.error("mrf_comm: ro not ret_obj")
             return 0
         if id != None:
+            mrflog.warn("comm id = %s ro %s"%(repr(id),repr(ro)))
             for ob in ro.a():
                 self.send_object_to_client(id,ob)  
             if True or ro.touch or ( len(ro.a()) > 0 ) :  # now touch session for every command received
@@ -400,7 +401,8 @@ class MrflandRegManager(object):
             self.sensors[sl].subscribe_minutes(self.graph_callback)
 
         # get sensors that have data in db
-        tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
+        if hasattr(self,'db'):
+            tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
     def authenticate(self,username,password,ip):             
         mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
         if username not in install.users.keys():
@@ -442,7 +444,7 @@ class MrflandRegManager(object):
             mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
         mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
-        self.weblets[app].cmd(cmd,data)
+        self.weblets[app].cmd(cmd,data,wsid)
 
         
         self.server._run_updates()
@@ -547,8 +549,14 @@ class MrflandRegManager(object):
             return None
         return sv[sv.keys()[0]]
     
-    def webupdate(self, tag , data):
-        self.wups.append({ 'tag': tag , 'data': data})
+    def webupdate(self, tag , data , wsid=None):
+        if wsid:
+            update = { 'tag': tag , 'data': data , 'wsid': wsid}
+            mrflog.warn("webupdate %s"%repr(update))
+            self.wups.append(update)
+            
+        else:
+            self.wups.append({ 'tag': tag , 'data': data})
 
     def cmdcode(self, dest, cmdname):
         if not self.devmap.has_key(dest):
@@ -732,7 +740,9 @@ var _sensor_averages = {"""
         sensor_ids = kwargs['sensor_ids']
         stype = kwargs['stype']
         dt = kwargs['docdate']
-    
+        wtag = kwargs['wtag']
+        wsid = kwargs['wsid']
+        
         docdate = datetime.datetime.combine(dt.date(),datetime.time())
 
         gdata = {}
@@ -746,6 +756,11 @@ var _sensor_averages = {"""
             mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
 
         mrflog.warn("gdata %s"%repr(gdata))
+
+        self.webupdate(wtag,
+                       {'data' : gdata},
+                       wsid)
+
     
 
     @tornado.gen.coroutine

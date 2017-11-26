@@ -410,8 +410,12 @@ class MrflandServer(object):
     def _run_updates(self):
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
-            ro.b(mrfland.mrf_cmd('web-update',wup))
-            self.rm.comm.comm(None,ro)
+            if wup.has_key('wsid'):
+                ro.a(mrfland.mrf_cmd('web-update',wup))
+                self.rm.comm.comm(wup['wsid'],ro)
+            else:
+                ro.b(mrfland.mrf_cmd('web-update',wup))                
+                self.rm.comm.comm(None,ro)
         self.rm.wups = []
 
 

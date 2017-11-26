@@ -419,6 +419,12 @@ class MrflandWeblet(object):
         
     _ret = re.compile(r'(.*)_(on|off|en)')
 
+    def graph_request_data_ready(self,wsid, data):
+        self.rm.webupdate(self.graphtag,
+                          {'data' : data},
+                          wsid)
+        
+        
     def var_callback(self,name):
         mrflog.info("%s var_callback for %s value %s"%(self.__class__.__name__, name, self.var.__dict__[name].val))
 
@@ -468,6 +474,9 @@ class MrflandWeblet(object):
     def has_var(self,name):
         return name in self.var.__dict__
 
+    @property
+    def graphtag(self):
+        return { 'app' : self.tag, 'mrfgraph' : 1, 'tab' : 'mrfgraph' }
         
     def mktag(self, tab, row):
         return { 'app' : self.tag, 'tab' : tab , 'row' : row }
@@ -674,11 +683,11 @@ class MrflandWeblet(object):
         return self.html_mc_var_table('Name',self._timers.keys(), tcols ,ctrl=True,rocols=rocols)
 
 
-    def cmd(self,cmd, data=None):
+    def cmd(self,cmd, data,wsid=None):
         fn = 'cmd_'+cmd
         if hasattr(self, fn):
             mrflog.info( "executing weblet defined cmd %s"%cmd)
-            return getattr(self,fn)(data)
+            return getattr(self,fn)(data,wsid)
         else:
             mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
 
