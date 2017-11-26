@@ -34,7 +34,7 @@ import install
 from mrflog import mrflog
 #from mrf_structs import *
 from collections import OrderedDict
-#import tornado
+import tornado.gen
 
 def is_mrf_obj(ob):
     if ob == None:
@@ -392,7 +392,7 @@ DateTimeFormat = '%Y-%m-%dT%H:%M:%S'
         
 class MrflandRegManager(object):
     """ mrfland device and sensor/actuator registration manager """
-    def __init__(self):
+    def __init__(self,config):
         self.labels = {}
         self.devices = {}  ### hash devices by label - must be unique
         self.devmap  = {} ## hash devices by address
@@ -407,6 +407,13 @@ class MrflandRegManager(object):
         self.timers = {}
         self.sgraphs = {}  # support graph data for these sensors during this mrfland service
         self.graph_insts = 0
+        self.config = config
+
+        if self.config.has_key('db_uri'):
+            from motor import motor_tornado
+            self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
+            mrflog.warn("opened db connection %s"%repr(self.db))
+
         self.server = None
         
 
@@ -421,6 +428,10 @@ class MrflandRegManager(object):
         ## rm should connect graph callbacks here
         for sl in self.sgraphs.keys():
             self.sensors[sl].subscribe_minutes(self.graph_callback)
+
+        # get sensors that have data in db
+        tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
+
     def graph_callback(self, label, data):
         mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
@@ -429,7 +440,7 @@ class MrflandRegManager(object):
         stype = self.sensors[label]._stype_
         if data.has_key('ts') and data.has_key(stype) and self.server:
             dt = datetime.datetime.strptime(data['ts'],"%Y-%m-%dT%H:%M:%S")
-            self.server.sensor_db_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
+            self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
             
     def graph_req(self,slab):  #for weblets to request graph data capture for sensors
         if not self.sensors.has_key(slab):
@@ -672,30 +683,129 @@ var _sensor_averages = {"""
 
         return s
 
+
+    def graph_day_data(self,doc):
+        """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
+        gdata = dict()
+
+        stype = doc['stype']
+        gdata[stype] = {
+            'ts'   : [],
+            'value': []
+        }
+    
+        gvals =  gdata[stype]
+        gtime = doc['docdate']
+    
+        for hour in xrange(24):
+            for minute in xrange(60):
+                if doc['data'][hour][minute] == doc['nullval']:
+                    print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
+                    return gvals
+            
+                gvals['ts'].append(gtime.strftime(DateTimeFormat))
+                gvals['value'].append(doc['data'][hour][minute])
+                gtime = gtime + datetime.timedelta(minutes=1)
+        return gvals
+
+
+        
+    @tornado.gen.coroutine
+    def db_day_graph(self,**kwargs):
+
+        sensor_ids = kwargs['sensor_ids']
+        stype = kwargs['stype']
+        dt = kwargs['docdate']
+    
+        docdate = datetime.datetime.combine(dt.date(),datetime.time())
+
+        gdata = {}
+    
+        for sensor_id in sensor_ids:
+            coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+            doc = yield coll.find_one({'docdate' : docdate})
+
+            mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
+            gdata[sensor_id] = self.graph_day_data(doc)
+            mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
+
+        mrflog.warn("gdata %s"%repr(gdata))
+    
+
+    @tornado.gen.coroutine
+    def db_get_sensors(self,**kwargs):
+
+
+        cnames = yield self.db.collection_names()
+    
+
+        mrflog.warn("got cnames %s"%repr(cnames))
+    
+        sensors = dict()
+
+        for cn in cnames:
+            fld = cn.split('.')
+            if (fld[0] == 'sensor') and (len(fld) == 3):
+                stype = fld[1]
+                sname = fld[2]
+                if not sensors.has_key(stype):
+                    sensors[stype] = []
+                sensors[stype].append(sname)
+
+        for stype in sensors.keys():
+            sensors[stype].sort()
+        
+        mrflog.warn("got sensors %s"%repr(sensors))
+        self.db_sensors = sensors
+
+    @tornado.gen.coroutine
+    def db_sensor_data_insert(self, **kwargs):
+        
+        if not hasattr(self,'db'):
+            return
+
+        mrflog.info("sensor_db_insert : kwargs %s"%repr(kwargs))
+        sensor_id = kwargs['sensor_id']
+        stype = kwargs['stype']
+        dt = kwargs['dt']    
+        minute = dt.minute
+        hour = dt.hour
+        value  = kwargs['value']
+
+    
+        #docdate should always have zero time ..let's do this now
+        docdate = datetime.datetime.combine(dt.date(),datetime.time())
+
+        
+        coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+            
+        future = coll.update({'docdate':docdate},
+                                 { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
+        result = yield future
+
+
+        if result['updatedExisting']:
+            mrflog.info("doc update result good %s "%repr(result))
+        else:
+            mrflog.warn("result dodgy %s "%repr(result))
+            doc = mrfland.new_sensor_day_doc(sensor_id, stype, docdate)
+            future = coll.insert_one(doc)
+            result = yield future
+            mrflog.warn("insert result was %s"%repr(result))
+
+            future = coll.update({'docdate':docdate},
+                                 { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
+
+            result = yield future
+            if result['updatedExisting']:
+                mrflog.warn("doc update(2) result good %s "%repr(result))
+            else:
+                mrflog.error("result(2) bad %s "%repr(result))
+            
+
+
+    
 ## coroutines
-""""
-@tornado.gen.coroutine
-def db_day_graph(**kwargs):
-
-    sensor_ids = kwargs['sensor_ids']
-    stype = kwargs['stype']
-    dt = kwargs['docdate']
-    
-    docdate = datetime.datetime.combine(dt.date(),datetime.time())
-
-    gdata = {}
-    
-    for sensor_id in sensor_ids:
-        coll = db.get_collection('sensor.%s.%s'%(stype,sensor_id))
-        doc = yield coll.find_one({'docdate' : docdate})
-
-        mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
-        gdata[sensor_id] = graph_day_data(doc)
-        mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
-
-    mrflog.warn("gdata %s"%repr(gdata))
-    
-"""    
     
 
     

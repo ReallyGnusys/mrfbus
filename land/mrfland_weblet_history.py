@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrfland_weblet import MrflandWeblet, mrfctrl_butt_html
 from mrflog import mrflog
 from mrfland import to_json
+import datetime
 
 class MrfLandWebletHistory(MrflandWeblet):
     def init(self):
@@ -28,19 +29,20 @@ class MrfLandWebletHistory(MrflandWeblet):
         if data['tab'] != 'date_range':
             return
 
-        sl = self.rm.server.db_sensors
+        sl = self.rm.db_sensors
 
         stype = sl.keys()[0]
         sensor_id = sl[stype][0]
         
         if data['fld'] == 'day':
-            
+            docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
+
             mrflog.warn( "gen day graph ")
-            self.rm.server.sensor_db_day_doc(sensor_id=sensor_id,stype=stype)
+            self.rm.db_day_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate)
     
     def pane_html(self):
 
-        sens = self.rm.server.db_sensors
+        sens = self.rm.db_sensors
         mrflog.warn("pane_html got sensors %s"%repr(sens))
         s =  """
         <h2>%s</h2>nobbit"""%self.label
