@@ -328,6 +328,12 @@ class MrflandServer(object):
             # get sensors that have data in db
             tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
 
+        if self.config.has_key('console'):
+            from thirdparty.tornado_console import ConsoleServer
+            #my_locals = {}
+            self.console_server = ConsoleServer(locals())
+            #my_locals['server'] = self.console_server
+            self.console_server.listen(self.config['console']['port'])
         tornado.ioloop.IOLoop.instance().start()
         mrflog.error( "do we ever get here?")
 

@@ -119,5 +119,7 @@ if __name__ == '__main__':
                             'http_port'       : 8888,
                             'mrfbus_host_port': install.mrfbus_host_port,
                             'tcp_test_port'   : install.tcpport ,
-                            'db_uri'          : install.db_uri
+                            'db_uri'          : install.db_uri,
+                            'console'         : { 'port' : 1234}
+
                         })

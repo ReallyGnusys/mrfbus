@@ -33,5 +33,6 @@ if __name__ == '__main__':
     ml =  MrflandServer(rm,
                         {
                             'http_port'       : 9999,
-                            'db_uri'          : install.db_uri
+                            'db_uri'          : install.db_uri,
+                            'console'         : { 'port' : 1234}
                         })

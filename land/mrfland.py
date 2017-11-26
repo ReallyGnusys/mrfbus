@@ -34,7 +34,7 @@ import install
 from mrflog import mrflog
 #from mrf_structs import *
 from collections import OrderedDict
-
+#import tornado
 
 def is_mrf_obj(ob):
     if ob == None:
@@ -671,6 +671,33 @@ var _sensor_averages = {"""
          }"""
 
         return s
-            
+
+## coroutines
+""""
+@tornado.gen.coroutine
+def db_day_graph(**kwargs):
+
+    sensor_ids = kwargs['sensor_ids']
+    stype = kwargs['stype']
+    dt = kwargs['docdate']
+    
+    docdate = datetime.datetime.combine(dt.date(),datetime.time())
+
+    gdata = {}
+    
+    for sensor_id in sensor_ids:
+        coll = db.get_collection('sensor.%s.%s'%(stype,sensor_id))
+        doc = yield coll.find_one({'docdate' : docdate})
+
+        mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
+        gdata[sensor_id] = graph_day_data(doc)
+        mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
+
+    mrflog.warn("gdata %s"%repr(gdata))
+    
+"""    
+    
+
+    
 if __name__ == "__main__":
     print "nothing"

@@ -128,7 +128,7 @@ class MrfSens(object):
                 ournow = datetime.datetime.now()
             
                 if (ournow - now) > datetime.timedelta(minutes = 2) or   (now - ournow) > datetime.timedelta(minutes = 2):
-                    mrflog.warn("sensor input date is not set... setting current")
+                    mrflog.warn("sensor input date is not set ( got %s from %s)... setting current"%(repr(now),repr(indata['date'])))
                     now = ournow
                 
                     
@@ -138,8 +138,7 @@ class MrfSens(object):
                 self.history_dt = now
                 self.history_dt = self.history_dt.replace(second = 0,microsecond = 0)
 
-            if now.minute != self.history_dt.minute:  # roll up last minutes readings
-                # FIXME handle if more than 1 minute difference, send multiple averages
+            if (now > self.history_dt) and (now.minute != self.history_dt.minute):  # roll up last minutes readings
                 mrflog.info("averaging minute for sensor %s history_dt %s now %s"%
                             (self.label,repr(self.history_dt),repr(now)))
                 if (now - self.history_dt) >= datetime.timedelta(minutes = 2):
@@ -179,11 +178,13 @@ class MrfSens(object):
                     self.minute_subscribers[s](self.label,avm)
 
                 nowm = now
-                nowm.replace(second=0,microsecond=0)
+                nowm = nowm.replace(second=0,microsecond=0)
                 
                 
 
                 self.history_dt += datetime.timedelta(minutes = 1)
+                if False and self.label == 'LOUNGE_AMBIENT':
+                    mrflog.warn("minute_subscribers %s updated with %s hdt is now %s nowm %s"%(self.label,repr(avm),repr(self.history_dt),repr(nowm)))
 
                 while self.history_dt < nowm:
                      avm['ts']  = self.history_dt.strftime("%Y-%m-%dT%H:%M:%S")

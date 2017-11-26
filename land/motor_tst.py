@@ -72,20 +72,6 @@ def graph_day_data(doc):
     
     for hour in xrange(24):
         for minute in xrange(60):
-            """
-            if blank and (doc['data'][hour][minute] == blank):  # return early
-                indnext = hour*60+minute+1
-                indprev = hour*60+minute-1
-                if (indnext/60 > 23):
-                    return gdata
-                if (indprev/60 < 0):
-                    return gdata
-                
-                if (doc['data'][indnext/60][indnext%60] != blank): #pad last valid if only one missing value
-                    gdata.append(doc['data'][indprev/60][indprev%60])
-                
-            else:
-            """
             if doc['data'][hour][minute] == doc['nullval']:
                 print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
                 return gvals
