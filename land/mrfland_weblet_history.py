@@ -39,7 +39,7 @@ class MrfLandWebletHistory(MrflandWeblet):
             docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
 
             mrflog.warn( "gen day graph ")
-            self.rm.db_day_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(graphid))
+            self.rm.db_days_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(graphid))
     
     def pane_html(self):
 
