@@ -419,8 +419,8 @@ class MrflandWeblet(object):
         
     _ret = re.compile(r'(.*)_(on|off|en)')
 
-    def graph_request_data_ready(self,wsid, data):
-        self.rm.webupdate(self.graphtag,
+    def tbd_graph_request_data_ready(self,wsid, graphid, data):
+        self.rm.webupdate(self.graphtag(graphid),
                           {'data' : data},
                           wsid)
         
@@ -474,9 +474,8 @@ class MrflandWeblet(object):
     def has_var(self,name):
         return name in self.var.__dict__
 
-    @property
-    def graphtag(self):
-        return { 'app' : self.tag, 'mrfgraph' : 1, 'tab' : 'mrfgraph' }
+    def graphtag(self, graphid):
+        return { 'app' : self.tag, 'tab' : 'mrfgraph' , 'row' : graphid }
         
     def mktag(self, tab, row):
         return { 'app' : self.tag, 'tab' : tab , 'row' : row }

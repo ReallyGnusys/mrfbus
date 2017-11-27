@@ -26,8 +26,8 @@ class MrfLandWebletHistory(MrflandWeblet):
     def cmd_mrfctrl(self,data,wsid):
         mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
 
-    
-        if data['tab'] != 'graph1':
+        graphid =  'graph1'
+        if data['tab'] != graphid:
             return
 
         sl = self.rm.db_sensors
@@ -39,7 +39,7 @@ class MrfLandWebletHistory(MrflandWeblet):
             docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
 
             mrflog.warn( "gen day graph ")
-            self.rm.db_day_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag()
+            self.rm.db_day_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(graphid))
     
     def pane_html(self):
 
@@ -50,8 +50,9 @@ class MrfLandWebletHistory(MrflandWeblet):
         <h2>%s</h2>nobbit"""%self.label
         
         s += """<hr>
-        """+ mrfctrl_butt_html(self.tag, graphid ,'range','day',cls="")+"""
-        <div id="%s" """%
+        """+ mrfctrl_butt_html(self.tag, graphid ,'range','day',cls="")
+        s += '<div id="'+graphid+'"></div>'
+        s += """
 <script type="text/javascript">
 
 """+to_json(sens)+"""

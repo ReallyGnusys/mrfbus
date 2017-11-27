@@ -55,9 +55,13 @@ def db_get_day_doc(**kwargs):
 
     mrflog.warn("got doc %s"%repr(doc))
 
+from mrfland import MrflandRegManager
+
+rm = MrflandRegManager( {'http_port'       : 9999 })
 
 
-def graph_day_data(doc):
+
+def tbd_graph_day_data(doc):
     """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
     gdata = dict()
 
@@ -99,10 +103,10 @@ def db_day_graph(**kwargs):
         doc = yield coll.find_one({'docdate' : docdate})
 
         mrflog.warn("got doc for %s  %s"%(sensor_id,repr(doc)))
-        gdata[sensor_id] = graph_day_data(doc)
+        gdata[sensor_id] = rm.graph_day_data(doc)
         mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
 
-    mrflog.warn("gdata %s"%repr(gdata))
+    mrflog.warn("gdata is %s"%repr(gdata))
     
     
     

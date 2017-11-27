@@ -713,11 +713,13 @@ var _sensor_averages = {"""
         gdata = dict()
 
         stype = doc['stype']
+
+        
         gdata[stype] = {
             'ts'   : [],
             'value': []
         }
-    
+        mrflog.warn("graph_day_data - stype is %s starting with gdata %s"%(stype,repr(gdata)))
         gvals =  gdata[stype]
         gtime = doc['docdate']
     
@@ -725,29 +727,38 @@ var _sensor_averages = {"""
             for minute in xrange(60):
                 if doc['data'][hour][minute] == doc['nullval']:
                     print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
-                    return gvals
+                    return gdata
             
                 gvals['ts'].append(gtime.strftime(DateTimeFormat))
                 gvals['value'].append(doc['data'][hour][minute])
                 gtime = gtime + datetime.timedelta(minutes=1)
-        return gvals
+        mrflog.warn("graph_day_data - finish with gdata %s"%(repr(gdata)))
+         
+        return gdata
 
 
         
     @tornado.gen.coroutine
-    def db_day_graph(self,**kwargs):
+    def db_days_graph(self,**kwargs):
 
         sensor_ids = kwargs['sensor_ids']
         stype = kwargs['stype']
         dt = kwargs['docdate']
         wtag = kwargs['wtag']
         wsid = kwargs['wsid']
+
+        if kwargs.has_key('days'):
+            days = kwargs['days']
+        else:
+            days = 1
+            
         
         docdate = datetime.datetime.combine(dt.date(),datetime.time())
 
         gdata = {}
     
         for sensor_id in sensor_ids:
+
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
             doc = yield coll.find_one({'docdate' : docdate})
 
@@ -758,10 +769,10 @@ var _sensor_averages = {"""
         mrflog.warn("gdata %s"%repr(gdata))
 
         self.webupdate(wtag,
-                       {'data' : gdata},
+                       gdata,
                        wsid)
 
-    
+        self.server._run_updates()
 
     @tornado.gen.coroutine
     def db_get_sensors(self,**kwargs):

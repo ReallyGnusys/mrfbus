@@ -112,15 +112,17 @@ function mrf_web_update(obj){
         return;
     }
 
+    if(tag.tab == 'mrfgraph') {  
+        console.log("mrfgraph tag ");
+        console.log(tag);
+        mrfgraph(tag.app, tag.row,  obj.data)
+        return;
+    }
     
         
     data = obj.data;
 
 
-    if(tag.hasOwnProperty('mrfgraph')){
-        console.log("mrfgraph tag "+tag+ " data "+data);
-        return;
-    }
     
     if(tag.hasOwnProperty('mrfvar')){
         //console.log("var update "+tag.mrfvar+ " = "+data.val);
@@ -155,6 +157,79 @@ function mrf_web_update(obj){
     }
         
 }
+
+
+function mrfgraph_data_layout(gdata){
+
+    var data = [];
+    var layout = {
+            yaxis: {title: 'temp'},
+        };
+
+    console.log("mrfgraph_data_layout snames follow");
+    for (sn in gdata) {
+        console.log(sn);
+        sdata = gdata[sn];
+
+        if ('temp' in sdata){
+
+            console.log("this is temp");
+            tsens = sn;
+        
+            data.push( {
+                x : gdata[tsens].temp.ts,
+                y : gdata[tsens].temp.value,
+                name : tsens,
+                type : 'scatter'                
+            });
+        }
+        else if ('relay' in sdata){
+            // support optional graphing or relays on RHS second Y axis
+            console.log("this is relay");
+            tsens = sn;
+            if (!('yaxis2' in layout)){
+                console.log("creating yaxis2");
+                layout.yaxis2 =  {
+                    title: 'relay',
+                    overlaying: 'y',
+                    side: 'right'
+                };
+            }
+                data.push( {
+                    x : gdata[tsens].relay.ts,
+                    y : gdata[tsens].relay.value,
+                    name : tsens,
+                    yaxis : 'y2',
+                    type : 'linear',
+                    autorange : false,
+                    rangemode : 'nonnegative',
+                    range : [0,1],
+                    type : 'scatter'                    
+                });
+        } else {
+
+            console.log("not temp or relay!"+sn);
+        }
+    }
+ 
+    return { data : data ,  layout : layout};
+}
+
+
+
+function mrfgraph(app, graph, data){
+    console.log("mrfgraph app "+app+"  graph  "+graph);
+    //console.log(data);
+
+    dl = mrfgraph_data_layout(data);
+
+    console.log("layout is ");
+    console.log(dl.layout);
+    console.log("graph is "+graph);
+    Plotly.newPlot(graph,dl.data,dl.layout);
+    
+}
+
 
 
 
