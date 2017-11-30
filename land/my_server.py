@@ -16,13 +16,18 @@ from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_server import MrflandServer
 import install
-            
+
+from mrfland_regmanager import MrflandRegManager
+
 if __name__ == '__main__':
     #mrf_log_init()
     parse_command_line()
     
 
-    rm = mrfland.MrflandRegManager()
+    rm = MrflandRegManager( {
+            'http_port'       : 8888,
+            'db_uri'          : install.db_uri
+        })
      
     MrfDevHost(rm, "host", 1)
     
@@ -116,7 +121,6 @@ if __name__ == '__main__':
 
     ml =  MrflandServer(rm,
                         {
-                            'http_port'       : 8888,
                             'mrfbus_host_port': install.mrfbus_host_port,
                             'tcp_test_port'   : install.tcpport ,
                             'db_uri'          : install.db_uri,

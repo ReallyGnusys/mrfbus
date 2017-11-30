@@ -18,6 +18,7 @@ from mrfland_weblet import MrflandWeblet, mrfctrl_butt_html
 from mrflog import mrflog
 from mrfland import to_json
 import datetime
+from mrfland_regmanager import MrflandRegManager  # FYI self/ __MrflandWeblet__.rm is this type
 
 class MrfLandWebletHistory(MrflandWeblet):
     def init(self):
@@ -39,7 +40,7 @@ class MrfLandWebletHistory(MrflandWeblet):
             docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
 
             mrflog.warn( "gen day graph ")
-            self.rm.db_days_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(graphid))
+            self.rm.db_days_graph(sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"],stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(graphid),days=10)
     
     def pane_html(self):
 

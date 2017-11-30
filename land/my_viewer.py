@@ -7,6 +7,8 @@ import mrfland
 from mrflog import mrflog, mrf_log_init
 from mrfland_server import MrflandServer
 from mrfland_weblet_history import MrfLandWebletHistory
+from mrfland_regmanager import MrflandRegManager
+
 import install
             
 if __name__ == '__main__':
@@ -14,7 +16,7 @@ if __name__ == '__main__':
     parse_command_line()
     
 
-    rm = mrfland.MrflandRegManager(
+    rm = MrflandRegManager(
         {
             'http_port'       : 9999,
             'db_uri'          : install.db_uri

@@ -690,7 +690,7 @@ class MrflandWeblet(object):
         else:
             mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
 
-    def cmd_mrfvar_ctrl(self,data):
+    def cmd_mrfvar_ctrl(self,data ,wsid=None):
         mrflog.warn("%s cmd_mrfvar_ctrl - data  %s"%(self.__class__.__name__,repr(data)))
         
         if not data.has_key('op'):
