@@ -8,13 +8,15 @@ from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_sim import MrfDevSim
 from mrfland_server import MrflandServer
+from mrfland_regmanager import MrflandRegManager
+
 import install
             
 if __name__ == '__main__':
     parse_command_line()
     mrflog.info('Application started')
     
-    rm = mrfland.MrflandRegManager(
+    rm = MrflandRegManager(
         {
             'http_port'       : 8889
         })
