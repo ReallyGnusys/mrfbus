@@ -61,7 +61,7 @@ class MrfLandWebletRelays(MrflandWeblet):
         return s
 
 
-    def cmd_mrfctrl(self,data):
+    def cmd_mrfctrl(self,data,wsid=None):
         mrflog.info( "cmd_mrfctrl here, data was %s"%repr(data))
         if not data.has_key("tab") or not data.has_key("row"):
             mrflog.error("cmd_mrfctrl data problem in %s"%repr(data))
