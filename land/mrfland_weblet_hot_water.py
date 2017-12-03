@@ -133,7 +133,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.state_update(timeout=True)
 
 
-    def var_changed(self,name):
+    def var_changed(self,name,wsid=None):
         #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
         if name == 'enabled':

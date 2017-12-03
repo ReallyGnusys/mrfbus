@@ -642,24 +642,30 @@ var _sensor_averages = {"""
             days = 1
             
         startdate = datetime.datetime.combine(dt.date(),datetime.time())
-
+        
         gdata = {}
     
         for sensor_id in sensor_ids:
-            docdate = startdate - datetime.timedelta(days=days)
+            docdate = startdate - datetime.timedelta(days=days-1)
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
 
             for day in xrange(days):
                 mrflog.warn("%s %d) %s"%(sensor_id,day,repr(docdate))) 
                 doc = yield coll.find_one({'docdate' : docdate})
-                stype = doc['stype']
 
-                #mrflog.warn("got doc %s  %s  %s"%(repr(docdate),sensor_id,repr(doc)))
 
-                gdata  = self.graph_day_data(gdata, sensor_id,stype, doc)
-                #mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
-                docdate += datetime.timedelta(days=1)
                 
+                try:
+                    stype = doc['stype']
+
+                    mrflog.warn("got doc %s  %s"%(repr(docdate),sensor_id))
+
+                    gdata  = self.graph_day_data(gdata, sensor_id,stype, doc)
+                    #mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
+                except:
+                    mrflog.warn("no doc for %s %s"%(sensor_id,repr(docdate)))
+                
+                docdate += datetime.timedelta(days=1)
 
         #mrflog.warn("gdata %s"%repr(gdata))
 

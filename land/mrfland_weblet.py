@@ -114,7 +114,24 @@ def mrfctrl_butt_html(app,tab,row,fld,cls=""):
     return """<button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
         (cls,app,tab,row,fld,fld)
 
-        
+
+def mrfctrl_select_html(app,tab,row,fldlist,label, cls=""):
+    sid = "mrfctrl_sel_%s_%s_%s"%(app,tab,row)
+    s = """
+<span class="form-group">
+  <label>%s</label>
+  <select class="form-control mrfctrl_sel"  app="%s" tab="%s" row="%s" >"""%(label,app,tab,row)
+    for fld in fldlist:
+        s += """
+        <option>%s</option>"""%fld
+
+    s += """
+   </select>
+</span>
+"""
+    return s
+
+
 _tre = re.compile(r'([0-2][0-9]):([0-5][0-9])')
 
 def parse_timestr(tstr):
@@ -146,9 +163,9 @@ class MrfWebletVar(object):
         if hasattr(self,'init'):
             self.init(val, **kwargs)
         
-    def updated(self): #notice that value has changed - should be no need to pass anything
+    def updated(self,wsid=None): #notice that value has changed - should be no need to pass anything
         if self._app_callback:
-            self._app_callback(self.name)
+            self._app_callback(self.name,wsid=None)
     @property
     def webtag(self):
         return { 'app' : self.app, 'mrfvar' : self.name }
@@ -207,6 +224,9 @@ class MrfWebletConfigVar(MrfWebletVar):
             self.max_val = max_val
             self.min_val = min_val
             self.step    = step
+        elif  self.val.__class__ == str and  kwargs.has_key('sel_list'):
+            self.sel_list =  kwargs['sel_list']
+            mrflog.warn("config var select")
 
     def check_tod(self):  # check if self.val is tod
 
@@ -246,14 +266,14 @@ class MrfWebletConfigVar(MrfWebletVar):
  
             
         
-    def set(self, value):
+    def set(self, value, wsid=None):
         if type(value) != type(self._val):
             mrflog.error("%s set value wrong type for var name %s"%(self.__class__.__name__,self.name))
             return
         if self._val != value:
             self._val = value
             self.check_tod()
-            self.updated()
+            self.updated(wsid=wsid)
 
         
         
@@ -284,9 +304,23 @@ class MrfWebletConfigVar(MrfWebletVar):
                <i class="glyphicon glyphicon-time mrfvar-ctrl-timepick" app="%s" name="%s"></i>
             </span>"""%(self.app, self.name, self.app, self.name)
 
+        if self.val.__class__ == str and hasattr(self,'sel_list'):
+            
+            s = """
+            <span class="form-group">
+  <select class="form-control mrfvar-ctrl-sel" app="%s" name="%s" >"""%(self.app,self.name)
+            for fld in self.sel_list:
+                s += """
+        <option>%s</option>"""%fld
+
+            s += """
+   </select>
+</span>
+"""
+            return s
+
+            
         
-        
-        return ""
         
 class MrfWebletSensorVar(MrfWebletVar):
     def init(self,val, **kwargs):
@@ -425,8 +459,8 @@ class MrflandWeblet(object):
                           wsid)
         
         
-    def var_callback(self,name):
-        mrflog.info("%s var_callback for %s value %s"%(self.__class__.__name__, name, self.var.__dict__[name].val))
+    def var_callback(self,name,wsid=None):
+        mrflog.info("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
 
         if self.var.__dict__[name].public:  # if set this var has been instanced in a webpage
             
@@ -449,7 +483,7 @@ class MrflandWeblet(object):
 
         
         if hasattr(self,'var_changed'):
-            self.var_changed(name)
+            self.var_changed(name,wsid=wsid)
     
     def add_var(self, name, initval, **kwargs):
         v = None
@@ -654,7 +688,11 @@ class MrflandWeblet(object):
         <table class="table">
           <tbody>"""
          
-        for vn in varlist:
+        for v in varlist:
+            if v.__class__ == str:  #pass var name or var ref
+                vn = v
+            else:
+                vn = v.name
             s += """
             <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+self.var.__dict__[vn].html+"</td><td>"+self.var.__dict__[vn].html_ctrl+"</td></tr>"
 
@@ -691,7 +729,7 @@ class MrflandWeblet(object):
             mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
 
     def cmd_mrfvar_ctrl(self,data ,wsid=None):
-        mrflog.warn("%s cmd_mrfvar_ctrl - data  %s"%(self.__class__.__name__,repr(data)))
+        mrflog.warn("%s cmd_mrfvar_ctrl - data  %s wsid %s"%(self.__class__.__name__,repr(data),repr(wsid)))
         
         if not data.has_key('op'):
             mrflog.error("%s cmd_mrfvar_ctrl no op specified - data  was  %s"%(self.__class__.__name__,repr(data)))
@@ -719,7 +757,7 @@ class MrflandWeblet(object):
                 
                 mrflog.warn("%s cmd_mrfvar_ctrl set %s = %s %s"%(self.__class__.__name__,vn,repr(data['val']),repr(sval)))
                 
-                va.set(sval)
+                va.set(sval,wsid=wsid)
                 mrflog.warn("%s var  %s = %s"%(self.__class__.__name__,vn,repr(va.val)))
 
         if data['op'] == 'up':

@@ -481,6 +481,19 @@ function init_app(){
             ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
         });
 
+
+    $(".mrfctrl_sel").change(
+        function(){
+            var value = this.value;
+            var app = $(this).attr('app');
+            var tab = $(this).attr('tab');
+            var row = $(this).attr('row');            
+            var cdata = {"app" : app, "tab": tab , "row" : row , "value" : value}
+            console.log("mrfctrl_sel changed");
+            console.log(cdata);
+            ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
+
+        });
     // new style var controls
     //mrvar-ctrl-cb
 
@@ -563,6 +576,20 @@ function init_app(){
       });
     
 
+    $(".mrfvar-ctrl-sel").change(
+        function(){
+            var val = this.value;
+            var app = $(this).attr('app');
+            var name = $(this).attr('name');
+
+            var cdata = {"app": app , "name" : name, "op" : "set",  "val" : val }
+
+            console.log("mrfvar-ctrl-sel changed");
+            console.log(cdata);
+            ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
+
+
+        });
 
 
     
