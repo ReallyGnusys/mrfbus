@@ -460,14 +460,18 @@ class MrflandWeblet(object):
         
         
     def var_callback(self,name,wsid=None):
-        mrflog.info("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
+        #mrflog.warn("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
 
         if self.var.__dict__[name].public:  # if set this var has been instanced in a webpage
-            
+            #mrflog.warn("%s running webupdate for  %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
+
             self.rm.webupdate(self.var.__dict__[name].webtag,
                               { 'val' : self.var.__dict__[name].val}
-            )       
+            )
+            self.rm.server._run_updates() # ouch
 
+
+            
         # hmpff... see if this var belongs to a timer
         
         mob = MrflandWeblet._ret.match(name)
@@ -590,13 +594,14 @@ class MrflandWeblet(object):
     def _eval_timer(self,label):
         sensmap =  self._relay_lut[label]['smap']
         pl = self._relay_lut[label]['tag']
+        relay = self.rm.sensors[pl]
+        was_active = relay.req_val
         is_active = False
         for tn in self._relay_shares[pl]:
             
             tmr = self._timers[tn]
             is_active = is_active or tmr.is_active()
 
-        relay = self.rm.sensors[pl]
         relay.set(is_active)
         
     def pane_html_header(self):
@@ -658,6 +663,7 @@ class MrflandWeblet(object):
 
             for cn in cols.keys():
                 v = cols[cn][i]
+                v.public = True
                 if ctrl:
                     if v.val.__class__ == bool:
                         s += "<td>"+v.html_ctrl+"</td>"
@@ -668,6 +674,7 @@ class MrflandWeblet(object):
 
             for cn in rocols.keys():
                 v = rocols[cn][i]
+                v.public = True
                 s += "<td>"+v.html+"</td>"
 
 
@@ -693,6 +700,9 @@ class MrflandWeblet(object):
                 vn = v
             else:
                 vn = v.name
+
+
+            self.var.__dict__[vn].public = True
             s += """
             <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+self.var.__dict__[vn].html+"</td><td>"+self.var.__dict__[vn].html_ctrl+"</td></tr>"
 
@@ -702,7 +712,7 @@ class MrflandWeblet(object):
         return s
 
 
-    def timer_ctrl_table(self):
+    def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False):
         tcols =  OrderedDict()
         tcols['enable'] =  []
         tcols['on']  = []
@@ -710,14 +720,33 @@ class MrflandWeblet(object):
 
         rocols = OrderedDict()
         rocols['active'] = []
-        for tn in self._timers.keys():
+
+        if include_list:
+            tnames = include_list
+        else:
+            tnames = self._timers.keys()
+
+        tcnames = []
+        for tn in tnames:
+            if tn in exclude_list:
+                continue
+            tcnames.append(tn)
             tmr = self._timers[tn]
+
             tcols['enable'].append(tmr.en)
             tcols['on'].append(tmr.on)
             tcols['off'].append(tmr.off)
+                
             rocols['active'].append(tmr.active)
 
-        return self.html_mc_var_table('Name',self._timers.keys(), tcols ,ctrl=True,rocols=rocols)
+        if ro:
+            del tcols['on']
+            del tcols['enable']  # Filthy hack to unclutter these from auto controlled timers
+            for tc in tcols.keys():
+                rocols[tc] = tcols[tc]
+                del tcols[tc]
+                
+        return self.html_mc_var_table('Name',tcnames, tcols ,ctrl=True,rocols=rocols)
 
 
     def cmd(self,cmd, data,wsid=None):
@@ -726,7 +755,7 @@ class MrflandWeblet(object):
             mrflog.info( "executing weblet defined cmd %s"%cmd)
             return getattr(self,fn)(data,wsid)
         else:
-            mrflog.error("%s attempt to execute undefined cmd %s"%cmd)
+            mrflog.error("%s attempt to execute undefined cmd %s"%(self.__class__.__name__,cmd))
 
     def cmd_mrfvar_ctrl(self,data ,wsid=None):
         mrflog.warn("%s cmd_mrfvar_ctrl - data  %s wsid %s"%(self.__class__.__name__,repr(data),repr(wsid)))

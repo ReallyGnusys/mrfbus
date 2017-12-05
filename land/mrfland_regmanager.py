@@ -255,7 +255,7 @@ class MrflandRegManager(object):
 
         stype = self.sensors[label]._stype_
         if data.has_key('ts') and data.has_key(stype) and self.server:
-            dt = datetime.datetime.strptime(data['ts'],"%Y-%m-%dT%H:%M:%S")
+            dt = datetime.datetime.strptime(data['ts'],DateTimeFormat)
             self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
             
     def graph_req(self,slab):  #for weblets to request graph data capture for sensors

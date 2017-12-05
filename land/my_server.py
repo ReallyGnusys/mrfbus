@@ -6,7 +6,6 @@ import mrfland
 
 from mrflog import mrflog, mrf_log_init
 from mrfdev_pt1000 import Pt1000Dev
-from mrfdev_heatbox import DevHeatbox
 from mrfdev_host import MrfDevHost
 from mrfland_weblet_temps  import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
@@ -14,6 +13,8 @@ from mrfland_weblet_timers import MrfLandWebletTimers
 from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
+from mrfland_weblet_rad_pump import MrfLandWebletRadPump
+
 from mrfland_server import MrflandServer
 import install
 
@@ -58,7 +59,24 @@ if __name__ == '__main__':
                         'acc_litres' : 2200
                            
                     })
+    """
 
+    MrfLandWebletRadPump(rm,
+                         {
+                             'tag'        : 'rad1',
+                             'label'      : 'Main Rads',
+                             'rad'        : 'RAD1',
+                             'pump'       : 'RAD1_PUMP',
+                             'flowsens'   : 'HB1_FLOW',
+                             'retsens'    : 'RAD1_RET',
+                             'timers'     :  [ 'RAD1_P0', 'RAD1_P1' , 'RAD1_P2']
+                         },
+                         {
+                             'max_return' : 45.0,
+                             'hysterisis' : 5.0
+                         })
+
+    """
     MrfLandWebletHotWater(rm,
                           {
                               'tag'        : 'DHW1',
@@ -85,8 +103,8 @@ if __name__ == '__main__':
                               'litres'     : 200
                           },
                           {
-                              'target_temp': 60.0,
-                              'delta_targ_rx' : 8.0,
+                              'target_temp'    : 60.0,
+                              'delta_targ_rx'  : 8.0,
                               'min_wait_hours' : 16.0, 
                               'enabled'  : False
                           })
@@ -102,7 +120,7 @@ if __name__ == '__main__':
                         {
                             'tag':'timers',
                             'label':'Timers',
-                            'timers':  [ "RAD1_P0", "RAD1_P1", "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
+                            'timers':  [ "RAD1_P0", "RAD1_P1",  "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
                             
                         })
 

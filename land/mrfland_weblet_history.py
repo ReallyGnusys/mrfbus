@@ -54,9 +54,12 @@ class MrfLandWebletHistory(MrflandWeblet):
 
         if self.graph_type == 'Ambient':
             sensor_ids=["LOUNGE_AMBIENT","OUTSIDE_AMBIENT"]
-        else:
+        elif self.graph_type == 'Store':
             sensor_ids=["ACC_100","ACC_60","ACC_30","ACC_RET"]
+        else:
+            sensor_ids=["ACC_100","ACC_60","ACC_30","OUTSIDE_AMBIENT"]
             
+
         docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
 
         self.rm.db_days_graph(sensor_ids=sensor_ids,stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(self.graphid),days=self.days)
@@ -69,7 +72,7 @@ class MrfLandWebletHistory(MrflandWeblet):
         <div>
         """
         s += mrfctrl_select_html(self.tag,self.graphid, 'days', ['1','7','28'],'Days')
-        s += mrfctrl_select_html(self.tag,self.graphid, 'type', ['Ambient','Store'],'Graph')
+        s += mrfctrl_select_html(self.tag,self.graphid, 'type', ['Ambient','Store','Energy'],'Graph')
         
         s += """
       </div>

@@ -306,6 +306,9 @@ class MrflandServer(object):
         server = self  # FIXME ouch
         self.rm.setserver(server)  # double OUCH
 
+        self.q = Queue.Queue()
+        self.active_cmd = None
+        self.active_timer = 0
 
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
@@ -341,9 +344,6 @@ class MrflandServer(object):
         self.netid = netid
 
 
-        self.q = Queue.Queue()
-        self.active_cmd = None
-        self.active_timer = 0
 
         self._connect_to_mrfnet(port)
         
@@ -453,16 +453,17 @@ class MrflandServer(object):
             self.q.put(cobj)
         else:
             mrflog.warn("running cmd immediately %s"%repr(cobj))
-            self._next_cmd(cobj)
-            self._activate()
+            if self._next_cmd(cobj) == 0:
+                self._activate()
 
     def _next_cmd(self,cobj):
         if self._run_cmd(cobj) == 0:
             self.resp_timer = 0
-            self.active_cmd = cobj            
+            self.active_cmd = cobj
+            return 0
         else:
             mrflog.warn("_run_cmd failed for %s"%repr(cobj))
-
+            return -1
     def TBD_app_cmd_set(self,dest):
         for appn in self.apps.keys():
             app = self.apps[appn]
@@ -530,14 +531,18 @@ class MrflandServer(object):
         csum = csum % 256
         msg[mlen - 1] = csum
         mrflog.info("msg len is %d"%len(msg))
-        self._app_fifo_write(msg)
-        return 0
-    def _app_fifo_write(self,msg):
-        n = self.nsock.send(msg)
-        #self.nsock.flush()
-        #self.app_fifo.close()
-        mrflog.warn("written %d bytes to app_fifo"%n)
+        return self._app_fifo_write(msg)
         
+    def _app_fifo_write(self,msg):
+        if hasattr(self,'nsock'):        
+            n = self.nsock.send(msg)
+            #self.nsock.flush()
+            #self.app_fifo.close()
+            mrflog.warn("written %d bytes to app_fifo"%n)
+            return 0
+        else:
+            mrflog.error("failed to write message to app_fifo %s"%repr(msg))
+            return -1
 
     def parse_input(self,resp):
         """
@@ -598,7 +603,7 @@ class MrflandServer(object):
         elif response and self.active_cmd and hdr.usrc == self.active_cmd.dest and param.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
             mrflog.info("got response for active command %s"%repr(self.active_cmd))
             mrflog.info("rsp %s"%(param))
-            if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
+            if hasattr(self,'tcp_server') and self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                 mrflog.info("response for tcp client %d"%self.active_cmd.tag)
                 mrflog.info("robj dic is %s"%repr(robj.dic()))
                 rstr = mrfland.to_json(robj.dic())
@@ -711,7 +716,7 @@ class MrflandServer(object):
                 self.resp_timer += 1
                 if self.resp_timer > 5:
                     mrflog.warn("give up waiting for response for %s"%( self.active_cmd))
-                    if self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
+                    if hasattr(self,'tcp_server') and self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
                         mrflog.info("response for tcp client %d"%self.active_cmd.tag)
                         mrflog.info("sending empty dict")
                         rstr = mrfland.to_json({})
