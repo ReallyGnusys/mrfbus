@@ -59,7 +59,6 @@ if __name__ == '__main__':
                         'acc_litres' : 2200
                            
                     })
-    """
 
     MrfLandWebletRadPump(rm,
                          {
@@ -76,7 +75,6 @@ if __name__ == '__main__':
                              'hysterisis' : 5.0
                          })
 
-    """
     MrfLandWebletHotWater(rm,
                           {
                               'tag'        : 'DHW1',
@@ -120,7 +118,7 @@ if __name__ == '__main__':
                         {
                             'tag':'timers',
                             'label':'Timers',
-                            'timers':  [ "RAD1_P0", "RAD1_P1",  "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
+                            'timers':  [ "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
                             
                         })
 
