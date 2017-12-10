@@ -120,6 +120,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                  "sid":sob.sid,
                  "ip":sob.ip,
                  "username": sob.username,
+                 "apps": sob.apps,
                  "object": self 
                  }
         self.rm.comm.add_client(self.id,cdata)

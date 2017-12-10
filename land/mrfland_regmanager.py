@@ -24,10 +24,11 @@ class socket_info(object):
         self.wsid = other.wsid
         self.username = other.username
         self.ip  = other.ip
+        self.apps = other.apps
 
 
 class staff_socket(object):
-    def __init__(self,sid,wsid,sessid,username,stype,ip):
+    def __init__(self,sid,wsid,sessid,username,stype,apps,ip):
         self.opened = None
         self.closed = None
         self.isopen = True
@@ -36,6 +37,7 @@ class staff_socket(object):
         self.sessid = sessid
         self.username = username
         self.stype = stype
+        self.apps = apps
         self.ip = ip
         self.expire = None
     def __repr__(self):
@@ -54,11 +56,11 @@ class mrf_comm(object):
         self.clients = dict()
         self.sockets = {}
 
-    def prepare_socket(self,sid,wsid,sessid,username,stype,ip):
+    def prepare_socket(self,sid,wsid,sessid,username,stype,apps,ip):
         mrflog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
-        self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,ip)
+        self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,apps,ip)
         
-    def check_socket(self,wsid,ip):
+    def check_socket(self,wsid,ip):  # FIXME should have timeout if socket not opened in v short time after prepare_socket
         mrflog.info("checking socket id %s  ip %s"%(wsid,ip))
         if not wsid in self.sockets.keys():
             mrflog.warn("wsid not found...(%s)"%wsid)            
@@ -83,23 +85,47 @@ class mrf_comm(object):
             del self.clients[wsid]
             self.sockets[wsid].close()
 
-    def _jso_broadcast(self,raw):
-        mrflog.debug( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
+    def staff_logout(self,sob,ip):
+        wsid = sob['wsid']
+        mrflog.warn("staff_logout wsid "+wsid)
+        self.del_client(wsid)
+        
+    def _jso_broadcast(self,app,raw):
+        mrflog.debug( "mrf.comm._jso_broadcast : app"+str(app)+" "+str(len(self.clients))+" clients")
         mrflog.debug(" clients = "+str(self.clients))    
-        for client in self.clients :   
-            mrflog.debug( "client:"+client)
-            self.clients[client]['object'].write_message(raw + "\r\n\r\n")
+        for wsid in self.clients.keys() :   
+            mrflog.debug( "client wsid:"+wsid)
+            client = self.clients[wsid]
+            if app in client['apps']:
+                client['object'].write_message(raw + "\r\n\r\n")
 
     def send_object_to_client(self,id,obj):
         if not self.clients.has_key(id):
             errstr = "asa_comm:obj to client key error, key was "+str(id)+" obj was "+str(obj)
             mrflog.error(errstr)
             return
-        username = self.clients[id]['username']
+        client = self.clients[id]
+        
+        #username = self.clients[id]['username']
+        username = client['username']
+
+        if not obj.has_key('data'):
+            mrflog.error("send obj to client ... no data in %s"%repr(obj))
+            return
+        data = obj['data']
+
+        if not data.has_key('tag'):
+            mrflog.error("send obj to client ... no tag in %s"%repr(data))
+            app = None
+        else:
+            app = data['tag']['app']
+         
         mrflog.info( "send_object_to_client: sent cmd "+str(obj['cmd'])+ " to  "+username)
         msg = mrfland.to_json(obj)
         mrflog.debug(msg)
-        self.clients[id]['object'].write_message(msg+"\r\n\r\n")
+        mrflog.warn("checking client %s"%repr(client))
+        if app and app in client['apps']:
+            client['object'].write_message(msg+"\r\n\r\n")
     def broadcast(self,obj):
         msg = mrfland.to_json(obj)
 
@@ -109,12 +135,13 @@ class mrf_comm(object):
             mrflog.error("broadcast obsolete attempt of %s"%repr(data))
             return
         tag = data['tag']
-        if tag['app'] == 'timers':
+        app = tag['app']
+        if app == 'timers':
             mrflog.warn("broadcasting timer obj:"+msg)
             mrflog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
             mrflog.info(" clients = "+str(self.clients))
     
-        self._jso_broadcast(msg)
+        self._jso_broadcast(app,msg)
     def set_session_expire(self,id,seconds = install.session_timeout):
         self.sockets[id].expire = int(time.time() + seconds)
 
@@ -134,7 +161,8 @@ class mrf_comm(object):
             if skt.sessid == sessid:
                 self.log.info("sessid matched for wsid %s"%wsid)
                 if skt.expire > int(time.time()):
-                    return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire, 'type': skt.stype , 'username' : skt.username}
+                    return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire,
+                            'type': skt.stype , 'username' : skt.username , 'apps' : skt.apps}
                 else:
                     return None
         return None
@@ -217,7 +245,7 @@ class MrflandRegManager(object):
         wsid = os.urandom(16).encode('hex')  
         sessid = gen_sessid()
 
-        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],ip)    
+        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip)    
         self.comm.set_session_expire(wsid)
 
         return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
@@ -396,36 +424,40 @@ class MrflandRegManager(object):
         self.weblets[weblet.tag] = weblet
         mrflog.warn("weblet_register -registered new weblet %s"%weblet.tag)
 
-    def html_pills(self):
+    def html_pills(self,apps):
         """ generate bootstrap pills """
         s = ""
         first = True
         for wa in self.weblets.keys():
-            wl = self.weblets[wa]
-            if first:
-                lic = ' class="active"'
-                first = False
-            else:
-                lic = ''
+            if wa in apps:
+                wl = self.weblets[wa]
+                if first:
+                    lic = ' class="active"'
+                    first = False
+                else:
+                    lic = ''
             
-            s += '    <li %s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
+                s += '    <li %s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         return s
 
-    def html_body(self):
+    def html_body(self,apps):
         """ generate the html body """
         self.graph_insts = 0
         s = """
   <body>
     <div class="container">
-       <ul class="nav nav-pills">
-"""+self.html_pills()+"""
+       <ul class="nav nav-pills" id="mrf-tabs">
+"""+self.html_pills(apps)+"""
        </ul>
 
        <div class="tab-content">
 """
+        first = True
         for wa in self.weblets.keys():
-            wl = self.weblets[wa]
-            s += wl.html()
+            if wa in apps:
+                wl = self.weblets[wa]
+                s += wl.html(first)
+                first = False
         s += """
        </div> <!-- /tab-content -->
 

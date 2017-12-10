@@ -604,14 +604,18 @@ class MrflandWeblet(object):
 
         relay.set(is_active)
         
-    def pane_html_header(self):
-        return '    <div id="%s" class="tab-pane fade">'%self.tag
+    def pane_html_header(self,active=False):
+        if active:
+            astr = 'active'
+        else:
+            astr = ''
+        return '    <div id="%s" class="tab-pane %s fade">'%(self.tag,astr)
     def pane_html_footer(self):
         return '    </div>  <!-- %s -->\n'%self.tag
 
-    def html(self):
+    def html(self,active=False):
         self.graph_insts = 0
-        s = self.pane_html_header()
+        s = self.pane_html_header(active)
         s += self.pane_html()
         s += self.pane_html_footer()
         return s

@@ -15,8 +15,45 @@ $(document).ready(function() {
 
     }
     window.addEventListener('resize', onresize);
-    
-    $(document).on('shown.bs.tab', onresize);
+
+
+    $('#mrf-tabs a').click(function(e) {
+        console.log("tab clicked");
+        console.log(e);
+        
+        e.preventDefault();
+        $(this).tab('show');
+        onresize();
+
+    });
+
+
+    $("ul.nav-tabs > li > a").on("shown.bs.tab", function(e) {
+        var id = $(e.target).attr("href").substr(1);
+        window.location.hash = id;
+    });
+
+    var hash = window.location.hash;
+
+    console.log("trying to show tab "+hash)
+    console.log('#mrf-tabs a[href="' + hash + '"]')
+    $('#mrf-tabs a[href="' + hash + '"]').tab('show');
+
+    /*
+    $(document).on('shown.bs.tab',
+                   function(e){
+                       var target = $(e.target).attr("href") // activated tab
+                       console.log("shown.bs.tab href "+target);
+
+                       if (target == '#logout'){
+
+                           if (window.confirm("Really logout?")){
+                               
+                           }
+                       }
+                       onresize;
+    });
+*/
 
     onresize();
     

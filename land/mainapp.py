@@ -38,7 +38,7 @@ def login_page(rh):
 
 def logout_action(rh,sob,ip):
 
-    ro = mrfland.staff_logout(sob['sid'],sob['username'],ip)
+    ro = mrfland.staff_logout(sob['sid'],sob['username'],sob['wsid'],ip)
     rh.clear_cookie(install.sess_cookie)
     
     rh.redirect('/login')
@@ -294,9 +294,14 @@ class mainapp(tornado.web.RequestHandler):
 
         if  ( page == 'logout') :
             alog.info("calling logout_action")
-            return logout_action(self,sob,ip)
+            wsid = sob['wsid']
+            self.rm.comm.staff_logout(sob,ip)
+            self.clear_cookie(install.sess_cookie)
+    
+            self.redirect('/login')
+            return
 
-        html_body = self.rm.html_body()
+        html_body = self.rm.html_body(sob['apps'])
         ws_url = self.rm.ws_url(sob['wsid'])
         return mrf_page(self,sob,ws_url,ip,html_body)
      
