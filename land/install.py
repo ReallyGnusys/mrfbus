@@ -1,5 +1,5 @@
 test = True
-installdir = '/v/share/projects/msp/mrfbus/land/'
+#installdir = '/v/share/projects/msp/mrfbus/land/'
 
 instance = 'heat-1'
 #domain = 'localdom'
@@ -49,12 +49,12 @@ users = {
     'guest' : { 'sid' : 2, 'type' : 'sysadmin', 'password' : 'gpass' , 'username': 'guest',
                 'apps' : ['temps','history']},
     'q'     : { 'sid' : 3, 'type' : 'sysadmin', 'password' : 'q'     , 'username': 'q',
-                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','history']},
+                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','devs','history']},
     'p'     : { 'sid' : 4, 'type' : 'sysadmin', 'password' : 'p'     , 'username': 'p',
-                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','history']}
+                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','devs','history']}
 }
 
 
 
-_ssl_cert_file = installdir+'/certs/'+host+'/cert.pem' 
-_ssl_key_file =  installdir+'/certs/'+host+'/private/key.pem'  
+_ssl_cert_file = 'certs/'+host+'/cert.pem' 
+_ssl_key_file =  'certs/'+host+'/private/key.pem'  

@@ -8,7 +8,6 @@ import sys
 sys.path.append('../lib')
 from mrflog import mrf_log
 import templates
-import psycopg2
 alog = mrf_log()
 
 def print_everything(*args):

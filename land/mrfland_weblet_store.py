@@ -80,6 +80,7 @@ class MrfLandWebletStore(MrflandWeblet):
         skeys = self.var.__dict__.keys()
         skeys.sort()
 
+        mrflog.warn("store app var keys are %s"%repr(skeys))
         s += """
         <hr>
         <h3>Temps</h3>"""

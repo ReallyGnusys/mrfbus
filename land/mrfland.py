@@ -223,4 +223,4 @@ def new_sensor_day_doc(sensor_id, stype, docdate):
 
     
 if __name__ == "__main__":
-    print "nothing"
+    print("nothing")

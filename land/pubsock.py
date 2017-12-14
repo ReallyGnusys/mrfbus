@@ -10,7 +10,6 @@ sys.path.append('../lib')
 import install
 #import asa_prims
 #import asa
-import psycopg2
 from datetime import datetime
 import time
 import json

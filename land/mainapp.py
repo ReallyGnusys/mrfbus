@@ -8,7 +8,6 @@ import sys
 sys.path.append('../lib')
 from mrflog import mrf_log
 import templates
-import psycopg2
 import mrfland
 alog = mrf_log()
 from mrflog import mrflog

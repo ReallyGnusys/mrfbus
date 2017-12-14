@@ -5,7 +5,7 @@ import os
 import time
 import base64
 from collections import OrderedDict
-
+import socket
 import install
 
 from mrflog import mrflog
@@ -200,6 +200,7 @@ class MrflandRegManager(object):
         self.addresses = {}  ### hash devices by address - must be unique
         self.wups = []  ## webupdates from weblets to send to browsers
         self.dups = []  ## device updates : from weblets to send to devices
+        self.hostname = socket.gethostname()
         self.weblets = OrderedDict()  # has weblets by tag
         self.timers = {}
         self.sgraphs = {}  # support graph data for these sensors during this mrfland service
@@ -423,7 +424,7 @@ class MrflandRegManager(object):
 
         self.weblets[weblet.tag] = weblet
         mrflog.warn("weblet_register -registered new weblet %s"%weblet.tag)
-
+        self.db_app_load_cfg_data(apptag=weblet.tag)
     def html_pills(self,apps):
         """ generate bootstrap pills """
         s = ""
@@ -502,6 +503,22 @@ class MrflandRegManager(object):
     def subprocess(self, arglist, callback):
         mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))        
         return self.server.subprocess(arglist, callback)
+
+    def quiet_task(self):  # server calls this task periodically 
+        mrflog.warn("quiet task")
+        for wapn in self.weblets.keys():
+            wap = self.weblets[wapn]
+            if wap._cfg_touched:
+                mrflog.warn("wap %s cfg change"%wapn)
+                doc = wap.var.cfg_doc()                
+                wap._cfg_touched = False
+                doc['hostname'] = self.hostname
+                doc['tag'] = wap.tag
+                doc['label'] = wap.label
+                doc['cls'] = wap.__class__.__name__
+                
+                mrflog.warn(repr(doc))
+                self.db_app_cfg_data_replace(apptag=wapn,doc=doc)
 
     def sensor_average_js(self):  # generate sensor average history js
         s = ""
@@ -778,8 +795,68 @@ var _sensor_averages = {"""
                 mrflog.error("result(2) bad %s "%repr(result))
             
 
+    @tornado.gen.coroutine
+    def db_app_cfg_data_replace(self, **kwargs):
+        
+        if not hasattr(self,'db'):
+            return
 
+        mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
+        apptag = kwargs['apptag']
+        doc    = kwargs['doc']
+        
+        if kwargs.has_key('sid'):
+            sid = kwargs['sid']
+        else:
+            sid = -1
+            
+        doc['sid'] = sid
+        
+        
 
+        docdate = datetime.datetime.now()
+        doc['docdate'] = docdate
+        
+        collname =  '%s.cfg.webapps'%(self.hostname)
+        coll = self.db.get_collection(collname)
+
+        filt = {'tag' : apptag }
+
+        
+        
+        future = coll.replace_one(filt, doc, True)
+        result = yield future
+
+        mrflog.warn("result %s"%repr(result))
+            
+
+    @tornado.gen.coroutine
+    def db_app_load_cfg_data(self, **kwargs):
+        
+        if not hasattr(self,'db'):
+            return
+
+        mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
+        apptag = kwargs['apptag']
+        
+        
+        
+
+        
+        collname =  '%s.cfg.webapps'%(self.hostname)
+        coll = self.db.get_collection(collname)
+
+        filt = {'tag' : apptag }
+
+        
+        
+        future = coll.find_one(filt)
+        result = yield future
+
+        mrflog.warn("loaded config  for app %s result %s"%(apptag,repr(result)))
+
+        if result.has_key('data'):
+            self.weblets[apptag].restore_cfg(result['data'])
 
 def gen_sessid():
     return base64.b64encode(os.urandom(18))

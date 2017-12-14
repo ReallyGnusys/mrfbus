@@ -739,5 +739,6 @@ class MrflandServer(object):
             self._set_timeout(5.0)
             if self.quiet_cnt % 5 == 0  :
                 #mrflog.info("calling state task qc %d"%self.quiet_cnt)
+                self.rm.quiet_task()
                 self.quiet_cnt = 0
             

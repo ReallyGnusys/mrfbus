@@ -141,7 +141,7 @@ def check_doc_data_precision(doc):
         return None
 
 
-    
+"""    
 for cn in cns:
     if cn.find("sensor.") != 0:
         continue
@@ -156,7 +156,7 @@ for cn in cns:
     for doc in cur:
         #print doc['_id']
         d2 = col.find_one({'_id': doc['_id'] })
-        """
+
         #print d2
         if (not d2.has_key('stype')) or (not d2.has_key('nullval')) or (not d2.has_key('min_res')):
             print "not migrated!! %s"%d2['_id']
@@ -177,7 +177,7 @@ for cn in cns:
             #print "matched "+repr(res.matched_count)
             if res.modified_count > 0:            
                 print "modified min_res"+repr(res.modified_count)
-        """
+
         fdoc = check_doc_null_data(d2)
 
         if fdoc:
@@ -227,3 +227,5 @@ for cn in cns:
                 print "modified "+repr(res.modified_count)+" data_precision "+sensor_id
 
 
+                
+        """

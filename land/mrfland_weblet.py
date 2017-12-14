@@ -187,6 +187,12 @@ class MrfWebletConfigVar(MrfWebletVar):
         self._val = val  # just a simple value we keep here
         print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
 
+        if kwargs.has_key('save'):  # can override default save to DB of cfg var changes
+            self.save = kwargs['save']
+        else:
+            self.save = True
+
+        
         self.check_tod()
 
         if self.tod.__class__ == datetime.time:
@@ -268,7 +274,8 @@ class MrfWebletConfigVar(MrfWebletVar):
         
     def set(self, value, wsid=None):
         if type(value) != type(self._val):
-            mrflog.error("%s set value wrong type for var name %s"%(self.__class__.__name__,self.name))
+            mrflog.error("%s set value wrong type for var name %s  - got %s expected %s"%
+                         (self.__class__.__name__,self.name,value.__class__.__name__,self._val.__class__.__name__))
             return
         if self._val != value:
             self._val = value
@@ -354,9 +361,20 @@ class MrfWebletSensorVar(MrfWebletVar):
         
 
 class MrflandWebletVars(object):
-    pass
+    def cfg_dict(self):
+        keys = self.__dict__.keys()
+        rv = dict()
+        for key in keys:
+            v = self.__dict__[key]
+            if v.__class__.__name__ == 'MrfWebletConfigVar' and v.save:
+                rv[key] =  self.__dict__[key].val
+        return rv
 
-
+    def cfg_doc(self):
+        dc = dict()
+        dc['data'] = self.cfg_dict()
+        return dc
+        
 class MrfTimer(object):
     def __init__(self,name,en,on,off,active):
         self.name = name
@@ -398,7 +416,9 @@ class MrflandWeblet(object):
         self.label = cdata['label']
         self.cdata = cdata
         self.graph_insts = 0
+        #self.var = MrflandWebletVars(self.tag,self.label,self.__class__.__name__)
         self.var = MrflandWebletVars()
+        self._cfg_touched = False
 
 
         self._timers = OrderedDict()
@@ -453,6 +473,14 @@ class MrflandWeblet(object):
         
     _ret = re.compile(r'(.*)_(on|off|en)')
 
+    def restore_cfg(self,data):
+        mrflog.warn("weblet %s restoring data %s"%(self.tag,repr(data)))
+
+        for vn in data.keys():
+            mrflog.warn("setting var %s to %s"%(vn,repr(data[vn])))
+            dv = self.var.__dict__[vn]._val.__class__(data[vn])  # FIXME str types are unicode when they come back from DB
+            self.var.__dict__[vn].set(dv)
+        
     def tbd_graph_request_data_ready(self,wsid, graphid, data):
         self.rm.webupdate(self.graphtag(graphid),
                           {'data' : data},
@@ -461,7 +489,7 @@ class MrflandWeblet(object):
         
     def var_callback(self,name,wsid=None):
         #mrflog.warn("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
-
+        
         if self.var.__dict__[name].public:  # if set this var has been instanced in a webpage
             #mrflog.warn("%s running webupdate for  %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
 
@@ -485,7 +513,8 @@ class MrflandWeblet(object):
                     aval = tmr.__dict__[act]
                     self.set_timer( aval.tod , tn , act)
 
-        
+        if self.var.__dict__[name].__class__.__name__ == 'MrfWebletConfigVar':
+            self._cfg_touched = True
         if hasattr(self,'var_changed'):
             self.var_changed(name,wsid=wsid)
     
@@ -494,7 +523,7 @@ class MrflandWeblet(object):
 
         mrflog.warn("%s add_var name %s"%(self.__class__.__name__, name))
         #kwargs['callback'] = self.var_callback
-        
+
         if issubclass(initval.__class__ , MrfSens):
             if not kwargs.has_key('field'):
                 mrflog.error("add_var initval was sensor but no field keyword")
@@ -559,7 +588,7 @@ class MrflandWeblet(object):
         en = name+'_en'
         self.add_var(en, False)
         active = name+'_active'
-        self.add_var(active, False)
+        self.add_var(active, False,save=False)
 
         on = name+'_on'
         self.add_var(on, '00:00')
