@@ -14,6 +14,7 @@ from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_weblet_rad_pump import MrfLandWebletRadPump
+from mrfland_weblet_history import MrfLandWebletHistory
 
 from mrfland_server import MrflandServer
 import install
@@ -75,6 +76,22 @@ if __name__ == '__main__':
                              'hysterisis' : 5.0
                          })
 
+    MrfLandWebletRadPump(rm,
+                         {
+                             'tag'        : 'rad2',
+                             'label'      : 'Guest Rads',
+                             'rad'        : 'RAD2',
+                             'pump'       : 'RAD2_PUMP',
+                             'flowsens'   : 'HB2_FLOW',
+                             'retsens'    : 'HB2_RET',
+                             'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2']
+                         },
+                         {
+                             'max_return' : 45.0,
+                             'hysterisis' : 5.0
+                         })
+
+    
     MrfLandWebletHotWater(rm,
                           {
                               'tag'        : 'DHW1',
@@ -135,6 +152,13 @@ if __name__ == '__main__':
                            'label': 'Devices'
                        })
 
+    MrfLandWebletHistory(rm,
+                    {
+                        'tag'        : 'history',
+                        'label'      : 'History'
+                           
+                    })
+    
     ml =  MrflandServer(rm,
                         {
                             'mrfbus_host_port': install.mrfbus_host_port,

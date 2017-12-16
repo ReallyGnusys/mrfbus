@@ -277,8 +277,13 @@ function mrf_auto_graph(label, data){
         console.error("auto graph for label "+label+"  not found");
         return;
     }
-
-
+    dbg = false
+    if (label == 'HB1_FLOW') {
+        
+        console.log("auto-graph label "+label);
+        console.log(data);
+        dbg = true;
+    }
     for (var fld in data) {
         
         if (fld != 'ts')
@@ -293,9 +298,10 @@ function mrf_auto_graph(label, data){
             _sensor_averages[label][fld].ts.push(data['ts']);
 
             dt = new Date(data['ts']);
-            //console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
-            //console.log(dt);
-
+            if ( dbg) {
+                console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
+                console.log(dt);
+            }
             limms = dt.getTime() - _sensor_hist_seconds * 1000;
             
             fd =  new Date(_sensor_averages[label][fld].ts[0]);

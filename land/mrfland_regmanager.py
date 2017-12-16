@@ -96,7 +96,7 @@ class mrf_comm(object):
         for wsid in self.clients.keys() :   
             mrflog.debug( "client wsid:"+wsid)
             client = self.clients[wsid]
-            if app in client['apps']:
+            if (app == 'auto_graph') or app in client['apps']:
                 client['object'].write_message(raw + "\r\n\r\n")
 
     def send_object_to_client(self,id,obj):
@@ -124,7 +124,7 @@ class mrf_comm(object):
         msg = mrfland.to_json(obj)
         mrflog.debug(msg)
         mrflog.warn("checking client %s"%repr(client))
-        if app and app in client['apps']:
+        if app and ((app ==  'auto_graph')  or app in client['apps']):
             client['object'].write_message(msg+"\r\n\r\n")
     def broadcast(self,obj):
         msg = mrfland.to_json(obj)
@@ -225,6 +225,7 @@ class MrflandRegManager(object):
                 getattr(wl, 'run_init')()
         ## rm should connect graph callbacks here
         for sl in self.sgraphs.keys():
+            mrflog.warn("graph subscribe %s"%sl)
             self.sensors[sl].subscribe_minutes(self.graph_callback)
 
         # get sensors that have data in db

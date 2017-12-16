@@ -48,10 +48,14 @@ users = {
     'home'  : { 'sid' : 1, 'type' : 'sysadmin', 'password' : 'hpass' , 'username': 'home'},
     'guest' : { 'sid' : 2, 'type' : 'sysadmin', 'password' : 'gpass' , 'username': 'guest',
                 'apps' : ['temps','history']},
+
+    
     'q'     : { 'sid' : 3, 'type' : 'sysadmin', 'password' : 'q'     , 'username': 'q',
-                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','devs','history']},
+                'apps' : ['store','rad1', 'rad2', 'DHW1','DHW2','temps','timers','relays','devs','history']},
     'p'     : { 'sid' : 4, 'type' : 'sysadmin', 'password' : 'p'     , 'username': 'p',
-                'apps' : ['store','rad1','DHW1','DHW2','temps','timers','relays','devs','history']}
+                'apps' : ['store','rad1','rad2','DHW1','DHW2','temps','timers','relays','devs','history']},
+    'j'     : { 'sid' : 5, 'type' : 'sysadmin', 'password' : 'j'     , 'username': 'j',
+                'apps' : ['rad2','history']}
 }
 
 
