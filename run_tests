@@ -42,6 +42,7 @@ sleep 3
 
 # need install.py locally
 cp ${MRFBUS_HOME}/land/install_example.py  ./install.py
+export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
 
 source ${MRFBUS_HOME}/land/venv/bin/activate
 stdbuf -oL  python ${MRFBUS_HOME}/land/test_server.py  > ${LOGDIR}/mrfland.log&
