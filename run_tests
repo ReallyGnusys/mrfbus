@@ -9,6 +9,8 @@ LOGDIR=log
 #
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 
+# MRFBUS_HOME must be defined
+[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit -1
 
 stdbuf -oL ${MRFBUS_HOME}/examples/hostsim/build/0x01/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
 h01_pid=$!
@@ -37,7 +39,6 @@ sleep 3
 # need to start mrfland... ho ho ho
 
 
-[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && export MRFBUS_HOME=$(pwd)
 
 # need install.py locally
 cp ${MRFBUS_HOME}/land/install_example.py  ./install.py
