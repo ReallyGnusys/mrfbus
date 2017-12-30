@@ -1,3 +1,7 @@
+## normally copy this your run dir  and name install.py
+## setup as required
+
+
 test = True
 #installdir = '/v/share/projects/msp/mrfbus/land/'
 

@@ -11,4 +11,4 @@ script:
   - make venv
   - make tests
   - ./mrflib/tests/iqueue/test_01
-  - ./run_tests
+  - export MRFBUS_HOME=$(pwd) ; ./run_tests

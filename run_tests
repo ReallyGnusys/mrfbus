@@ -3,27 +3,27 @@
 #start mrfbus instances
 TMP=/tmp/mrf_bus
 LOGDIR=log
-export MRFBUS_HOME=$(pwd)
+#export MRFBUS_HOME=$(pwd)
 
 
 #
 [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
 
 
-stdbuf -oL examples/hostsim/build/0x01/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
+stdbuf -oL ${MRFBUS_HOME}/examples/hostsim/build/0x01/bin/hostsim_0x01 > ${LOGDIR}/hostsim_0x01.log &
 h01_pid=$!
 echo $h01_pid
 
-stdbuf -oL examples/hostsim/build/0x02/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
+stdbuf -oL ${MRFBUS_HOME}/examples/hostsim/build/0x02/bin/hostsim_0x02 > ${LOGDIR}/hostsim_0x02.log&
 h02_pid=$!
 echo $h02_pid
 
-stdbuf -oL examples/hostsim/build/0x20/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
+stdbuf -oL ${MRFBUS_HOME}/examples/hostsim/build/0x20/bin/hostsim_0x20 > ${LOGDIR}/hostsim_0x20.log&
 h20_pid=$!
 echo $h20_pid
 
 
-stdbuf -oL examples/hostsim/build/0x2f/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
+stdbuf -oL ${MRFBUS_HOME}/examples/hostsim/build/0x2f/bin/hostsim_0x2f > ${LOGDIR}/hostsim_0x2f.log&
 h2f_pid=$!
 echo $h2f_pid
 
@@ -39,8 +39,11 @@ sleep 3
 
 [ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && export MRFBUS_HOME=$(pwd)
 
-source land/venv/bin/activate
-stdbuf -oL  python land/test_server.py  > ${LOGDIR}/mrfland.log&
+# need install.py locally
+cp ${MRFBUS_HOME}/land/install_example.py  ./install.py
+
+source ${MRFBUS_HOME}/land/venv/bin/activate
+stdbuf -oL  python ${MRFBUS_HOME}/land/test_server.py  > ${LOGDIR}/mrfland.log&
 land_pid=$!
 echo "land started "$land_pid
 
@@ -49,7 +52,7 @@ sleep 5
 echo "starting core_tests.."
 # run stubtst
 
-python land/core_tests.py
+python ${MRFBUS_HOME}/land/core_tests.py
 rv=$?
 
 
