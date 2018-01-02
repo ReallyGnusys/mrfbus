@@ -113,5 +113,6 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum );
 void _mrf_if_print_all();
 int mrf_if_recieving(I_F i_f);
 int mrf_if_transmitting(I_F i_f);
+int mrf_if_can_sleep(I_F i_f);
 
 #endif

@@ -53,10 +53,12 @@ class MrfDev(object):
             self.caps[clab] = []
             chan = 0
             for slab in caplabels[clab]:
+                mrflog.warn("%s elaborating sensor %s  %s"%(self.__class__.__name__, clab, slab))
                 #self.caps[clab].append(self._capspec[clab](slab, self.address, chan, mrflog))
                 self.caps[clab].append(self._capspec[clab](slab,self.devupdate,self.address,chan))
                 self.rm.senslink(slab, self.address ,chan)
                 chan += 1
+            mrflog.warn(self.caps[clab])
 
         if hasattr(self, 'init'):  # run subclass init if defined
             self.init()

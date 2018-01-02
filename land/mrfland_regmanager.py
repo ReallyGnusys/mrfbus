@@ -491,6 +491,7 @@ class MrflandRegManager(object):
         self.devmap[dev.address] = dev
         ### now enumerate device sensors
         for cap in dev.caps.keys():
+            mrflog.warn("enumerating sensors type %s"%cap)
             for ch in range(len(dev.caps[cap])):
                 sens = dev.caps[cap][ch]
                 if self.sensors.has_key(sens.label):
@@ -500,7 +501,8 @@ class MrflandRegManager(object):
                 if not self.senstypes.has_key(type(sens)):
                     self.senstypes[type(sens)] = []
                 self.senstypes[type(sens)].append(sens)
-
+                mrflog.warn("chan %d type  %s"%(ch,type(sens)))
+                
     def subprocess(self, arglist, callback):
         mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))        
         return self.server.subprocess(arglist, callback)

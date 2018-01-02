@@ -18,6 +18,8 @@
 
 DEVCCFLAGS= -DMCLK_16MHZ_DCO
 
+DEVOBJS=${MOBJ}/mrf_uart_cc.o
+
 #use USCI_B for spi
 #DEVOBJS=${MOBJ}/mrf_spi_cc.o
 

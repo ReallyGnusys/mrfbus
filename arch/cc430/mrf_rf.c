@@ -26,7 +26,7 @@
 
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(RF0,buff)
 
-#define mrf_alloc() mrf_alloc_if(RF0)
+//#define mrf_alloc() mrf_alloc_if(RF0)
 int rf_if_send_func(I_F i_f, uint8 *buff);
 int mrf_rf_init(I_F i_f);
 
@@ -37,10 +37,16 @@ const MRF_IF_TYPE mrf_rf_cc_if = {
 };
 
 
+int _Dbg_sresp(){
+  return 2;
+}
+int  _xb_hw_wr_tx_fifo(int len , uint8 *buff);
 
 int rf_if_send_func(I_F i_f, uint8 *buff){
-  const MRF_IF *mif = mrf_if_ptr(i_f);
-  _xb_hw_wr_tx_fifo(buff[0] , buff);
+  //const MRF_IF *mif = mrf_if_ptr(i_f);
+  if (buff[4] == 2) // resp
+    _Dbg_sresp();
+  _xb_hw_wr_tx_fifo((int)buff[0] , buff);
 }
 
 extern RF_SETTINGS rfSettings;
@@ -51,17 +57,8 @@ static void _mrf_init_radio()
   WriteRfSettings(&rfSettings);
   WriteSinglePATable(PATABLE_VAL);
 }
-void _mrf_receive_enable(void);
 
-int mrf_rf_init(I_F i_f){
-  ResetRadioCore();
-  _mrf_init_radio();
-  _mrf_receive_enable();
-  return 0;
-}
-
-
-void _mrf_receive_enable(void){
+int _mrf_receive_enable(void){
   RF1AIES |= BIT9;                          // Falling edge of RFIFG9
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt 
@@ -71,20 +68,90 @@ void _mrf_receive_enable(void){
   // Strobe( RF_SFRX  );    
   Strobe( RF_SIDLE );
   Strobe(RF_SFRX);
-  Strobe( RF_SRX );      
+  Strobe( RF_SRX );
+  return 0;
+  
+}
+
+
+int mrf_rf_init(I_F i_f){
+  ResetRadioCore();
+  _mrf_init_radio();
+  _mrf_receive_enable();
+  return 0;
+}
+
+
+
+uint16 rf_if_clt0(){
+  return RF1AIFCTL0;
+  
+}
+
+uint16 rf_if_clt1(){
+  return RF1AIFCTL1;
+  
+}
+
+
+uint16 rf_iflg(){
+  return RF1AIFG;
+  
+}
+
+uint16 rf_iedge(){
+  return RF1AIES;
+  
+}
+
+uint16 rf_ien(){
+  return RF1AIE;
+  
+}
+
+uint16 rf_if_err(){
+  return RF1AIFERR;
+  
+}
+
+uint8 rf_if_iflg(){
+  return RF1AIFIFG ;
+  
+}
+uint8 rf_if_ien(){
+  return   RF1AIFIE;
+  
+}
+
+
+int _Dbg11(){
+  return 11;
+}
+
+
+int _Dbg12(){
+  return 12;
 }
 
 
 
 int _xb_hw_rd_rx_fifo(I_F i_f){
-  uint8 i,len,bnum;
+  //int i;
+  uint8 i, len,bnum;
   uint8 *buff;
   uint8 lenerr = FALSE;
-  uint8 ebuff;
   const MRF_IF *mif;
   mif = mrf_if_ptr(i_f);
   len = ReadSingleReg( RXBYTES ); 
 
+
+  if (len == 0) {
+    _mrf_receive_enable();
+    return -1;
+  }
+
+  _Dbg11();
+  
   if ( len < sizeof(MRF_PKT_HDR) + 2) { // at least 2 are LQI and RSSI
     lenerr = TRUE;    
   }
@@ -92,8 +159,8 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     lenerr = TRUE;
   }
   else{
-    bnum = mrf_alloc();
-
+    //bnum = mrf_alloc();
+    bnum =  mrf_alloc_if(RF0);
     if ( bnum == _MRF_BUFFS){  // emergency buffer used to collect header + toks only
       mif->status->stats.alloc_err++;
       lenerr = TRUE;
@@ -107,15 +174,23 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
   while (!(RF1AIFCTL1 & RFINSTRIFG));    // wait for RFINSTRIFG
   RF1AINSTR1B = (RF_RXFIFORD | RF_REGRD);          
 
-  for (i = 0; i < len; i++)    
+
+  buff[0] = RF1ADOUT1B;
+  buff[0] = len -2;   
+  for (i = 1; i < len; i++){    
     if ( lenerr == FALSE)
-      buff[i+1] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
-    else 
-      ebuff = RF1ADOUT1B;                     // Also initiates auto-read for next DOUT byte
+      buff[i] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
+  }
+
+  
   if (lenerr){ // re-enable reception
     _mrf_receive_enable();
-    return;
+    return -1;
   }
+  
+  _Dbg12();
+
+  
   mrf_buff_loaded(bnum);
   return 0;
  
@@ -133,8 +208,8 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   Strobe( RF_SFTX  );  
   Strobe( RF_SNOP );                         // Strobe STX   
   while (!(RF1AIFCTL1 & RFINSTRIFG));        // wait for tx ready  
-  RF1AINSTRW = ((RF_TXFIFOWR | RF_REGWR)<<8 ) + (uint8)len; // write reg addr + len
-  for (i = 0; i < len; i++){
+  RF1AINSTRW = ((RF_TXFIFOWR | RF_REGWR)<<8 ) + (uint8)(len-1); // write reg addr + len
+  for (i = 1; i < len; i++){
     while (!(RFDINIFG & RF1AIFCTL1));       
     RF1ADINB = buff[i];                   
   }
@@ -175,9 +250,16 @@ int _mrf_rf_tx_intr(I_F i_f){
   }else { // some cockup
     ifp->status->stats.st_err ++;
   }
-
+  return 0;
 }
 
+uint8 rf1stb;
+
+uint8 GetRF1ASTATB(){
+  uint8 rv = RF1ASTATB;
+  return rv;
+  
+}
 
 static unsigned int RF1AIVREG;
 
@@ -187,7 +269,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
   int xbtransmitting = mrf_if_transmitting(RF0);
   int rx_ournet = 0;
   int rx_crcok = 0;
-  //RSTAT = GetRF1ASTATB();
+  rf1stb = GetRF1ASTATB();
   
   // switch(__even_in_range(RF1AIV,32))        // Prioritizing Radio Core Interrupt 
   RF1AIVREG = RF1AIV;

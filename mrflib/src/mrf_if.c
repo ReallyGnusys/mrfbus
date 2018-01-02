@@ -56,7 +56,7 @@ void mrf_if_init(){
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;    
     queue_init(&(mif->status->txqueue));
-    mif->status->state = MRF_ST_IDLE;
+    mif->status->state = MRF_ST_RX;
     fd = (*(mif->type->funcs.init))(i);
 #ifdef MRF_ARCH_lnx
     *(mif->fd) = fd; //needed for epoll

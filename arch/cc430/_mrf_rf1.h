@@ -53,5 +53,7 @@ void WriteBurstReg(unsigned char addr, unsigned char *buffer, unsigned char coun
 void WriteRfSettings(RF_SETTINGS *pRfSettings);
 void WriteSinglePATable(unsigned char value);
 void WriteSingleReg(unsigned char addr, unsigned char value);
+unsigned char Strobe(unsigned char strobe);
+void ResetRadioCore (void);
 
 #endif

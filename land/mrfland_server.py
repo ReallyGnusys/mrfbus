@@ -316,7 +316,7 @@ class MrflandServer(object):
         self._active = False
 
         if self.config.has_key('mrfbus_host_port'):
-            self._start_mrfnet(self.config['mrfbus_host_port'])
+            self._start_mrfnet(self.config['mrfbus_host_port'],self.config['mrf_netid'])
         self.quiet_cnt = 0
         self._start_webapp()
         if self.config.has_key('tcp_test_port'):
@@ -340,7 +340,7 @@ class MrflandServer(object):
         mrflog.error( "do we ever get here?")
 
 
-    def _start_mrfnet (self, port,  netid = 0x25):
+    def _start_mrfnet (self, port,  netid):
         self.hostaddr = 1
         self.netid = netid
 
@@ -565,7 +565,7 @@ class MrflandServer(object):
         #print "hdr is:\n%s\n"%repr(hdr)
 
         if hdr.netid != self.netid: # only looking for packets from this netid
-            mrflog.info("not our netid")
+            mrflog.warn("not our netid")
             return None,None,None
         
         if hdr.udest != 0: # only looking for packets destined for us

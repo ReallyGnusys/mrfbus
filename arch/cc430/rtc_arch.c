@@ -321,7 +321,7 @@ int rtc_get(TIMEDATE *td){
   _rtc_get(old);
   _rtc_get(new);
  
-  while(!_rtc_td_eq(old,new) && (count < RTC_GET_TIMEOUT) || !_rtc_td_is_valid(new)){
+  while(!_rtc_td_eq(old,new) && ((count < RTC_GET_TIMEOUT) || !_rtc_td_is_valid(new))){
 
     count++;
     // swap old and new

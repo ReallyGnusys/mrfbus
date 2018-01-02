@@ -28,7 +28,7 @@
 #include "mrf_buff.h"
 
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(UART0,buff)
-#define mrf_alloc() mrf_alloc_if(UART0)
+//#define mrf_alloc() mrf_alloc_if(UART0)
 #define LP_115200
 //#define LP_57600
 

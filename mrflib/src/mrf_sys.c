@@ -483,6 +483,12 @@ int _mrf_ex_buffer(uint8 bnum){
   */
 }
 
+int _Dbg_fh(){
+  return -2;
+}
+
+
+
 // FIXME lots of duplicated code here wrt. data_response / ex packet - need to clean this up
 int _mrf_buff_forward(uint8 bnum){
   MRF_PKT_HDR *pkt;
@@ -515,7 +521,10 @@ int _mrf_buff_forward(uint8 bnum){
 
     mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
   }
-
+  if (pkt->hdest == 1){
+    _Dbg_fh();
+    
+  }
   return 0;
 }
 

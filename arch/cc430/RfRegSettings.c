@@ -156,6 +156,7 @@ RF_SETTINGS rfSettings = {
     0x29,   // IOCFG2    GDO2 output pin configuration.
     0x06,   // IOCFG0    GDO0 output pin configuration. Refer to SmartRF® Studio User Manual for detailed pseudo register explanation.
     0x04 | 2 | 8,   // PKTCTRL1 // append stat + addr check(0=bdcst) + CRC autoflush.
+    //0x04,  // | 2,   // PKTCTRL1 // append stat + addr check(0=bdcst) + CRC autoflush.
     0x04 + 1,   // PKTCTRL0  Packet automation control - CRC and variable packet.
 
     MRFID,   // ADDR      Device address.
