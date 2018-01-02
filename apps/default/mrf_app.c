@@ -29,10 +29,12 @@ int signal_handler(uint8 signal){
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
+  return MRF_CMD_RES_OK;
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_buff_free(bnum);
+  return MRF_CMD_RES_OK;
 }
 
 

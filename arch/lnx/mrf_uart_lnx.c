@@ -149,6 +149,8 @@ static int _usb_if_send_func(I_F i_f, uint8 *buff){
 
   
   fsync(fd);
+
+  return 0;
   //printf("bc = %d  fd = %d\n",bc,fd);
 }
 
@@ -241,7 +243,7 @@ static int _mrf_uart_init_lnx(I_F i_f){
   fd = usb_open(mif->name);
 
   if (fd < 0){
-    mrf_debug("mrf_uart_init_lnx sadly failed to open %s..adios\n",devname);
+    mrf_debug("mrf_uart_init_lnx sadly failed to open %s..adios\n",mif->name);
     _fd[i_f] = -1;
     return fd;
   }

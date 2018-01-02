@@ -80,6 +80,7 @@ uint8 set_relay_state(uint8 chan,uint8 val){
       PINLOW(RLD);
     }
   }
+  return 0;
 }
 
 
