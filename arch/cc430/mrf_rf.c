@@ -133,7 +133,7 @@ int _Dbg12(){
   return 12;
 }
 
-
+static uint8   _rf_rssi,_rf_lqi;
 
 int _xb_hw_rd_rx_fifo(I_F i_f){
   //int i;
@@ -171,17 +171,20 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     }
   }
   
-  while (!(RF1AIFCTL1 & RFINSTRIFG));    // wait for RFINSTRIFG
+  while (!(RF1AIFCTL1 & RFINSTRIFG));    // wait for RFINSTRIFG   // FIXME check this doesn't block - it shouldn't - should be able to remove this line
   RF1AINSTR1B = (RF_RXFIFORD | RF_REGRD);          
 
 
   buff[0] = RF1ADOUT1B;
   buff[0] = len -2;   
-  for (i = 1; i < len; i++){    
+  for (i = 1; i < (len - 2); i++){    
     if ( lenerr == FALSE)
       buff[i] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
   }
 
+  _rf_rssi =  RF1ADOUT1B;
+
+  _rf_lqi  =  RF1ADOUT1B;
   
   if (lenerr){ // re-enable reception
     _mrf_receive_enable();
