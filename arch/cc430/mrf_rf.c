@@ -187,7 +187,8 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     _mrf_receive_enable();
     return -1;
   }
-  
+  _mrf_receive_enable();  // need to be rx if not tx
+
   _Dbg12();
 
   
