@@ -30,6 +30,7 @@ if __name__ == '__main__':
     ml =  MrflandServer(rm,
                         {
                             'mrfbus_host_port': install.mrfbus_host_port,
+                            'mrf_netid'     : 0x25,
                             'tcp_test_port'   : install.tcpport 
                         })
 
