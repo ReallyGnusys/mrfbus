@@ -177,14 +177,19 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
 
   buff[0] = RF1ADOUT1B;
   buff[0] = len -2;   
-  for (i = 1; i < (len - 2); i++){    
+  for (i = 1; i < (len-2); i++){     // append rssi and lqi
     if ( lenerr == FALSE)
       buff[i] = RF1ADOUT1B;                 // Read DOUT from Radio Core + clears RFDOUTIFG
   }
 
-  _rf_rssi =  RF1ADOUT1B;
+  if ( i < 60){  // don't risk buff overflow by appending RSSI and LQI for long packets
+    buff[i] = RF1ADOUT1B;  // rssi
+    i++;
+    buff[i] = RF1ADOUT1B;  // lqi
+  }
+  //_rf_rssi =  RF1ADOUT1B;
 
-  _rf_lqi  =  RF1ADOUT1B;
+  //_rf_lqi  =  RF1ADOUT1B;
   
   if (lenerr){ // re-enable reception
     _mrf_receive_enable();

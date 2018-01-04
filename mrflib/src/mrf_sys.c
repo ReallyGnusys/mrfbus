@@ -533,6 +533,8 @@ int _mrf_buff_forward(uint8 bnum){
 int _mrf_process_buff(uint8 bnum)
 {
   MRF_PKT_HDR *pkt;
+  MRF_PKT_RESP *resp;
+  MRF_PKT_PING_RES *pingres;
   uint8 type;
   I_F owner = mrf_buff_owner(bnum);
   mrf_debug("_mrf_process_buff: processing buff number %d our _mrfid = %X owner i_f %d \n",bnum,_mrfid, owner);
@@ -562,6 +564,15 @@ int _mrf_process_buff(uint8 bnum)
     // act like we received an ack
     mrf_debug("%s","got resp_should count as ack \n");
     mrf_task_ack(pkt->type,bnum,ifp);
+
+    resp = (MRF_PKT_RESP *)((void *)pkt + sizeof(MRF_PKT_HDR));
+
+    if (resp->type == mrf_cmd_ping) {  // nasty bodge to append get rssi and lqi for response to ping_test
+      pingres = (MRF_PKT_PING_RES *)((void *)pkt + sizeof(MRF_PKT_HDR)+ sizeof(MRF_PKT_RESP));
+      pingres->from_rssi = *((uint8 *)pkt + pkt->length);
+      pingres->from_lqi = *((uint8 *)pkt + (pkt->length) + 1);
+      
+    }
   }
   // end desperate
 

@@ -36,5 +36,6 @@ MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_task_reset(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
+MRF_CMD_RES mrf_task_ping(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 
 #endif

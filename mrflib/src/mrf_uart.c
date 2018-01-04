@@ -202,7 +202,7 @@ int mrf_uart_to_buff(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum){
 */
 
 
-inline uint8 mrf_uart_tx_complete(UART_CSTATE *txstate){
+uint8 mrf_uart_tx_complete(UART_CSTATE *txstate){
   if(txstate->state == S_IDLE)
     return 1;
   else

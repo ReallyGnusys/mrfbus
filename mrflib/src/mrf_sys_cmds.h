@@ -39,7 +39,8 @@ typedef enum mrf_cmd_code
    mrf_cmd_usr_struct = 14,
    mrf_cmd_usr_resp = 15,
    mrf_cmd_reset = 16,
-   MRF_NUM_SYS_CMDS = 17
+   mrf_cmd_ping = 17,   
+   MRF_NUM_SYS_CMDS = 18
  } MRF_CMD_CODE;
 
 

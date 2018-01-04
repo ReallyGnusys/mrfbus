@@ -163,4 +163,14 @@ typedef struct  __attribute__ ((packed))   {
   char data[32];
 } MRF_PKT_DBG_CHR32;
 
+
+typedef struct  __attribute__ ((packed))   {
+  uint8 to_rssi;
+  uint8 to_lqi;
+  uint8 from_rssi;
+  uint8 from_lqi;
+} MRF_PKT_PING_RES;
+
+
+
 #endif

@@ -238,7 +238,7 @@ void WriteSinglePATable(unsigned char value)
 // *****************************************************************************
 void WriteBurstPATable(unsigned char *buffer, unsigned char count)
 {
-  volatile char i = 0; 
+  volatile unsigned char i = 0; 
   
   while( !(RF1AIFCTL1 & RFINSTRIFG));
   RF1AINSTRW = 0x7E00 + buffer[i];          // PA Table burst write   

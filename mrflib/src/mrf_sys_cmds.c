@@ -41,7 +41,9 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                                , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_task_test_1   },
   [ mrf_cmd_usr_struct  ] = {"USR_STRUCT" , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_struct  },
   [ mrf_cmd_usr_resp    ] = {"USR_RESP"   , MRF_CFLG_NO_RESP                 , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_resp     },
-  [ mrf_cmd_reset       ] = {"RESET"       ,  MRF_CFLG_NO_ACK                , 0                          , 0                          ,  NULL      , mrf_task_reset      }
+  [ mrf_cmd_reset       ] = {"RESET"       ,  MRF_CFLG_NO_ACK                , 0                          , 0                          ,  NULL      , mrf_task_reset      },
+  [ mrf_cmd_ping ] = {"PING",  MRF_CFLG_INTR                                 , 0                          , sizeof(MRF_PKT_PING_RES)   ,  NULL     , mrf_task_ping},
+
 
 };
 

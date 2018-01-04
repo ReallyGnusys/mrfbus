@@ -220,6 +220,16 @@ class PktIfStats(MrfStruct):
         ("st_err", c_uint8)
     ]
 
+class PktPingRes(MrfStruct):
+    _fields_ = [
+        ("to_rssi", c_uint8),
+        ("to_lqi", c_uint8),
+        ("from_rssi", c_uint8),
+        ("from_lqi", c_uint8)
+    ]
+
+
+    
 # FIXME should be able to generate core command set arg and return templates from C here
 mrf_cmd_ack = 0
 mrf_cmd_retry = 1
@@ -238,7 +248,8 @@ mrf_cmd_test_1 = 13
 mrf_cmd_usr_struct = 14
 mrf_cmd_usr_resp = 15
 mrf_cmd_reset = 16
-MRF_NUM_SYS_CMDS = 17
+mrf_cmd_ping = 17
+MRF_NUM_SYS_CMDS = 18
 
 
 ## some app commands for the time being here.. ideally would be auto discovered codes
@@ -312,6 +323,11 @@ MrfSysCmds = {
         'name' : "RESET",
         'param': None,
         'resp' : None        
+    },
+    mrf_cmd_ping : {
+        'name' : "PING",
+        'param': None,
+        'resp' : PktPingRes        
     }
 }
     
