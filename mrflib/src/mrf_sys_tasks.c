@@ -256,7 +256,7 @@ MRF_CMD_RES mrf_task_ping(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   MRF_PKT_PING_RES *pres = (MRF_PKT_PING_RES *)mrf_response_buffer(bnum);
   // lqi and rssi follow packet - just header with no payload for ping
-  uint8 *bptr = *((uint8*)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  uint8 *bptr = (uint8 *)((uint8*)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   pres->to_rssi =  *(bptr);
   pres->to_lqi =  *(bptr + 1);
   mrf_send_response(bnum,sizeof(MRF_PKT_PING_RES));
