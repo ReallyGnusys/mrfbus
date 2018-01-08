@@ -40,7 +40,7 @@
 
 // system supports using a radio relay between usbmote and subnet device
 // if HOP_TO_SNET is defined device 0x20 will be relay hub 
-#define HOP_TO_SNET 
+//#define HOP_TO_SNET 
 //#include <stdio.h>
 
 //calculate the cell relay node that handles traffic for this address 

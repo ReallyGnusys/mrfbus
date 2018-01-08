@@ -486,7 +486,9 @@ int _mrf_ex_buffer(uint8 bnum){
 int _Dbg_fh(){
   return -2;
 }
-
+int _Dbg_fw(){
+  return -3;
+}
 
 
 // FIXME lots of duplicated code here wrt. data_response / ex packet - need to clean this up
@@ -514,7 +516,7 @@ int _mrf_buff_forward(uint8 bnum){
   pkt->hsrc = _mrfid;
   pkt->netid = MRFNET;  // what are we going to use this for?
   mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
-
+  _Dbg_fw();
   if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
     mrf_retry(route.i_f,bnum);
   else{
@@ -696,13 +698,11 @@ void _mrf_tick(){
     // check if i_f busy
     if ( istate == MRF_ST_WAITSACK){
       if_busy = 1;
-      if ((mif->status->acktimer) > 0 ){
- 
+      if ((mif->status->acktimer) > 0 )
         mif->status->acktimer--;
-        if((mif->status->acktimer) == 0){
-          mrf_debug("tick - aborting wait for ack  i_f %d  tc %d \n",i,_tick_count);
-          mif->status->state = MRF_ST_TX;
-        }
+      if((mif->status->acktimer) == 0){
+        mrf_debug("tick - aborting wait for ack  i_f %d  tc %d \n",i,_tick_count);
+        mif->status->state = MRF_ST_TX;
       }
  
       if_busy = 1;

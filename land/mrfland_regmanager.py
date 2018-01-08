@@ -195,6 +195,7 @@ class MrflandRegManager(object):
         self.devmap  = {} ## hash devices by address
         self.sensors = {}  ### hash sensors by label
         self.senstypes = {} ### hash lists of sensors by sensor type
+        self.senscaps = {}  ## hash lists by cap string 
         self.actuators = {}
         self.sensmap = {}  ## keep physical mapping here - addr, chan dict returned for each sensor label
         self.addresses = {}  ### hash devices by address - must be unique
@@ -501,6 +502,11 @@ class MrflandRegManager(object):
                 if not self.senstypes.has_key(type(sens)):
                     self.senstypes[type(sens)] = []
                 self.senstypes[type(sens)].append(sens)
+
+                if not self.senscaps.has_key(cap):
+                    self.senscaps[cap] = []
+                self.senscaps[cap].append(sens)
+                
                 mrflog.warn("chan %d type  %s"%(ch,type(sens)))
                 
     def subprocess(self, arglist, callback):

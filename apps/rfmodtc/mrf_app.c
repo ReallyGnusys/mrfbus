@@ -28,6 +28,7 @@
 #include "mrf_pinmacros.h"
 #include "mrf_arch.h"
 #include "mrf_relays.h"
+#include "mrf_route.h"
 
 
 #define _BUT1_PORT P1
@@ -38,7 +39,7 @@
 
 
 
-static uint8 _app_mode;
+uint8 _app_mode;
 
 static int _sec_count ;
 static uint32_t _last_reading[MAX_RTDS];
@@ -97,9 +98,25 @@ int16 modtc_celx4(){
 
 }
 static MRF_PKT_RFMODTC_STATE _state_pkt;
-  
+
+int _dbg_ping_res(){
+  return -21;
+}
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
+
+   if (resp->type == mrf_cmd_ping) {     
+     MRF_PKT_PING_RES *pres = (MRF_PKT_PING_RES *)((void *)hdr + sizeof(MRF_PKT_HDR)+ sizeof(MRF_PKT_RESP));
+
+     if (_app_mode == 1) {
+       sprintf(_message,"R S%02X Q%02X",pres->from_rssi,pres->from_lqi);
+       _dbg_ping_res();
+       LCD1x9_Write(_message);
+
+     }
+   }
   _mrf_buff_free(bnum);
   return MRF_CMD_RES_OK;
 }
@@ -181,6 +198,8 @@ interrupt(PORT1_VECTOR) PORT1_ISR (void)
     case  4: 
       P1IE &= ~BIT1;                             // Debounce by disabling buttons
       button_pressed();
+
+      
       //   __bic_SR_register_on_exit(LPM3_bits); // Exit active   
       break;                         // P1.1 IFG
     case  6: break;                         // P1.2 IFG
@@ -218,11 +237,15 @@ MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
+int _Dbg_ping(){
+  return -15;
+}
 
 int sec_task(){
   int val,tw,tf;
   //sprintf(_message,"sec %d",_sec_count);
-
+  MRF_ROUTE route;
+  P1IE |= BIT1;                             // hmpff -renable button ( crude debouncing )
 
   val = modtc_celx4();
   tw = val >> 2;
@@ -238,11 +261,25 @@ int sec_task(){
     }
   _sec_count++;
 
-  //build_state(&_state_pkt);
-  //mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state_pkt, sizeof(MRF_PKT_RFMODTC_STATE));
+  if ((_sec_count % 10) == 0){
+    build_state(&_state_pkt);
+    mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state_pkt, sizeof(MRF_PKT_RFMODTC_STATE));
+  }
 
-  sprintf(_message,"%2d.%02d C",tw,tf);
-  LCD1x9_Write(_message);
+  if (_app_mode == 0 ) {
+    sprintf(_message,"%2d.%02d C",tw,tf);
+    LCD1x9_Write(_message);
+  } else {
+    mrf_nexthop(&route, MRFID, 0);
+    _Dbg_ping();
+    mrf_send_structure(route.relay,  mrf_cmd_ping,  NULL, 0);
+
+  }
+  
+  if ((_sec_count % 10) == 0){
+    build_state(&_state_pkt);
+    mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state_pkt, sizeof(MRF_PKT_RFMODTC_STATE));
+  }
 
   
   return 0;
