@@ -722,6 +722,11 @@ void _mrf_tick(){
           }
         }
       }
+    else if ( istate == MRF_ST_ACK ){
+      mif->status->state = MRF_ST_RX;
+      if_busy = 1;  // wait for next tick to check queues before marking idle
+
+    }
     else if (queue_data_avail(qp))
         {
 
