@@ -430,7 +430,7 @@ int build_state(MRF_PKT_PT1000_STATE *state){
 
 
 
-#define APP_SIG_SECOND  0
+//#define APP_SIG_SECOND  0
 static int _tick_cnt;
 static int _tick_err_cnt;
 static MRF_PKT_PT1000_STATE _state[2];

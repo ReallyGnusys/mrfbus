@@ -824,3 +824,8 @@ void _mrf_tick(){
 }
 
 
+int mrf_app_signal(uint8 signum){
+  mrf_app_queue_push(MRF_BNUM_SIGNAL_BASE + signum);
+
+
+}

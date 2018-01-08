@@ -131,7 +131,13 @@ uint16 mrf_spi_rx_noblock(){  // return -1 if nothing available
 }
 
 
+int mrf_spi_busy(){
 
+  
+  return (mrf_spi_tx_data_avail() || (UCB0STAT & 1));
+
+
+}
 int mrf_spi_flush_rx(){
   return queue_flush(&_spi_rx_queue);
 }

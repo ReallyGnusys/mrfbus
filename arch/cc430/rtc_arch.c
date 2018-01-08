@@ -19,6 +19,7 @@
 
 
 #include "rtc_arch.h"
+#include  "mrf_sys.h"
 
 #define RTC_YEAR0  2000
 #define RTC_MAXYEAR 255
@@ -108,6 +109,21 @@ void rtc_rdy_enable(VFUNCPTR func){
   // enable interrupt
   RTCCTL01 |= RTCRDYIE;
 }
+
+
+// each second do this.. in interrupt handler
+void _rtc_on_second(){
+  // push signal code to app queue
+  mrf_app_signal(APP_SIG_SECOND);
+  //mrf_app_queue_push(MRF_BNUM_SIGNAL_BASE + APP_SIG_SECOND);
+
+}
+
+void rtc_second_signal_enable(){
+  rtc_rdy_enable(_rtc_on_second);
+}
+
+
 
 void rtc_ps0_init(RTCDIVCODE div,VFUNCPTR func){
   // disable interrupt

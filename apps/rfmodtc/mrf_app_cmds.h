@@ -17,21 +17,20 @@
 *
 ******************************************************************************/
 
-#ifndef _MRF_SPI_INCLUDED_
-#define _MRF_SPI_INCLUDED_
+#ifndef __MRF_APP_CMDS_INCLUDED__
+#define __MRF_APP_CMDS_INCLUDED__
 
-int mrf_spi_tx(uint8 tx_byte);
-int mrf_spi_txq(uint8 tx_byte);
-void mrf_spi_start_tx();
-uint8 mrf_spi_rx();
-uint16 mrf_spi_rx_noblock();
-int mrf_spi_flush_rx();
-int mrf_spi_init();
-int mrf_spi_busy();
-int mrf_spi_data_avail();  // rx data
-int mrf_spi_tx_data_avail();
-int mrf_spi_tx_queue_items();
-int mrf_spi_rx_queue_items();
-IQUEUE *mrf_spi_tx_queue();
-IQUEUE *mrf_spi_rx_queue();
+
+typedef enum mrf_app_cmd_code
+ {
+   mrf_app_cmd_test = 0,
+   mrf_app_cmd_led_on  = 1,
+   mrf_app_cmd_led_off  = 2,
+   mrf_app_cmd_get_relay  = 3,
+   mrf_app_cmd_set_relay  = 4,   
+   mrf_app_cmd_read_state  = 5,   
+   MRF_NUM_APP_CMDS = 6
+ } MRF_APP_CMD_CODE;
+
+
 #endif

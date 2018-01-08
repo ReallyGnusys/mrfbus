@@ -94,6 +94,10 @@ typedef int (*MRF_APP_CALLBACK)(int fd);
 #define MRF_NUM_SIGNALS  32
 #define MRF_BNUM_SIGNAL_BASE (256 - MRF_NUM_SIGNALS)
 
+#define APP_SIG_SECOND  0
+#define APP_SIG_BUT1  1
+
+
 
 /* constant flags */
 #define MRF_CFLG_NO_ACK 1   // send no ack when segment recipient
@@ -146,6 +150,7 @@ int mrf_rtc_set(TIMEDATE *td);
 int mrf_rtc_get(TIMEDATE *td);
 int mrf_retry(I_F i_f,uint8 bnum);
 
+int mrf_app_signal(uint8 signum);
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"
 
