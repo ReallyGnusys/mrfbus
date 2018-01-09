@@ -261,7 +261,7 @@ int sec_task(){
     }
   _sec_count++;
 
-  if ((_sec_count % 10) == 0){
+  if ( (_app_mode == 0 ) && ((_sec_count % 10) == 0)){
     build_state(&_state_pkt);
     mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state_pkt, sizeof(MRF_PKT_RFMODTC_STATE));
   }
@@ -272,14 +272,10 @@ int sec_task(){
   } else {
     mrf_nexthop(&route, MRFID, 0);
     _Dbg_ping();
-    mrf_send_structure(route.relay,  mrf_cmd_ping,  NULL, 0);
+    mrf_send_command(route.relay,  mrf_cmd_ping,  NULL, 0);
 
   }
   
-  if ((_sec_count % 10) == 0){
-    build_state(&_state_pkt);
-    mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state_pkt, sizeof(MRF_PKT_RFMODTC_STATE));
-  }
 
   
   return 0;

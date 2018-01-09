@@ -266,7 +266,7 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
 
 // this is just used by HOST_STUB application - should be conditional
 
-int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
+int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uint8 len){
   uint8 bnum;
   uint8 i;
   MRF_ROUTE route;
@@ -297,13 +297,14 @@ int mrf_send_command(uint8 dest, uint8 type,  uint8 *data, uint8 len){
  hdr->udest = dest;
  if (hdr->udest == _mrfid){
    hdr->hdest = _mrfid;
-   hdr->hsrc = _mrfid;
  }
  else {
    hdr->hdest = route.relay;
-   hdr->hsrc = _mrfid;
+
  }
- hdr->usrc = 0;
+ hdr->hsrc = _mrfid;
+ hdr->usrc = usrc;
+
  hdr->netid = MRFNET; 
  hdr->msgid = _txmsgid++;
  hdr->type = type;
@@ -341,6 +342,19 @@ extern int response_to_app(uint8 bnum);
 
 #endif
 
+
+int mrf_send_command( uint8 dest, uint8 type,  uint8 *data, uint8 len){
+
+
+  return _mrf_send_command_src(_mrfid ,  dest,  type,   data,  len);
+
+}
+int mrf_send_command_root( uint8 dest, uint8 type,  uint8 *data, uint8 len){
+
+  return _mrf_send_command_src(0 ,  dest,  type,   data,  len);
+
+
+} 
 int mrf_send_response(uint8 bnum,uint8 rlen){
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
