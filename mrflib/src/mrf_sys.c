@@ -391,11 +391,11 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
 
  hdr->hdest = route.relay;
 
- const MRF_IF *ifp = mrf_if_ptr(route.i_f);
- mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
+ //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
+ //mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
 
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
-   mrf_debug("mdr l0 i_f %d bnum %d\n",route.i_f,bnum);
+   //mrf_debug("mdr l0 i_f %d bnum %d\n",route.i_f,bnum);
    mrf_retry(route.i_f,bnum);
    
  }
@@ -419,7 +419,6 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
   else
     cname = mrf_sys_cmds[hdr->type].str;
 
-  uint8 type = hdr->type;
   mrf_debug("%s","**************************************\n");
 
   mrf_debug("PACKET %s  LEN %d \n",cname,hdr->length);
@@ -525,7 +524,7 @@ int _mrf_buff_forward(uint8 bnum){
   
   MRF_ROUTE route;
   mrf_nexthop(&route,_mrfid,pkt->udest);
-  const MRF_IF *ifp = mrf_if_ptr(route.i_f);
+  //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
   pkt->netid = MRFNET;  // what are we going to use this for?
@@ -535,7 +534,7 @@ int _mrf_buff_forward(uint8 bnum){
     mrf_retry(route.i_f,bnum);
   else{
 
-    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d  st %d\n",pkt->udest,route.relay,route.i_f,ifp->status->state);  
+    mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d \n",pkt->udest,route.relay,route.i_f);  
   }
   if (pkt->hdest == 1){
     _Dbg_fh();
@@ -646,6 +645,10 @@ void mrf_sys_init(){
   queue_init(&_app_queue);
 }
 
+int mrf_app_queue_available(){
+
+  return queue_data_avail(&_app_queue);
+}
 
 int mrf_foreground(){
   /* empty application queue and return */

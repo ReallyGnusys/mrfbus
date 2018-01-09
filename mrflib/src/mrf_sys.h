@@ -133,6 +133,7 @@ const MRF_CMD *mrf_app_cmd_ptr(uint8 type);
 // these must be defined by every application
 int mrf_app_init();
 int signal_handler(uint8 signal);
+int mrf_app_queue_available();
 
 // these are defined in arch  but here is prototype
 int mrf_arch_boot();

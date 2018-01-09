@@ -29,7 +29,7 @@
 #include "mrf_arch.h"
 #include "mrf_relays.h"
 #include "mrf_route.h"
-
+#include "LCD1x9.h"
 
 #define _BUT1_PORT P1
 #define _BUT1_BIT  1

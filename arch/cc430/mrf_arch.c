@@ -73,8 +73,8 @@ int mrf_arch_boot(){
   P3DIR = 0x00;
   // LCD1x9_Initialize();
 
-  PINHIGH(WAKE);
-  OUTPUTPIN(WAKE);
+  //PINHIGH(WAKE);
+  //OUTPUTPIN(WAKE);
 
 
   rtc_init();
@@ -87,15 +87,15 @@ int mrf_arch_boot(){
 
 int  mrf_wake()  {
   // clear LPM3 on reti
-  WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
-  PINHIGH(WAKE);
+  //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
+  //PINHIGH(WAKE);
   __bic_SR_register(LPM3_bits);
   return 0;
 }
 int mrf_sleep(){
   // disable WDT
-  WDTCTL = WDTPW + WDTHOLD; 
-  PINLOW(WAKE);
+  //WDTCTL = WDTPW + WDTHOLD; 
+  //PINLOW(WAKE);
   __bis_SR_register(LPM3_bits  + GIE);
   
   return 0;
@@ -105,8 +105,9 @@ int mrf_arch_run(){
   int i;
   while(1){
     WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
-
-    i = mrf_foreground();
+    mrf_foreground();
+    //while( mrf_foreground());
+    //if (mrf_app_queue_available() == 0)
     //mrf_sleep();
   }
   return 0;
