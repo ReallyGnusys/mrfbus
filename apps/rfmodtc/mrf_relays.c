@@ -5,7 +5,7 @@
 #include "mrf_pinmacros.h"
 
 #ifndef NUM_RELAY_CHANNELS
-#define NUM_RELAY_CHANNELS 1
+#define NUM_RELAY_CHANNELS 2
 #endif
 
 volatile static uint8 _relay_state;
@@ -15,6 +15,12 @@ volatile static uint8 _relay_state;
 
 #ifndef _RLA_BIT
 #define _RLA_BIT  0
+#endif
+
+#define _RLB_PORT P2
+
+#ifndef _RLB_BIT
+#define _RLB_BIT  6
 #endif
 
 
@@ -41,12 +47,16 @@ uint8 set_relay_state(uint8 chan,uint8 val){
     _relay_state &=  (uint8)(~( 1 << chan ));
     if (chan == 0 ) {
       PINLOW(RLA);
+    } else if (chan == 1){
+      PINLOW(RLB);
     }
   }
   else {
     _relay_state |=  (uint8)( 1 << chan );  
     if (chan == 0 ) {
       PINHIGH(RLA);
+    } else if (chan == 1){
+      PINHIGH(RLB);
     }
   }
 }
@@ -56,4 +66,6 @@ void init_relays(){
   clear_relay_state();
   PINLOW(RLA);
   OUTPUTPIN(RLA);
+  PINLOW(RLB);
+  OUTPUTPIN(RLB);
 }
