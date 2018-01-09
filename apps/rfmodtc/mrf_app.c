@@ -63,7 +63,7 @@ int mrf_app_init(){
   OUTPUTPIN(CS);
   mrf_spi_tx(0x0); // NOP
   mrf_spi_tx(0x0); // NOP
-
+  LCD1x9_Initialize();
   rtc_second_signal_enable();
   return 0;
 }
