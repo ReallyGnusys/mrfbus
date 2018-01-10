@@ -1,0 +1,170 @@
+#!/bin/bash
+
+if [ $# -lt 1 ] ; then
+  echo "Usage $0  <build|run|runtests|test>"
+  exit
+fi
+
+if [ ! -e ./mrf.prj ] ; then
+  echo "no mrf.prj found in current dir"
+  exit
+
+fi
+
+[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit 0
+
+LOGDIR=log
+VARDIR=var
+
+[ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
+[ ! -d $VARDIR ] && echo "creating $VARDIR" && mkdir -p $VARDIR
+
+
+
+if [ $1 == build ] ; then
+   mode=build
+elif  [ $1 == run ] ; then
+   mode=run
+   pids=""
+elif  [ $1 == runtests ] ; then
+   mode=run
+   runtests=yes
+   pids=""
+else
+   echo "illegal mode $1 - try build or run"
+   exit;
+fi
+
+declare -i valid=0
+
+while read -r LINE
+do
+
+ #echo "read line $LINE"
+
+ valid=0
+ read -r -a fld <<< "$LINE"
+ 
+ if  [ "${fld[0]}" == "MRFNET" ] ; then
+     mrfnet=${fld[1]}
+ elif  [ "${fld[0]}" == "SERVER" ] ; then
+     server=${fld[1]}
+ elif [ "${fld[0]}" == "DEVICE" ] ; then
+    #echo "DEVICE line"
+    for tok in "${fld[@]:1}" ; do
+      [ -n "$(echo $tok | grep '^MRFID=')" ]  && mrfid=${tok##MRFID=}
+      [ -n "$(echo $tok | grep '^APP=')" ]  && app=${tok##APP=}
+      [ -n "$(echo $tok | grep '^ARCH=')" ]  && arch=${tok##ARCH=}
+            
+    done
+
+    [ -n "$mrfid" ] && [ -n "$app" ] &&  [ -n "$mrfnet" ] && valid=1
+
+    if [ $valid -eq 1 ] ; then
+      echo "valid device line detected app $app mrfid $mrfid"
+      dn=${app}_${mrfid}
+      if [ $mode == build ] ; then
+          rm -rf $dn
+          mkdir $dn
+          mf=${dn}/Makefile
+          echo "MRFNET=$mrfnet" > $mf
+          for tok in "${fld[@]:1}" ; do
+             echo ${tok} >> $mf
+          done
+          echo "" >> $mf
+          echo 'include ${MRFBUS_HOME}/Makefile.inc'  >> $mf
+
+          cd $dn && make | tee  make.log && cd ..
+      
+      elif [ $mode == run ] && [ $arch == lnx ]  ; then
+      
+          echo "starting lnx device $dn"
+          stdbuf -oL -i0 ${dn}/bin/${dn} > ${LOGDIR}/${dn}.log  &
+          pid=$!
+          echo "pid is $pid"
+          pids=${pids}" "$pid
+      fi
+    fi
+    
+       
+ fi
+done < ./mrf.prj
+
+function exit_tst {
+ for pid in "$1" ; do
+   echo "killing pid $pid"
+ done
+ echo "adios"
+ exit
+
+}
+
+function kill_devs {
+ for pid in $pids ; do
+   echo "killing pid $pid"
+   kill -9 $pid
+ done
+
+}
+
+[ $mode == build ] && echo "build complete" && exit
+
+
+if [ -n "${server}" ] ; then
+
+   [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1 
+
+
+   [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
+   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land" && cp ${MRFBUS_HOME}/land/install.py ./
+   echo "" > ${LOGDIR}/mrfland.log
+   echo "starting server ./${server}"
+   export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
+   source ${MRFBUS_HOME}/land/venv/bin/activate
+   stdbuf -oL  python  ./${server} --mrfnet=${mrfnet} > /dev/null&
+
+   pid=$!
+   echo "pid is $pid"
+   pids=${pids}" "$pid
+
+fi
+
+
+
+function ctrl_c() {
+        echo "** Trapped CTRL-C killing mfrbus instances .. nicely if possible"
+        kill_devs "$pids"
+        echo "adios"
+        exit 0
+}
+
+
+if [ -n "$runtests" ] ; then
+   echo "running unit tests.."
+   sleep 4
+   
+   python ${MRFBUS_HOME}/land/core_tests.py
+   rv=$?
+
+   echo "tests completed"
+   kill_devs
+   if [ $rv == 0 ] ; then
+
+    echo "PASSED"
+   else
+     echo "FAILED"
+   fi
+    exit $rv
+fi
+
+
+trap ctrl_c INT
+
+echo "mrfbus instances running ... ctrl C to quit"
+while [ 1 ] ; do
+  sleep 1
+
+done
+
+echo "quitting"
+echo "run adios at $(date)"
