@@ -11,7 +11,7 @@ script:
   - make venv
   - export MRFBUS_HOME=$(pwd) && make testsetup
   - ./mrflib/tests/iqueue/test_01
-  - mkdir -p /tmp/mrftest/rftst  && cp rf_mrf.prj /tmp/mrftst/rftst/mrf.prj
+  - mkdir -p /tmp/mrftst/rftst  && cp rf_mrf.prj /tmp/mrftst/rftst/mrf.prj
   - export MRFBUS_HOME=$(pwd) ; cd /tmp/mrftst/rftst ; ../mrf_proj build
   - mkdir -p /tmp/mrftest/testrun  && cp test_mrf.prj /tmp/mrftst/testrun/mrf.prj
   - export MRFBUS_HOME=$(pwd) ; cd /tmp/mrftst/testrun ; ../mrf_proj build && ../mrf_proj runtests
