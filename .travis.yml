@@ -9,9 +9,10 @@ addons:
 
 script:
   - make venv
-  - export MRFBUS_HOME=$(pwd) && make testsetup
+  - export MRFBUS_HOME=$(pwd)
+  - make testsetup
   - ./mrflib/tests/iqueue/test_01
-  - mkdir -p /tmp/mrftst/rftst  && cp rf_mrf.prj /tmp/mrftst/rftst/mrf.prj
-  - export MRFBUS_HOME=$(pwd) ; cd /tmp/mrftst/rftst ; ${MRFBUS_HOME}/mrf_proj build
-  - mkdir -p /tmp/mrftest/testrun  && cp test_mrf.prj /tmp/mrftst/testrun/mrf.prj
-  - export MRFBUS_HOME=$(pwd) ; cd /tmp/mrftst/testrun ; ${MRFBUS_HOME}/mrf_proj build && ${MRFBUS_HOME}/mrf_proj runtests
+  - mkdir -p /tmp/mrftst/rftst  && cp ${MRFBUS_HOME}/rf_mrf.prj /tmp/mrftst/rftst/mrf.prj
+  - cd /tmp/mrftst/rftst ; ${MRFBUS_HOME}/mrf_proj build
+  - mkdir -p /tmp/mrftest/testrun  && cp ${MRFBUS_HOME}/test_mrf.prj /tmp/mrftst/testrun/mrf.prj
+  - cd /tmp/mrftst/testrun ; ${MRFBUS_HOME}/mrf_proj build && ${MRFBUS_HOME}/mrf_proj runtests
