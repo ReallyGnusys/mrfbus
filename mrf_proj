@@ -116,7 +116,7 @@ if [ -n "${server}" ] ; then
 
 
    [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
-   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
+   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land/install_example.py" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
    echo "" > ${LOGDIR}/mrfland.log
    sleep 1
    echo "starting server ./${server}"
