@@ -116,7 +116,7 @@ if [ -n "${server}" ] ; then
 
 
    [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
-   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land" && cp ${MRFBUS_HOME}/land/install.py ./
+   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land" && cp ${MRFBUS_HOME}/land/install_example.py ./
    echo "" > ${LOGDIR}/mrfland.log
    echo "starting server ./${server}"
    export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
