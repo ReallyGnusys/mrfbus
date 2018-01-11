@@ -210,6 +210,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
     
   mrf_debug("%s","_mrf_pipe_buff_lnx exit\n");
+  return 0;
 }
 
 
@@ -255,4 +256,5 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   fsync(fd);
   close(fd);
   //mrf_debug("bc = %d  fd = %d\n",bc,fd);
+  return 0;
 }

@@ -148,8 +148,8 @@ if [ -n "$runtests" ] ; then
    echo "Pause for server to start before running unit tests.."
    sleep 4
 
-   echo "hostlog.."
-   cat $hostlog
+   #echo "hostlog.."
+   #cat $hostlog
    echo "Start unit tests.."
    
    
