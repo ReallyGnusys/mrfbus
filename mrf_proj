@@ -118,6 +118,7 @@ if [ -n "${server}" ] ; then
    [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
    [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
    echo "" > ${LOGDIR}/mrfland.log
+   sleep 1
    echo "starting server ./${server}"
    export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
    source ${MRFBUS_HOME}/land/venv/bin/activate
@@ -140,8 +141,10 @@ function ctrl_c() {
 
 
 if [ -n "$runtests" ] ; then
-   echo "running unit tests.."
+   echo "Pause for server to start before running unit tests.."
    sleep 4
+   echo "Start unit tests.."
+   
    
    python ${MRFBUS_HOME}/land/core_tests.py
    rv=$?
