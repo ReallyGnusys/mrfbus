@@ -127,7 +127,8 @@ class DeviceTestCase(LandTestCase):
         print "****passfail is:\n%s"%repr(pass_fail)
         self.assertTrue(pass_fail)
 
-        if resp['num_cmds'] != MRF_NUM_SYS_CMDS:
+        if (resp['num_cmds'] <  (MRF_NUM_SYS_CMDS -2 )) or  (resp['num_cmds'] >  MRF_NUM_SYS_CMDS):
+            print "Error num_cmds was %d  MRF_NUM_SYS_CMDS was %d"%(resp['num_cmds'],MRF_NUM_SYS_CMDS);
             pass_fail = False
         print "****passfail(2) is:\n%s"%repr(pass_fail)
         self.assertTrue(pass_fail)
