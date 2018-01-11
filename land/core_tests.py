@@ -70,7 +70,7 @@ class DeviceTestCase(LandTestCase):
         self.assertTrue(rv)
 
         
-        if rv == 0:
+        if rv:
             print "PASSED device info test (dest 0x%02x)"%dest
         else:
             print "FAILED device info test (dest 0x%02x)"%dest

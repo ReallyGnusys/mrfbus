@@ -181,7 +181,7 @@ int make_listener_socket (uint16_t port)
   
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
-      mrf_debug("%s","bind error for port");
+      mrf_debug("bind error for port %u",port);
       return -1;
     }
 
