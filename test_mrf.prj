@@ -1,4 +1,4 @@
-MRFNET 0x25
+MRFNET 37
 
 DEVICE MRFID=0x01 APP=host    DEVTYPE=hostsim  ARCH=lnx
 DEVICE MRFID=0x02 APP=default DEVTYPE=hostsim  ARCH=lnx
