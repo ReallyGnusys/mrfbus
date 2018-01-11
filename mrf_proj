@@ -83,6 +83,10 @@ do
           pid=$!
           echo "pid is $pid"
           pids=${pids}" "$pid
+          if [ $mrfid == "0x01" ] ; then
+              hostlog=${LOGDIR}/${dn}.log
+              echo "Host log is $hostlog"
+          fi
       fi
     fi
     
@@ -143,6 +147,9 @@ function ctrl_c() {
 if [ -n "$runtests" ] ; then
    echo "Pause for server to start before running unit tests.."
    sleep 4
+
+   echo "hostlog.."
+   cat $hostlog
    echo "Start unit tests.."
    
    

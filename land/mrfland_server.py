@@ -637,7 +637,7 @@ class MrflandServer(object):
         s.connect(("127.0.0.1", port))
         sfno = s.fileno()
 
-        mrflog.warn("_connect_to_mrfnet - firststage  %d"%s.fileno())
+        mrflog.warn("_connect_to_mrfnet localhost port %d :  firststage fd  %d"%(port,s.fileno()))
 
         if sfno > 0:
             self.rfd = sfno
