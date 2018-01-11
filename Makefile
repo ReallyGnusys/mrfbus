@@ -7,6 +7,8 @@ APPFIFO=${TMP}/0-app-str
 
 tests: ${TMP} FIFOS ${LOGDIR} BUILD BUILDCC QTEST
 
+testsetup :  ${TMP} FIFOS ${LOGDIR} QTEST
+
 venv :	land/requirements.txt
 	./build_venv
 
