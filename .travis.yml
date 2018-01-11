@@ -11,4 +11,5 @@ script:
   - make venv
   - make tests
   - ./mrflib/tests/iqueue/test_01
-  - export MRFBUS_HOME=$(pwd) ; ./run_tests
+  - mkdir testrun  && cp test_mrf.prj testrun/mrf.prj
+  - export MRFBUS_HOME=$(pwd) ; cd testrun ; ../mrf_proj build && ../mrf_proj runtests

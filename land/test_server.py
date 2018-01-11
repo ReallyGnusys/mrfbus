@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from tornado.options import  options, parse_command_line  #FIXME move mrfland_server.py
+from tornado.options import  define, options, parse_command_line  #FIXME move mrfland_server.py
 
 import mrfland
 from mrflog import mrflog
@@ -13,6 +13,7 @@ from mrfland_regmanager import MrflandRegManager
 import install
             
 if __name__ == '__main__':
+    define("mrfnet", type=int, help="mrfnet ID",default=0x25)
     parse_command_line()
     mrflog.info('Application started')
     
