@@ -202,7 +202,7 @@ class MrfSens(object):
                     firstts = self.averages['ts'][0]
                     ftd = datetime.datetime.strptime(firstts,'%Y-%m-%dT%H:%M:%S')
                     tdel = now - ftd
-                    if tdel.seconds > self._HISTORY_SECONDS_:
+                    if tdel.total_seconds() > self._HISTORY_SECONDS_:
                         mrflog.info("%s discarding average ts %s"%(self.label,firstts))
                         del self.averages['ts'][0]
                         for hfld in  self._history_['fields']:
