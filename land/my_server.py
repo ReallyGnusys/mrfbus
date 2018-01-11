@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from tornado.options import  options, parse_command_line  #FIXME move mrfland_server.py
+from tornado.options import  define, options, parse_command_line  #FIXME move mrfland_server.py
 
 import mrfland
 
@@ -23,6 +23,8 @@ from mrfland_regmanager import MrflandRegManager
 
 if __name__ == '__main__':
     #mrf_log_init()
+    define("mrfnet", type=int, help="mrfnet ID",default=0x25)
+
     parse_command_line()
     
 
@@ -162,8 +164,8 @@ if __name__ == '__main__':
     ml =  MrflandServer(rm,
                         {
                             'mrfbus_host_port': install.mrfbus_host_port,
+                            'mrf_netid'     : options['mrfnet'],
                             'tcp_test_port'   : install.tcpport ,
-                            'db_uri'          : install.db_uri,
                             'console'         : { 'port' : 1234}
 
                         })
