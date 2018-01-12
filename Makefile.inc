@@ -29,9 +29,9 @@ endif
 BUILD ?= debug
 
 ifeq ($(BUILD),debug)
-	BFLAGS = -g -Wall
+	BFLAGS = -g -g3 -Wall
 else
-	BFLAGS = -g -O2 -Wall
+	BFLAGS = -g -g3 -O2 -Wall
 endif
 
 APP ?= default

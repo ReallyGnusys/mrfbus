@@ -51,9 +51,19 @@ int rf_if_send_func(I_F i_f, uint8 *buff){
 
 extern RF_SETTINGS rfSettings;
 
+static void _mrf_radio_active_lpm3(){
+  // Set the High-Power Mode Request Enable bit so LPM3 can be entered
+  // with active radio enabled 
+  PMMCTL0_H = 0xA5;
+  PMMCTL0_L |= PMMHPMRE_L; 
+  PMMCTL0_H = 0x00; 
+
+
+}
+
 static void _mrf_init_radio()
 {
-  // xb_active_on_lpm3();
+  
   WriteRfSettings(&rfSettings);
   WriteSinglePATable(PATABLE_VAL);
 }
@@ -75,6 +85,8 @@ int _mrf_receive_enable(void){
 
 
 int mrf_rf_init(I_F i_f){
+  _mrf_radio_active_lpm3();
+
   ResetRadioCore();
   _mrf_init_radio();
   _mrf_receive_enable();

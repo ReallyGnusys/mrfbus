@@ -498,13 +498,13 @@ interrupt(RTC_VECTOR) RTC_ISR()
     break;
   case RTC_RTCAIFG:
     AlarmFlag = 1;
-    __bic_SR_register_on_exit(LPM3_bits);    
+    //__bic_SR_register_on_exit(LPM3_bits);    
     alarm_gone();
     break;
 
   case  RTC_RTCTEVIFG:
     _min_reached = 1;
-    __bic_SR_register_on_exit(LPM3_bits);    
+    //__bic_SR_register_on_exit(LPM3_bits);    
     break;
   case  RTC_RT0PSIFG:
     rtc_counts.pscnt++;

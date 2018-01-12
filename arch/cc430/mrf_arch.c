@@ -24,8 +24,8 @@
 #include "hal_pmm.h"
 
 #include "mrf_pinmacros.h"
-#define _WAKE_PORT P2
-#define _WAKE_BIT  6
+#define _WAKE_PORT P1
+#define _WAKE_BIT  0
 
 
 extern uint8 _mrfid;
@@ -62,7 +62,7 @@ extern void init_clock(void);
 int mrf_arch_boot(){
 
   WDTCTL = WDTPW + WDTHOLD; 
-  
+  SFRRPCR |= SYSRSTUP | SYSRSTRE;
 
   SetVCore(2);   
   UCSCTL6 &= ~(XT1DRIVE0 | XT1DRIVE1);  // low power mode
@@ -73,8 +73,8 @@ int mrf_arch_boot(){
   P3DIR = 0x00;
   // LCD1x9_Initialize();
 
-  //PINHIGH(WAKE);
-  //OUTPUTPIN(WAKE);
+  PINHIGH(WAKE);
+  OUTPUTPIN(WAKE);
 
 
   rtc_init();
@@ -88,14 +88,14 @@ int mrf_arch_boot(){
 int  mrf_wake()  {
   // clear LPM3 on reti
   //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
-  //PINHIGH(WAKE);
+  PINHIGH(WAKE);
   __bic_SR_register(LPM3_bits);
   return 0;
 }
 int mrf_sleep(){
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
-  //PINLOW(WAKE);
+  PINLOW(WAKE);
   __bis_SR_register(LPM3_bits  + GIE);
   
   return 0;
@@ -104,11 +104,11 @@ int mrf_sleep(){
 int mrf_arch_run(){
   int i;
   while(1){
-    WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
+    //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
     mrf_foreground();
     //while( mrf_foreground());
     //if (mrf_app_queue_available() == 0)
-    //mrf_sleep();
+    mrf_sleep();
   }
   return 0;
 }

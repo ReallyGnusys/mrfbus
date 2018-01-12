@@ -230,7 +230,7 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
 static uint8 last_rx;
 
 
-static uint8  _rx_byte(){
+static int  _rx_byte(){
   // called in intr handler below
   // just read byte from RXBUF and push to queue
   if ( UCB0STAT & UCOE )
@@ -249,9 +249,10 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     _spi_rx_int_cnt++;
     _rx_byte();
     _spi_rx_bytes += 1;
-   __bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
-    UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
-    break;
+    //__bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
+   mrf_wake();
+   UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
+   break;
   case 4:                                   // Vector 4 - TXIFG
     _spi_tx_int_cnt++;
     if(queue_data_avail(&_spi_tx_queue)){
@@ -279,8 +280,9 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
       _spi_txrx_int_cnt++;
       _rx_byte();
       _spi_rx_bytes += 1;
-      __bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
       UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
+      //__bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
+      mrf_wake();
 
 
     }
