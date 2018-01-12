@@ -35,6 +35,7 @@ uint16 _spi_txrx_int_cnt;
 uint16 _spi_tx_bytes;
 uint16 _spi_rx_bytes;
 uint16 _spi_rxov_err;
+uint16 _mrf_spi_busy_errors;
 
 static  IQUEUE _spi_rx_queue,_spi_tx_queue;
 
@@ -83,6 +84,7 @@ int _start_spi_tx(){
   _spi_tx_err3++;
 
 #endif
+  return 0;
 }
 
 static _dbg_spi_tx_err1;
@@ -130,9 +132,13 @@ uint16 mrf_spi_rx_noblock(){  // return -1 if nothing available
   return queue_pop(&_spi_rx_queue);
 }
 
-
 int mrf_spi_busy(){
 
+  if (((UCB0STAT & 1) == 0) && mrf_spi_tx_data_avail()){
+    _mrf_spi_busy_errors++;   // FIXME some deadlock if this counts up
+    _start_spi_tx();
+    return 1;
+  }
   
   return (mrf_spi_tx_data_avail() || (UCB0STAT & 1));
 
@@ -174,7 +180,7 @@ int  __attribute__ ((constructor)) mrf_spi_init(){
   _spi_rx_int_cnt = 0;
   _spi_tx_int_cnt = 0;
   _spi_txrx_int_cnt = 0;
- 
+  _mrf_spi_busy_errors = 0;
   _spi_rx_bytes = 0;
   _spi_tx_bytes = 0;
   _spi_rxov_err = 0;
