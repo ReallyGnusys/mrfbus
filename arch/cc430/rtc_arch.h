@@ -28,6 +28,7 @@ void rtc_init(void);
 int rtc_get(TIMEDATE *td);
 void _rtc_get(TIMEDATE *td);
 void rtc_set(TIMEDATE *td);
+void _rtc_set(TIMEDATE *td);
 
 void rtc_wake_on_min();
 

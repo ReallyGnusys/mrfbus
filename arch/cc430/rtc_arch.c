@@ -409,7 +409,7 @@ void rtc_sleep_til(TIMEDATE *td){
   RTCADAY = td->day;
   RTCADOW = RTCDOW;
   RTCCTL0 |=  RTCAIE;
-  __bis_SR_register(LPM3_bits  + GIE);
+  mrf_sleep();
 
 }
 
@@ -469,8 +469,8 @@ interrupt(RTC_VECTOR) RTC_ISR()
       rtc_dbg1();
       if (RTCSEC == _rtc_wake_on_sec){
 	rtc_dbg2();
-
-        __bic_SR_register_on_exit(LPM3_bits);    
+        mrf_wake();
+        //__bic_SR_register_on_exit(LPM3_bits);    
       }
 	
     }
@@ -494,7 +494,8 @@ interrupt(RTC_VECTOR) RTC_ISR()
       ReadFlag = 0;
     }
     (*_rtc_rdy_handler)();
-
+    if (mrf_wake_on_exit())
+      __bic_SR_register_on_exit(LPM3_bits);
     break;
   case RTC_RTCAIFG:
     AlarmFlag = 1;

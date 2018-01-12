@@ -250,7 +250,9 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
     _rx_byte();
     _spi_rx_bytes += 1;
     //__bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
-   mrf_wake();
+    mrf_wake();
+    if (mrf_wake_on_exit())
+      __bic_SR_register_on_exit(LPM3_bits);
    UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
    break;
   case 4:                                   // Vector 4 - TXIFG
@@ -283,7 +285,8 @@ interrupt (USCI_B0_VECTOR) USCI_B0_ISR()
       UCB0IE |= UCRXIE;         // re-enable RX ready interrupt
       //__bic_SR_register_on_exit(LPM3_bits);    // exit LPM3
       mrf_wake();
-
+      if (mrf_wake_on_exit())
+        __bic_SR_register_on_exit(LPM3_bits);
 
     }
     

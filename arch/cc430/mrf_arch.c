@@ -57,6 +57,7 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
 extern void init_clock(void);
 
 
+int _mrf_wakeup;
 
 
 int mrf_arch_boot(){
@@ -76,6 +77,7 @@ int mrf_arch_boot(){
   PINHIGH(WAKE);
   OUTPUTPIN(WAKE);
 
+  _mrf_wakeup = 0;
 
   rtc_init();
   rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
@@ -85,19 +87,38 @@ int mrf_arch_boot(){
   return 0;
 }
 
+
 int  mrf_wake()  {
   // clear LPM3 on reti
   //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
   PINHIGH(WAKE);
-  __bic_SR_register(LPM3_bits);
+  _mrf_wakeup = 1;  // only ISR can run __bic_SR_register_on_exit - mrf_wake should only be called via ISR
+  //__bic_SR_register_on_exit(LPM3_bits);
   return 0;
 }
+
+int mrf_wake_on_exit(){
+  if( _mrf_wakeup){
+    _mrf_wakeup = 0;
+    return 1;
+  }
+  return  0;
+}
+
+int _mrf_woken(){
+  return 101;
+}
+#define LOW_POWER_MODE
+
 int mrf_sleep(){
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
   PINLOW(WAKE);
+#ifdef LOW_POWER_MODE    
   __bis_SR_register(LPM3_bits  + GIE);
-  
+#endif
+
+  _mrf_woken();
   return 0;
 }
 
@@ -108,6 +129,7 @@ int mrf_arch_run(){
     mrf_foreground();
     //while( mrf_foreground());
     //if (mrf_app_queue_available() == 0)
+
     mrf_sleep();
   }
   return 0;

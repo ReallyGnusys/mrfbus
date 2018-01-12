@@ -141,6 +141,8 @@ int mrf_arch_run();
 int mrf_tick_enable();
 int mrf_tick_disable();
 int mrf_wake();
+int mrf_sleep();
+int mrf_wake_on_exit();
 // end arch
 void mrf_sys_init();
 int _mrf_buff_forward(uint8 bnum);

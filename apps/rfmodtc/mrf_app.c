@@ -77,9 +77,9 @@ int16 modtc_celx4(){
   mrf_spi_tx(0x0); // NOP
   mrf_spi_tx(0x0); // NOP
   
-  val = (int16)mrf_spi_rx();
+  val = (int16)mrf_spi_rx_noblock();
   val <<= 8;
-  val |= (int16)mrf_spi_rx();
+  val |= (int16)mrf_spi_rx_noblock();
 
   
   //mrf_spi_tx(0x0); // NOP

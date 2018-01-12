@@ -317,6 +317,8 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 	_mrf_rf_tx_intr(RF0);
 
       }
+      if (mrf_wake_on_exit())
+        __bic_SR_register_on_exit(LPM3_bits);
 
       // else while(1); 			    // trap - sometimes gets in here - 
       break;

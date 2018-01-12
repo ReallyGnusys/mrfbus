@@ -222,6 +222,9 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     }
 
     UCA0IE |= UCRXIE;         // re-enable RX ready interrupt
+    if (mrf_wake_on_exit())
+      __bic_SR_register_on_exit(LPM3_bits);
+
     break;
   case 4:                                   // Vector 4 - TXIFG
     _uart_tx_int_cnt++;
