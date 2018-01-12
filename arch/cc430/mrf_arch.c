@@ -74,8 +74,8 @@ int mrf_arch_boot(){
   P3DIR = 0x00;
   // LCD1x9_Initialize();
 
-  PINHIGH(WAKE);
-  OUTPUTPIN(WAKE);
+  //PINHIGH(WAKE);
+  //OUTPUTPIN(WAKE);
 
   _mrf_wakeup = 0;
 
@@ -91,7 +91,7 @@ int mrf_arch_boot(){
 int  mrf_wake()  {
   // clear LPM3 on reti
   //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
-  PINHIGH(WAKE);
+  //PINHIGH(WAKE);
   _mrf_wakeup = 1;  // only ISR can run __bic_SR_register_on_exit - mrf_wake should only be called via ISR
   //__bic_SR_register_on_exit(LPM3_bits);
   return 0;
@@ -113,7 +113,7 @@ int _mrf_woken(){
 int mrf_sleep(){
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
-  PINLOW(WAKE);
+  //PINLOW(WAKE);
 #ifdef LOW_POWER_MODE    
   __bis_SR_register(LPM3_bits  + GIE);
 #endif
