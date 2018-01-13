@@ -58,7 +58,7 @@ static void _mrf_radio_active_lpm3(){
 
   // for light sleep , allow RF and peripherals to keep clocks requested during LPM3  
 #ifdef SLEEP_deep 
-  PMMCTL0_L &= PMMHPMRE_L;
+  PMMCTL0_L &= ~PMMHPMRE_L;
 #else
   PMMCTL0_L |= PMMHPMRE_L;
 #endif  
