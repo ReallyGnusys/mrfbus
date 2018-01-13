@@ -108,15 +108,12 @@ int mrf_wake_on_exit(){
 int _mrf_woken(){
   return 101;
 }
-#define LOW_POWER_MODE
 
 int mrf_sleep(){
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
   //PINLOW(WAKE);
-#ifdef LOW_POWER_MODE    
   __bis_SR_register(LPM3_bits  + GIE);
-#endif
 
   _mrf_woken();
   return 0;

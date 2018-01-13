@@ -36,6 +36,8 @@ endif
 
 APP ?= default
 
+## sleep opts deep or light -  light sleep keeps RF reciever on - deep sleep should ultimately shut off all clocks except RTC ACLK
+SLEEP ?= light
 
 MSRC=${MRFBUS_HOME}/mrflib/src
 
@@ -86,7 +88,7 @@ else
      MAIN := ${APPSRC}/main.c
 endif      
 
-CCFLAGS=-I${MRFBUS_HOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${APPCCFLAGS} ${BFLAGS}
+CCFLAGS=-I${MRFBUS_HOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DSLEEP_${SLEEP} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${APPCCFLAGS} ${BFLAGS} 
 
 
 ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${APPOBJS} ${TARG} ${LST} ${SIZEREP}

@@ -55,7 +55,13 @@ static void _mrf_radio_active_lpm3(){
   // Set the High-Power Mode Request Enable bit so LPM3 can be entered
   // with active radio enabled 
   PMMCTL0_H = 0xA5;
-  PMMCTL0_L |= PMMHPMRE_L; 
+
+  // for light sleep , allow RF and peripherals to keep clocks requested during LPM3  
+#ifdef SLEEP_deep 
+  PMMCTL0_L &= PMMHPMRE_L;
+#else
+  PMMCTL0_L |= PMMHPMRE_L;
+#endif  
   PMMCTL0_H = 0x00; 
 
 
@@ -145,8 +151,6 @@ int _Dbg12(){
   return 12;
 }
 
-static uint8   _rf_rssi,_rf_lqi;
-
 int _xb_hw_rd_rx_fifo(I_F i_f){
   //int i;
   uint8 i, len,bnum;
@@ -199,9 +203,6 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
     i++;
     buff[i] = RF1ADOUT1B;  // lqi
   }
-  //_rf_rssi =  RF1ADOUT1B;
-
-  //_rf_lqi  =  RF1ADOUT1B;
   
   if (lenerr){ // re-enable reception
     _mrf_receive_enable();
