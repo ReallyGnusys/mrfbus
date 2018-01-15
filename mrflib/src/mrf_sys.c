@@ -638,9 +638,11 @@ int _mrf_process_buff(uint8 bnum)
 
 
 uint32  _tick_count;
+uint16  _idle_count;
 
 void mrf_sys_init(){
   _tick_count = 0;
+  _idle_count = 0;
   _txmsgid = 0;
   queue_init(&_app_queue);
 }
@@ -833,12 +835,18 @@ void _mrf_tick(){
     {
       // all i_fs are idle - turn off tick
 
-      mrf_debug("mrf_tick - turning off tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
-      _mrf_if_print_all();
-      mrf_tick_disable();
+        mrf_debug("mrf_tick - turning off tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
+        _mrf_if_print_all();
+        mrf_tick_disable();
+
+#ifdef SLEEP_deep
+        mrf_sleep_deep();  // must be defined by app for now
+#endif
+     
       
     }
   else{
+    _idle_count = 0;
     // mrf_debug("mrf_tick - keeping tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
     //_mrf_if_print_all();   
     

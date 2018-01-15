@@ -68,6 +68,11 @@ int mrf_app_init(){
   return 0;
 }
 
+int mrf_sleep_deep(){
+  mrf_rf_idle(RF0);
+  return 0;
+}
+
 char _message[20];
 
 int16 modtc_celx4(){

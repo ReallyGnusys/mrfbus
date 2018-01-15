@@ -155,6 +155,11 @@ int mrf_rtc_get(TIMEDATE *td);
 int mrf_retry(I_F i_f,uint8 bnum);
 
 int mrf_app_signal(uint8 signum);
+
+#ifdef SLEEP_deep
+int mrf_sleep_deep();  // must be defined by app for now
+#endif
+
 #include "mrf_sys_tasks.h"
 #include "mrf_sys_cmds.h"
 

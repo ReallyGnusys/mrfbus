@@ -263,12 +263,21 @@ int _mrf_rf_tx_intr(I_F i_f){
     // we're now waiting for SACK
     ifp->status->state = MRF_ST_WAITSACK;    
   }
-  else if((*if_state) ==  MRF_ST_ACK){ 
+  else if((*if_state) ==  MRF_ST_ACK){
+
+#ifdef SLEEP_deep
+      mrf_rf_idle(i_f);
+#else
+      _mrf_receive_enable(); 	 
+#endif
+      /*      
    if (mrf_if_can_sleep(i_f))
       mrf_rf_idle(i_f);
     else{
       _mrf_receive_enable(); 	 
     }
+      */
+
   }else { // some cockup
     ifp->status->stats.st_err ++;
   }
