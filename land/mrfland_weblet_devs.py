@@ -101,7 +101,7 @@ class MrfLandWebletDevs(MrflandWeblet):
                 pstr = 'FAIL'
             data = {'last_result' : pstr , 'last_run': nowstr }
             self.rm.webupdate(self.mktag( 'unit_test', dn ), data)
-            
+            self.rm.server._run_updates() # ouch
         return _sbcb 
     
     def cmd_mrfctrl(self,data, wsid=None):

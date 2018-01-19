@@ -20,8 +20,23 @@
 #ifndef __MRF_APP_INCLUDED__
 #define __MRF_APP_INCLUDED__
 
+// define APP specific signals
+
+#define APP_SIG_ADC_RES 11
+
+
 // define APP specific packets
 
+// define APP specific packets
+#define MAX_RTDS 1
+
+typedef struct  __attribute__ ((packed))   {
+  TIMEDATE td;
+  uint8    relay_cmd;  // 8 bit emergency masks for request and ideally a validated check below
+  uint8    relay_state;
+  uint32   tempX100[MAX_RTDS];  // channels
+} MRF_PKT_RFMODTC_STATE;
+  
 
   
 typedef struct  __attribute__ ((packed))   {
@@ -39,5 +54,6 @@ MRF_CMD_RES mrf_app_led_on(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_app_led_off(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay
 MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);  // set one relay state
+MRF_CMD_RES mrf_app_read_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp); // read ptd device state
 
 #endif

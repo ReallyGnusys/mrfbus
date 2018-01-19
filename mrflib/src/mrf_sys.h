@@ -32,6 +32,7 @@
 #include "mrf_buff.h"
 #include "mrf_sys_cmds.h"
 #include "iqueue.h"
+#include "mrf_route.h"
 
 #define FALSE 0
 #define TRUE  1
@@ -112,7 +113,6 @@ typedef struct {
   const void *data;
   const MRF_CMD_FUNC func;
 } MRF_CMD;
-#endif
 
 
 int _mrf_process_packet(I_F owner,uint8 bnum);
@@ -167,3 +167,4 @@ int mrf_sleep_deep();  // must be defined by app for now
 #include "mrf_app.h"
 #include "mrf_app_cmds.h"
 #include "iqueue.h"
+#endif

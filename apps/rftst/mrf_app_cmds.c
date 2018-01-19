@@ -29,10 +29,9 @@ const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
 
   [ mrf_app_cmd_get_relay ]  = {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_get_relay   },
   [ mrf_app_cmd_set_relay ]  = {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_set_relay   },
+  [ mrf_app_cmd_read_state] = {"READ_STATE", 0  , 0    , sizeof(MRF_PKT_RFMODTC_STATE)  ,  NULL  , mrf_app_read_state   },
   
 };
 
 
 const uint8 mrf_num_app_cmds = (uint8)MRF_NUM_APP_CMDS;
-
-const MRF_PKT_APP_INFO app_info        = {"rftst", MRF_NUM_APP_CMDS};

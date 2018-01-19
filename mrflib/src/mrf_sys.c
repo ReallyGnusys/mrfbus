@@ -663,7 +663,7 @@ int mrf_foreground(){
     mrf_debug("got bnum %d\n",bnum);
 
     if (bnum >= MRF_BNUM_SIGNAL_BASE)
-      rv = signal_handler(MRF_BNUM_SIGNAL_BASE - bnum);
+      rv = signal_handler(bnum - MRF_BNUM_SIGNAL_BASE);  // signal_handler must be defined by app
     else
       rv = _mrf_ex_buffer(bnum);
     mrf_debug("rv was %d",rv);

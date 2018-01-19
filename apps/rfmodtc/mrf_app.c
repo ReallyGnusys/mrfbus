@@ -286,11 +286,13 @@ int sec_task(){
   return 0;
 }
 
+
 // this is run by mrf_foreground - so a foreground task
 int signal_handler(uint8 signal){
  
   if (signal == APP_SIG_SECOND)
     return sec_task();
+
   return 0;
 
 }
