@@ -54,6 +54,13 @@ int _appdbg_22(){
 static uint32_t tgrad100, tycross100;
 static int _sec_count;
 int mrf_app_init(){
+
+  P3DIR = 0xFF;
+  P3OUT = 0x0;
+
+  P2DIR = 0xFC;
+  P2OUT = 0x0;
+  
   init_relays();
   _app_state = SYNC_TIME;
   mrf_nexthop(&_base_route, MRFID, 0);  // get relay/basestation route
@@ -272,6 +279,9 @@ interrupt(ADC12_VECTOR) ADC12ISR(void)
     ADC12IE = 0x0;                           // disable interrupt
     
     _adc_res_rdy();
+    if (mrf_wake_on_exit())
+      __bic_SR_register_on_exit(LPM3_bits);
+    
     break;
   case  8: break;                           // Vector  8:  ADC12IFG1
   case 10: break;                           // Vector 10:  ADC12IFG2

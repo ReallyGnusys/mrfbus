@@ -59,9 +59,26 @@ extern void init_clock(void);
 
 int _mrf_wakeup;
 
+static struct wake_stats_t {
+  uint32 sleep;
+  uint32 wake;
+  uint32 wake_on_exit;
+  uint32 wake_on_exit_yes;
+  uint32 wake_on_exit_no;
+  uint32 woken;
+} wake_stats;
 
+
+  
 int mrf_arch_boot(){
 
+  wake_stats.sleep = 0;
+  wake_stats.wake = 0;
+  wake_stats.wake_on_exit = 0;
+  wake_stats.wake_on_exit_yes = 0;
+  wake_stats.wake_on_exit_no = 0;
+  wake_stats.woken = 0;
+  
   WDTCTL = WDTPW + WDTHOLD; 
   SFRRPCR |= SYSRSTUP | SYSRSTRE;
 
@@ -88,24 +105,32 @@ int mrf_arch_boot(){
 }
 
 
+
 int  mrf_wake()  {
   // clear LPM3 on reti
   //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
   //PINHIGH(WAKE);
+  wake_stats.wake++;
   _mrf_wakeup = 1;  // only ISR can run __bic_SR_register_on_exit - mrf_wake should only be called via ISR
   //__bic_SR_register_on_exit(LPM3_bits);
   return 0;
 }
 
 int mrf_wake_on_exit(){
+  wake_stats.wake_on_exit++;
+
   if( _mrf_wakeup){
+    wake_stats.wake_on_exit_yes++;
     _mrf_wakeup = 0;
     return 1;
   }
+  wake_stats.wake_on_exit_no++;
   return  0;
 }
 
 int _mrf_woken(){
+  wake_stats.woken++;
+
   return 101;
 }
 
@@ -113,6 +138,7 @@ int mrf_sleep(){
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
   //PINLOW(WAKE);
+  wake_stats.sleep++;
   __bis_SR_register(LPM3_bits  + GIE);
 
   _mrf_woken();
