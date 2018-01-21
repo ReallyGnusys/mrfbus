@@ -61,10 +61,6 @@ int queue_data_avail(IQUEUE *q){
   return (q->qip != q->qop);
 }
 
-// returns elem for entry qop
-static uint8 _q_elem(IQUEUE *q, uint8 index){
-  return q->buffer[q->qop % IQUEUE_DEPTH];
-}
 
 // sets elem for entry qip
 static void _q_elem_set(IQUEUE *q, uint8 val){

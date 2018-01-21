@@ -82,7 +82,11 @@ int mrf_arch_boot(){
   WDTCTL = WDTPW + WDTHOLD; 
   SFRRPCR |= SYSRSTUP | SYSRSTRE;
 
-  SetVCore(2);   
+#ifdef MCLK_4MHZ_DCO   //FIXME - need better way
+  SetVCore(0);
+#else
+  SetVCore(2);
+#endif
   UCSCTL6 &= ~(XT1DRIVE0 | XT1DRIVE1);  // low power mode
 
   init_clock();

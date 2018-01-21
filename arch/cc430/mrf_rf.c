@@ -47,6 +47,7 @@ int rf_if_send_func(I_F i_f, uint8 *buff){
   if (buff[4] == 2) // resp
     _Dbg_sresp();
   _xb_hw_wr_tx_fifo((int)buff[0] , buff);
+  return 0;
 }
 
 extern RF_SETTINGS rfSettings;
@@ -300,8 +301,6 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 {
   int xbreceiving = mrf_if_recieving(RF0);
   int xbtransmitting = mrf_if_transmitting(RF0);
-  int rx_ournet = 0;
-  int rx_crcok = 0;
   rf1stb = GetRF1ASTATB();
   
   // switch(__even_in_range(RF1AIV,32))        // Prioritizing Radio Core Interrupt 

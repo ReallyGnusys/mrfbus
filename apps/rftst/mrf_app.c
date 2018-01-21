@@ -43,6 +43,17 @@ static ADC_CHAN _adc_chan;
 
 static MRF_ROUTE _base_route;
 static uint16 _adc_res;  // vcc div 2 and temp
+
+static uint32_t tgrad100, tycross100;
+static uint16_t _sec_count;
+
+static uint32_t _last_reading[MAX_RTDS];
+static MRF_PKT_RFMODTC_STATE _state_pkt;
+
+static uint32_t _ftaps[10];
+
+
+
 int mrf_sleep_deep(){
   mrf_rf_idle(RF0);
   return 0;
@@ -51,8 +62,7 @@ int _appdbg_22(){
   return 22;
 }
 
-static uint32_t tgrad100, tycross100;
-static uint16_t _sec_count;
+
 int mrf_app_init(){
 
   P3DIR = 0xFF;
@@ -84,7 +94,7 @@ int mrf_app_init(){
 
   rtc_second_signal_enable();
 
-  
+  return 0;
 }
 
 #define ADC_CHANNELS 2
@@ -97,8 +107,6 @@ int mrf_app_init(){
 
 
 int sec_task(){
-  int val,tw,tf;
-  //sprintf(_message,"sec %d",_sec_count);
 
   if (_app_state == SYNC_TIME){ // relying on usr_resp to change state when response received
     mrf_send_command(_base_route.relay,  mrf_cmd_get_time,  NULL, 0);
@@ -114,10 +122,23 @@ int sec_task(){
   
   return 0;
 }
-static uint32_t _last_reading[MAX_RTDS];
-static MRF_PKT_RFMODTC_STATE _state_pkt;
 
-static uint32_t _ftaps[10];
+
+int build_state(MRF_PKT_RFMODTC_STATE *state){
+
+  //uint16 rd = ads1148_data();
+  
+  mrf_rtc_get(&((*state).td));
+  uint8 ch;
+  for (ch = 0 ; ch < MAX_RTDS ; ch++){
+    (*state).tempX100[ch] = _last_reading[ch];
+  }
+  (*state).relay_cmd   = 0;
+  (*state).relay_state = relay_state();
+  return 0;
+}
+
+
 
 int adc_res_ready(){
   uint32_t temp,avg;
@@ -144,7 +165,7 @@ int adc_res_ready(){
   }
   _ftaps[_sec_count % 10 ] = temp;
 
-
+  return 0;
 }
   
 
@@ -230,19 +251,6 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   rs->val = get_relay_state(rs->chan);
   mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
   return MRF_CMD_RES_OK;
-}
-int build_state(MRF_PKT_RFMODTC_STATE *state){
-
-  //uint16 rd = ads1148_data();
-  
-  mrf_rtc_get(&((*state).td));
-  uint8 ch;
-  for (ch = 0 ; ch < MAX_RTDS ; ch++){
-    (*state).tempX100[ch] = _last_reading[ch];
-  }
-  (*state).relay_cmd   = 0;
-  (*state).relay_state = relay_state();
-  return 0;
 }
 
 
