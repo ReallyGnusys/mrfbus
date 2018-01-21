@@ -52,7 +52,7 @@ int _appdbg_22(){
 }
 
 static uint32_t tgrad100, tycross100;
-static int _sec_count;
+static uint16_t _sec_count;
 int mrf_app_init(){
 
   P3DIR = 0xFF;

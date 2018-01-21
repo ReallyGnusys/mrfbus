@@ -248,7 +248,9 @@ void mrf_rf_idle(I_F i_f){
   const MRF_IF *ifp = mrf_if_ptr(i_f);
   ifp->status->state = MRF_ST_IDLE;
   Strobe( RF_SIDLE );
-
+  Strobe( RF_SWOR );
+  
+  //ResetRadioCore();  // test if needs re-init
 }
 
 int _mrf_rf_tx_intr(I_F i_f){
