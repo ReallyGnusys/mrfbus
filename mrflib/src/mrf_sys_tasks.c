@@ -77,6 +77,7 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 // FIXME - what is this for. This sys command is not used or valid.
+// We want to support this. If only to pass
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_retry..doing nothing yet\n");
   return MRF_CMD_RES_OK;

@@ -156,8 +156,9 @@ int mrf_arch_run(){
     mrf_foreground();
     //while( mrf_foreground());
     //if (mrf_app_queue_available() == 0)
-
+#ifndef SLEEP_none
     mrf_sleep();
+#endif    
   }
   return 0;
 }

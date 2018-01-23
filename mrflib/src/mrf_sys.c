@@ -175,11 +175,11 @@ int mrf_sretry(uint8 bnum){
  return 0;
 }
 
-int mrf_retry(I_F i_f,uint8 bnum){
+int mrf_retry(I_F i_f,uint8 bnum){  // FIXME this is same as mrf_sretry once you delete the unuse param i_f!
  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_ROUTE route;
- if (hdr->hsrc == 0 )  // never ack or retry 0 
-   return 0;
+ //if (hdr->hsrc == 0 )  // never ack or retry 0   FIXME - this should never happen , no hsrc 0
+ //  return 0;
 
 
  mrf_nexthop(&route,_mrfid,hdr->hsrc);
@@ -251,9 +251,8 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
  //mrf_print_packet_header(hdr);
  _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
-   // FIXME this should increment an error stat at least , maybe leave to calling app
-   //_mrf_buff_free(bnum);
-    mrf_retry(route.i_f,bnum);
+   // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
+   
    return -1;
  }
  else
@@ -276,12 +275,11 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
     mrf_debug("%s","ERROR : failed to alloc  buffer in mrf_send_command..fatal");    
     return -1;
   }
-  mrf_debug("mrf_send_command :  using bnum %d  len %d\n",bnum,len);
+  mrf_debug("mrf_send_command_src :  using bnum %d  len %d\n",bnum,len);
 
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
   uint8 *pl = (uint8 *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
 
-  // FIXME no payload supported
  
   for (i = 0 ; i < len ; i++ )
     *(pl + i) = data[i];
@@ -324,9 +322,11 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
  
  _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
-   // FIXME this should increment an error stat at least , maybe leave to calling app
-   //_mrf_buff_free(bnum);
-    mrf_retry(route.i_f,bnum);
+
+   // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
+   _mrf_buff_free(bnum);
+
+   //mrf_retry(route.i_f,bnum);  NO! never send sretry for send_command etc. as caller is initiator
    return -1;
  }
  else
@@ -349,6 +349,10 @@ int mrf_send_command( uint8 dest, uint8 type,  uint8 *data, uint8 len){
   return _mrf_send_command_src(_mrfid ,  dest,  type,   data,  len);
 
 }
+
+// this is used by host to relay commands from server
+// prob shouldn't be in scope for all builds
+// FIXME - move to host app
 int mrf_send_command_root( uint8 dest, uint8 type,  uint8 *data, uint8 len){
 
   return _mrf_send_command_src(0 ,  dest,  type,   data,  len);
@@ -394,19 +398,9 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
  //mrf_debug("mdr l0 -r.if %d  istate %d\n",route.i_f,ifp->status->state);
 
- if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
-   //mrf_debug("mdr l0 i_f %d bnum %d\n",route.i_f,bnum);
-   mrf_retry(route.i_f,bnum);
-   
- }
- else
-   {
-     
-     //mrf_debug("mrf_send_resp, responding - header follows(1)\n");
-     //mrf_print_packet_header(hdr);
-     mrf_debug("resp->rlen = %u resp->type=%u\n",resp->rlen,resp->type);
-   }
- return 0;
+
+ return mrf_if_tx_queue(route.i_f,bnum);
+ 
 }
 
 static const uint8 _appcname[] = "APP_CMD";
@@ -434,7 +428,7 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF
       mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
       mrf_debug("cmd name %s  req size %u  rsp size %u cflags %x cmd->data %p\n",
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
-      if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 ) && ( (cmd->cflags & MRF_CFLG_NO_RESP) == 0)) {
+      if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 )) {  
         mrf_debug("%s","sending data response \n");
         mrf_data_response(bnum,cmd->data,cmd->rsp_size);
         return 0;
@@ -478,22 +472,6 @@ int _mrf_ex_buffer(uint8 bnum){
   mrf_debug("packet type %d\n",pkt->type);
   return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
 
-  /*
-  if(pkt->type < MRF_NUM_SYS_CMDS){
-    mrf_debug("packet type %d\n",pkt->type);
-    //const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_sys_cmds[pkt->type]);
-    return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
-  }
-
-  uint8 app_cnum = pkt->type - _MRF_APP_CMD_BASE;
-  if(app_cnum < MRF_NUM_APP_CMDS){
-    mrf_debug("packet type %d\n",pkt->type);
-    const MRF_CMD *cmd = (const MRF_CMD *) &(mrf_app_cmds[app_cnum]);
-    return  _mrf_ex_packet(bnum, pkt, cmd, ifp);
-  }
-  mrf_debug("_mrf_ex_buffer got illegal packet type %u\n",pkt->type);
-  return -1;
-  */
 }
 
 int _Dbg_fh(){
@@ -502,10 +480,13 @@ int _Dbg_fh(){
 int _Dbg_fw(){
   return -3;
 }
+int _Dbg_fw2(){
+  return 2;
+}
 
 
 // FIXME lots of duplicated code here wrt. data_response / ex packet - need to clean this up
-int _mrf_buff_forward(uint8 bnum){
+static int _mrf_buff_forward(uint8 bnum){
   MRF_PKT_HDR *pkt;
   uint8 type;
   mrf_debug("mrf_buff_forward: processing buff number %d our _mrfid = %X  \n",bnum,_mrfid);
@@ -513,25 +494,32 @@ int _mrf_buff_forward(uint8 bnum){
   type = pkt->type;
 
 #ifdef HOST_STUB
- if ((_mrfid == 1 ) && (pkt->udest == 0 ))
+  if ((_mrfid == 1 ) && (pkt->udest == 0 )){
    mrf_debug("mrf_buff_forward: this one is for app/server udest is  %d our _mrfid = %X  \n",pkt->udest,_mrfid);
    response_to_app(bnum);
    _mrf_buff_free(bnum);
    return 0;
- 
+  }
 #endif
-
   
   MRF_ROUTE route;
   mrf_nexthop(&route,_mrfid,pkt->udest);
   //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
   pkt->hdest = route.relay;
   pkt->hsrc = _mrfid;
-  pkt->netid = MRFNET;  // what are we going to use this for?
+  pkt->netid = MRFNET;
+
+
+  if ((pkt->type != mrf_cmd_ack) && ( pkt->hdest == 33)) {
+      _Dbg_fw2();
+
+  }
   mrf_debug("udest is 0x%x route.i_f is %d route.relay %d\n",pkt->udest,route.i_f,route.relay);
   _Dbg_fw();
-  if( mrf_if_tx_queue(route.i_f,bnum) == -1) // then outgoing queue full - need to retry
+  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
+    // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
     mrf_retry(route.i_f,bnum);
+  }
   else{
 
     mrf_debug("INFO:  UDEST %02X : forwarding to %02X on I_F %d \n",pkt->udest,route.relay,route.i_f);  
@@ -817,9 +805,21 @@ void _mrf_tick(){
               }else{
 
                 mrf_debug("%s","retry limit reached - abort buffer tx\n");
+                mif->status->stats.tx_errors++;
+
+                
+                
+#if 0                
                 // maybe send NDR here ..but in meantime
-                bs->state = FREE;
+                bs->state = FREE;   // effectively mrf_buff_free
                 bs->owner = NUM_INTERFACES;
+#else
+
+                mrf_retry(i,bnum);  // this frees orig buffer as well
+                
+                //pkt->
+
+#endif                
                 mif->status->state = MRF_ST_RX;
                 queue_pop(qp);
               }                              

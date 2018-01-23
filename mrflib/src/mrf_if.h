@@ -68,7 +68,6 @@ enum{
   MRF_BUFF_NONE = 255
 };
 
-#define MRF_IF_QL 4
 
 typedef struct  __attribute__ ((packed))  {
   uint32 rx_pkts;
@@ -76,6 +75,7 @@ typedef struct  __attribute__ ((packed))  {
   uint32 tx_acks;
   uint16 tx_overruns;
   uint16 tx_retries;  
+  uint16 tx_errors;  
   uint16  unexp_ack;  
   uint8  alloc_err;
   uint8  st_err;

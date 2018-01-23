@@ -145,7 +145,7 @@ int mrf_sleep();
 int mrf_wake_on_exit();
 // end arch
 void mrf_sys_init();
-int _mrf_buff_forward(uint8 bnum);
+//int _mrf_buff_forward(uint8 bnum);
 int _mrf_process_buff(uint8 bnum);
 int mrf_foreground();
 int mrf_app_queue_push(uint8 bnum);

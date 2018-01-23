@@ -26,8 +26,7 @@ extern const MRF_PKT_APP_INFO app_info;
 const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_ack          ] = {"ACK"        , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_ack      },
   [ mrf_cmd_retry        ] = {"RETRY"      , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_retry      },
-  [ mrf_cmd_resp         ] = {"RESP"       , MRF_CFLG_INTR |  MRF_CFLG_NO_ACK | MRF_CFLG_NO_RESP,
-                                                                            sizeof(MRF_PKT_RESP)                , 0                    ,  NULL               , mrf_task_resp     },
+  [ mrf_cmd_resp         ] = {"RESP"       , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL               , mrf_task_resp     },
   [ mrf_cmd_device_info  ] = {"DEVICE_INFO", MRF_CFLG_INTR                   , 0                          , sizeof(MRF_PKT_DEVICE_INFO),  (void*)&device_info, NULL },
    [ mrf_cmd_device_status] = {"DEVICE_STATUS"    , MRF_CFLG_INTR            , 0                          , sizeof(MRF_PKT_DEVICE_STATUS)    ,  NULL               , mrf_task_device_status },
   [ mrf_cmd_sys_info  ]    = {"SYS_INFO"   , MRF_CFLG_INTR                   , 0                          , sizeof(MRF_PKT_SYS_INFO),  (void*)&sys_info, NULL },
@@ -40,9 +39,9 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_app_cmd_info ] = {"APP_CMD_INFO",  MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO),  NULL          , mrf_task_app_cmd_info   },
   [ mrf_cmd_test_1      ] = {"TEST_1"     , 0                                , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_task_test_1   },
   [ mrf_cmd_usr_struct  ] = {"USR_STRUCT" , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_struct  },
-  [ mrf_cmd_usr_resp    ] = {"USR_RESP"   , MRF_CFLG_NO_RESP                 , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_resp     },
+  [ mrf_cmd_usr_resp    ] = {"USR_RESP"   , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_resp     },
   [ mrf_cmd_reset       ] = {"RESET"       ,  MRF_CFLG_NO_ACK                , 0                          , 0                          ,  NULL      , mrf_task_reset      },
-  [ mrf_cmd_ping ] = {"PING",  MRF_CFLG_INTR                                 , 0                          , sizeof(MRF_PKT_PING_RES)   ,  NULL     , mrf_task_ping},
+  [ mrf_cmd_ping        ] = {"PING"        ,  MRF_CFLG_INTR                  , 0                          , sizeof(MRF_PKT_PING_RES)   ,  NULL     , mrf_task_ping},
 
 
 };

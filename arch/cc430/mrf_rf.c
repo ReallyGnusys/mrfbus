@@ -40,12 +40,22 @@ const MRF_IF_TYPE mrf_rf_cc_if = {
 int _Dbg_sresp(){
   return 2;
 }
+
+int _Dbg_dinfo(){
+  return 3;
+}
+
+
 int  _xb_hw_wr_tx_fifo(int len , uint8 *buff);
 
 int rf_if_send_func(I_F i_f, uint8 *buff){
   //const MRF_IF *mif = mrf_if_ptr(i_f);
   if (buff[4] == 2) // resp
     _Dbg_sresp();
+  if (buff[4] == 3) // dev info
+    _Dbg_dinfo();
+
+  
   _xb_hw_wr_tx_fifo((int)buff[0] , buff);
   return 0;
 }
@@ -211,8 +221,10 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
   }
   _mrf_receive_enable();  // need to be rx if not tx
 
-  _Dbg12();
-
+  MRF_PKT_HDR *pkt = (MRF_PKT_HDR *)buff;
+  if (pkt->type == mrf_cmd_device_info)
+    _Dbg12();
+  
   
   mrf_buff_loaded(bnum);
   return 0;
