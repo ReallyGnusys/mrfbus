@@ -156,7 +156,7 @@ void rtc_ps0_disable(){
 }
 
 
-int  _rtc_td_eq(TIMEDATE *td1,TIMEDATE *td2){  
+volatile int  _rtc_td_eq(TIMEDATE *td1,TIMEDATE *td2){  
   if(td1->sec != td2->sec) return 0;
   if(td1->min != td2->min ) return 0;
   if(td1->hour != td2->hour) return 0;
@@ -229,6 +229,9 @@ void _rtc_set_error(TIMEDATE *td){
   set_err_cnt++;
 }
 
+// FIXME working round an odd optimisation bug that stops clock setting reliably
+#define _RTDAY (* ((volatile uint8_t *)0x04B4))
+
 void _rtc_get(TIMEDATE *td){
   /*
   td->sec = ((TIMEDATE *)&ReadTime)->sec;
@@ -241,7 +244,7 @@ void _rtc_get(TIMEDATE *td){
   td->sec = RTCSEC;
   td->min = RTCMIN;
   td->hour = RTCHOUR;
-  td->day = RTCDAY;
+  td->day = _RTDAY;
   td->mon = RTCMON;
   td->year = _y16_to_y8(RTCYEAR) ;
 }
@@ -250,7 +253,7 @@ void _rtc_set(TIMEDATE *td){
   RTCSEC = td->sec  ;
   RTCMIN = td->min  ;
   RTCHOUR = td->hour  ;
-  RTCDAY = td->day  ;
+  _RTDAY = td->day  ;
   RTCMON = td->mon  ;
   RTCYEAR = _y8_to_y16(td->year)  ;
   //RTCCTL01 &= ~RTCHOLD  ;
@@ -268,7 +271,6 @@ void rtc_set(TIMEDATE *td)
       _rtc_set_error(&setval);
       return;
     }
-
   _rtc_set(&setval);
   _rtc_get(&rdval);
   while(!_rtc_td_eq(&setval,&rdval)  || !_rtc_td_is_valid(&rdval)){
