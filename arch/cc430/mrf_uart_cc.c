@@ -61,7 +61,7 @@ static int disable_tx_int(){
 static int enable_tx_int(){
   UCA0IE &= ~UCTXIE;  // disable this intr
   UCA0IE |= UCTXIE;  //re-enable this intr
-  __bis_SR_register(GIE);
+  //__bis_SR_register(GIE);   // shouldn't need this setting.. .don't want it set in intr
   return 0;
 }
 
@@ -158,7 +158,7 @@ static int mrf_uart_init_cc(I_F i_f){
   UCA0IE |= UCRXIE;        // enable RX interrupt 
   _ubindex = 0; // dbg
   _tbindex = 0;
- __bis_SR_register(GIE);
+  //__bis_SR_register(GIE);  // leave for system to set
   return 0;
 }
 

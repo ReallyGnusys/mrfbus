@@ -49,7 +49,7 @@ static int _enable_spi_tx_int(){
 static int _enable_spi_rx_int(){
 
   UCB0IE |= UCRXIE;   // enable RX interrupt 
-  __bis_SR_register(GIE);
+  // __bis_SR_register(GIE);  // don't want this set in intr accidentally
   return 0;
 }
 static uint16_t _spi_tx_imm , _spi_tx_err1, _spi_tx_err2, _spi_tx_err3;

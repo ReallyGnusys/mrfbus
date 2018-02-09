@@ -22,9 +22,17 @@
 #include <mrf_debug.h>
 
 
-MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status->state);
+// mrf_task_ack
+// run whenever ack,retry or resp recieved from hdest
+// 1) pops tx queue if msgid matches head head msgid
+// 2) frees buffer if not resp
 
+
+// buffer_responded - checks to see if ack/retry/resp relates to
+// txqueue head -  if so removes txqueue entry and returns responded buffer num
+// else _MRF_BUFFS
+
+uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   uint8 bn;
 
   IQUEUE *qp = &(ifp->status->txqueue);
@@ -34,22 +42,13 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_BUFF_STATE *bs;
 
   
-  //if ( ifp->status->state != MRF_ST_WAITSACK){  
+ if ( ifp->status->state != MRF_ST_WAITSACK){
+   mrf_debug("ERROR: buffer_responded called when ifp state was %d",ifp->status->state);
+
+ }
   if (!queue_data_avail(qp)){
-    mrf_debug("%s","mrf_task_ack: unexpected ack for i_f\n");
-    ifp->status->stats.unexp_ack++;
-    //_mrf_buff_state(bnum)->state = FREE;
-    if (ackhdr->type == mrf_cmd_ack) {// don't free for resp
-      mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
-      _mrf_buff_free(bnum);
-    }
-    return MRF_CMD_RES_ERROR;
-  }
-  mrf_debug("%s","ack 1\n");
-  if (ackhdr->type == mrf_cmd_ack) {// don't free for resp .. hmpff
-    mrf_debug("mrf_task_ack - buffer %d contains ack .. freeing\n",bnum);
-  //_mrf_buff_state(bnum)->state = FREE;
-    _mrf_buff_free(bnum);
+    mrf_debug("buffer_responded, error nothing was queuing for ifp %p",ifp);
+    return _MRF_BUFFS;
   }
   // clear buff state of ack buffer
   if (queue_data_avail(qp)){
@@ -57,32 +56,101 @@ MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
       bs = _mrf_buff_state(bn);
       txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
       mrf_debug(" qhead is %d state %d\n",bn,bs->state);
+      //FIXME really should do some more checks here on src dest addresses
       if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
         {
-        mrf_debug("acknowledge recieved for buffer %d \n",bn);
+        mrf_debug("buffer_responded : acknowledge recieved for buffer %d \n",bn);
         queue_pop(qp);
         ifp->status->state = MRF_ST_RX;
-        ifp->status->stats.tx_pkts++;
-        _mrf_buff_free(bn);
-        //bs->state = FREE;
-        return MRF_CMD_RES_OK;
+        return bn;
         }
       else{
-        mrf_debug("%s","no ack 1\n");
+        mrf_debug("buffer_responded returning not found for bnum %u",bnum);
+        mrf_debug("buff %d state %d (%s) owner %d\n",bnum,bs->state,mrf_buff_state_name(bnum),bs->owner);    
+
       }
   }
-  mrf_debug("i_f status %d da %d\n",ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
-  mrf_debug("%s","no ack 2\n");
+  return _MRF_BUFFS;
+
+
+}
+
+
+MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+
+  uint8 txbuff;
+  MRF_PKT_HDR *hdr;
+
+  mrf_debug("mrf_task_ack : bnum %d  IF state %d\n",bnum,ifp->status->state);
+
+
+  txbuff = buffer_responded(bnum, ifp);
+
+  if ( txbuff < _MRF_BUFFS){
+
+    hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
+    mrf_debug("mrf_task_ack.. ack matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
+    ifp->status->stats.tx_pkts++;
+    _mrf_buff_free(txbuff);
+
+    
+  } else {
+
+    mrf_debug("mrf_task_retry.. unexpected retry , txbuff %d\n",txbuff);
+    ifp->status->stats.unexp_ack++;
+
+  }
+
+  _mrf_buff_free(bnum);
+  
   return MRF_CMD_RES_OK;
 }
 
-// FIXME - what is this for. This sys command is not used or valid.
-// We want to support this. If only to pass
+// Retry command received
+// need to queue an NDR to original sender when receive this
+
+// need to stop further immediate retries 
+
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
-  mrf_debug("%s","mrf_task_retry..doing nothing yet\n");
+  uint8 txbuff;
+  MRF_PKT_HDR *hdr;
+
+  txbuff = buffer_responded(bnum, ifp);
+
+  if ( txbuff < _MRF_BUFFS){
+
+    hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
+    mrf_debug("mrf_task_retry.. matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
+    ifp->status->stats.tx_retried++;
+    if(hdr->usrc != _mrfid)   // if we weren't initiator then send ndr to initiator
+      mrf_ndr(RECD_SRETRY, txbuff);
+    else      
+      _mrf_buff_free(txbuff);
+
+    
+  } else {
+
+    mrf_debug("mrf_task_retry.. unexpected retry , txbuff %d\n",txbuff);
+
+  }
+  _mrf_buff_free(bnum);
+
   return MRF_CMD_RES_OK;
 
 }
+
+MRF_CMD_RES mrf_task_ndr(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  // recieved an NDR -  normally only expect server/root to care about this
+
+  ifp->status->stats.rx_ndr++;
+  
+  _mrf_buff_free(bnum);
+
+  return MRF_CMD_RES_OK;
+}
+
+
+
 int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -91,12 +159,9 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   
   mrf_debug("%s","mrf_task_resp L1\n");
 
+  
 
-  // mrf_debug("sending sack\n");
-   // send ack
-  //mrf_sack(bnum);
-
-
+  
   mrf_debug("%s","pushing to app queue as MRF_CMD_USR_RESP\n");
   // now put in application queue as MRF_CMD_USR_RESP
   

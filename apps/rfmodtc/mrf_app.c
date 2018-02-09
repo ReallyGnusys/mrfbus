@@ -44,13 +44,22 @@ uint8 _app_mode;
 static int _sec_count ;
 static uint32_t _last_reading[MAX_RTDS];
 
+typedef enum {
+  SYNC_TIME,
+  SHOW_TIME} APP_STATE;
+static APP_STATE _app_state;
+static MRF_ROUTE _base_route;
+
+
 int mrf_app_init(){
   int i;
 
   for ( i=0 ; i<MAX_RTDS ; i++){
     _last_reading[i] = 0;
   }
-  
+  _app_state = SYNC_TIME;
+  mrf_nexthop(&_base_route, MRFID, 0);  // get relay/basestation route
+
   INPUTPIN(BUT1);
   P1REN &= ~BITNAME(BUT1);
   P1IES |=  BITNAME(BUT1);  // hi to lo 
@@ -111,8 +120,14 @@ int _dbg_ping_res(){
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
    MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
    MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
-
-   if (resp->type == mrf_cmd_ping) {     
+   if (_app_state == SYNC_TIME ){
+     if(resp->type == mrf_cmd_get_time){
+       TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
+       rtc_set(td);
+       _app_state = SHOW_TIME;
+     }
+   }
+   else if (resp->type == mrf_cmd_ping) {     
      MRF_PKT_PING_RES *pres = (MRF_PKT_PING_RES *)((void *)hdr + sizeof(MRF_PKT_HDR)+ sizeof(MRF_PKT_RESP));
 
      if (_app_mode == 1) {
@@ -252,6 +267,12 @@ int sec_task(){
   MRF_ROUTE route;
   P1IE |= BIT1;                             // hmpff -renable button ( crude debouncing )
 
+  if (_app_state == SYNC_TIME){ // relying on usr_resp to change state when response received
+    mrf_send_command(_base_route.relay,  mrf_cmd_get_time,  NULL, 0);
+    return 0;
+  }
+  
+
   val = modtc_celx4();
   tw = val >> 2;
   tf = val & 3;
@@ -275,9 +296,9 @@ int sec_task(){
     sprintf(_message,"%2d.%02d C",tw,tf);
     LCD1x9_Write(_message);
   } else {
-    mrf_nexthop(&route, MRFID, 0);
+    //mrf_nexthop(&route, MRFID, 0);
     _Dbg_ping();
-    mrf_send_command(route.relay,  mrf_cmd_ping,  NULL, 0);
+    mrf_send_command(_base_route.relay,  mrf_cmd_ping,  NULL, 0);
 
   }
   

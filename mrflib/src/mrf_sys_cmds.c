@@ -42,6 +42,7 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_usr_resp    ] = {"USR_RESP"   , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_resp     },
   [ mrf_cmd_reset       ] = {"RESET"       ,  MRF_CFLG_NO_ACK                , 0                          , 0                          ,  NULL      , mrf_task_reset      },
   [ mrf_cmd_ping        ] = {"PING"        ,  MRF_CFLG_INTR                  , 0                          , sizeof(MRF_PKT_PING_RES)   ,  NULL     , mrf_task_ping},
+  [ mrf_cmd_ndr         ] = {"NDR"      , MRF_CFLG_INTR                      , sizeof(MRF_PKT_NDR)        , 0                          ,  NULL     , mrf_task_ndr      },
 
 
 };

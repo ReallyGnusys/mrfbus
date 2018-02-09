@@ -74,9 +74,11 @@ typedef struct  __attribute__ ((packed))  {
   uint32 tx_pkts;
   uint32 tx_acks;
   uint16 tx_overruns;
-  uint16 tx_retries;  
+  uint16 tx_retries;
+  uint16 tx_retried;
   uint16 tx_errors;  
   uint16  unexp_ack;  
+  uint16  rx_ndr;  
   uint8  alloc_err;
   uint8  st_err;
 } IF_STATS;

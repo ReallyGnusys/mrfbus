@@ -42,6 +42,7 @@ typedef struct S_RF_SETTINGS {
     unsigned char test0;     // Various test settings.
     unsigned char fifothr;   // RXFIFO and TXFIFO thresholds.
     unsigned char iocfg2;    // GDO2 output pin configuration
+    unsigned char iocfg1;    // GDO0 output pin configuration
     unsigned char iocfg0;    // GDO0 output pin configuration
     unsigned char pktctrl1;  // Packet automation control.
     unsigned char pktctrl0;  // Packet automation control.

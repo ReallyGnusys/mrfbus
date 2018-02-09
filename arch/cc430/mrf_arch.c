@@ -101,9 +101,6 @@ int mrf_arch_boot(){
   _mrf_wakeup = 0;
 
   rtc_init();
-  rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
-
-  __bis_SR_register(GIE);
  
   return 0;
 }
@@ -138,12 +135,14 @@ int _mrf_woken(){
   return 101;
 }
 
-int mrf_sleep(){
+int mrf_sleep(){ 
   // disable WDT
   //WDTCTL = WDTPW + WDTHOLD; 
   //PINLOW(WAKE);
   wake_stats.sleep++;
-  __bis_SR_register(LPM3_bits  + GIE);
+  __bis_SR_register(LPM3_bits);    // (LPM3_bits  + GIE);
+  // shouldn't need GIE here, it should always be set in foreground anyway
+  // and this should only be called from foreground
 
   _mrf_woken();
   return 0;
@@ -151,6 +150,9 @@ int mrf_sleep(){
 
 int mrf_arch_run(){
   int i;
+  rtc_ps0_init(DIV32,_mrf_tick);  // 1KHz tick
+  __bis_SR_register(GIE);  // GIE should always be set for foreground process
+
   while(1){
     //WDTCTL = WDTPW + WDTIS_5 + WDTSSEL__ACLK + WDTCNTCL_L;
     mrf_foreground();
@@ -174,7 +176,7 @@ int mrf_rtc_set(TIMEDATE *td){
 
 int mrf_tick_enable(){
   rtc_ps0_enable(_mrf_tick);
-  __bis_SR_register(GIE);
+  // __bis_SR_register(GIE);
 
   return 0;
 
