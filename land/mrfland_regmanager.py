@@ -24,16 +24,18 @@ class socket_info(object):
         self.wsid = other.wsid
         self.username = other.username
         self.ip  = other.ip
+        self.req_host  = other.req_host
         self.apps = other.apps
 
 
 class staff_socket(object):
-    def __init__(self,sid,wsid,sessid,username,stype,apps,ip):
+    def __init__(self,sid,wsid,sessid,username,stype,apps,ip,req_host):
         self.opened = None
         self.closed = None
         self.isopen = True
         self.sid = sid
         self.wsid = wsid
+        self.req_host = req_host
         self.sessid = sessid
         self.username = username
         self.stype = stype
@@ -56,9 +58,9 @@ class mrf_comm(object):
         self.clients = dict()
         self.sockets = {}
 
-    def prepare_socket(self,sid,wsid,sessid,username,stype,apps,ip):
+    def prepare_socket(self,sid,wsid,sessid,username,stype,apps,ip,req_host):
         mrflog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
-        self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,apps,ip)
+        self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,apps,ip,req_host)
         
     def check_socket(self,wsid,ip):  # FIXME should have timeout if socket not opened in v short time after prepare_socket
         mrflog.info("checking socket id %s  ip %s"%(wsid,ip))
@@ -162,7 +164,7 @@ class mrf_comm(object):
                 self.log.info("sessid matched for wsid %s"%wsid)
                 if skt.expire > int(time.time()):
                     return {'sid' : skt.sid , 'wsid' : skt.wsid, 'expire' :  skt.expire,
-                            'type': skt.stype , 'username' : skt.username , 'apps' : skt.apps}
+                            'type': skt.stype , 'username' : skt.username , 'apps' : skt.apps, 'req_host':skt.req_host}
                 else:
                     return None
         return None
@@ -232,7 +234,8 @@ class MrflandRegManager(object):
         # get sensors that have data in db
         if hasattr(self,'db'):
             tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
-    def authenticate(self,username,password,ip):             
+            
+    def authenticate(self,username,password,ip,req_host):             
         mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
         if username not in install.users.keys():
             return None
@@ -248,13 +251,14 @@ class MrflandRegManager(object):
         wsid = os.urandom(16).encode('hex')  
         sessid = gen_sessid()
 
-        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip)    
+        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip,req_host)    
         self.comm.set_session_expire(wsid)
 
         return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
 
 
-    def ws_url(self, wsid):
+    def ws_url(self, wsid,req_host):
+        """
         url = install.wsprot+install.host
         if install.domain:
             url += '.'+install.domain
@@ -264,6 +268,10 @@ class MrflandRegManager(object):
             pport =  self.config['http_port']
 
         url += ':'+str(pport)+'/ws?Id='+wsid
+        """
+        url = install.wsprot+req_host+'/ws?Id='+wsid
+
+        
         return url
             
 
