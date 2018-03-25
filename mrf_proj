@@ -79,7 +79,7 @@ do
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
       
           echo "starting lnx device $dn"
-          stdbuf -oL -i0 ${dn}/bin/${dn} > ${LOGDIR}/${dn}.log  &
+          stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
           pid=$!
           echo "pid is $pid"
           pids=${pids}" "$pid

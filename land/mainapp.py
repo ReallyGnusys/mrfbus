@@ -162,7 +162,7 @@ def post_login(rh):
         ip = rh.request.headers['X-Forwarded-For']
     else:
     """
-    ip = rh.request.remote_ip
+    ip = rh.ip #rh.request.remote_ip
 
     if not 'username' in rh.request.arguments.keys():   
         return login_fail(rh,'invalid post data')
@@ -193,7 +193,7 @@ def post_login(rh):
 
     alog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
  
-    authres = rh.rm.authenticate(username,password,ip)
+    authres = rh.rm.authenticate(username,password,ip,rh.request_host)
     alog.info('authenticate result = '+str(authres) )
 
     if authres == None:
@@ -229,15 +229,31 @@ def post_login(rh):
 
 class mainapp(tornado.web.RequestHandler):
     def __init__(self,*args, **kwargs):
+        self.prox_re = re.compile(r'^[^\/]+\/\/([^\/]*)')
         tornado.web.RequestHandler.__init__(self,*args, **kwargs)
         mrflog.warn("mainapp init kwargs %s"%repr(kwargs))
         self.rm = kwargs['rm']
         #self.log = log
     def initialize(self, rm):
         self.rm = rm   # desperate times
+
+    def set_req_host(self):
+        # handle nginx proxying
+        
+        
+        if 'X-Forwarded-For' in self.request.headers.keys():
+            self.ip = self.request.headers['X-Forwarded-For']
+            
+            #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
+        else:
+            self.ip = self.request.remote_ip
+        self.request_host = self.request.headers['Host']
+        
     def post(self, *args, **kwargs):
         alog.info('post:'+str(self.request))
         mrflog.warn("mainapp post kwargs %s"%repr(kwargs))
+        self.set_req_host()
+        
         alog.info("uri : "+self.request.uri)
         uri = remarg.sub('',self.request.uri)
         alog.info("uri : "+uri)
@@ -255,12 +271,23 @@ class mainapp(tornado.web.RequestHandler):
         alog.info("host : "+self.request.host)
   
         uri = remarg.sub('',self.request.uri)
-        ip = self.request.remote_ip
+        alog.warn("get headers is %s"%repr(self.request.headers.keys()))
 
-        # handle nginx proxying
-        #if self.request.headers.has_key('X-Forwarded-For'):
-        #    ip = self.request.headers['X-Forwarded-For']
+        for hn in ['Host','Port','X-Forwarded-For','Referer','X-Real-Ip']:
+            if hn in self.request.headers.keys():
+                alog.warn("%s %s"%(hn,repr(self.request.headers[hn])))
+
+
+        self.set_req_host()
+        ip = self.ip
+
+        alog.warn("got request_host "+self.request_host)
+
+        
         alog.info("ip: "+ip+" uri : "+uri)
+
+
+
         reqa = uri.split('/')[1:]
         
         alog.info("reqa = "+str(reqa)+ " len "+str(len(reqa)))
@@ -301,7 +328,7 @@ class mainapp(tornado.web.RequestHandler):
             return
 
         html_body = self.rm.html_body(sob['apps'])
-        ws_url = self.rm.ws_url(sob['wsid'])
+        ws_url = self.rm.ws_url(sob['wsid'],sob['req_host'])
         return mrf_page(self,sob,ws_url,ip,html_body)
      
         

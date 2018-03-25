@@ -16,6 +16,7 @@ import install
 import os
 import time
 import json
+from urlparse import urlparse
 import signal
 import Queue
 from collections import OrderedDict
@@ -85,6 +86,8 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def initialize(self,rm):
         self.rm = rm
         mrflog.warn("WebSocketHandler.initialize rm %s"%repr(self.rm))
+
+
     def open(self, *args, **kwargs):        
         self.id = self.get_argument("Id")
         mrflog.warn("client attempt to open ws:Id="+self.id+" kwargs "+repr(kwargs))
