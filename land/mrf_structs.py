@@ -70,6 +70,8 @@ class MrfStruct(LittleEndianStructure):
         for attr in dic.keys():
             setattr(self,attr,dic[attr])
     def __eq__(self,other):
+        if type(other) == type(None):
+            return False
         for field in self._fields_:
             #att = getattr(self,field[0])
             #oatt = getattr(other,field[0])

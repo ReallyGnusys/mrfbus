@@ -249,9 +249,10 @@ class MrfCmdObj(object):
         self.dest = dest
         self.cmd_code = cmd_code
         self.dstruct = dstruct
+        self.receipt = None # get receipt from mrfnet once command is issued
     def __repr__(self):
-        s = "%s: tag %s dest %d cmd_code %d dstruct %s"%\
-            (self.__class__.__name__,self.tag,self.dest,self.cmd_code,repr(self.dstruct))
+        s = "%s: tag %s dest %d cmd_code %d dstruct %s receipt %s"%\
+            (self.__class__.__name__,self.tag,self.dest,self.cmd_code,repr(self.dstruct),repr(self.receipt))
         return s
 
 
@@ -326,7 +327,7 @@ class MrflandServer(object):
             self._start_tcp_service( self.config['tcp_test_port'])
         self.ioloop = tornado.ioloop.IOLoop.instance()
         mrflog.warn("MrflandServer tornado IOLoop starting : IOLoop.time %s"%repr(self.ioloop.time()))
-        self._deactivate()  # start quiet
+        #self._deactivate()  # start quiet
 
         if hasattr(self,'nsock'):
             self.ioloop.add_handler(self.nsock,self._resp_handler,self.ioloop.READ)
@@ -464,6 +465,7 @@ class MrflandServer(object):
         if self._run_cmd(cobj) == 0:
             self.resp_timer = 0
             self.active_cmd = cobj
+            mrflog.warn("self.active_cmd %s"%repr(self.active_cmd))
             return 0
         else:
             mrflog.warn("_run_cmd failed for %s"%repr(cobj))
@@ -561,6 +563,7 @@ class MrflandServer(object):
         hdr = PktHeader()
 
         if len(resp) < len(hdr):  # no way valid
+            mrflog.warn("len(resp) was %d!"%len(resp))
             return None,None,None
 
 
@@ -572,9 +575,28 @@ class MrflandServer(object):
             return None,None,None
         
         if hdr.udest != 0: # only looking for packets destined for us
-            mrflog.info("not our us")
-            return None,None,None
+            mrflog.warn("not our us")
 
+            if hdr.usrc != 0:
+                mrflog.warn("not receipt for us")
+                return None,None,None
+
+            if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
+                mrflog.warn("got receipt for active cmd %s"%repr(hdr))
+                mrflog.warn("len(resp) was %d"%len(resp))
+                self.active_cmd.receipt = hdr
+                if len(resp) > hdr.length:
+                    resp = resp[hdr.length:]
+                    return None,None,resp
+                    
+                
+            else:
+                mrflog.warn("unexpected receipt %s"%repr(hdr))
+                if self.active_cmd:
+                    mrflog.warn("active_cmd %s"%self.active_cmd)
+            return None,None,None
+            
+            
         if  hdr.type == mrf_cmd_ndr:
             ndr = PktNDR()
 
@@ -582,7 +604,11 @@ class MrflandServer(object):
 
             mrflog.warn("got NDR %s"%repr(ndr))
             mrflog.warn("got header was  %s"%repr(hdr))
-            
+            if self.active_cmd and self.active_cmd.receipt and self.active_cmd.receipt.msgid == ndr.msgid and self.active_cmd.dest == ndr.hdest:
+                mrflog.warn("got NDR for active cmd %s"%repr(ndr))
+                self.robj_for_active_cmd(ndr)
+                self.active_cmd = None
+
             self.rm.ndr(hdr,ndr)
             return None, None, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
@@ -617,28 +643,63 @@ class MrflandServer(object):
         if type(param) == type(None):
             mrflog.error("failed to get resp for packet with header %s"%repr(hdr))            
         elif response and self.active_cmd and hdr.usrc == self.active_cmd.dest and param.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
-            mrflog.info("got response for active command %s"%repr(self.active_cmd))
-            mrflog.info("rsp %s"%(param))
-            if hasattr(self,'tcp_server') and self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
-                mrflog.info("response for tcp client %d"%self.active_cmd.tag)
-                mrflog.info("robj dic is %s"%repr(robj.dic()))
-                rstr = mrfland.to_json(robj.dic())
-                self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
+            mrflog.warn("rsp %s"%(param))
+
+            self.robj_for_active_cmd(robj)
 
             self.active_cmd = None
-                                
+
+
+    def robj_for_active_cmd(self,robj):
+        mrflog.warn("got response for active command %s"%repr(self.active_cmd))            
+        if hasattr(self,'tcp_server') and self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
+            mrflog.info("response for tcp client %d"%self.active_cmd.tag)
+            mrflog.info("robj dic is %s"%repr(robj.dic()))
+            rstr = mrfland.to_json(robj.dic())
+            self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
+        
     def _resp_handler(self,*args, **kwargs):
         mrflog.info("Input on response pipe")
         resp = os.read(self.rfd, MRFBUFFLEN)
 
         hdr , param, resp  = self.parse_input(resp)
+        ccnt = 0
+        while not (hdr == None and param == None and resp == None):
+            
+            ccnt += 1
+            if ccnt > 3:
+                break
+            
+            mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
+            if hdr  and param  and resp :                    
+                mrflog.warn("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                self.handle_response(hdr, param , resp, response=True )
 
-        if hdr  and param and resp:                    
-            mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
-            self.handle_response(hdr, param , resp, response=True )
-        else:
-            mrflog.warn("_resp_handler , got resp %s"%repr(resp))
-            mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
+                if hdr.length < len(resp):
+                    mrflog.warn("more bytes...")
+                    resp = resp[hdr.length:]
+                    
+                    hdr , param, resp  = self.parse_input(resp)
+                else:
+                    hdr = None
+                    param = None
+                    resp = None
+                
+            else:
+
+                if hdr == None and resp:
+                    mrflog.warn("_resp_handler , got residual resp %s"%repr(resp))
+                    hdr , param, resp  = self.parse_input(resp)
+                    
+                else:
+                    mrflog.warn("_resp_handler , got resp %s"%repr(resp))
+                    mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
+                    mrflog.warn("_resp_handler , got param %s"%repr(hdr))
+                    hdr = None
+                    param = None
+                    resp = None
+                    
+                
     def _struct_handler(self,*args, **kwargs):
         mrflog.info("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)

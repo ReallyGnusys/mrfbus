@@ -243,7 +243,15 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
  return 0;  
 }
 
-// this is just used by HOST_STUB application - should be conditional
+#ifdef HOST_STUB
+extern int response_to_app(uint8 bnum);
+
+#endif
+
+
+
+
+
 
 int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uint8 len){
   uint8 bnum;
@@ -293,6 +301,12 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
  mrf_debug("%s","mrf_send_command : this is our header\n");
  
  mrf_print_packet_header(hdr);
+ 
+ #ifdef HOST_STUB
+ // FIXME - cheap way of returning receipts for messages relayed - send squirt back the buffer to be transmitted
+ response_to_app(bnum);
+
+ #endif
 
  if (dest == _mrfid) {
    // process buffer
@@ -320,10 +334,6 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
  return 0;  
 }
 
-#ifdef HOST_STUB
-extern int response_to_app(uint8 bnum);
-
-#endif
 
 
 int mrf_send_command( uint8 dest, uint8 type,  uint8 *data, uint8 len){
