@@ -329,7 +329,7 @@ class TestMrfBus(DeviceTestCase):
 
 
 
-    def test02_device_tests(self, dests=[ 0x01, 0x02, 0x20, 0x2f, 0x2e] ):
+    def test02_device_tests(self, dests=[ 0x01, 0x02, 0x20, 0x2f ] ):
         for dest in dests:
             self.device_tests(dest)
     def skipped_test02_ndr_tests(self, dests=[0x01,0x2e] ):
