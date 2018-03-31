@@ -575,15 +575,13 @@ class MrflandServer(object):
             return None,None,None
         
         if hdr.udest != 0: # only looking for packets destined for us
-            mrflog.warn("not our us")
 
             if hdr.usrc != 0:
                 mrflog.warn("not receipt for us")
                 return None,None,None
 
             if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
-                mrflog.warn("got receipt for active cmd %s"%repr(hdr))
-                mrflog.warn("len(resp) was %d"%len(resp))
+                mrflog.warn("got receipt for active cmd  msgid %d"%hdr.msgid)
                 self.active_cmd.receipt = hdr
                 if len(resp) > hdr.length:
                     resp = resp[hdr.length:]
@@ -643,7 +641,6 @@ class MrflandServer(object):
         if type(param) == type(None):
             mrflog.error("failed to get resp for packet with header %s"%repr(hdr))            
         elif response and self.active_cmd and hdr.usrc == self.active_cmd.dest and param.type == self.active_cmd.cmd_code:  # FIXME - make queue items a bit nicer
-            mrflog.warn("rsp %s"%(param))
 
             self.robj_for_active_cmd(robj)
 
@@ -651,7 +648,7 @@ class MrflandServer(object):
 
 
     def robj_for_active_cmd(self,robj):
-        mrflog.warn("got response for active command %s"%repr(self.active_cmd))            
+        #mrflog.info("got response for active command %s"%repr(self.active_cmd))            
         if hasattr(self,'tcp_server') and self.tcp_server.tag_is_tcp_client(self.active_cmd.tag):
             mrflog.info("response for tcp client %d"%self.active_cmd.tag)
             mrflog.info("robj dic is %s"%repr(robj.dic()))
@@ -670,9 +667,9 @@ class MrflandServer(object):
             if ccnt > 3:
                 break
             
-            mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
+            #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
             if hdr  and param  and resp :                    
-                mrflog.warn("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
                 self.handle_response(hdr, param , resp, response=True )
 
                 if hdr.length < len(resp):
@@ -688,7 +685,7 @@ class MrflandServer(object):
             else:
 
                 if hdr == None and resp:
-                    mrflog.warn("_resp_handler , got residual resp %s"%repr(resp))
+                    mrflog.info("_resp_handler , got residual resp %s"%repr(resp))
                     hdr , param, resp  = self.parse_input(resp)
                     
                 else:

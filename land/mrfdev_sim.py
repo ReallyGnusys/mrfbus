@@ -16,7 +16,7 @@ class MrfDevSim(MrfDev):
     }                 
 
     def app_packet(self, hdr, param , resp):
-        mrflog.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))        
-        mrflog.warn("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))        
+        mrflog.info("hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
         return
                 
