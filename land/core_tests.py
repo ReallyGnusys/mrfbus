@@ -329,10 +329,10 @@ class TestMrfBus(DeviceTestCase):
 
 
 
-    def skipped_test02_device_tests(self, dests=[ 0x01, 0x02, 0x20, 0x2f, 0x2e] ):
+    def test02_device_tests(self, dests=[ 0x01, 0x02, 0x20, 0x2f, 0x2e] ):
         for dest in dests:
             self.device_tests(dest)
-    def test02_device_tests(self, dests=[0x01,0x2e] ):
+    def skipped_test02_ndr_tests(self, dests=[0x01,0x2e] ):
         for dest in dests:
             self.sys_info_test(dest)
     @unittest.skip("temp disabled - too long")
