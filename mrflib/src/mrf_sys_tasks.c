@@ -123,7 +123,7 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     mrf_debug("mrf_task_retry.. matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
     ifp->status->stats.tx_retried++;
     if(hdr->usrc != _mrfid)   // if we weren't initiator then send ndr to initiator
-      mrf_ndr(RECD_SRETRY, txbuff);
+      mrf_ndr(NDR_RECD_SRETRY, txbuff);
     else      
       _mrf_buff_free(txbuff);
 

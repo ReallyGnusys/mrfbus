@@ -52,12 +52,13 @@ typedef struct  __attribute__ ((packed))   {
   uint8 rlen;  
 } MRF_PKT_RESP;
 
-typedef  enum { RECD_SRETRY,
-		MAX_RETRIES
-} mrf_ndr_code;
+
+#define NDR_RECD_SRETRY 0
+#define NDR_MAX_RETRIES 1
+
 
 typedef struct  __attribute__ ((packed))   {
-  mrf_ndr_code code;
+  uint8 code;
   uint8 msgid; 
   uint8 hsrc; 
   uint8 hdest;

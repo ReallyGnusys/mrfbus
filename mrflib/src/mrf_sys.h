@@ -153,7 +153,7 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len);
 int mrf_rtc_set(TIMEDATE *td);
 int mrf_rtc_get(TIMEDATE *td);
 int mrf_retry(I_F i_f,uint8 bnum);
-int mrf_ndr(mrf_ndr_code code, uint8 bnum);
+int mrf_ndr(uint8 code, uint8 bnum);
 
 int mrf_app_signal(uint8 signum);
 

@@ -393,11 +393,11 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
 // code = RECD_SRETRY  - mrf_task_sretry has run upon receipt of mrf_retry command from nexthop 
 // code = MAX_RETRIES  - this device has hit retry limit trying to tx to nexthop
 
-int mrf_ndr(mrf_ndr_code code, uint8 bnum){
+int mrf_ndr(uint8 code, uint8 bnum){
  MRF_PKT_HDR *hdr  = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum); 
  MRF_PKT_NDR *ndr = (MRF_PKT_NDR *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
  MRF_ROUTE route;
- mrf_debug("mrf_ndr :  bnum %d\n",bnum);
+ mrf_debug("mrf_ndr :  bnum %d code %d \n",bnum,code);
  // this buffer might contain recieved mrf_retry  or max retried tx buffer
  // either way we copy msgid,  hdest and hsrc of this buffer to ndr packet
 
@@ -405,7 +405,8 @@ int mrf_ndr(mrf_ndr_code code, uint8 bnum){
  ndr->msgid = hdr->msgid;
  ndr->hdest = hdr->hdest;
  ndr->hsrc  = hdr->hsrc;
- 
+ mrf_debug("mrf_ndr : code %d msgid %d hdest %d hsrc %d\n",ndr->code,ndr->msgid,ndr->hdest,ndr->hsrc);
+
  // turning buffer around - deliver to usrc
  hdr->udest = hdr->usrc; 
 
@@ -413,11 +414,12 @@ int mrf_ndr(mrf_ndr_code code, uint8 bnum){
  hdr->usrc = _mrfid;
  hdr->hsrc = _mrfid;
 
+ hdr->msgid = _txmsgid++;
 
  hdr->type = mrf_cmd_ndr;
  hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_NDR);
 
-
+ 
  
 #ifdef HOST_STUB
  mrf_debug("HOST_STUB defined _mrfid %d  hdr->udest %d\n",_mrfid, hdr->udest);
@@ -873,7 +875,7 @@ void _mrf_tick(){
                 bs->owner = NUM_INTERFACES;
 #else
 
-                mrf_ndr(MAX_RETRIES,bnum);  // this reuses buffer for ndr
+                mrf_ndr(NDR_MAX_RETRIES,bnum);  // this reuses buffer for ndr
                 
                 //pkt->
 

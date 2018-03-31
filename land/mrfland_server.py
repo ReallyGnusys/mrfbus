@@ -575,15 +575,27 @@ class MrflandServer(object):
             mrflog.info("not our us")
             return None,None,None
 
-        if not (hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct):
-            mrflog.info("not resp or struct")
-            mrflog.info("hdr : %s"%repr(hdr))
-            return None,None,None
-        ## here just pass this to rm device model to handle
-        mrflog.info("server parse input got hdr %s"%repr(hdr))
+        if  hdr.type == mrf_cmd_ndr:
+            ndr = PktNDR()
 
-        # pass packet to rm , which runs device packet handler
-        param, rsp = self.rm.packet(hdr,resp)
+            ndr.load(bytes(resp)[len(hdr):len(hdr)+len(ndr)])
+
+            mrflog.warn("got NDR %s"%repr(ndr))
+            mrflog.warn("got header was  %s"%repr(hdr))
+            
+            self.rm.ndr(hdr,ndr)
+            return None, None, None
+        elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
+            ## here just pass this to rm device model to handle
+            mrflog.info("server parse input got hdr %s"%repr(hdr))
+
+            # pass packet to rm , which runs device packet handler
+            param, rsp = self.rm.packet(hdr,resp)
+
+        else:
+            mrflog.warn("not resp or struct or ndr")
+            mrflog.warn("hdr : %s"%repr(hdr))
+            return None,None,None
 
         # all webapp callbacks for packet have been run at this point
         # so empty anything that has accrued in the queues as a result
@@ -624,7 +636,9 @@ class MrflandServer(object):
         if hdr  and param and resp:                    
             mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
             self.handle_response(hdr, param , resp, response=True )
-
+        else:
+            mrflog.warn("_resp_handler , got resp %s"%repr(resp))
+            mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
     def _struct_handler(self,*args, **kwargs):
         mrflog.info("Input on data pipe")
         resp = os.read(self.sfd, MRFBUFFLEN)
@@ -634,6 +648,9 @@ class MrflandServer(object):
         if hdr and param and resp :                    
             mrflog.info("received object %s response from  %d"%(type(resp),hdr.usrc))
             self.handle_response(hdr, param , resp)
+        else:
+            mrflog.warn("_struct_handler , got resp %s"%repr(resp))
+            mrflog.warn("_struct_handler , got hdr %s"%repr(hdr))
     def _connect_to_mrfnet(self,port):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

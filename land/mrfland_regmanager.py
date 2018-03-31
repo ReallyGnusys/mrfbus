@@ -419,12 +419,21 @@ class MrflandRegManager(object):
         
         mrflog.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
+
+
+    def ndr(self,hdr,ndr):
+
+        mrflog.warn("got NDR %s"%repr(ndr))
+        mrflog.warn("header was  %s"%repr(hdr))
+        return None
         
         
     def packet(self,hdr,resp):
+
         if self.devmap.has_key(hdr.usrc):
             return self.devmap[hdr.usrc].packet(hdr,resp)
         else:
+            mrflog.warn("got packet but no dev registered for usrc %d"%hdr.usrc)
             return None, None
 
     def weblet_register(self, weblet):

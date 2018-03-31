@@ -228,6 +228,13 @@ class PktPingRes(MrfStruct):
         ("from_lqi", c_uint8)
     ]
 
+class PktNDR(MrfStruct):
+    _fields_ = [
+        ("ndr_code", c_uint8),
+        ("msgid", c_uint8),
+        ("hrsc", c_uint8),
+        ("hdest", c_uint8)
+    ]
 
     
 # FIXME should be able to generate core command set arg and return templates from C here
@@ -329,7 +336,13 @@ MrfSysCmds = {
         'name' : "PING",
         'param': None,
         'resp' : PktPingRes        
-    }
+    },
+
+    mrf_cmd_ndr : {
+        'name' : "NDR",
+        'param': PktNDR,
+        'resp' : None        
+    }    
 }
     
     

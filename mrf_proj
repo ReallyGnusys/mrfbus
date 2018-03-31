@@ -31,7 +31,7 @@ elif  [ $1 == runtests ] ; then
    runtests=yes
    pids=""
 else
-   echo "illegal mode $1 - try build or run"
+   echo "illegal mode $1 - try build, run or runtests"
    exit;
 fi
 
@@ -79,7 +79,8 @@ do
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
       
           echo "starting lnx device $dn"
-          stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
+          #stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
+          stdbuf -oL -i0 ${dn}/bin/${dn} >  ${LOGDIR}/${dn}.log  &
           pid=$!
           echo "pid is $pid"
           pids=${pids}" "$pid
@@ -155,7 +156,7 @@ if [ -n "$runtests" ] ; then
    
    python ${MRFBUS_HOME}/land/core_tests.py
    rv=$?
-
+ 
    echo "tests completed"
    kill_devs
    if [ $rv == 0 ] ; then

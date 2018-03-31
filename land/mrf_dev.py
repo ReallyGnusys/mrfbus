@@ -94,6 +94,8 @@ class MrfDev(object):
         #print "resp should be %s"%repr(param)
         respdat = bytes(rsp)[len(hdr)+len(param):]
 
+
+        
         mrflog.info(" have response or struct object %s"%repr(param))
 
         resp = mrf_decode_buff(param.type,respdat)
