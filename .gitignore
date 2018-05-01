@@ -3,4 +3,8 @@
 *#
 bin/
 obj/
+lst/
+build/
 .#*
+*.mod
+*.wip

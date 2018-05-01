@@ -15,7 +15,6 @@ import mrfland
 #from mrfland import to_json
 
 
-DateTimeFormat = '%Y-%m-%dT%H:%M:%S'
 
 
 class socket_info(object):
@@ -294,7 +293,7 @@ class MrflandRegManager(object):
 
         stype = self.sensors[label]._stype_
         if data.has_key('ts') and data.has_key(stype) and self.server:
-            dt = datetime.datetime.strptime(data['ts'],DateTimeFormat)
+            dt = datetime.datetime.strptime(data['ts'],mrfland.mrfland.DateTimeFormat)
             self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
             
     def graph_req(self,slab):  #for weblets to request graph data capture for sensors
@@ -648,7 +647,7 @@ var _sensor_averages = {"""
         for hour in xrange(24):
             for minute in xrange(60):
                 if not (doc['data'][hour][minute] == doc['nullval']):
-                    gvals['ts'].append(gtime.strftime(DateTimeFormat))
+                    gvals['ts'].append(gtime.strftime(mrfland.DateTimeFormat))
                     gvals['value'].append(doc['data'][hour][minute])
                 #else:                    
                 #    print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))

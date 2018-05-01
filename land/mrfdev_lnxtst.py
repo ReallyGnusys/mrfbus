@@ -54,6 +54,43 @@ LnxtstAppCmds = {
     }
 }
 
+class MrfSensMemory(MrfSens):
+    _in_flds_ = [ ('date', PktTimeDate) ,
+                  ('sz' , int),
+                  ('res' , int),
+                  ('share' , int),
+                  ('text' , int),
+                  ('lib' , int),
+                  ('data' , int),
+                  ('dt' , int) ]
+    
+    _out_flds_ = [ ('send_date' , datetime.datetime.now ),
+                   ('recd_date' , datetime.datetime.now),
+                   ('sz' , int),
+                   ('res' , int),
+                   ('share' , int),
+                   ('text' , int),
+                   ('lib' , int),
+                   ('data' , int),
+                   ('dt' , int) ]
+    
+    _history_ =  { 'fields' : ['sz','res'] } 
+    _stype_ = 'memory'
+    
+    def init(self):
+        return
+        
+    def genout(self,indata):
+        outdata = dict()
+        #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
+        outdata['send_date'] = indata['date'].to_datetime()
+        outdata['recd_date'] = datetime.datetime.now()
+
+        for f in self.out_data_flds():
+            outdata[f] = indata[f]
+                    
+        return outdata
+
 
         
 class DevLnxtst(MrfDev):

@@ -452,7 +452,7 @@ int tick_task(){
   //return 0;
 
   stind = _tick_cnt % 2;
-    build_state(&_state[stind]);
+  build_state(&_state[stind]);
 
   // only send struct if readings or relays changed
   if ((_tick_cnt > 2) && state_diff(&_state[0], &_state[1]))

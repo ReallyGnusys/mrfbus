@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrf_structs import *
 from mrflog import mrflog
 import math
-from mrfland_regmanager import DateTimeFormat
+from mrfland import DateTimeFormat
 
 class MrfSens(object):
     _HISTORY_SECONDS_ = 60*60*24   # keep a day of history by default .. one minute averages
@@ -68,6 +68,14 @@ class MrfSens(object):
 
         if hasattr(self,'init'):
             self.init()
+
+    def out_data_flds(self):
+        """ out_flds except dates """
+        flds = []
+        for f in self._out_flds_:
+            if f[0].find("_date") != -1:
+                flds.append(f[0])
+        return flds
         
     def subscribe(self,callback):  # subscribe for all changes
         key = self.skey
