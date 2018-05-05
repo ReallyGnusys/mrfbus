@@ -136,13 +136,19 @@ int signal_handler(uint8 signal);
 int mrf_app_queue_available();
 
 // these are defined in arch  but here is prototype
-int mrf_arch_boot();
-int mrf_arch_run();
-int mrf_tick_enable();
-int mrf_tick_disable();
+
+// can be used by app
 int mrf_wake();
 int mrf_sleep();
 int mrf_wake_on_exit();
+int mrf_app_tick_enable(int secs, MRF_APP_CALLBACK cback);
+int mrf_app_tick_disable();
+
+// system functions defined in arch
+int mrf_arch_boot();
+int mrf_arch_run();
+int mrf_tick_enable();  // this is actually system tick, not for app use
+int mrf_tick_disable();
 // end arch
 void mrf_sys_init();
 //int _mrf_buff_forward(uint8 bnum);

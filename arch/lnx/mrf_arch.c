@@ -136,6 +136,7 @@ static void print_elapsed_time(void)
 
 static void *_sys_loop(void *arg);
 
+// posix signal handler - not be confused with mrf signal which is handled by app 
 void sig_handler(int signum)
 {
   printf("Received signal %d\n", signum);
@@ -193,8 +194,8 @@ static MRF_APP_CALLBACK app_callback;
 static int app_callback_fd;
 
 // slightly desperate for now - need 2 sockets - one for initial connection
-static MRF_APP_CALLBACK app_ccallback;
-static int app_ccallback_fd;
+//static MRF_APP_CALLBACK app_ccallback;
+//static int app_ccallback_fd;
 
 
 
@@ -207,9 +208,9 @@ int mrf_arch_app_callback(MRF_APP_CALLBACK callback){
 
 }
 
-static int num_fds = NUM_INTERFACES+2;
+//static int num_fds = NUM_INTERFACES+2;
 static  int efd, lisfd , servfd;
-static  struct epoll_event ievent[NUM_INTERFACES + 3];
+static  struct epoll_event ievent[NUM_INTERFACES + 5];
 
 
 int mrf_arch_servfd(){
@@ -233,7 +234,42 @@ void kill_signal (int sig)
     
 }
 
+static int _app_tick_seconds;
+static MRF_APP_CALLBACK _app_tick_callback;
+static int _app_timerfd;
+static int  _sys_running, _app_tick_enabled; 
 
+
+int mrf_app_tick_enable(int secs, MRF_APP_CALLBACK cback){
+  struct itimerspec new_value;
+ 
+  if (_sys_running){
+    _app_timerfd = timerfd_create(CLOCK_MONOTONIC,0);
+    new_value.it_value.tv_sec = _app_tick_seconds;
+    new_value.it_value.tv_nsec = 0;
+    new_value.it_interval.tv_sec = _app_tick_seconds;
+    new_value.it_interval.tv_nsec = 0;
+    if (timerfd_settime(_app_timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
+      return -1;
+    ievent[NUM_INTERFACES+4].data.u32 = NUM_INTERFACES+4;   // 3 is used when server connection is made
+    ievent[NUM_INTERFACES+4].events = EPOLLIN | EPOLLET;
+
+    epoll_ctl(efd, EPOLL_CTL_ADD,_app_timerfd , &ievent[NUM_INTERFACES+4]);
+
+  }
+  _app_tick_seconds = secs;
+  _app_tick_callback = cback;
+  _app_tick_enabled = 1;
+  
+}
+int mrf_app_tick_disable(){
+  if(_app_tick_enabled){
+    epoll_ctl(efd, EPOLL_CTL_DEL,_app_timerfd , &ievent[NUM_INTERFACES+4]);
+  }
+  _app_tick_enabled = 0;
+
+}
+  
 int mrf_arch_boot(){
   // would like to handle sig USR1 at least for clean shutdown of sockets
   struct sigaction usr_action;
@@ -249,6 +285,11 @@ int mrf_arch_boot(){
   mrf_debug("%s","lnx arch boot - installed SIGUSR1 handler\n");
   // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
+  _app_timerfd = -1;
+  _app_tick_callback = NULL;
+  _app_tick_seconds = 0;
+  _app_tick_enabled = 0;
+  _sys_running = 0;
   lisfd  = -1;
   servfd = -1;
 
@@ -334,12 +375,13 @@ char buff[2048];
   ssize_t s;
   // input events for each i_f + one for timer tick plus optional app fifo
 
-  struct epoll_event revent[NUM_INTERFACES + 3];
+  struct epoll_event revent[NUM_INTERFACES + 5];
   int nfds;
   uint32 inif;
   char sname[64];
   printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
 
+  // this is system tick timer - 1KHz
   new_value.it_value.tv_sec = 0;
   new_value.it_value.tv_nsec = 1000000;
   new_value.it_interval.tv_sec = 0;
@@ -348,14 +390,33 @@ char buff[2048];
   timerfd = timerfd_create(CLOCK_MONOTONIC,0);
   if (timerfd == -1)
     handle_error("timerfd_create");
-  if (clock_gettime(CLOCK_REALTIME, &now) == -1)
-    handle_error("clock_gettime");
+  //if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+  //  handle_error("clock_gettime");
   if (timerfd_settime(timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
     handle_error("timerfd_settime");
   print_elapsed_time();
   printf("timer started - fd = %d\n",timerfd);
   printf("opened pipe i = %d  fd = %d\n",NUM_INTERFACES,timerfd);
 
+  // create app timer if cback set
+  if ((_app_tick_callback!=NULL) && (_app_tick_seconds > 0)) {
+    new_value.it_value.tv_sec = _app_tick_seconds;
+    new_value.it_value.tv_nsec = 0;
+    new_value.it_interval.tv_sec = _app_tick_seconds;
+    new_value.it_interval.tv_nsec = 0;
+
+    _app_timerfd = timerfd_create(CLOCK_MONOTONIC,0);
+    if (_app_timerfd == -1)
+      handle_error("_app_timerfd_create");
+    //if (clock_gettime(CLOCK_REALTIME, &now) == -1)
+    //  handle_error("clock_gettime");
+    if (timerfd_settime(_app_timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
+      handle_error("_app_timerfd_settime");
+    print_elapsed_time();
+    printf("apptimer started - fd = %d\n",_app_timerfd);
+
+  }
+  
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
@@ -402,9 +463,8 @@ char buff[2048];
 
 
   // add server listener if initialised by appl
-  num_fds = NUM_INTERFACES+2;
+  //num_fds = NUM_INTERFACES+2;
   if (( app_callback != NULL ) && (lisfd > 0)){
-    num_fds = NUM_INTERFACES+3;
     mrf_debug("adding epoll for app fifo %d\n",lisfd); 
     ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
     ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
@@ -412,8 +472,19 @@ char buff[2048];
     mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,lisfd);
   }
 
+  // add 
+  if (_app_timerfd != -1) {  
+
+    mrf_debug("adding epoll for _app_timerfd %d\n",_app_timerfd); 
+    ievent[NUM_INTERFACES+4].data.u32 = NUM_INTERFACES+4;   // 3 is used when server connection is made
+    ievent[NUM_INTERFACES+4].events = EPOLLIN | EPOLLET;
+
+    epoll_ctl(efd, EPOLL_CTL_ADD,_app_timerfd , &ievent[NUM_INTERFACES+4]);
+  }
+
+  _sys_running = 1; 
   while(1){
-   nfds = epoll_wait(efd, revent,num_fds , -1);
+   nfds = epoll_wait(efd, revent, NUM_INTERFACES+4 , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
    //mrf_debug("nfds = %d\n",nfds);
    
@@ -453,7 +524,7 @@ char buff[2048];
      }
    
      else if (revent[i].data.u32 == NUM_INTERFACES){
-       // timer tick
+       // sys timer tick  1kHz
        s = 1;
        int l = 0;
        // while (s > 0){
@@ -533,7 +604,7 @@ char buff[2048];
          if ( servfd == -1) {
            servfd = new;
            if ( app_callback != NULL ){
-             num_fds = NUM_INTERFACES+4;
+             //num_fds = NUM_INTERFACES+4;
              mrf_debug("adding epoll for app c fifo %d\n",servfd); 
              ievent[NUM_INTERFACES+3].data.u32 = NUM_INTERFACES+3;
              ievent[NUM_INTERFACES+3].events = EPOLLIN | EPOLLET;
@@ -566,12 +637,17 @@ char buff[2048];
          }
        }
      }
+
+     else if (revent[i].data.u32 == NUM_INTERFACES+4){
+       printf("app timer  event\n");
+
+     }
    }
   }
        
   return NULL;
 
-}
+ }
 
 
 
