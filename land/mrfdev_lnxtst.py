@@ -56,7 +56,8 @@ LnxtstAppCmds = {
 
 class MrfSensMemory(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('sz' , int),
+                  ('kBytes' , int),
+                  
                   ('res' , int),
                   ('share' , int),
                   ('text' , int),
@@ -95,9 +96,30 @@ class MrfSensMemory(MrfSens):
         
 class DevLnxtst(MrfDev):
 
-    _capspec = {}                 
+    _capspec = {
+            'memory' : MrfSensMemory
+    }
+    
     _cmdset = LnxtstAppCmds
 
+    _sens_names = [ 'sz',
+                    'res',
+                    'share',
+                    'text',
+                    'lib',
+                    'data',
+                    'dt' ]
+    
+    def __init__(self, rm, label, address, caplabels={}):
+        mrflog.warn("%s __init__ entry , label %s address 0x%x"%(self.__class__.__name__,label,address))
+        
+        if caplabels == {}:
+            slabs = []
+            for sl in self._sens_names:
+                slabs.append(label+"_"+sl)
+            caplabels = {'memory' : slabs}
+            mrflog.warn("no caplabels - setting to %s"%repr(caplabels))            
+        return super(DevLnxtst,self).__init__(rm,label, address, caplabels)
     def app_packet(self, hdr, param , resp):
         mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         

@@ -29,6 +29,7 @@ class MrfDev(object):
 
     """
     def __init__(self, rm, label, address, caplabels={}):
+        mrflog.warn("%s __init__ entry , label %s address 0x%x"%(self.__class__.__name__,label,address))
         self.address = address
         self.label = label
         self.rm = rm
