@@ -7,7 +7,7 @@ fi
 
 if [ ! -e ./mrf.prj ] ; then
   echo "no mrf.prj found in current dir"
-  exit
+  exit -1
 
 fi
 
@@ -32,7 +32,7 @@ elif  [ $1 == runtests ] ; then
    pids=""
 else
    echo "illegal mode $1 - try build, run or runtests"
-   exit;
+   exit -1;
 fi
 
 declare -i valid=0
@@ -74,7 +74,20 @@ do
           echo "" >> $mf
           echo 'include ${MRFBUS_HOME}/Makefile.inc'  >> $mf
 
-          cd $dn && make | tee  make.log && cd ..
+          pushd $dn
+          make
+
+          
+
+          #| tee  make.log
+
+          mrv=$?
+          
+          #echo "make done mrv $?  $mrv"
+
+          popd
+          [ $mrv -ne  0  ]  && echo "make failed" && exit $?
+         
       
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
       
