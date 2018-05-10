@@ -86,7 +86,7 @@ do
           #echo "make done mrv $?  $mrv"
 
           popd
-          [ $mrv -ne  0  ]  && echo "make failed" && exit $?
+          [ $mrv -ne  0  ]  && echo "make failed" && exit $mrv
          
       
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
