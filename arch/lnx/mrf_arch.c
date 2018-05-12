@@ -235,12 +235,12 @@ void kill_signal (int sig)
 }
 
 static int _app_tick_seconds;
-static MRF_APP_CALLBACK _app_tick_callback;
+//static MRF_APP_CALLBACK _app_tick_callback;
 static int _app_timerfd;
 static int  _sys_running, _app_tick_enabled; 
 
 
-int mrf_app_tick_enable(int secs, MRF_APP_CALLBACK cback){
+int mrf_app_tick_enable(int secs){
   struct itimerspec new_value;
  
   if (_sys_running){
@@ -252,13 +252,12 @@ int mrf_app_tick_enable(int secs, MRF_APP_CALLBACK cback){
     if (timerfd_settime(_app_timerfd, TFD_TIMER_ABSTIME, &new_value, NULL) == -1)
       return -1;
     ievent[NUM_INTERFACES+4].data.u32 = NUM_INTERFACES+4;   // 3 is used when server connection is made
-    ievent[NUM_INTERFACES+4].events = EPOLLIN | EPOLLET;
+    ievent[NUM_INTERFACES+4].events = EPOLLIN |EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD,_app_timerfd , &ievent[NUM_INTERFACES+4]);
 
   }
   _app_tick_seconds = secs;
-  _app_tick_callback = cback;
   _app_tick_enabled = 1;
   
 }
@@ -286,7 +285,7 @@ int mrf_arch_boot(){
   // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
   _app_timerfd = -1;
-  _app_tick_callback = NULL;
+  // _app_tick_callback = NULL;
   _app_tick_seconds = 0;
   _app_tick_enabled = 0;
   _sys_running = 0;
@@ -399,7 +398,7 @@ char buff[2048];
   printf("opened pipe i = %d  fd = %d\n",NUM_INTERFACES,timerfd);
 
   // create app timer if cback set
-  if ((_app_tick_callback!=NULL) && (_app_tick_seconds > 0)) {
+  if ( (_app_tick_seconds > 0)) {
     new_value.it_value.tv_sec = _app_tick_seconds;
     new_value.it_value.tv_nsec = 0;
     new_value.it_interval.tv_sec = _app_tick_seconds;
@@ -484,7 +483,8 @@ char buff[2048];
 
   _sys_running = 1; 
   while(1){
-   nfds = epoll_wait(efd, revent, NUM_INTERFACES+4 , -1);
+
+   nfds = epoll_wait(efd, revent, NUM_INTERFACES+5 , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
    //mrf_debug("nfds = %d\n",nfds);
    
@@ -568,12 +568,12 @@ char buff[2048];
            }
            else if (strcmp(token,"wake") == 0){
              mrf_debug("%s","INTERNAL:wakeup\n");
-             int i = mrf_foreground();
-             printf("ran %d foreground tasks\n",i);
+             int i = mrf_foreground(); 
+             mrf_debug("ran %d foreground tasks\n",i);
            }
            else{
          
-             printf("internal control unrecognised string %s\n",buff);
+             mrf_debug("internal control unrecognised string %s\n",buff);
            }
            
            
@@ -640,6 +640,11 @@ char buff[2048];
 
      else if (revent[i].data.u32 == NUM_INTERFACES+4){
        printf("app timer  event\n");
+       s = read(_app_timerfd, buff, 1024);
+       buff[s] = 0;
+
+       mrf_app_signal(APP_SIG_TICK);
+       
 
      }
    }
@@ -679,7 +684,7 @@ int _write_internal_pipe(char *data, int len){
   sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
-    printf(" %d\n",fd);
+    mrf_debug("write internal pipe error, fd was %d  name %s\n",fd,sname);
     perror("_write_internal_pipe ERROR sock open\n");
     return -1;
   }

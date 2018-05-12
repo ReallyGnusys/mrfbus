@@ -722,8 +722,10 @@ int mrf_foreground(){
     bnum = (uint8)queue_pop(&_app_queue);
     mrf_debug("got bnum %d\n",bnum);
 
-    if (bnum >= MRF_BNUM_SIGNAL_BASE)
+    if (bnum >= MRF_BNUM_SIGNAL_BASE){
+      mrf_debug("calling signal_handler - signum %d",bnum - MRF_BNUM_SIGNAL_BASE);
       rv = signal_handler(bnum - MRF_BNUM_SIGNAL_BASE);  // signal_handler must be defined by app
+    }
     else
       rv = _mrf_ex_buffer(bnum);
     mrf_debug("rv was %d",rv);

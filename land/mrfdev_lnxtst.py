@@ -121,8 +121,8 @@ class DevLnxtst(MrfDev):
             mrflog.warn("no caplabels - setting to %s"%repr(caplabels))            
         return super(DevLnxtst,self).__init__(rm,label, address, caplabels)
     def app_packet(self, hdr, param , resp):
-        mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
+        mrflog.warn("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
         
-        mrflog.info("LnxtstDev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
+        mrflog.warn("LnxtstDev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
 

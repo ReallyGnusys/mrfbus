@@ -94,7 +94,10 @@ typedef int (*MRF_APP_CALLBACK)(int fd);
 #define MRF_BNUM_SIGNAL_BASE (256 - MRF_NUM_SIGNALS)
 
 #define APP_SIG_SECOND  0
-#define APP_SIG_BUT1  1
+#define APP_SIG_TICK  1
+#define APP_SIG_BUT1  2
+#define APP_SIG_BUT2  3
+
 
 
 
@@ -139,7 +142,7 @@ int mrf_app_queue_available();
 int mrf_wake();
 int mrf_sleep();
 int mrf_wake_on_exit();
-int mrf_app_tick_enable(int secs, MRF_APP_CALLBACK cback);
+int mrf_app_tick_enable(int secs);  // generate APP_SIG_TICK at interval secs
 int mrf_app_tick_disable();
 
 // system functions defined in arch
