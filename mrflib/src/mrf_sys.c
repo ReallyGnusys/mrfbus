@@ -410,12 +410,23 @@ int mrf_ndr(uint8 code, uint8 bnum){
  mrf_debug("mrf_ndr :  bnum %d code %d \n",bnum,code);
  // this buffer might contain recieved mrf_retry  or max retried tx buffer
  // either way we copy msgid,  hdest and hsrc of this buffer to ndr packet
+ mrf_print_packet_header(hdr);
 
+
+ if (hdr->usrc == _mrfid )  {   // don't send NDR to ourself! - ony for packets we are relaying
+   // FIXME maybe so something useful here
+   mrf_debug("packet usrc is us %d\n",hdr->usrc);
+    _mrf_buff_free(bnum);
+  return 0;
+
+ }
  ndr->code  = code;
  ndr->msgid = hdr->msgid;
  ndr->hdest = hdr->hdest;
  ndr->hsrc  = hdr->hsrc;
- mrf_debug("mrf_ndr : code %d msgid %d hdest %d hsrc %d\n",ndr->code,ndr->msgid,ndr->hdest,ndr->hsrc);
+ mrf_debug("mrf_ndr : code %d msgid %d hdest %d hsrc %d : here is header\n",ndr->code,ndr->msgid,ndr->hdest,ndr->hsrc);
+
+ mrf_print_packet_header(hdr);
 
  // turning buffer around - deliver to usrc
  hdr->udest = hdr->usrc; 

@@ -685,7 +685,7 @@ class MrflandServer(object):
             else:
 
                 if hdr == None and resp:
-                    mrflog.info("_resp_handler , got residual resp %s"%repr(resp))
+                    mrflog.warn("_resp_handler , got residual resp %s"%repr(resp))
                     hdr , param, resp  = self.parse_input(resp)
                     
                 else:
