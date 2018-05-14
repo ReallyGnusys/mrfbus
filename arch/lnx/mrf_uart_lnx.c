@@ -80,13 +80,13 @@ int copy_to_txbuff(uint8 *buff, uint8 *dest, UART_CSTATE *txstate){
 
 static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen){
   uint8 i,rv;
-  UART_LSTATE stb,sta;
+  //UART_LSTATE stb,sta;
   //mrf_debug("_mrf_uart_input i_f %d inlen %d inbuff[0] %x\n",i_f,inlen,inbuff[0]);
   //rxstate[i_f].state = S_START; // FIXME ideally the state would already be this
   for ( i = 0 ; i < inlen ; i++){
-    stb =  rxstate[i_f].state;
+    //stb =  rxstate[i_f].state;
     rv = mrf_uart_rx_byte(inbuff[i], &(rxstate[i_f]));
-    sta =  rxstate[i_f].state;
+    //sta =  rxstate[i_f].state;
     //mrf_debug("i %d char %x stb %d sta %d rv %d\n",i,inbuff[i],stb,sta,rv);
     if(rv){
       //mrf_debug("%s","mrf_buff_loaded returned 1 lnx_uart input - think we got a buffer\n");
@@ -108,13 +108,11 @@ void _dbg_txbuff(){
 
 
 static int _usb_if_send_func(I_F i_f, uint8 *buff){
-  char spath[64];
   uint8 txbuff[_MRF_BUFFLEN+8];
   int fd,bc,tb;
-  uint8 sknum;
   UART_CSTATE txstate;
 
-  MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
+  //MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
   fd = _fd[i_f];
   mrf_debug("_usb_if_send_func fd = %d\n",fd);
   if(fd < 0){
@@ -231,7 +229,6 @@ int usb_open(const char *dev){
 
 
 static int _mrf_uart_init_lnx(I_F i_f){
-  char devname[64];
   int fd;
   if (i_f >= MAX_UARTS){
     mrf_debug("error mrf_uart_init_lnx i_f %d\n",i_f);
