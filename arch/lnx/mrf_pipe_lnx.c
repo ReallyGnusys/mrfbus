@@ -54,7 +54,7 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd);
 // lnx i_f opens fd for each write
 // usb keeps opened ( in output_fd ) 
 
-static int _input_fd[NUM_INTERFACES+2];
+//static int _input_fd[NUM_INTERFACES+2];
 
 static int _bnum[NUM_INTERFACES];
 
@@ -153,12 +153,12 @@ void trim_trailing_space(uint8 *buff);
 
 //convert raw i_f data to buffer data
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
-  int i,len;
+  int len;
   //_print_mrf_cmd(mrf_cmd_device_info);
   //mrf_debug("%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
 
   trim_trailing_space(inbuff);
-  len = strlen(inbuff);
+  len = strlen((char *)inbuff);
 
   mrf_debug("_mrf_pipe_buff_lnx entry i_f %d inlen %d  chk len %d\n",i_f,inlen,len);
   /*
@@ -237,7 +237,8 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   char spath[64];
   uint8 txbuff[_MRF_BUFFLEN*2];
-  int fd,bc,tb;
+  int fd,tb;
+  //int bc;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
   mrf_debug("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
@@ -272,7 +273,8 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   tb = copy_to_txbuff(buff,buff[0],txbuff);
   mrf_debug("copied to tx_buffer .. len %d\n",tb);
 
-  bc = write(fd, txbuff,tb );
+  //bc = write(fd, txbuff,tb );
+  write(fd, txbuff,tb );
   fsync(fd);
   close(fd);
   //mrf_debug("bc = %d  fd = %d\n",bc,fd);

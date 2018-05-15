@@ -495,14 +495,14 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 )) {  
         mrf_debug("%s","sending data response \n");
-        mrf_data_response(bnum,cmd->data,cmd->rsp_size);
+        mrf_data_response(bnum,(uint8 *)cmd->data,cmd->rsp_size);
         return 0;
       }
       mrf_debug("%s","pp l12\n");
       // check if command func defined
       if(cmd->func != NULL){
         mrf_debug("%s","executing cmd func\n");
-        (*(cmd->func))(pkt->type,bnum,ifp);
+        (*(cmd->func))((MRF_CMD_CODE)pkt->type,bnum,ifp);
       }
       return 0;
 }
@@ -596,6 +596,7 @@ static int _mrf_buff_forward(uint8 bnum){
   return 0;
 }
 
+extern uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp);
 
 
 int _mrf_process_buff(uint8 bnum)
@@ -728,13 +729,13 @@ int mrf_foreground(){
   uint8 bnum;
   int rv,cnt = 0;
   while(queue_data_avail(&_app_queue)){
-    mrf_debug("%s","appq data available\n");
+    mrf_debug("%s","mrf_foreground : appq data available\n");
 
     bnum = (uint8)queue_pop(&_app_queue);
-    mrf_debug("got bnum %d\n",bnum);
+    mrf_debug("mrf_foreground : got bnum %d\n",bnum);
 
     if (bnum >= MRF_BNUM_SIGNAL_BASE){
-      mrf_debug("calling signal_handler - signum %d",bnum - MRF_BNUM_SIGNAL_BASE);
+      mrf_debug("mrf_foreground : calling signal_handler - signum %d\n",bnum - MRF_BNUM_SIGNAL_BASE);
       rv = signal_handler(bnum - MRF_BNUM_SIGNAL_BASE);  // signal_handler must be defined by app
     }
     else
@@ -763,7 +764,7 @@ int _mrf_if_can_tx(IF_STATE istate){
 
 void _mrf_tick(){
   const MRF_IF *mif; 
-  I_F i;
+  int i;
   uint8 *tb;
   MRF_BUFF_STATE *bs;
   uint8 bnum;
@@ -781,7 +782,7 @@ void _mrf_tick(){
   }
   */
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
-    mif = mrf_if_ptr(i);
+    mif = mrf_if_ptr((I_F)i);
     qp = &(mif->status->txqueue);
     istate = mif->status->state;
     if ( istate > MRF_ST_IDLE)
@@ -810,7 +811,7 @@ void _mrf_tick(){
             mrf_print_packet_header(mif->ackbuff);
             mif->status->state = MRF_ST_ACK;
             mif->status->stats.tx_acks += 1;
-            (*(mif->type->funcs.send))(i,(uint8 *)(mif->ackbuff));
+            (*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff));
           }
         }
       }
@@ -848,7 +849,7 @@ void _mrf_tick(){
                           bnum,i,_tick_count,bs->retry_count);
                 mif->status->state = MRF_ST_TX;
                 //mif->status->stats.tx_pkts += 1;   // only inc this stat if ack recieved - i.e. in ack/resp handlers
-                (*(mif->type->funcs.send))(i,tb);
+                (*(mif->type->funcs.send))((I_F)i,tb);
 
                 //const MRF_CMD *cmd = _mrf_cmd(pkt->type);
 

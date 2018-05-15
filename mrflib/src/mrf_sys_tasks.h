@@ -19,7 +19,7 @@
 
 #ifndef __MRF_SYS_TASKS_INCL__
 #define __MRF_SYS_TASKS_INCL__
-#include <mrf_sys.h>
+//#include <mrf_sys.h>
 
 MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);

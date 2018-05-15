@@ -44,12 +44,12 @@ int mrf_if_transmitting(I_F i_f){
 
 
 void mrf_if_init(){
-  int i,j,fd;
+  unsigned int i,j;
   uint8 *dptr;
   mrf_debug("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
   for (i = 0 ; i < NUM_INTERFACES ; i++){
     mrf_debug("interface %d\n",i);
-    const MRF_IF *mif = mrf_if_ptr(i);
+    const MRF_IF *mif = mrf_if_ptr((I_F)i);
     // rough zeroing of status data including stats
     dptr = (uint8 *)mif->status;
     mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
@@ -57,9 +57,10 @@ void mrf_if_init(){
       dptr[j] = 0;    
     queue_init(&(mif->status->txqueue));
     mif->status->state = MRF_ST_RX;
-    fd = (*(mif->type->funcs.init))(i);
 #ifdef MRF_ARCH_lnx
-    *(mif->fd) = fd; //needed for epoll
+    *(mif->fd) =  (*(mif->type->funcs.init))((I_F)i); //needed for epoll
+#else
+    (*(mif->type->funcs.init))((I_F)i);
 #endif
     
   }
@@ -75,11 +76,11 @@ void mrf_if_register(I_F i_f,const MRF_IF_TYPE *type){
 
 void _mrf_if_print_all(){
 
-  I_F i_f;
+  int i;
   const MRF_IF *ifp;
-  for ( i_f = 0 ; i_f < NUM_INTERFACES ; i_f++){
-    ifp = mrf_if_ptr(i_f);
-    mrf_debug("I_F %d state %d txq_da %d\n",i_f,ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
+  for ( i = 0 ; i < NUM_INTERFACES ; i++){
+    ifp = mrf_if_ptr((I_F)i);
+    mrf_debug("I_F %d state %d txq_da %d\n",i,ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
   }
 }
 

@@ -188,10 +188,10 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *if
   //info.buffs_total = _MRF_BUFFS;
   info.buffs_free  = mrf_buff_num_free();
   info.tick_count = _tick_count;
-  I_F i;
+  uint8_t i;
   const MRF_IF *i_f;
   for ( i = 0 ; i < NUM_INTERFACES ; i++ ) {
-    i_f = mrf_if_ptr(i);
+    i_f = mrf_if_ptr((I_F)i);
     info.tx_retries += i_f->status->stats.tx_retries;
     info.tx_pkts    += i_f->status->stats.tx_pkts;
     info.rx_pkts    += i_f->status->stats.rx_pkts; 
@@ -211,7 +211,7 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   if ( (streq->value) >= NUM_INTERFACES)
     return MRF_CMD_RES_ERROR;
-  const MRF_IF *i_f = mrf_if_ptr(streq->value);
+  const MRF_IF *i_f = mrf_if_ptr((I_F)streq->value);
 
   mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));  
   return MRF_CMD_RES_OK;
