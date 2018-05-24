@@ -38,6 +38,7 @@ uint8 *_mrf_buff_ptr(uint8 bind);
 MRF_BUFF_STATE *_mrf_buff_state(uint8 bnum);
 I_F mrf_buff_owner(uint8 bnum);
 void _mrf_buff_print();
+const char * mrf_buff_state_name(uint8 bnum);
 
 //extern static uint8 _mrf_buff[_MRF_BUFFS][_MRF_BUFFLEN];
 #endif

@@ -48,7 +48,7 @@ typedef struct {
 } RX_PKT_INFO;
 
 
-typedef volatile struct  __attribute__ ((packed)){
+typedef struct  __attribute__ ((packed)){
  MRF_PKT_HDR hdr;
  MRF_PKT_TIMEDATE td; 
  uint8 xdata[64+2];  // RSSI and CRC appended
@@ -56,6 +56,7 @@ typedef volatile struct  __attribute__ ((packed)){
 
 
 extern volatile MRF_RX_BUFF _xb_rx_buff;
+/*
 typedef enum {
   MRF_CMD_RES_RETRY,
   MRF_CMD_RES_OK,
@@ -63,12 +64,13 @@ typedef enum {
   MRF_CMD_RES_WARN,
   MRF_CMD_RES_ERROR
 } MRF_CMD_RES;
+*/
 //#define MRF_CMD_RES int
 
 
 
 
-typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
+//typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
 
 typedef int (*MRF_APP_CALLBACK)(int fd);
 
@@ -106,6 +108,7 @@ typedef int (*MRF_APP_CALLBACK)(int fd);
 #define MRF_CFLG_NO_RESP 2   // send no resp when final recipient
 #define MRF_CFLG_INTR 4  // task is run in interrupt handler
 
+/*
 typedef struct {
   const uint8 str[16];
   const uint8 cflags;
@@ -114,7 +117,7 @@ typedef struct {
   const void *data;
   const MRF_CMD_FUNC func;
 } MRF_CMD;
-
+*/
 
 int _mrf_process_packet(I_F owner,uint8 bnum);
 //void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F i_f);

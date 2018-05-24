@@ -122,7 +122,7 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
     mrf_debug("mrf_task_retry.. matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
     ifp->status->stats.tx_retried++;
-    if(hdr->usrc != _mrfid)   // if we weren't initiator then send ndr to initiator
+    if(hdr->usrc != MRFID)   // if we weren't initiator then send ndr to initiator
       mrf_ndr(NDR_RECD_SRETRY, txbuff);
     else      
       _mrf_buff_free(txbuff);
@@ -276,7 +276,7 @@ MRF_CMD_RES mrf_task_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 }
 
-extern const MRF_CMD mrf_app_cmds[];
+//extern const MRF_CMD mrf_app_cmds[];
 
 MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_UINT8 *streq = (MRF_PKT_UINT8 *)(_mrf_buff_ptr(bnum)+sizeof(MRF_PKT_HDR));
@@ -284,7 +284,7 @@ MRF_CMD_RES mrf_task_app_cmd_info(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp
   if ( (streq->value) >= MRF_NUM_APP_CMDS)
     return MRF_CMD_RES_ERROR;
   MRF_PKT_CMD_INFO *cinfo = (MRF_PKT_CMD_INFO *)mrf_response_buffer(bnum);
-  const MRF_CMD * cmdp = mrf_app_cmds + streq->value ;
+  const MRF_CMD * cmdp = mrf_app_cmd_ptr ( streq->value) ;
   mrf_debug("think cmdp->str is %s\n",cmdp->str);
   cinfo->type   = streq->value + _MRF_APP_CMD_BASE;
   cinfo->cflags = cmdp->cflags;

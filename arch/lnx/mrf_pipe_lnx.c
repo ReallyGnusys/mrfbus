@@ -39,7 +39,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
 static int _mrf_pipe_init_lnx(I_F i_f);
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen);
 
-const MRF_IF_TYPE mrf_pipe_lnx_if = {
+extern const MRF_IF_TYPE mrf_pipe_lnx_if = {
  tx_del : 1,
  funcs : { send : _mrf_pipe_send_lnx,
            init : _mrf_pipe_init_lnx,
@@ -73,7 +73,7 @@ int _mrf_pipe_init_lnx(I_F i_f){
   // open input pipes
   int fd,tmp;
   char sname[64];
-  sprintf(sname,"%s%d-%d-in",SOCKET_DIR,_mrfid,i_f);
+  sprintf(sname,"%s%d-%d-in",SOCKET_DIR,MRFID,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   mrf_debug("created pipe %s res %d\n",sname,tmp);
@@ -248,7 +248,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
     sknum = 0;
   else if (hdr->hdest >= 1) { // usbrf or host
-      if(hdr->hdest < _mrfid) 
+      if(hdr->hdest < MRFID) 
         sknum = 1;
       else
         sknum = 0;

@@ -37,6 +37,17 @@ static IQUEUE _app_queue;
 extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];
 extern const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS];
 
+const MRF_CMD *mrf_cmd_ptr(uint8 type){
+  if (type >= MRF_NUM_SYS_CMDS)
+    return NULL;
+  return &mrf_sys_cmds[type];
+}
+
+const MRF_CMD *mrf_app_cmd_ptr(uint8 type){
+  if (type >= MRF_NUM_APP_CMDS)
+    return NULL;
+  return &mrf_app_cmds[type];
+}
 
 static uint8 _txmsgid;
 
@@ -47,11 +58,6 @@ uint8 _mrf_response_type(uint8 type){
 */
 
 
-const MRF_CMD *mrf_cmd_ptr(uint8 type){
-  if (type >= MRF_NUM_SYS_CMDS)
-    return NULL;
-  return &mrf_sys_cmds[type];
-}
 
 
 const MRF_CMD * _mrf_cmd(uint8 type){
@@ -59,10 +65,10 @@ const MRF_CMD * _mrf_cmd(uint8 type){
     // lookup command
   uint8 app_cnum = type - _MRF_APP_CMD_BASE;
   if(type < MRF_NUM_SYS_CMDS){
-    return &(mrf_sys_cmds[type]);
+    return mrf_cmd_ptr(type);
   }
   else if(app_cnum < MRF_NUM_APP_CMDS) {
-    return &(mrf_app_cmds[app_cnum]);
+    return mrf_app_cmd_ptr(app_cnum);
   }
   else  {
     mrf_debug("unsupported packed type 0x%02X\n",type);
@@ -74,7 +80,7 @@ const MRF_CMD * _mrf_cmd(uint8 type){
 int needs_ack(uint8 type){
   // FIXME app cmds are always considered ack
   if(type < MRF_NUM_SYS_CMDS){
-    return ((mrf_sys_cmds[type].cflags & MRF_CFLG_NO_ACK) == 0);
+    return (((mrf_cmd_ptr(type)->cflags) & MRF_CFLG_NO_ACK) == 0);
   }
   if(type >=  _MRF_APP_CMD_BASE){
     return 1;
@@ -124,7 +130,7 @@ int mrf_sack(uint8 bnum){
    mrf_debug("mrf_sack : never acking address 0  0x%02x\n",hdr->hsrc);
    return 0;
  }
- mrf_nexthop(&route,_mrfid,hdr->hsrc);
+ mrf_nexthop(&route,MRFID,hdr->hsrc);
  mrf_debug("mrf_sack : for addr %d msgid 0x%02x\n",hdr->hsrc,hdr->msgid);
  //mrf_debug("mrf_sack : for addr %d orig header is\n",hdr->hsrc);
  //mrf_print_packet_header(hdr);
@@ -136,8 +142,8 @@ int mrf_sack(uint8 bnum){
  if_ptr->ackbuff->netid = MRFNET;
  if_ptr->ackbuff->type = mrf_cmd_ack;
 
- if_ptr->ackbuff->hsrc = _mrfid;
- if_ptr->ackbuff->usrc = _mrfid;
+ if_ptr->ackbuff->hsrc = MRFID;
+ if_ptr->ackbuff->usrc = MRFID;
  if_ptr->ackbuff->msgid = hdr->msgid;
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
@@ -157,7 +163,7 @@ int mrf_sretry(uint8 bnum){
  if (hdr->hsrc == 0 )  // never ack or retry 0 
    return 0;
  
- mrf_nexthop(&route,_mrfid,hdr->hsrc);
+ mrf_nexthop(&route,MRFID,hdr->hsrc);
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
@@ -165,8 +171,8 @@ int mrf_sretry(uint8 bnum){
  if_ptr->ackbuff->netid = MRFNET;
  if_ptr->ackbuff->type = mrf_cmd_retry;
 
- if_ptr->ackbuff->hsrc = _mrfid;
- if_ptr->ackbuff->usrc = _mrfid;
+ if_ptr->ackbuff->hsrc = MRFID;
+ if_ptr->ackbuff->usrc = MRFID;
  if_ptr->ackbuff->msgid = hdr->msgid;
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
@@ -201,7 +207,7 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
 
  // deliver buffer to dest
 
-  mrf_nexthop(&route,_mrfid,dest);
+  mrf_nexthop(&route,MRFID,dest);
 
   if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
     return -1;
@@ -214,8 +220,8 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   //MRF_IF *ifp = mrf_if_ptr(route.i_f);
   hdr->udest = dest; 
   hdr->hdest = route.relay;
-  hdr->usrc = _mrfid;
-  hdr->hsrc = _mrfid;
+  hdr->usrc = MRFID;
+  hdr->hsrc = MRFID;
   hdr->netid = MRFNET; 
   hdr->msgid = _txmsgid++;
   uint8 *dptr = mrf_response_buffer(bnum);
@@ -258,7 +264,7 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
   uint8 i;
   MRF_ROUTE route;
 
-  mrf_nexthop(&route,_mrfid,dest);
+  mrf_nexthop(&route,MRFID,dest);
 
   if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
     mrf_debug("%s","ERROR : failed to alloc  buffer in mrf_send_command..fatal");    
@@ -277,20 +283,20 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
 
  // deliver buffer to dest
 
-  mrf_nexthop(&route,_mrfid,dest);
+  mrf_nexthop(&route,MRFID,dest);
 
   mrf_debug("route.i_f %u route.relay %u\n",route.i_f, route.relay);
   
  //MRF_IF *ifp = mrf_if_ptr(route.i_f);
  hdr->udest = dest;
- if (hdr->udest == _mrfid){
-   hdr->hdest = _mrfid;
+ if (hdr->udest == MRFID){
+   hdr->hdest = MRFID;
  }
  else {
    hdr->hdest = route.relay;
 
  }
- hdr->hsrc = _mrfid;
+ hdr->hsrc = MRFID;
  hdr->usrc = usrc;
 
  hdr->netid = MRFNET; 
@@ -308,7 +314,7 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
 
  #endif
 
- if (dest == _mrfid) {
+ if (dest == MRFID) {
    // process buffer
    mrf_debug("%s","hold onto your hats... trying to process locally..\n");
    _mrf_process_buff(bnum);
@@ -339,7 +345,7 @@ int _mrf_send_command_src(uint8 usrc , uint8 dest, uint8 type,  uint8 *data, uin
 int mrf_send_command( uint8 dest, uint8 type,  uint8 *data, uint8 len){
 
 
-  return _mrf_send_command_src(_mrfid ,  dest,  type,   data,  len);
+  return _mrf_send_command_src(MRFID ,  dest,  type,   data,  len);
 
 }
 
@@ -362,8 +368,8 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  hdr->udest = hdr->usrc; 
 
  // turnaround buffer and add response
- hdr->usrc = _mrfid;
- hdr->hsrc = _mrfid;
+ hdr->usrc = MRFID;
+ hdr->hsrc = MRFID;
 
  resp->rlen = rlen;
  resp->type = hdr->type;
@@ -374,8 +380,8 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  //hdr->msgid = _txmsgid++;  // NO! resp should have same msgid as initiator packet
  
 #ifdef HOST_STUB
- mrf_debug("HOST_STUB defined _mrfid %d  hdr->udest %d\n",_mrfid, hdr->udest);
- if ((_mrfid == 1 ) && (hdr->udest == 0 )){
+ mrf_debug("HOST_STUB defined MRFID %d  hdr->udest %d\n",MRFID, hdr->udest);
+ if ((MRFID == 1 ) && (hdr->udest == 0 )){
    hdr->hdest = 0;
    mrf_debug("calling response to app for bnum %d\n",bnum);
    response_to_app(bnum);
@@ -385,7 +391,7 @@ int mrf_send_response(uint8 bnum,uint8 rlen){
  
 #endif
  
- mrf_nexthop(&route,_mrfid,hdr->udest);
+ mrf_nexthop(&route,MRFID,hdr->udest);
 
  hdr->hdest = route.relay;
 
@@ -413,7 +419,7 @@ int mrf_ndr(uint8 code, uint8 bnum){
  mrf_print_packet_header(hdr);
 
 
- if (hdr->usrc == _mrfid )  {   // don't send NDR to ourself! - ony for packets we are relaying
+ if (hdr->usrc == MRFID )  {   // don't send NDR to ourself! - ony for packets we are relaying
    // FIXME maybe so something useful here
    mrf_debug("packet usrc is us %d\n",hdr->usrc);
     _mrf_buff_free(bnum);
@@ -432,8 +438,8 @@ int mrf_ndr(uint8 code, uint8 bnum){
  hdr->udest = hdr->usrc; 
 
  // turnaround buffer and add response
- hdr->usrc = _mrfid;
- hdr->hsrc = _mrfid;
+ hdr->usrc = MRFID;
+ hdr->hsrc = MRFID;
 
  hdr->msgid = _txmsgid++;
 
@@ -443,8 +449,8 @@ int mrf_ndr(uint8 code, uint8 bnum){
  
  
 #ifdef HOST_STUB
- mrf_debug("HOST_STUB defined _mrfid %d  hdr->udest %d\n",_mrfid, hdr->udest);
- if ((_mrfid == 1 ) && (hdr->udest == 0 )){
+ mrf_debug("HOST_STUB defined MRFID %d  hdr->udest %d\n",MRFID, hdr->udest);
+ if ((MRFID == 1 ) && (hdr->udest == 0 )){
    hdr->hdest = 0;
    mrf_debug("calling response to app for bnum %d\n",bnum);
    response_to_app(bnum);
@@ -454,7 +460,7 @@ int mrf_ndr(uint8 code, uint8 bnum){
  
 #endif
  
- mrf_nexthop(&route,_mrfid,hdr->udest);
+ mrf_nexthop(&route,MRFID,hdr->udest);
 
  hdr->hdest = route.relay;
 
@@ -476,7 +482,7 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
   if (hdr->type >= _MRF_APP_CMD_BASE)
     cname = _appcname;
   else
-    cname = mrf_sys_cmds[hdr->type].str;
+    cname = mrf_cmd_ptr(hdr->type)->str;
 
   mrf_debug("%s","**************************************\n");
 
@@ -490,7 +496,7 @@ void mrf_print_packet_header(MRF_PKT_HDR *hdr){
 
 
 int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF *ifp){
-      mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,_mrfid);
+      mrf_debug("\n_mrf_ex_packet INFO: EXECUTE PACKET UDEST %02X is us %02X \n",pkt->udest,MRFID);
       mrf_debug("cmd name %s  req size %u  rsp size %u cflags %x cmd->data %p\n",
                 cmd->str,cmd->req_size,cmd->rsp_size,cmd->cflags,cmd->data);
       if( ( cmd->data != NULL )  && ( cmd->rsp_size > 0 )) {  
@@ -554,13 +560,13 @@ int _Dbg_fw2(){
 static int _mrf_buff_forward(uint8 bnum){
   MRF_PKT_HDR *pkt;
   uint8 type;
-  mrf_debug("mrf_buff_forward: processing buff number %d our _mrfid = %X  \n",bnum,_mrfid);
+  mrf_debug("mrf_buff_forward: processing buff number %d our MRFID = %X  \n",bnum,MRFID);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
 
 #ifdef HOST_STUB
-  if ((_mrfid == 1 ) && (pkt->udest == 0 )){
-   mrf_debug("mrf_buff_forward: this one is for app/server udest is  %d our _mrfid = %X  \n",pkt->udest,_mrfid);
+  if ((MRFID == 1 ) && (pkt->udest == 0 )){
+   mrf_debug("mrf_buff_forward: this one is for app/server udest is  %d our MRFID = %X  \n",pkt->udest,MRFID);
    response_to_app(bnum);
    _mrf_buff_free(bnum);
    return 0;
@@ -568,10 +574,10 @@ static int _mrf_buff_forward(uint8 bnum){
 #endif
   
   MRF_ROUTE route;
-  mrf_nexthop(&route,_mrfid,pkt->udest);
+  mrf_nexthop(&route,MRFID,pkt->udest);
   //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
   pkt->hdest = route.relay;
-  pkt->hsrc = _mrfid;
+  pkt->hsrc = MRFID;
   pkt->netid = MRFNET;
 
 
@@ -606,15 +612,15 @@ int _mrf_process_buff(uint8 bnum)
   MRF_PKT_PING_RES *pingres;
   uint8 type, resptxbuff;
   I_F owner = mrf_buff_owner(bnum);
-  mrf_debug("_mrf_process_buff: processing buff number %d our _mrfid = %X owner i_f %d \n",bnum,_mrfid, owner);
+  mrf_debug("_mrf_process_buff: processing buff number %d our MRFID = %X owner i_f %d \n",bnum,MRFID, owner);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
   mrf_print_packet_header(pkt);
 
   // check we are hdest 
-  if ( pkt->hdest != _mrfid)
+  if ( pkt->hdest != MRFID)
     {
-      mrf_debug("ERROR:  HDEST %02X is not us %02X - mrf_bus.pkt_error\n",pkt->hdest,_mrfid);
+      mrf_debug("ERROR:  HDEST %02X is not us %02X - mrf_bus.pkt_error\n",pkt->hdest,MRFID);
       _mrf_buff_free(bnum);
 
       return -1;
@@ -641,7 +647,7 @@ int _mrf_process_buff(uint8 bnum)
       mrf_debug("RESP counts as ack for buffer %d",resptxbuff);
       ifp->status->stats.tx_pkts++;
 
-      if( pkt->udest != _mrfid){
+      if( pkt->udest != MRFID){
         mrf_debug("udest %u was not us , freeing buff %d",pkt->udest,resptxbuff);
         _mrf_buff_free(resptxbuff);
       }
@@ -665,7 +671,7 @@ int _mrf_process_buff(uint8 bnum)
 
   // check if we are udest
 
-  if ( pkt->udest == _mrfid){
+  if ( pkt->udest == MRFID){
 
     // lookup command
     const MRF_CMD *cmd = _mrf_cmd(type);

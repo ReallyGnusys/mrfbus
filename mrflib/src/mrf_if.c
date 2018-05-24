@@ -8,14 +8,17 @@
 #include <mrf_sys.h>
 #include <mrf_debug.h>
 
-extern const MRF_IF _sys_ifs[NUM_INTERFACES];
 
-inline const MRF_IF *mrf_if_ptr(I_F i_f){
+
+extern const MRF_IF _sys_ifs[NUM_INTERFACES]; //[NUM_INTERFACES];
+
+const MRF_IF *mrf_if_ptr(I_F i_f){
   if (i_f < NUM_INTERFACES)
     return &_sys_ifs[i_f];
   else
     return (MRF_IF *)NULL;
 }
+
 
 int mrf_if_can_sleep(I_F i_f){
   return 0;
@@ -23,7 +26,7 @@ int mrf_if_can_sleep(I_F i_f){
 
 
 int mrf_if_recieving(I_F i_f){
-  switch (_sys_ifs[i_f].status->state)
+  switch (mrf_if_ptr(i_f)->status->state)
     {
     case MRF_ST_RX: return TRUE;
     case MRF_ST_WAITSACK:return TRUE;
@@ -33,7 +36,7 @@ int mrf_if_recieving(I_F i_f){
 }
 
 int mrf_if_transmitting(I_F i_f){
-  switch (_sys_ifs[i_f].status->state)
+  switch (mrf_if_ptr(i_f)->status->state)
     {
     case MRF_ST_TX: return TRUE;
     case MRF_ST_ACK:return TRUE;
@@ -46,13 +49,13 @@ int mrf_if_transmitting(I_F i_f){
 void mrf_if_init(){
   unsigned int i,j;
   uint8 *dptr;
-  mrf_debug("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
+  //mrf_debug("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
   for (i = 0 ; i < NUM_INTERFACES ; i++){
-    mrf_debug("interface %d\n",i);
+    //mrf_debug("interface %d\n",i);
     const MRF_IF *mif = mrf_if_ptr((I_F)i);
     // rough zeroing of status data including stats
     dptr = (uint8 *)mif->status;
-    mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
+    //mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;    
     queue_init(&(mif->status->txqueue));
@@ -104,7 +107,7 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
   }
   else {
   // fall through if no space in queue
-  _sys_ifs[i_f].status->stats.tx_overruns++;
+    mrf_if_ptr(i_f)->status->stats.tx_overruns++;
   return -1;
   }
 }

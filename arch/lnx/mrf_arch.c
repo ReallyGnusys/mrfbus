@@ -61,7 +61,7 @@
 
 
 //FIXME debug tmp
-extern const MRF_CMD const *mrf_sys_cmds;
+//extern const MRF_CMD  *mrf_sys_cmds;
 
 long long mrf_timestamp(){
 struct timeval te; 
@@ -145,6 +145,7 @@ void sig_handler(int signum)
   }
 }
 
+/*
 int _print_mrf_cmd(MRF_CMD_CODE cmd){
   mrf_debug("_print_mrf_cmd entry cmd %d\n",cmd);
   mrf_debug("mrf_sys_cmds %p  &mrf_sys_cmds[0] %p \n",mrf_sys_cmds,&mrf_sys_cmds[0]);
@@ -155,13 +156,14 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd){
   mrf_debug("cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
   mrf_debug("cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
 }
-
+*/
 
 
 
 int make_listener_socket (uint16_t port)
 {
   int sock;
+  int opt = 1;
   struct sockaddr_in name;
 
   /* Create the socket. */
@@ -178,7 +180,7 @@ int make_listener_socket (uint16_t port)
   name.sin_addr.s_addr = htonl (INADDR_ANY);
   name.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int));
+  setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
   
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
@@ -319,8 +321,8 @@ int mrf_arch_run(){
   }
 
   
-  _print_mrf_cmd(mrf_cmd_device_info);
-  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
+  //  _print_mrf_cmd(mrf_cmd_device_info);
+  //  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
   (*_sys_loop)(NULL);
 
  return 0;
@@ -350,7 +352,7 @@ uint8 int_to_hex_digit(int in){
 
 void trim_trailing_space(uint8 *buff){
 
-  uint8 *end  = buff + strlen(buff) - 1;
+  uint8 *end  = buff + strlen((char *)buff) - 1;
   while(end > buff && isspace(*end)) end--;
   // Write new null terminator
   *(end+1) = 0;
@@ -378,7 +380,7 @@ char buff[2048];
   int nfds;
   uint32 inif;
   char sname[64];
-  printf("Initialising DEVTYPE %s _mrfid %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),_mrfid,NUM_INTERFACES);
+  printf("Initialising DEVTYPE %s MRFID %d NUM_INTERFACES %d \n", DEFSTR(DEVTYPE),MRFID,NUM_INTERFACES);
 
   // this is system tick timer - 1KHz
   new_value.it_value.tv_sec = 0;
@@ -417,7 +419,7 @@ char buff[2048];
   }
   
   i = NUM_INTERFACES + 1;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   mrf_debug("created pipe %s res %d",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
@@ -438,14 +440,14 @@ char buff[2048];
   // add i_f events + cntrl if
   const MRF_IF *ifp;
   for ( i = 0 ; i <  NUM_INTERFACES ; i++){
-    ifp = mrf_if_ptr(i);
+    ifp = mrf_if_ptr((I_F)i);
     ievent[i].data.u32 = i;
     ievent[i].events = EPOLLIN | EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
     mrf_debug("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
- _print_mrf_cmd(mrf_cmd_device_info);
+  //_print_mrf_cmd(mrf_cmd_device_info);
   // timer event
   ievent[NUM_INTERFACES].data.u32 = NUM_INTERFACES;
   ievent[NUM_INTERFACES].events = EPOLLIN | EPOLLET;
@@ -494,7 +496,7 @@ char buff[2048];
      //mrf_debug("fd %i is i_f %d\n",i,inif);
      if (inif < NUM_INTERFACES){
        //it's an input stream
-       fd = *(mrf_if_ptr(inif)->fd);
+       fd = *(mrf_if_ptr((I_F)inif)->fd);
        //sanity check
        mrf_debug("event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
@@ -506,9 +508,9 @@ char buff[2048];
        uint8 bind;
        //bind = mrf_alloc_if(inif);
 
-       if (*(mrf_if_ptr(inif)->type->funcs.buff) != NULL){
+       if (*(mrf_if_ptr((I_F)inif)->type->funcs.buff) != NULL){
          //use interface method to copy to buff 
-         int rv = (*(mrf_if_ptr(inif)->type->funcs.buff))(inif,buff,s);
+         int rv = (*(mrf_if_ptr((I_F)inif)->type->funcs.buff))((I_F)inif,(uint8 *)buff,s);
          //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
        } else {
          // probably mistake here to not have buff function defined..
@@ -582,18 +584,16 @@ char buff[2048];
      } else if (revent[i].data.u32 == NUM_INTERFACES+2){
        // connection to server
 
-       ssize_t s;
-       uint8 i;
        struct sockaddr_in clientname;
        size_t size;
        mrf_debug("server connection fd %d\n",lisfd);
 
-       int new;
+       int newcon;
        size = sizeof (clientname);
-       new = accept (lisfd,
+       newcon = accept (lisfd,
                      (struct sockaddr *) &clientname,
                      (socklen_t*)&size);
-       if (new < 0)
+       if (newcon < 0)
          {
            mrf_debug("%s","big trouble accepting connection");
          }
@@ -602,7 +602,7 @@ char buff[2048];
                     inet_ntoa (clientname.sin_addr),
                     ntohs (clientname.sin_port));
          if ( servfd == -1) {
-           servfd = new;
+           servfd = newcon;
            if ( app_callback != NULL ){
              //num_fds = NUM_INTERFACES+4;
              mrf_debug("adding epoll for app c fifo %d\n",servfd); 
@@ -615,8 +615,8 @@ char buff[2048];
          }
          else {
 
-           mrf_debug("already have a connection ... closing %d",new);
-           close(new);
+           mrf_debug("already have a connection ... closing %d",newcon);
+           close(newcon);
 
            
          }
@@ -681,7 +681,7 @@ int mrf_rtc_set(TIMEDATE *td){
 int _write_internal_pipe(char *data, int len){
   char sname[64];
   int fd,bc,tb;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,_mrfid);
+  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
     mrf_debug("write internal pipe error, fd was %d  name %s\n",fd,sname);

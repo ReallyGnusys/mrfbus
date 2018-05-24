@@ -19,11 +19,16 @@
 
 #include "mrf_sys.h"
 
-extern const MRF_PKT_DEVICE_INFO device_info;
-extern const MRF_PKT_SYS_INFO    sys_info;
-extern const MRF_PKT_APP_INFO app_info;
+const uint8 _mrfid = MRFID;
 
-const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
+#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
+
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
+const MRF_PKT_SYS_INFO sys_info        = {  SYM_NAME(GITSH), SYM_NAME(MRFBLD), (const uint8)MRF_NUM_SYS_CMDS,GITMOD };
+const MRF_PKT_APP_INFO app_info        = {SYM_NAME(MRF_APP), MRF_NUM_APP_CMDS};
+
+
+extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
   [ mrf_cmd_ack          ] = {"ACK"        , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_ack      },
   [ mrf_cmd_retry        ] = {"RETRY"      , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_retry      },
   [ mrf_cmd_resp         ] = {"RESP"       , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL               , mrf_task_resp     },
@@ -78,3 +83,10 @@ const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
 
 
 const uint16 mrf_num_cmds = (uint16)MRF_NUM_SYS_CMDS;  // FIXME -better to have user commands separate from sys
+/*
+const MRF_CMD *mrf_cmd_ptr(uint8 type){
+  if (type >= MRF_NUM_SYS_CMDS)
+    return NULL;
+  return &mrf_sys_cmds[type];
+}
+*/

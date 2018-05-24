@@ -103,7 +103,7 @@ typedef struct  __attribute__ ((packed))   {
 } MRF_PKT_DEVICE_INFO;
 
 typedef struct  __attribute__ ((packed))   {
-  char  mrfbus_version[40];
+  char  mrfbus_version[42];
   char  build[8];
   uint8 num_cmds;
   uint8 modified;

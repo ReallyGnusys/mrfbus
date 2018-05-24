@@ -66,7 +66,7 @@ static UART_CSTATE rxstate[MAX_UARTS];
 
 int copy_to_txbuff(uint8 *buff, uint8 *dest, UART_CSTATE *txstate){
   int i = 0;
-  mrf_uart_init_tx_state(0,txstate);
+  mrf_uart_init_tx_state((I_F)0,txstate);
   txstate->buff = buff;
   txstate->state = S_START;
 

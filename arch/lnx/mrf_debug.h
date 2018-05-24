@@ -27,12 +27,12 @@
 
 #define MRF_DEBUG 1
 long long mrf_timestamp();
-extern const uint8 _mrfid;
+//extern const uint8 _mrfid;
 
 //#define mrf_debug(x)  _mrf_debug("%s",x)
 
 #define mrf_debug(fmt, ...) \
-  do { if (MRF_DEBUG) fprintf(stdout, "%lld ID:%02x %s:%d:(): " fmt, mrf_timestamp(),_mrfid,__FILE__, \
+  do { if (MRF_DEBUG) fprintf(stdout, "%lld ID:%02x %s:%d:(): " fmt, mrf_timestamp(),MRFID,__FILE__, \
                                 __LINE__, __VA_ARGS__); } while (0)
       //         do { if (MRF_DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)  
 

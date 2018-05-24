@@ -80,13 +80,16 @@ APPINCL=-I${APPSRC}
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
 	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
 	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o \
-	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS} ${DEVOBJS}  ${APPOBJS}
+	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS} ${DEVOBJS}  ${APPOBJS} \
+        ${MOBJ}/main.o
 
 ifeq (,$(wildcard ${APPSRC}/main.c))
      MAIN := ${MSRC}/main.c
 else
      MAIN := ${APPSRC}/main.c
 endif      
+
+
 
 CCFLAGS=-I${MRFBUS_HOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DMRF_APP=${APP} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DSLEEP_${SLEEP} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${APPCCFLAGS} ${BFLAGS} 
 
@@ -103,12 +106,14 @@ ${MOBJ}:
 	echo mkdir -p ${MOBJ}
 	mkdir -p ${MOBJ}
 
+main.cpp.out: ${MAIN}
+	cpp ${CCFLAGS} ${MAIN} > main.cpp.out
 
 ${LSTD}:
 	mkdir -p ${LSTD}
 
-${TARG} :
-	${GCC} ${CCFLAGS} ${MAIN} ${MOBJS} ${ALDFLAGS} -o ${TARG}
+${TARG} : ${MOBJS}
+	${GCC} ${CCFLAGS} ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
 ${LST}: ${TARG}
 	${OD} ${TARG} > ${LST}
@@ -117,6 +122,8 @@ ${SIZEREP}: ${TARG}
 	${SIZE} ${TARG} > ${SIZEREP}
 	cat ${SIZEREP}
 
+${MOBJ}/main.o: ${MAIN}
+	${GCC}  -c $(CCFLAGS) ${MAIN}   -o ${MOBJ}/main.o
 
 ${MOBJ}/%.o: ${APPDIR}/%.c
 	${GCC}  -c $(CCFLAGS) $< -o $@
