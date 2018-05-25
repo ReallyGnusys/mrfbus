@@ -76,7 +76,7 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
 }
 
 
-MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+extern MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   uint8 txbuff;
   MRF_PKT_HDR *hdr;

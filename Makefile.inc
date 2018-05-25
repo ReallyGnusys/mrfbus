@@ -113,7 +113,7 @@ ${LSTD}:
 	mkdir -p ${LSTD}
 
 ${TARG} : ${MOBJS}
-	${GCC} ${CCFLAGS} ${MOBJS} ${ALDFLAGS} -o ${TARG}
+	${LD} ${CCFLAGS} ${MOBJS} ${ALDFLAGS} -o ${TARG}
 
 ${LST}: ${TARG}
 	${OD} ${TARG} > ${LST}

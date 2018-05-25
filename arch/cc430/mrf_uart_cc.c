@@ -35,7 +35,7 @@
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff);
 static int mrf_uart_init_cc(I_F i_f);
 
-const MRF_IF_TYPE mrf_uart_cc_if = {
+extern const MRF_IF_TYPE mrf_uart_cc_if = {
  tx_del : 4,
  funcs : { send : mrf_uart_send_cc,
            init : mrf_uart_init_cc,
@@ -205,7 +205,7 @@ void _dbg_csum_ms(uint8 val){
 void _dbg_csum_ls(uint8 val){
   csum_ls  = val;
 }
-
+static uint8 _rxb;
 interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
 {
   switch(UCA0IV)
@@ -213,9 +213,9 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
   case 0:break;                             // Vector 0 - no interrupt
   case 2:                                   // Vector 2 - RXIFG
     _uart_rx_int_cnt++;
-    uint8 rxb = _rx_byte();
+    _rxb = _rx_byte();
    
-    if(mrf_uart_rx_byte(rxb,&rxstate)){
+    if(mrf_uart_rx_byte(_rxb,&rxstate)){
       mrf_buff_loaded(rxstate.bnum);
       // need to allocate next buffer
       mrf_uart_init_rx_state(UART0,&rxstate);    // FIXME - hardcoded i_f

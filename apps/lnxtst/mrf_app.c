@@ -68,6 +68,7 @@ int init_sockaddr (struct sockaddr_in *name,
 
 
 
+int tick_task();
 
 
 int signal_handler(uint8 signal){

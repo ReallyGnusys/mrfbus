@@ -329,41 +329,41 @@ int rtc_get_hang(TIMEDATE *td){
  
 int rtc_get(TIMEDATE *td){
 
-  TIMEDATE t1,t2,*old,*new,*tmp;
+  TIMEDATE t1,t2,*old,*newtd,*tmp;
   uint8 count = 0;
   old = &t1;
-  new = &t2;
+  newtd = &t2;
 
   
   
   _rtc_get(old);
-  _rtc_get(new);
+  _rtc_get(newtd);
  
-  while(!_rtc_td_eq(old,new) && ((count < RTC_GET_TIMEOUT) || !_rtc_td_is_valid(new))){
+  while(!_rtc_td_eq(old,newtd) && ((count < RTC_GET_TIMEOUT) || !_rtc_td_is_valid(newtd))){
 
     count++;
     // swap old and new
     tmp = old;
-    old = new;
-    new = tmp;
+    old = newtd;
+    newtd = tmp;
     // refresh new
-    _rtc_get(new);
+    _rtc_get(newtd);
   }
 
-  if (_rtc_td_is_valid(new) == 0){
+  if (_rtc_td_is_valid(newtd) == 0){
 
-    _rtc_get_error(new);
+    _rtc_get_error(newtd);
   }
   if ( count >= RTC_GET_TIMEOUT){
     // error getting consistent reading, send cleared structure
-    _rtc_td_clr(new);
-    _rtc_td_cpy(new,td);    
+    _rtc_td_clr(newtd);
+    _rtc_td_cpy(newtd,td);    
     return -1;
   }
 
   
   
-  _rtc_td_cpy(new,td); 
+  _rtc_td_cpy(newtd,td); 
   //*td = t1;
   return 0;
 }

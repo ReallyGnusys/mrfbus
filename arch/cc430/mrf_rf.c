@@ -30,10 +30,11 @@
 int rf_if_send_func(I_F i_f, uint8 *buff);
 int mrf_rf_init(I_F i_f);
 
-const MRF_IF_TYPE mrf_rf_cc_if = {
+extern const MRF_IF_TYPE mrf_rf_cc_if = {
  tx_del : 4,
  funcs : { send : rf_if_send_func,
-           init : mrf_rf_init }
+           init : mrf_rf_init,
+           buff : NULL}
 };
 
 static struct rf_stats_t {
@@ -251,7 +252,7 @@ int _Dbg15(){
   return 15;
 }
 
-volatile static _dumpbyte;
+volatile static uint8 _dumpbyte;
 
 
 int _xb_hw_rd_rx_fifo(I_F i_f){
