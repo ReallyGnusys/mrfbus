@@ -30,6 +30,6 @@ typedef  enum { RF0,
 #define _MRF_BUFFS 8
 
 #define IQUEUE_DEPTH 16
-const MRF_IF *mrf_if_ptr(I_F i_f);
+//const MRF_IF *mrf_if_ptr(I_F i_f);
 
 #endif

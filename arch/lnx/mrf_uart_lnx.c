@@ -48,7 +48,7 @@ static int _usb_if_send_func(I_F i_f, uint8 *buff);
 static int _mrf_uart_init_lnx(I_F i_f);
 static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen);
 
-const MRF_IF_TYPE mrf_uart_lnx_if = {
+extern const MRF_IF_TYPE mrf_uart_lnx_if = {
  tx_del : 4,
  funcs : { send : _usb_if_send_func,
            init : _mrf_uart_init_lnx,

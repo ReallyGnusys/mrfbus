@@ -49,4 +49,6 @@ void rtc_clear_alarm();
 void rtc_clear_eveie();
 void rtc_wake_on_sec(uint8 sec);
 void rtc_clear_wake_on_sec();
+void rtc_second_signal_enable();
+
 #endif

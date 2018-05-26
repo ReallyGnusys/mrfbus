@@ -28,6 +28,8 @@
 #include "mrf_pinmacros.h"
 
 #include "mrf_relays.h"
+#include "rtc_arch.h"
+void mrf_rf_idle(I_F i_f);
 
 typedef enum {
   SYNC_TIME,

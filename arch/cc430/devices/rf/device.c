@@ -27,13 +27,7 @@ static IF_STATUS _if_status[NUM_INTERFACES];
 //extern const MRF_IF_TYPE mrf_uart_cc_if;
 extern const MRF_IF_TYPE mrf_rf_cc_if;
 
-const MRF_IF _sys_ifs[NUM_INTERFACES] = {
-  [RF0]   = {&_if_status[RF0], &mrf_rf_cc_if  , &_if_ackbuffs[RF0]}  
+extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
+  {&_if_status[RF0], &mrf_rf_cc_if  , &_if_ackbuffs[RF0]}  
 };
 
-const MRF_IF *mrf_if_ptr(I_F i_f){
-  if (i_f < NUM_INTERFACES)
-    return &_sys_ifs[i_f];
-  else
-    return (MRF_IF *)NULL;
-}

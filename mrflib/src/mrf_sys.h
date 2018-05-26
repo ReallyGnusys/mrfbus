@@ -25,9 +25,9 @@
 
 #define _CONCAT_(A,B) # A ## B
 
+#include "device.h"
 #include "mrf_types.h"
 #include "mrf_sys_structs.h"
-#include "device.h"
 #include "mrf_if.h"
 #include "mrf_buff.h"
 #include "mrf_sys_cmds.h"
@@ -177,5 +177,5 @@ int mrf_sleep_deep();  // must be defined by app for now
 
 #include "mrf_app.h"
 #include "mrf_app_cmds.h"
-#include "iqueue.h"
+//#include "iqueue.h"
 #endif

@@ -125,7 +125,7 @@ function kill_devs {
 
 }
 
-[ $mode == build ] && echo "build complete" && exit
+[ $mode == build ] && echo "build complete" && exit 0
 
 
 if [ -n "${server}" ] ; then
@@ -170,7 +170,7 @@ if [ -n "$runtests" ] ; then
    python ${MRFBUS_HOME}/land/core_tests.py
    rv=$?
  
-   echo "tests completed"
+   echo "tests completed : rv=$rv"
    kill_devs
    if [ $rv == 0 ] ; then
 
@@ -178,7 +178,7 @@ if [ -n "$runtests" ] ; then
    else
      echo "FAILED"
    fi
-    exit $rv
+   exit $rv
 fi
 
 
