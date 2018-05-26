@@ -154,7 +154,7 @@ class PktDeviceStatus(MrfStruct):
 
 class PktSysInfo(MrfStruct):
     _fields_ = [
-        ("mrfbus_version", c_uint8*40),
+        ("mrfbus_version", c_uint8*42),
         ("build", c_uint8*8),
         ("num_cmds", c_uint8),
         ("modified", c_uint8)
