@@ -87,7 +87,7 @@ int _start_spi_tx(){
   return 0;
 }
 
-static _dbg_spi_tx_err1;
+static int  _dbg_spi_tx_err1;
 
 int mrf_spi_txq(uint8 tx_byte){
   int rv = queue_push(&_spi_tx_queue,tx_byte);

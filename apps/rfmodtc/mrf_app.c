@@ -30,6 +30,9 @@
 #include "mrf_relays.h"
 #include "mrf_route.h"
 #include "LCD1x9.h"
+#include "rtc_arch.h"
+#include <stdio.h>
+void mrf_rf_idle(I_F i_f);
 
 #define _BUT1_PORT P1
 #define _BUT1_BIT  1
