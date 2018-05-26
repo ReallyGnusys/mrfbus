@@ -172,7 +172,7 @@ int mrf_sleep_deep();  // must be defined by app for now
 #endif
 
 #include "mrf_sys_tasks.h"
-#include "mrf_sys_cmds.h"
+//#include "mrf_sys_cmds.h"
 
 
 #include "mrf_app.h"
