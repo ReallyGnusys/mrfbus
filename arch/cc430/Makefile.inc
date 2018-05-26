@@ -17,7 +17,7 @@
 
 
 #GCC=msp430-gcc
-LD=msp430-ld
+#LD=msp430-ld
 
 GCC=msp430-g++
 
