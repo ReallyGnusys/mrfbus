@@ -23,6 +23,8 @@ static IF_STATUS _if_status[NUM_INTERFACES];
 
 static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
 
+static AckQueue _if_ack_queues[NUM_INTERFACES];
+
 extern const MRF_IF_TYPE mrf_pipe_lnx_if;
 
 static int ifd[NUM_INTERFACES]; // need fds for lnx i_f s

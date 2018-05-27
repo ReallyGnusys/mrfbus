@@ -23,6 +23,15 @@
 //#include <device.h>
 #include "mrf_sys_structs.h"
 #include "iqueue.h"
+#include "mqueue.hpp"
+
+typedef struct{
+  uint8 type;
+  uint8 msgid;
+  uint8 dest;
+} ACK_TAG;
+
+typedef MQueue<ACK_TAG> AckQueue;
 
 
 
@@ -59,6 +68,7 @@ typedef struct {
   
 typedef struct {
   const uint8 tx_del;
+  const uint8 ack_del;  
   const IF_FUNCS funcs;
 } MRF_IF_TYPE;
 

@@ -32,6 +32,7 @@ int mrf_rf_init(I_F i_f);
 
 extern const MRF_IF_TYPE mrf_rf_cc_if = {
  tx_del : 4,
+ ack_del: 2,
  funcs : { send : rf_if_send_func,
            init : mrf_rf_init,
            buff : NULL}

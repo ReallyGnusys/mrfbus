@@ -37,6 +37,7 @@ static int mrf_uart_init_cc(I_F i_f);
 
 extern const MRF_IF_TYPE mrf_uart_cc_if = {
  tx_del : 4,
+ ack_del : 3, 
  funcs : { send : mrf_uart_send_cc,
            init : mrf_uart_init_cc,
            buff : NULL

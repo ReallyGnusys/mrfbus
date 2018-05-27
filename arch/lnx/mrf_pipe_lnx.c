@@ -40,7 +40,8 @@ static int _mrf_pipe_init_lnx(I_F i_f);
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen);
 
 extern const MRF_IF_TYPE mrf_pipe_lnx_if = {
- tx_del : 1,
+ tx_del : 2,
+ ack_del: 1,
  funcs : { send : _mrf_pipe_send_lnx,
            init : _mrf_pipe_init_lnx,
            buff : _mrf_pipe_buff_lnx}

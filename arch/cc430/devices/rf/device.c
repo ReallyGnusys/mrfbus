@@ -21,7 +21,7 @@
 #include "mrf_if.h"
 #include "device.h"
 static IF_STATUS _if_status[NUM_INTERFACES];
-  static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
+static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
 
 
 //extern const MRF_IF_TYPE mrf_uart_cc_if;
