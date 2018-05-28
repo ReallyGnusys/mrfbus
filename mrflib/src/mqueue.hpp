@@ -37,7 +37,7 @@ class MQueue
 
   int data_avail();
   int push(const T& data);
-  const T& pop();
+  const T* pop();
   int flush();
   const T& head();
 
@@ -130,15 +130,15 @@ int MQueue<T>::push(const T& data){
 
 template <class T> 
 
-const T& MQueue<T>::pop(){
+const T *MQueue<T>::pop(){
   if (data_avail() == 0){
     pop_errors++;
-    return NULL;
+    return (const T *)NULL;
   }
   const T& data = head();
   qop = (qop + 1) % (MQUEUE_DEPTH * 2);
   nitems--;
-  return data;
+  return (const T *)data;
 }
 
 
