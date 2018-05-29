@@ -109,6 +109,7 @@ typedef struct  {
   IF_STATUS *status;
   const MRF_IF_TYPE *type;
   MRF_PKT_HDR *ackbuff;
+  AckQueue  *ackqueue;
 #ifdef MRF_ARCH_lnx
   int *fd;  // fd used by lnx epoll
   const char *name;

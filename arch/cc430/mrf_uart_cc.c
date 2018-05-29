@@ -79,7 +79,7 @@ static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   //UART_CSTATE  *txstate =  (UART_CSTATE*)sp;
   // MRF_IF *mif = mrf_if_ptr(i_f);
   if (txstate.state != S_IDLE) {
-    mrf_debug("uart_if_send_func found if busy");
+    mrf_debug("ERROR: uart_if_send_func found if busy");
     enable_tx_int();
     return -1;
   }

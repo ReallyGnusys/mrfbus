@@ -109,7 +109,7 @@ uint16 mrf_copy(void *src,void *dst, size_t nbytes){
   }
   return i;
 }
-uint16 mrf_scopy(void *src,void *dst, size_t nbytes){
+uint16 mrf_scopy(void *src,void *dst, size_t nbytes){  //string copy
   uint16 i;
   uint8 sc;
   for ( i = 0 ; i < nbytes ; i++ ){
@@ -135,12 +135,28 @@ int mrf_sack(uint8 bnum){
  //mrf_debug("mrf_sack : for addr %d orig header is\n",hdr->hsrc);
  //mrf_print_packet_header(hdr);
  //mrf_debug("route if is %d\n",route.i_f);
+
+ 
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
+
+ ACK_TAG acktag;
+
+ acktag.type  = mrf_cmd_ack;
+ acktag.msgid = hdr->msgid;
+ acktag.dest   = hdr->hsrc;
+
+ if(if_ptr->ackqueue->push(acktag) == 0){
+   mrf_debug("pushed acktag to ackqueue for %s num items %d",if_ptr->name,if_ptr->ackqueue->items());
+ }
+ else {
+   mrf_debug("ERROR failed to push acktag to ackqueue for %s num items %d",if_ptr->name,if_ptr->ackqueue->items());
+ }
+     
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
  if_ptr->ackbuff->udest = hdr->hsrc;
  if_ptr->ackbuff->netid = MRFNET;
- if_ptr->ackbuff->type = mrf_cmd_ack;
+ if_ptr->ackbuff->type  = mrf_cmd_ack;
 
  if_ptr->ackbuff->hsrc = MRFID;
  if_ptr->ackbuff->usrc = MRFID;
@@ -420,7 +436,8 @@ int mrf_ndr(uint8 code, uint8 bnum){
 
 
  if (hdr->usrc == MRFID )  {   // don't send NDR to ourself! - ony for packets we are relaying
-   // FIXME maybe so something useful here
+   // FIXME maybe do something useful here
+   // what does host 0x01 do for packets from server (notionally 0 )
    mrf_debug("packet usrc is us %d\n",hdr->usrc);
     _mrf_buff_free(bnum);
   return 0;
@@ -777,6 +794,7 @@ void _mrf_tick(){
   IF_STATE istate;
   uint8 if_busy = 0;
   IQUEUE *qp;
+  const ACK_TAG *atp;
   _tick_count++;
   if ( (_tick_count % 1000 ) == 0)
     mrf_debug("%d\n",_tick_count);
@@ -809,6 +827,7 @@ void _mrf_tick(){
 
     else if ( istate == MRF_ST_ACKDELAY)
       {
+
         if_busy = 1;
         if ((mif->status->acktimer) > 0 ){
           mif->status->acktimer--;
@@ -820,6 +839,34 @@ void _mrf_tick(){
             (*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff));
           }
         }
+        
+        while(mif->ackqueue->data_avail()){
+          atp = mif->ackqueue->pop();
+          if (atp == NULL){
+            mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
+            //mif->status->state = MRF_ST_ACK;
+          }
+          else{
+            mrf_debug("tick ackqueue.pop got type 0x%x msgid 0x%x dest 0x%x\n",atp->type,atp->msgid,atp->dest);
+            //mif->status->state = MRF_ST_ACK;
+            
+            /*
+            mif->ackbuff->length = sizeof(MRF_PKT_HDR);
+            mif->ackbuff->hdest = atp->dest;
+            mif->ackbuff->udest = atp->dest;
+            mif->ackbuff->netid = MRFNET;
+            mif->ackbuff->type  = atp->type;
+
+            mif->ackbuff->hsrc = MRFID;
+            mif->ackbuff->usrc = MRFID;
+            mif->ackbuff->msgid = atp->msgid;
+            mif->status->acktimer =  mif->type->tx_del;
+            */
+          }
+         
+        }
+
+        
       }
     else if ( istate == MRF_ST_ACK ){
       mif->status->state = MRF_ST_RX;
@@ -832,7 +879,6 @@ void _mrf_tick(){
           if_busy = 1;
 
           bnum = queue_head(qp);
-          if_busy = 1;
 
           bs = _mrf_buff_state(bnum);
           MRF_PKT_HDR *pkt;

@@ -39,7 +39,7 @@ class MQueue
   int push(const T& data);
   const T* pop();
   int flush();
-  const T& head();
+  const T* head();
 
 
  private:
@@ -48,7 +48,7 @@ class MQueue
   volatile uint8 nitems;
   volatile uint8 push_errors;
   volatile uint8 pop_errors;
-  volatile uint32 buffer[MQUEUE_DEPTH];
+  T buffer[MQUEUE_DEPTH];
   void _q_elem_set(const T& val);
 };
 
@@ -111,8 +111,8 @@ void MQueue<T>::_q_elem_set(const T& val){
 
 template <class T> 
 
-const T& MQueue<T>::head(){
-  return buffer[qop % MQUEUE_DEPTH];
+const T *MQueue<T>::head(){
+  return (const T *)&buffer[qop % MQUEUE_DEPTH];
 }
 
 template <class T> 
@@ -135,10 +135,10 @@ const T *MQueue<T>::pop(){
     pop_errors++;
     return (const T *)NULL;
   }
-  const T& data = head();
+  const T *data = head();
   qop = (qop + 1) % (MQUEUE_DEPTH * 2);
   nitems--;
-  return (const T *)data;
+  return data;
 }
 
 

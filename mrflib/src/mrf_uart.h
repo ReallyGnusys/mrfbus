@@ -26,7 +26,7 @@
 #define _MRF_UART_PREAMBLE   0xAA
 #define _MRF_UART_PREAMBLE_1 0xAB
   // uart line state
-typedef enum _rstate {
+typedef enum  {
   S_IDLE       = 0,
   S_START      = 1,
   S_PREAMBLE_1 = 2,
@@ -37,7 +37,7 @@ typedef enum _rstate {
   S_DATA       = 7,
   S_CSUM_MS    = 8,
   S_CSUM_LS    = 9
-} UART_LSTATE;
+} UART_LSTATE;   // line state
 
 // uart channel state
 typedef struct {
