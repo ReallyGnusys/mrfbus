@@ -840,7 +840,7 @@ void _mrf_tick(){
           }
         }
         
-        while(mif->ackqueue->data_avail()){
+        if(mif->ackqueue->data_avail()){
           atp = mif->ackqueue->pop();
           if (atp == NULL){
             mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
@@ -864,6 +864,9 @@ void _mrf_tick(){
             */
           }
          
+        } else {
+
+
         }
 
         
