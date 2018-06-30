@@ -22,12 +22,12 @@
 #include "device.h"
 static IF_STATUS _if_status[NUM_INTERFACES];
 static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
-
+static AckQueue _if_ack_queues[NUM_INTERFACES];
 
 //extern const MRF_IF_TYPE mrf_uart_cc_if;
 extern const MRF_IF_TYPE mrf_rf_cc_if;
 
 extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
-  {&_if_status[RF0], &mrf_rf_cc_if  , &_if_ackbuffs[RF0]}  
+  {&_if_status[RF0], &mrf_rf_cc_if  , &_if_ackbuffs[RF0],&_if_ack_queues[0]}  
 };
 
