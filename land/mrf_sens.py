@@ -23,7 +23,7 @@ from mrfland_regmanager import DateTimeFormat
 class MrfSens(object):
     _HISTORY_SECONDS_ = 60*60*24   # keep a day of history by default .. one minute averages
     #def __init__(self, label, address,channel,log):
-    def __init__(self, label, devupdate, address, channel):        
+    def __init__(self, label, devupdate, address, channel):
         self.label = label  ## fix me this should be tag - maybe should have label as well
 
         self.address = address  # useful for sensor/actuator to know it's address channel
@@ -51,7 +51,7 @@ class MrfSens(object):
             self.output[fld[0]] = fld[1]()
 
 
-        # crude generic history 
+        # crude generic history
         if hasattr(self,'_history_') :
             import datetime
             self.history = { 'ts' : []}  # buffer for last minutes readings
@@ -63,12 +63,12 @@ class MrfSens(object):
                 self.history[fld] = []
                 self.averages[fld] = []
                 self.avg_types[fld] = type(self.output[fld])
-            
+
         # call optional subclass init
 
         if hasattr(self,'init'):
             self.init()
-        
+
     def subscribe(self,callback):  # subscribe for all changes
         key = self.skey
         self.subscribers[key] = callback
@@ -83,10 +83,10 @@ class MrfSens(object):
         return key
 
 
-    
+
 
     def input(self, indata):
-        # input sanity check for keys and types 
+        # input sanity check for keys and types
         #mrflog.info("new item for sens %s - %s"%(self.label,repr(indata)))
         for ditem in indata.keys():
             if not self._input.has_key(ditem):
@@ -106,7 +106,7 @@ class MrfSens(object):
         else:
             self.outcount += 1
 
-        # output sanity check for keys and types 
+        # output sanity check for keys and types
 
         for ditem in odata.keys():
             if not self._output.has_key(ditem):
@@ -121,17 +121,17 @@ class MrfSens(object):
         self.output = odata
 
         # update history if specified
-        
+
         if hasattr(self, "history"):
             if indata.has_key('date'):
                 now = indata['date'].to_datetime()  # it had better be PktTimeDate!
                 ournow = datetime.datetime.now()
-            
+
                 if (ournow - now) > datetime.timedelta(minutes = 2) or   (now - ournow) > datetime.timedelta(minutes = 2):
                     mrflog.warn("sensor input date is not set ( got %s from %s)... setting current"%(repr(now),repr(indata['date'])))
                     now = ournow
-                
-                    
+
+
             else:
                 now = datetime.datetime.now()
             if self.history_dt == None:
@@ -142,6 +142,7 @@ class MrfSens(object):
                 mrflog.info("averaging minute for sensor %s history_dt %s now %s"%
                             (self.label,repr(self.history_dt),repr(now)))
                 if (now - self.history_dt) >= datetime.timedelta(minutes = 2):
+                    #FIXME! should pad from last know value here, then build average for minute
                     mrflog.error("%s %s history not updated for %s"%(self.__class__.__name__,
                                                                      self.label,
                                                                      repr(now.minute - self.history_dt.minute)))
@@ -149,7 +150,7 @@ class MrfSens(object):
                     mrflog.error("ts = %s"%repr(self.history['ts']))
 
                 avm = {}
-                for hfld in self._history_['fields']:                
+                for hfld in self._history_['fields']:
                     if len(self.history['ts']):
                         tot = self.avg_types[hfld](0)
                         for val in self.history[hfld]:
@@ -167,11 +168,11 @@ class MrfSens(object):
                     avm[hfld] = avg
                     self.history[hfld] = []
                     mrflog.info("history[%s] len is %d"%(hfld,len(self.history[hfld])))
-                    
+
                 self.history['ts'] = []
                 avm['ts'] = self.history_dt.strftime(DateTimeFormat)
                 self.averages['ts'].append(avm['ts'])
-                
+
                 mrflog.info("history len is %d averages len %d"%(len(self.history['ts']),len(self.averages['ts'])))
                 mrflog.info("%s"%repr(self.averages))
                 for s in self.minute_subscribers.keys():
@@ -179,8 +180,8 @@ class MrfSens(object):
 
                 nowm = now
                 nowm = nowm.replace(second=0,microsecond=0)
-                
-                
+
+
 
                 self.history_dt += datetime.timedelta(minutes = 1)
                 if False and self.label == 'LOUNGE_AMBIENT':
@@ -188,9 +189,11 @@ class MrfSens(object):
 
                 while self.history_dt < nowm:
                      avm['ts']  = self.history_dt.strftime("%Y-%m-%dT%H:%M:%S")
+                     for hfld in self._history_['fields']:
+                         self.averages[hfld].append(avm[hfld])
                      self.averages['ts'].append(avm['ts'])
                      mrflog.warn("%s padding sensor average %s"%(self.label,repr(avm)))
-                     for s in self.minute_subscribers.keys():                         
+                     for s in self.minute_subscribers.keys():
                          self.minute_subscribers[s](self.label,avm)
                      self.history_dt += datetime.timedelta(minutes = 1)
 
@@ -210,11 +213,11 @@ class MrfSens(object):
                     else:
                         binit = False
 
-                    
-                
+
+
             self.history['ts'].append(now.strftime("%Y-%m-%dT%H:%M:%S"))
             for hfld in self._history_['fields']:
                 self.history[hfld].append(self.output[hfld])
-            
+
         for s in self.subscribers.keys():
             self.subscribers[s](self.label,self.output)
