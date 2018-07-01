@@ -44,7 +44,7 @@ do
 
  valid=0
  read -r -a fld <<< "$LINE"
- 
+
  if  [ "${fld[0]}" == "MRFNET" ] ; then
      mrfnet=${fld[1]}
  elif  [ "${fld[0]}" == "SERVER" ] ; then
@@ -55,7 +55,7 @@ do
       [ -n "$(echo $tok | grep '^MRFID=')" ]  && mrfid=${tok##MRFID=}
       [ -n "$(echo $tok | grep '^APP=')" ]  && app=${tok##APP=}
       [ -n "$(echo $tok | grep '^ARCH=')" ]  && arch=${tok##ARCH=}
-            
+
     done
 
     [ -n "$mrfid" ] && [ -n "$app" ] &&  [ -n "$mrfnet" ] && valid=1
@@ -75,9 +75,9 @@ do
           echo 'include ${MRFBUS_HOME}/Makefile.inc'  >> $mf
 
           cd $dn && make | tee  make.log && cd ..
-      
+
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
-      
+
           echo "starting lnx device $dn"
           stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
           pid=$!
@@ -89,8 +89,8 @@ do
           fi
       fi
     fi
-    
-       
+
+
  fi
 done < ./mrf.prj
 
@@ -116,7 +116,7 @@ function kill_devs {
 
 if [ -n "${server}" ] ; then
 
-   [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1 
+   [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1
 
 
    [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
@@ -151,8 +151,8 @@ if [ -n "$runtests" ] ; then
    #echo "hostlog.."
    #cat $hostlog
    echo "Start unit tests.."
-   
-   
+
+
    python ${MRFBUS_HOME}/land/core_tests.py
    rv=$?
 
@@ -177,4 +177,4 @@ while [ 1 ] ; do
 done
 
 echo "quitting"
-echo "run adios at $(date)"
+echo "mrf_proj adios at $(date)"
