@@ -22,7 +22,10 @@ VARDIR=var
 
 
 if [ $1 == build ] ; then
-   mode=build
+    mode=build
+    pushd $MRFBUS_HOME
+    make testsetup
+    popd
 elif  [ $1 == run ] ; then
    mode=run
    pids=""
