@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -38,10 +38,10 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   IQUEUE *qp = &(ifp->status->txqueue);
 
   MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
-  MRF_PKT_HDR *txhdr; 
+  MRF_PKT_HDR *txhdr;
   MRF_BUFF_STATE *bs;
 
-  
+
  if ( ifp->status->state != MRF_ST_WAITSACK){
    mrf_debug("ERROR: buffer_responded called when ifp state was %d",ifp->status->state);
 
@@ -51,24 +51,22 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
     return _MRF_BUFFS;
   }
   // clear buff state of ack buffer
-  if (queue_data_avail(qp)){
-      bn = queue_head(qp);
-      bs = _mrf_buff_state(bn);
-      txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
-      mrf_debug(" qhead is %d state %d\n",bn,bs->state);
-      //FIXME really should do some more checks here on src dest addresses
-      if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
-        {
-        mrf_debug("buffer_responded : acknowledge recieved for buffer %d \n",bn);
-        queue_pop(qp);
-        ifp->status->state = MRF_ST_RX;
-        return bn;
-        }
-      else{
-        mrf_debug("buffer_responded returning not found for bnum %u",bnum);
-        mrf_debug("buff %d state %d (%s) owner %d\n",bnum,bs->state,mrf_buff_state_name(bnum),bs->owner);    
+  bn = queue_head(qp);
+  bs = _mrf_buff_state(bn);
+  txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
+  mrf_debug(" qhead is %d state %d\n",bn,bs->state);
+  //FIXME really should do some more checks here on src dest addresses
+  if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
+    {
+      mrf_debug("buffer_responded : acknowledge recieved for buffer %d \n",bn);
+      queue_pop(qp);
+      ifp->status->state = MRF_ST_RX;
+      return bn;
+    }
+  else{
+    mrf_debug("buffer_responded returning not found for bnum %u",bnum);
+    mrf_debug("buff %d state %d (%s) owner %d\n",bnum,bs->state,mrf_buff_state_name(bnum),bs->owner);
 
-      }
   }
   return _MRF_BUFFS;
 
@@ -93,7 +91,7 @@ extern MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     ifp->status->stats.tx_pkts++;
     _mrf_buff_free(txbuff);
 
-    
+
   } else {
 
     mrf_debug("mrf_task_retry.. unexpected retry , txbuff %d\n",txbuff);
@@ -102,14 +100,14 @@ extern MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   }
 
   _mrf_buff_free(bnum);
-  
+
   return MRF_CMD_RES_OK;
 }
 
 // Retry command received
 // need to queue an NDR to original sender when receive this
 
-// need to stop further immediate retries 
+// need to stop further immediate retries
 
 MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   uint8 txbuff;
@@ -124,10 +122,10 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     ifp->status->stats.tx_retried++;
     if(hdr->usrc != MRFID)   // if we weren't initiator then send ndr to initiator
       mrf_ndr(NDR_RECD_SRETRY, txbuff);
-    else      
+    else
       _mrf_buff_free(txbuff);
 
-    
+
   } else {
 
     mrf_debug("mrf_task_retry.. unexpected retry , txbuff %d\n",txbuff);
@@ -143,7 +141,7 @@ MRF_CMD_RES mrf_task_ndr(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   // recieved an NDR -  normally only expect server/root to care about this
 
   ifp->status->stats.rx_ndr++;
-  
+
   _mrf_buff_free(bnum);
 
   return MRF_CMD_RES_OK;
@@ -156,15 +154,15 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd);
 MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_task_resp cmdcode %u bnum %u\n",cmd,bnum);
   _mrf_buff_print();
-  
+
   mrf_debug("%s","mrf_task_resp L1\n");
 
-  
 
-  
+
+
   mrf_debug("%s","pushing to app queue as MRF_CMD_USR_RESP\n");
   // now put in application queue as MRF_CMD_USR_RESP
-  
+
   MRF_PKT_HDR *hdr1 = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L); // why do we need this 0L???!
   //MRF_PKT_RESP *rsp1 = (MRF_PKT_RESP *)(_mrf_buff_ptr(bnum)+ sizeof(MRF_PKT_HDR));
   //mrf_debug("resp->rlen %u resp->type %u resp->msgid %u\n",rsp1->rlen,rsp1->type,rsp1->msgid);
@@ -194,11 +192,11 @@ MRF_CMD_RES mrf_task_device_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *if
     i_f = mrf_if_ptr((I_F)i);
     info.tx_retries += i_f->status->stats.tx_retries;
     info.tx_pkts    += i_f->status->stats.tx_pkts;
-    info.rx_pkts    += i_f->status->stats.rx_pkts; 
+    info.rx_pkts    += i_f->status->stats.rx_pkts;
   }
   mrf_debug("%s","mrf_task_if_info l1\n");
 
-  mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_DEVICE_STATUS));  
+  mrf_data_response( bnum,(uint8 *)&info,sizeof(MRF_PKT_DEVICE_STATUS));
   mrf_debug("%s","mrf_task_if_info exit\n");
   return MRF_CMD_RES_OK;
 
@@ -213,7 +211,7 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     return MRF_CMD_RES_ERROR;
   const MRF_IF *i_f = mrf_if_ptr((I_F)streq->value);
 
-  mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));  
+  mrf_data_response( bnum,(uint8 *)&i_f->status->stats,sizeof(IF_STATS));
   return MRF_CMD_RES_OK;
 
 }
@@ -231,7 +229,7 @@ MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   _mrf_print_hex_buff((uint8 *)&td,sizeof(TIMEDATE));
   mrf_debug(":end of hex");
   */
-  mrf_data_response( bnum,(uint8 *)&td,sizeof(TIMEDATE));  
+  mrf_data_response( bnum,(uint8 *)&td,sizeof(TIMEDATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -240,8 +238,8 @@ MRF_CMD_RES mrf_task_set_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_task_set_time entry\n");
   td = (TIMEDATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   mrf_rtc_set(td);
-  mrf_data_response( bnum,(uint8 *)td,sizeof(TIMEDATE));  
-  //mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));  
+  mrf_data_response( bnum,(uint8 *)td,sizeof(TIMEDATE));
+  //mrf_data_response( bnum,"TIME IS xx",sizeof("TIME IS xx"));
   return MRF_CMD_RES_OK;
 }
 
@@ -255,7 +253,7 @@ MRF_CMD_RES mrf_task_buff_state(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   buffst.id = streq->value;
   MRF_BUFF_STATE *bstp = _mrf_buff_state(streq->value);
   mrf_copy( (void *)bstp,(void *)&buffst.state, sizeof(MRF_BUFF_STATE));
-  mrf_data_response( bnum,(uint8 *)&buffst,sizeof(MRF_PKT_BUFF_STATE));  
+  mrf_data_response( bnum,(uint8 *)&buffst,sizeof(MRF_PKT_BUFF_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -302,7 +300,7 @@ MRF_CMD_RES mrf_task_test_1(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_rtc_get(rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
   mrf_debug("%s","mrf_task_test_1 exit\n");
-  return MRF_CMD_RES_OK;  
+  return MRF_CMD_RES_OK;
 }
 
 
@@ -313,8 +311,8 @@ MRF_CMD_RES mrf_task_reset(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 
   mrf_reset();  // must be defined by arch
-  
-  return MRF_CMD_RES_OK;  // ho ho 
+
+  return MRF_CMD_RES_OK;  // ho ho
 
 }
 
