@@ -607,10 +607,12 @@ static int _mrf_buff_forward(uint8 bnum){
       _Dbg_fw2();
 
   }
-  mrf_debug("udest is 0x%x route.i_f is %u route.relay %u\n",pkt->udest,route.i_f,route.relay);
+  mrf_debug("_mrf_buff_forward : udest is 0x%x route.i_f is %u route.relay %u\n",pkt->udest,route.i_f,route.relay);
   _Dbg_fw();
   if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
     // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
+    mrf_debug("WARN:  could not queue tx on on i_f %d  \n",route.i_f);
+
     mrf_sretry(bnum);
   }
   else{
