@@ -31,6 +31,8 @@
 
 
 #define ACKTIMER_VAL 100   //FIXME prob needs to be i/f dependent
+
+#define TX_TIMEOUT_VAL 100   //FIXME prob needs to be i/f dependent
 //extern uint8 _mrfid;
 
 static IQUEUE _app_queue;
@@ -151,7 +153,7 @@ int mrf_sack(uint8 bnum){
  else {
    mrf_debug("ERROR failed to push acktag to ackqueue for %s num items %d\n",if_ptr->name,if_ptr->ackqueue->items());
  }
-
+ /*
  if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
  if_ptr->ackbuff->hdest = hdr->hsrc;
  if_ptr->ackbuff->udest = hdr->hsrc;
@@ -164,7 +166,7 @@ int mrf_sack(uint8 bnum){
  if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
  if_ptr->status->state = MRF_ST_ACKDELAY;
-
+ */
  //mrf_debug("%s","mrf_sack : exit, ackbuff is\n");
  //mrf_print_packet_header(if_ptr->ackbuff);
 
@@ -181,18 +183,21 @@ int mrf_sretry(uint8 bnum){
 
  mrf_nexthop(&route,MRFID,hdr->hsrc);
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
- if_ptr->ackbuff->length = sizeof(MRF_PKT_HDR);
- if_ptr->ackbuff->hdest = hdr->hsrc;
- if_ptr->ackbuff->udest = hdr->hsrc;
- if_ptr->ackbuff->netid = MRFNET;
- if_ptr->ackbuff->type = mrf_cmd_retry;
 
- if_ptr->ackbuff->hsrc = MRFID;
- if_ptr->ackbuff->usrc = MRFID;
- if_ptr->ackbuff->msgid = hdr->msgid;
- if_ptr->status->acktimer =  if_ptr->type->tx_del;
 
- if_ptr->status->state = MRF_ST_ACKDELAY;
+  ACK_TAG acktag;
+
+ acktag.type  = mrf_cmd_retry;
+ acktag.msgid = hdr->msgid;
+ acktag.dest   = hdr->hsrc;
+
+ if(if_ptr->ackqueue->push(acktag) == 0){
+   mrf_debug("pushed acktag to ackqueue for %s num items %d\n",if_ptr->name,if_ptr->ackqueue->items());
+ }
+ else {
+   mrf_debug("ERROR failed to push acktag to ackqueue for %s num items %d\n",if_ptr->name,if_ptr->ackqueue->items());
+ }
+
  mrf_tick_enable();
  return 0;
 }
@@ -659,15 +664,15 @@ int _mrf_process_buff(uint8 bnum)
 
 
     resptxbuff = buffer_responded(bnum,ifp);
-    mrf_debug("buffer_responded bnum %u",resptxbuff);
+    mrf_debug("buffer_responded bnum %u\n",resptxbuff);
     if (resptxbuff < _MRF_BUFFS){
       mrf_debug("RESP counts as ack for buffer %d",resptxbuff);
-      ifp->status->stats.tx_pkts++;
-
-      if( pkt->udest != MRFID){
-        mrf_debug("udest %u was not us , freeing buff %d",pkt->udest,resptxbuff);
-        _mrf_buff_free(resptxbuff);
-      }
+      //ifp->status->stats.tx_pkts++;
+      ifp->status->state = MRF_ST_TX_COMPLETE;
+      //if( pkt->udest != MRFID){
+      //  mrf_debug("udest %u was not us , freeing buff %d",pkt->udest,resptxbuff);
+        //_mrf_buff_free(resptxbuff);
+      // }
     }
     else {
       mrf_debug("%s","ERROR got resp, but wasn't expecting one!!");
@@ -763,27 +768,101 @@ int mrf_foreground(){
     }
     else
       rv = _mrf_ex_buffer(bnum);
-    mrf_debug("rv was %d",rv);
+    mrf_debug("rv was %d\n",rv);
     cnt++;
   }
   //mrf_debug("no more data available returning after %d cmds",cnt);
   return cnt;
 }
 
-// can i_f start tx?
-int _mrf_if_can_tx(IF_STATE istate){
 
-  switch(istate){
-  case  MRF_ST_WAITSACK:
-  case  MRF_ST_ACKDELAY:
+int send_next_queued(int i,const MRF_IF *mif){
+  IQUEUE *qp;
+  MRF_BUFF_STATE *bs;
+  uint8 bnum;
+  MRF_PKT_HDR *pkt;
+  uint8 *tb;
+
+  qp = &(mif->status->txqueue);
+  if (queue_data_avail(qp)==0)
+    {
+    mrf_debug("%s","ERROR -nothing in txqueue! \n");
+    mif->status->stats.st_err += 1;
+    mif->status->state = MRF_ST_IDLE;
+    return -1;
+    }
+
+  bnum = queue_head(qp);
+
+  bs = _mrf_buff_state(bnum);
+  pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
+
+  mrf_debug("send_next_queued : FOUND txqueue -IF = %d buffer is %d buff state %d  tc %d i_f state %d\n",
+            i,bnum,bs->state,_tick_count,mif->status->state);
+
+  // if (_tick_count >10)
+  //  exit(1);
+
+
+  tb = _mrf_buff_ptr(bnum);
+  //mrf_debug("calling send func\n");
+  //bs->retry_count++;
+  bs->state = TX;
+  if (needs_ack(pkt->type))
+    mif->status->state = MRF_ST_TX_FOR_ACK;
+  else
+    mif->status->state = MRF_ST_TX;
+  mrf_debug("tick - send buff %d tc %d retry_count %d state to %d\n",
+            bnum,_tick_count,bs->retry_count,mif->status->state);
+
+  //mif->status->stats.tx_pkts += 1;   // only inc this stat if ack recieved - i.e. in ack/resp handlers
+  (*(mif->type->funcs.send))((I_F)i,tb);
+
+  mif->status->timer = TX_TIMEOUT_VAL;
+
+  return 0;
+}
+
+
+int send_next_ack(int i,const MRF_IF *mif){
+  const ACK_TAG *atp;
+
+  if (mif->ackqueue->data_avail() == 0){
+    mrf_debug("%s","ERROR -nothing in ackqueue! \n");
+    mif->status->stats.st_err += 1;
+    mif->status->state = MRF_ST_IDLE;
+    return -1;
+  }
+
+  atp = mif->ackqueue->pop();
+  if (atp == NULL){
+    mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
+    mif->status->stats.st_err += 1;
+    mif->status->state = MRF_ST_IDLE;
+    return -1;
+    //mif->status->state = MRF_ST_ACK;
+  }else{
+    mif->ackbuff->length = sizeof(MRF_PKT_HDR);
+    mif->ackbuff->hdest = atp->dest;
+    mif->ackbuff->udest = atp->dest;
+    mif->ackbuff->netid = MRFNET;
+    mif->ackbuff->type  = atp->type;
+
+    mif->ackbuff->hsrc = MRFID;
+    mif->ackbuff->usrc = MRFID;
+    mif->ackbuff->msgid = atp->msgid;
+
+    mrf_debug("send_next_ack i_f %d  tc %d \n",i,_tick_count);
+    mrf_print_packet_header(mif->ackbuff);
+    mif->status->state = MRF_ST_ACK;
+    mif->status->stats.tx_acks += 1;
+    (*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff));
     return 0;
-
-  default:
-    return 1;
   }
 }
 
-void _new_tick(){
+
+void _mrf_tick(){
   const MRF_IF *mif;
   int i;
   uint8 *tb;
@@ -801,187 +880,116 @@ void _new_tick(){
     qp = &(mif->status->txqueue);
 
     istate = mif->status->state;
-    if ( istate > MRF_ST_IDLE)
-      mrf_debug("tick -  i_f %d state %d  acktimer %d\n",i,istate,mif->status->acktimer);
 
-    // check if i_f busy
-    if ( istate == MRF_ST_WAITSACK){
+    if ( istate > MRF_ST_IDLE){
+      mrf_debug("tick -  i_f %d state %d  timer %d\n",i,istate,mif->status->timer);
       if_busy = 1;
-      if ((mif->status->acktimer) > 0 )
-        mif->status->acktimer--;
-      if((mif->status->acktimer) == 0){
-        mrf_debug("tick - aborting wait for ack  i_f %d  tc %d \n",i,_tick_count);
-        mif->status->state = MRF_ST_TX;
-      }
 
-      if_busy = 1;
-    }
-
-    else if ( istate == MRF_ST_ACKDELAY)
-      {
-
-        if_busy = 1;
-        if ((mif->status->acktimer) > 0 ){
-          mif->status->acktimer--;
-          if((mif->status->acktimer) == 0){
-            if (mif->ackqueue->data_avail() == 0){
-              mrf_debug("%s","ERROR -nothing in ackqueue! \n");
-              mif->status->stats.st_err += 1;
-              mif->status->state = MRF_ST_TX;
-              continue;
-            }
-
-            atp = mif->ackqueue->pop();
-            if (atp == NULL){
-              mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
-
-              //mif->status->state = MRF_ST_ACK;
-            }else{
-              mif->ackbuff->length = sizeof(MRF_PKT_HDR);
-              mif->ackbuff->hdest = atp->dest;
-              mif->ackbuff->udest = atp->dest;
-              mif->ackbuff->netid = MRFNET;
-              mif->ackbuff->type  = atp->type;
-
-              mif->ackbuff->hsrc = MRFID;
-              mif->ackbuff->usrc = MRFID;
-              mif->ackbuff->msgid = atp->msgid;
-
-              mrf_debug("tick - send ack i_f %d  tc %d \n",i,_tick_count);
-              mrf_print_packet_header(mif->ackbuff);
-              mif->status->state = MRF_ST_ACK;
-              mif->status->stats.tx_acks += 1;
-              (*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff));
-            }
-          }
-        }
-        if(mif->ackqueue->data_avail()){
-          atp = mif->ackqueue->pop();
-          if (atp == NULL){
-            mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
-            //mif->status->state = MRF_ST_ACK;
-          }
-          else{
-            mrf_debug("tick ackqueue.pop got type 0x%x msgid 0x%x dest 0x%x\n",atp->type,atp->msgid,atp->dest);
-            //mif->status->state = MRF_ST_ACK;
-
-            /*
-            mif->ackbuff->length = sizeof(MRF_PKT_HDR);
-            mif->ackbuff->hdest = atp->dest;
-            mif->ackbuff->udest = atp->dest;
-            mif->ackbuff->netid = MRFNET;
-            mif->ackbuff->type  = atp->type;
-
-            mif->ackbuff->hsrc = MRFID;
-            mif->ackbuff->usrc = MRFID;
-            mif->ackbuff->msgid = atp->msgid;
-            mif->status->acktimer =  mif->type->tx_del;
-            */
+      if (istate == MRF_ST_TX_COMPLETE){
+        if (queue_data_avail(qp)==0)
+          {
+            mrf_debug("%s","!!!!!ERROR!!!!! -nothing in txqueue when MRF_ST_TX_COMPLETE! \n");
+            mif->status->stats.st_err += 1;
+            mif->status->state = MRF_ST_IDLE;
           }
 
-        } else {
-
+        else{
+          bnum = queue_pop(qp);
+          mrf_debug("MRF_ST_TX_COMPLETE i_f %d freeing buff %d \n",i,bnum);
+          _mrf_buff_free(bnum);
+          mif->status->stats.tx_pkts++;
+          mif->status->state = MRF_ST_IDLE;
 
         }
-
+        continue;
 
       }
-    else if ( istate == MRF_ST_ACK ){
-      mif->status->state = MRF_ST_RX;
-      if_busy = 1;  // wait for next tick to check queues before marking idle
+      else if (istate == MRF_ST_TX_RETRY){
+        if (queue_data_avail(qp)==0)
+          {
+            mrf_debug("%s","!!!!!ERROR!!!!! -nothing in txqueue when MRF_ST_TX_RETRY! \n");
+            mif->status->stats.st_err += 1;
+            mif->status->state = MRF_ST_IDLE;
+          }
+
+        else{
+          bnum = queue_pop(qp);
+          mrf_debug("MRF_ST_TX_RETRY FIXME i_f %d freeing buff %d \n",i,bnum);
+          _mrf_buff_free(bnum);
+          mif->status->stats.tx_retried++;
+          mif->status->state = MRF_ST_IDLE;
+
+        }
+        continue;
+
+      }
+      if ((mif->status->timer) > 0 )
+        mif->status->timer--;
+
+
+      if ((mif->status->timer) == 0){
+
+        switch(istate){
+        case MRF_ST_ACK_DEL:
+          send_next_ack(i,mif);
+          break;
+        case MRF_ST_TX_DEL:
+          send_next_queued(i,mif);
+          break;
+
+        default:
+          mrf_debug("%s","ERROR -timeout state MRF_ST_TX*  \n");
+          mif->status->stats.st_err += 1;
+          mif->status->state = MRF_ST_IDLE;
+        }
+      }
 
     }
-    else if (queue_data_avail(qp))
-        {
+    else if (mif->ackqueue->data_avail()){ //and  MRF_ST_IDLE
+      mif->status->timer = mif->type->ack_del;
+      mif->status->state = MRF_ST_ACK_DEL;
+      if_busy = 1;
+    }
+    else if (queue_data_avail(qp)){ //and  MRF_ST_IDLE
+      if_busy = 1;
+      bnum = queue_head(qp);
 
-          if_busy = 1;
+      bs = _mrf_buff_state(bnum);
+      bs->retry_count++;
 
-          bnum = queue_head(qp);
-
-          bs = _mrf_buff_state(bnum);
-          MRF_PKT_HDR *pkt;
-          pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
-
-          mrf_debug("mrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d tx_timer %d  tc %d\n",
-                    i,bnum,bs->state,bs->tx_timer,_tick_count);
-
-          // if (_tick_count >10)
-          //  exit(1);
-          if ( (bs->state) == TXQUEUE ){
-            mrf_debug("%s","buffer state is TXQUEUE \n");
-
-
-            if ( (bs->tx_timer) == 0 ){
-                tb = _mrf_buff_ptr(bnum);
-                //mrf_debug("calling send func\n");
-                bs->retry_count++;
-                mrf_debug("tick - send buff %d i_f %d tc %d retry_count %d\n",
-                          bnum,i,_tick_count,bs->retry_count);
-                mif->status->state = MRF_ST_TX;
-                //mif->status->stats.tx_pkts += 1;   // only inc this stat if ack recieved - i.e. in ack/resp handlers
-                (*(mif->type->funcs.send))((I_F)i,tb);
-
-                //const MRF_CMD *cmd = _mrf_cmd(pkt->type);
-
-                if (!needs_ack(pkt->type)){   //cmd->cflags & MRF_CFLG_NO_ACK) {
-                  //bs->state = TX;
-                  mif->status->state = MRF_ST_RX; // FIXME what is this if state really about?
-                  _mrf_buff_free(bnum);
-                  queue_pop(qp);
-
-                } else {
-                  bs->state = TX;
-                  mif->status->state = MRF_ST_WAITSACK;
-                  mif->status->acktimer = ACKTIMER_VAL;
-                }
-                bs->tx_timer = 0;
-            // queue_pop(qp);
-            //count++;
-            }
-            else {
-              (bs->tx_timer) --;
-            //mrf_debug("tx_timer -> %d\n",bs->tx_timer);
-            }
-          }
-          else if ( (bs->state) == TX ){
-            mrf_debug("mrf_tick : bs state TX  on IF %d - timer = %d tc %d\n",i,bs->tx_timer,_tick_count);
-
-            if(((bs->tx_timer) ++) > _MRF_TX_TIMEOUT ){
-              mrf_debug("mrf_tick : tx timeout on IF %d - timer = %d tc %d\n",i,bs->tx_timer,_tick_count);
-              if ((bs->retry_count ) < _MRF_MAX_RETRY){
-                mrf_debug("retry number %d\n",bs->retry_count);
-                bs->tx_timer = mif->type->tx_del;
-                bs->state = TXQUEUE;
-                mif->status->state = MRF_ST_TXQ;
-                mif->status->stats.tx_retries++;
-
-
-              }else{
-
-                mrf_debug("%s","retry limit reached - abort buffer tx\n");
-                mif->status->stats.tx_errors++;
+      if(bs->retry_count >= _MRF_MAX_RETRY){
+        mrf_debug("%s","retry limit reached - abort buffer tx\n");
+        mif->status->stats.tx_errors++;
+        mrf_debug("%s","retry limit reached - abort buffer tx\n");
+        mif->status->stats.tx_errors++;
 
 
 
 #if 0
-                // maybe send NDR here ..but in meantime
-                bs->state = FREE;   // effectively mrf_buff_free
-                bs->owner = NUM_INTERFACES;
+        // maybe send NDR here ..but in meantime
+        bs->state = FREE;   // effectively mrf_buff_free
+        bs->owner = NUM_INTERFACES;
 #else
 
-                mrf_ndr(NDR_MAX_RETRIES,bnum);  // this reuses buffer for ndr
+        mrf_ndr(NDR_MAX_RETRIES,bnum);  // this reuses buffer for ndr
 
-                //pkt->
 
 #endif
-                mif->status->state = MRF_ST_RX;
-                queue_pop(qp);
-              }
-            }
+        mif->status->state = MRF_ST_IDLE;
+        queue_pop(qp);
 
 
-          }
-        }
+      }else {
+
+        mrf_debug("mrf_tick : FOUND txqueue -IF = %d buffer is %d buff state %d retry_count %d  tc %d\n",
+                  i,bnum,bs->state,bs->retry_count,_tick_count);
+
+
+        mif->status->timer = mif->type->tx_del;
+        mif->status->state = MRF_ST_TX_DEL;
+      }
+
+    }
      // end if can_tx
   } // for i=0 to NUM_INTERFACES
 
@@ -1008,6 +1016,7 @@ void _new_tick(){
 }
 
 
+/*
 
 void _mrf_tick(){
   const MRF_IF *mif;
@@ -1022,13 +1031,6 @@ void _mrf_tick(){
   _tick_count++;
   if ( (_tick_count % 1000 ) == 0)
     mrf_debug("%d\n",_tick_count);
-  /*
-  if(_tick_count > 100 ){
-    _mrf_if_print_all();
-    _mrf_buff_print();
-    exit(1);
-  }
-  */
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     mif = mrf_if_ptr((I_F)i);
     qp = &(mif->status->txqueue);
@@ -1073,19 +1075,6 @@ void _mrf_tick(){
           else{
             mrf_debug("tick ackqueue.pop got type 0x%x msgid 0x%x dest 0x%x\n",atp->type,atp->msgid,atp->dest);
             //mif->status->state = MRF_ST_ACK;
-
-            /*
-            mif->ackbuff->length = sizeof(MRF_PKT_HDR);
-            mif->ackbuff->hdest = atp->dest;
-            mif->ackbuff->udest = atp->dest;
-            mif->ackbuff->netid = MRFNET;
-            mif->ackbuff->type  = atp->type;
-
-            mif->ackbuff->hsrc = MRFID;
-            mif->ackbuff->usrc = MRFID;
-            mif->ackbuff->msgid = atp->msgid;
-            mif->status->acktimer =  mif->type->tx_del;
-            */
           }
 
         } else {
@@ -1216,6 +1205,7 @@ void _mrf_tick(){
   }
 }
 
+*/
 
 int mrf_app_signal(uint8 signum){
   mrf_app_queue_push(MRF_BNUM_SIGNAL_BASE + signum);

@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -53,7 +53,7 @@ int _print_mrf_cmd(MRF_CMD_CODE cmd);
 
 // lnx i_f uses named pipes , usb uses tty
 // lnx i_f opens fd for each write
-// usb keeps opened ( in output_fd ) 
+// usb keeps opened ( in output_fd )
 
 //static int _input_fd[NUM_INTERFACES+2];
 
@@ -108,7 +108,7 @@ static int  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
     return -1;
   }
 
-  
+
   for ( i = 0 ; i <  sizeof(MRF_PKT_HDR) ; i++){
     mbuff[i] = hex_dig_str_to_int(&buffer[i*2]);
   }
@@ -126,23 +126,23 @@ static int  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
     mrf_debug("looks like incomplete packet  in buffer ( hdr->length %d , but read len %d bytes hexascii)\n",hdr->length,len);
     return -1;
   }
- 
 
 
-  
+
+
   for (  ; i <  hdr->length ; i++){
     mbuff[i] = hex_dig_str_to_int(&buffer[i*2]);
   }
-    
-  
+
+
   return i*2;
 }
-// named pipe uses ascii hex encoding 
+// named pipe uses ascii hex encoding
 static int  copy_to_txbuff(uint8 *buffer,int len,uint8 *txbuff){
   int i;
   for ( i = 0 ; i < len ; i++){
     txbuff[i*2] = int_to_hex_digit(buffer[i]/16);
-    txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);    
+    txbuff[i*2 + 1] = int_to_hex_digit(buffer[i]%16);
   }
   txbuff[i*2] = '\n';
 
@@ -182,7 +182,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   for (i = 0 ; i < len ; i ++ )
     {
       if (is_hex_digit(inbuff[i] == 0) ){
-        mrf_debug("dig %d ( %c ) not hex\n",i,inbuff[i]); 
+        mrf_debug("dig %d ( %c ) not hex\n",i,inbuff[i]);
         return -1;
       }
     }
@@ -196,7 +196,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
   while (len > 0 ) {  // we can have multiple packets waiting
 
-    
+
     uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
     mrf_debug("about to copy to mbuff len (ascii) %d \n",len);
 
@@ -222,14 +222,14 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
         len -= 1;
         ibcnt += 1;
         mrf_debug("got non hex_digit %d - removed from buff len is now %d\n",inbuff[ibcnt-1],len);
-       
+
       }
 
     }
-    
+
   }
 
-    
+
   mrf_debug("%s","_mrf_pipe_buff_lnx exit\n");
   return 0;
 }
@@ -244,12 +244,12 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
   mrf_debug("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
-  
+
   // rough hack to get up and down using correct sockets
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
     sknum = 0;
   else if (hdr->hdest >= 1) { // usbrf or host
-      if(hdr->hdest < MRFID) 
+      if(hdr->hdest < MRFID)
         sknum = 1;
       else
         sknum = 0;
@@ -278,6 +278,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   write(fd, txbuff,tb );
   fsync(fd);
   close(fd);
+  mrf_if_tx_done(i_f);
   //mrf_debug("bc = %d  fd = %d\n",bc,fd);
   return 0;
 }

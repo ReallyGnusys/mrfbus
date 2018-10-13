@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -33,24 +33,16 @@ typedef struct{
 
 typedef MQueue<ACK_TAG> AckQueue;
 
-
-
 typedef enum {
-  MRF_ACK_SEG,
-  MRF_ACK_REC,
-  MRF_ACK_RTRY,
-  MRF_ACK_ERROR} MRF_ACK_CODE;
-
-typedef enum {
-  MRF_ST_NONE,
   MRF_ST_IDLE,
-  MRF_ST_TXQ,
-  MRF_ST_TX,
-  MRF_ST_WAITSACK,  // wait for segment ack
-  MRF_ST_WAITUACK,  // wait for ultimate ack
-  MRF_ST_RX,
-  MRF_ST_ACKDELAY,
+  MRF_ST_ACK_DEL,
+  MRF_ST_TX_DEL,
   MRF_ST_ACK,
+  MRF_ST_TX,
+  MRF_ST_TX_FOR_ACK, // called if send_func - needs if to st to next state
+  MRF_ST_WAIT_ACK,  // wait for segment ack
+  MRF_ST_TX_RETRY,  // received sretry
+  MRF_ST_TX_COMPLETE // tx was acknowledged, if required
 } IF_STATE;
 
 
@@ -65,10 +57,10 @@ typedef struct {
   const IF_INIT_FUNCPTR init;
   const IF_BUFF_FUNCPTR buff;
 } IF_FUNCS;
-  
+
 typedef struct {
   const uint8 tx_del;
-  const uint8 ack_del;  
+  const uint8 ack_del;
   const IF_FUNCS funcs;
 } MRF_IF_TYPE;
 
@@ -86,9 +78,9 @@ typedef struct  __attribute__ ((packed))  {
   uint16 tx_overruns;
   uint16 tx_retries;
   uint16 tx_retried;
-  uint16 tx_errors;  
-  uint16  unexp_ack;  
-  uint16  rx_ndr;  
+  uint16 tx_errors;
+  uint16  unexp_ack;
+  uint16  rx_ndr;
   uint8  alloc_err;
   uint8  st_err;
 } IF_STATS;
@@ -96,7 +88,7 @@ typedef struct  __attribute__ ((packed))  {
 typedef struct  {
   IF_STATE state;
   IF_STATS stats;
-  uint8 acktimer;
+  uint8 timer;
   IQUEUE txqueue;
   uint8 rx_last_id;
   uint8 rx_last_src;
@@ -123,6 +115,8 @@ void mrf_if_init();
 const MRF_IF *mrf_if_ptr(I_F i_f);
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum );
+void mrf_if_tx_done(I_F i_f);
+
 void _mrf_if_print_all();
 int mrf_if_recieving(I_F i_f);
 int mrf_if_transmitting(I_F i_f);

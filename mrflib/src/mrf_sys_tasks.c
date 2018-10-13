@@ -42,32 +42,32 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   MRF_BUFF_STATE *bs;
 
 
- if ( ifp->status->state != MRF_ST_WAITSACK){
-   mrf_debug("ERROR: buffer_responded called when ifp state was %d",ifp->status->state);
+ if ( ifp->status->state != MRF_ST_WAIT_ACK){
+   mrf_debug("ERROR: buffer_responded called when ifp state was %d\n",ifp->status->state);
 
  }
   if (!queue_data_avail(qp)){
-    mrf_debug("buffer_responded, error nothing was queuing for ifp %p",ifp);
+    mrf_debug("buffer_responded, error nothing was queuing for ifp %p\n",ifp);
     return _MRF_BUFFS;
   }
   // clear buff state of ack buffer
   bn = queue_head(qp);
   bs = _mrf_buff_state(bn);
   txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
-  mrf_debug(" qhead is %d state %d\n",bn,bs->state);
+  mrf_debug(" qhead is %d state %d - if state %d header:\n",bn,bs->state,ifp->status->state);
+  mrf_print_packet_header(txhdr);
+
   //FIXME really should do some more checks here on src dest addresses
-  if((bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
+  if((ifp->status->state == MRF_ST_WAIT_ACK) && (bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
     {
       mrf_debug("buffer_responded : acknowledge recieved for buffer %d \n",bn);
-      queue_pop(qp);
-      ifp->status->state = MRF_ST_RX;
+      //queue_pop(qp);
+      ifp->status->state = MRF_ST_TX_COMPLETE;
       return bn;
     }
-  else{
-    mrf_debug("buffer_responded returning not found for bnum %u",bnum);
-    mrf_debug("buff %d state %d (%s) owner %d\n",bnum,bs->state,mrf_buff_state_name(bnum),bs->owner);
+  mrf_debug("buffer_responded returning not found for bnum %u msgid %d ackid %d\n",bnum,txhdr->msgid,ackhdr->msgid);
+  mrf_debug("buff %d state %d (%s) owner %d i_f state %d \n",bnum,bs->state,mrf_buff_state_name(bnum),bs->owner,ifp->status->state);
 
-  }
   return _MRF_BUFFS;
 
 
@@ -88,8 +88,8 @@ extern MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
     hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
     mrf_debug("mrf_task_ack.. ack matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
-    ifp->status->stats.tx_pkts++;
-    _mrf_buff_free(txbuff);
+    //ifp->status->stats.tx_pkts++;
+    //_mrf_buff_free(txbuff);
 
 
   } else {
@@ -120,10 +120,9 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
     mrf_debug("mrf_task_retry.. matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
     ifp->status->stats.tx_retried++;
+    ifp->status->state = MRF_ST_TX_RETRY;
     if(hdr->usrc != MRFID)   // if we weren't initiator then send ndr to initiator
       mrf_ndr(NDR_RECD_SRETRY, txbuff);
-    else
-      _mrf_buff_free(txbuff);
 
 
   } else {

@@ -568,11 +568,10 @@ class MrflandServer(object):
 
 
         hdr.load(bytes(resp)[0:len(hdr)])
-        #print "hdr is:\n%s\n"%repr(hdr)
 
         if hdr.netid != self.netid: # only looking for packets from this netid
-            hdr.load(bytes(resp)[0:len(hdr)])
             mrflog.warn("not our netid")
+            print ("hdr is:\n%s\n"%repr(hdr))
             return None,None,None
 
         if hdr.udest != 0: # only looking for packets destined for us
