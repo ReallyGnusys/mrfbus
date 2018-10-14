@@ -950,7 +950,7 @@ void _mrf_tick(){
           break;
 
         default:
-          mrf_debug("%s","ERROR -timeout state MRF_ST_TX*  \n");
+          mrf_debug("ERROR -timeout state %s  \n",mrf_if_state_name((I_F)i));
           mif->status->stats.st_err += 1;
           mif->status->state = MRF_ST_IDLE;
         }
