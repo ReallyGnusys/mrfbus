@@ -41,11 +41,11 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_HDR *txhdr;
   MRF_BUFF_STATE *bs;
 
+  uint8 i = ifp->i_f;
+  if ( ifp->status->resp_timer == 0){
+    mrf_debug("ERROR: buffer_responded called when ifp resp_timer was %d\n",ifp->status->resp_timer);
 
- if ( ifp->status->state != MRF_ST_WAIT_ACK){
-   mrf_debug("ERROR: buffer_responded called when ifp state was %d\n",ifp->status->state);
-
- }
+  }
   if (!queue_data_avail(qp)){
     mrf_debug("buffer_responded, error nothing was queuing for ifp %p\n",ifp);
     return _MRF_BUFFS;
@@ -58,11 +58,24 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   mrf_print_packet_header(txhdr);
 
   //FIXME really should do some more checks here on src dest addresses
-  if((ifp->status->state == MRF_ST_WAIT_ACK) && (bs->state == TX) &&((txhdr->msgid) == (ackhdr->msgid)))
+  if((txhdr->msgid == ackhdr->msgid) && (txhdr->hdest == ackhdr->hsrc))
     {
+
       mrf_debug("buffer_responded : acknowledge recieved for buffer %d \n",bn);
-      //queue_pop(qp);
-      ifp->status->state = MRF_ST_TX_COMPLETE;
+
+      if(bs->state != TX){
+
+        mrf_debug("WARNING buffer_responded : acknowledge recieved for buffer %d but bs_state %s \n",bn,mrf_buff_state_name(bn));
+
+      }
+      ifp->status->resp_timer = 0;
+      // pop queue and free buffer
+      queue_pop(qp);
+      _mrf_buff_free(bn);
+      ifp->status->stats.tx_pkts++;
+      mrf_debug("popped i_f %d txq and freed buff %d",i,bnum);
+      mrf_if_print_info((I_F)i);
+      //ifp->status->state = MRF_ST_TX_COMPLETE;
       return bn;
     }
   mrf_debug("buffer_responded returning not found for bnum %u msgid %d ackid %d\n",bnum,txhdr->msgid,ackhdr->msgid);

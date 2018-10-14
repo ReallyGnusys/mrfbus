@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -30,9 +30,8 @@ extern const MRF_IF_TYPE mrf_pipe_lnx_if;
 static int ifd[NUM_INTERFACES]; // need fds for lnx i_f s
 
 extern const MRF_IF _sys_ifs[] = {
-  [ PIPE0 ] =  { &_if_status[0], &mrf_pipe_lnx_if, &_if_ackbuffs[0], &_if_ack_queues[0], &ifd[0], "PIPE0"},
-  [ PIPE1 ] =  { &_if_status[1], &mrf_pipe_lnx_if, &_if_ackbuffs[1], &_if_ack_queues[1], &ifd[1], "PIPE1"},
-  [ PIPE2 ] =  { &_if_status[2], &mrf_pipe_lnx_if, &_if_ackbuffs[2], &_if_ack_queues[2], &ifd[2], "PIPE2"},
-  [ PIPE3 ] =  { &_if_status[3], &mrf_pipe_lnx_if, &_if_ackbuffs[3], &_if_ack_queues[3], &ifd[3], "PIPE3"}
+  [ PIPE0 ] =  { &_if_status[0], &mrf_pipe_lnx_if, &_if_ackbuffs[0], &_if_ack_queues[0], &ifd[0], "PIPE0",PIPE0},
+  [ PIPE1 ] =  { &_if_status[1], &mrf_pipe_lnx_if, &_if_ackbuffs[1], &_if_ack_queues[1], &ifd[1], "PIPE1",PIPE1},
+  [ PIPE2 ] =  { &_if_status[2], &mrf_pipe_lnx_if, &_if_ackbuffs[2], &_if_ack_queues[2], &ifd[2], "PIPE2",PIPE2},
+  [ PIPE3 ] =  { &_if_status[3], &mrf_pipe_lnx_if, &_if_ackbuffs[3], &_if_ack_queues[3], &ifd[3], "PIPE3",PIPE3}
 };
-

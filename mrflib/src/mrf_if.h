@@ -86,14 +86,15 @@ typedef struct  __attribute__ ((packed))  {
 } IF_STATS;
 
 typedef struct  {
-  IF_STATE state;
   IF_STATS stats;
+  uint8 resp_timer;
   uint8 timer;
   IQUEUE txqueue;
   uint8 rx_last_id;
   uint8 rx_last_src;
   uint8 tx_id;
   uint8 rx_on;  // default xbus mode , when not transmitting
+  IF_STATE state;
 } IF_STATUS;
 
 
@@ -106,6 +107,7 @@ typedef struct  {
   int *fd;  // fd used by lnx epoll
   const char *name;
 #endif
+  uint8 i_f;
 } MRF_IF;
 
 void mrf_if_init();
@@ -122,5 +124,6 @@ int mrf_if_recieving(I_F i_f);
 int mrf_if_transmitting(I_F i_f);
 int mrf_if_can_sleep(I_F i_f);
 const char * mrf_if_state_name(I_F i_f);
+void mrf_if_print_info(I_F i_f);
 
 #endif

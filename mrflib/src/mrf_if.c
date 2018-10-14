@@ -101,14 +101,20 @@ void mrf_if_register(I_F i_f,const MRF_IF_TYPE *type){
 }
 */
 
+void mrf_if_print_info(I_F i_f){
+  const MRF_IF *ifp;
+  int i = (int)i_f;
+  ifp = mrf_if_ptr((I_F)i);
+    mrf_debug("I_F %d state %s txq_da %d ackq da %d timer %d resp_timer %d\n",i,mrf_if_state_name((I_F)i),
+              queue_data_avail(&(ifp->status->txqueue)),ifp->ackqueue->items(),
+              ifp->status->timer,ifp->status->resp_timer);
+
+}
 void _mrf_if_print_all(){
 
   int i;
-  const MRF_IF *ifp;
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
-    ifp = mrf_if_ptr((I_F)i);
-    mrf_debug("I_F %d state %s txq_da %d ackq da %d\n",i,mrf_if_state_name((I_F)i),
-              queue_data_avail(&(ifp->status->txqueue)),ifp->ackqueue->items());
+    mrf_if_print_info((I_F)i);
   }
 }
 
@@ -117,7 +123,6 @@ void mrf_if_tx_done(I_F i_f){
   if (mif->status->state == MRF_ST_ACK) {
     mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_ACK to IDLE \n",i_f,mif->status->state);
     mif->status->state = MRF_ST_IDLE;
-
   }
 
   else if (mif->status->state == MRF_ST_TX) {
@@ -126,8 +131,10 @@ void mrf_if_tx_done(I_F i_f){
 
   }
   else if(mif->status->state == MRF_ST_TX_FOR_ACK) {
-    mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_TX_FOR_ACK to WAIT_ACK \n",i_f,mif->status->state);
-    mif->status->state = MRF_ST_WAIT_ACK;
+    mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_TX_FOR_ACK to TX_COMPLETE \n",i_f,mif->status->state);
+    //mif->status->state = MRF_ST_WAIT_ACK;
+    mif->status->state = MRF_ST_TX_COMPLETE;
+    mif->status->resp_timer = 100;
   }
   else{
 
@@ -151,7 +158,8 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
       mbst->state = TXQUEUE;
       mbst->retry_count = 0;
       mrf_tick_enable();
-      mrf_debug("mrf_if_tx_queue OK i_f %d buff %d retry_count %d\n",i_f,bnum,mbst->retry_count);
+      mrf_debug("mrf_if_tx_queue OK i_f %d buff %d retry_count %d qip %d qop %d items %d\n",
+                i_f,bnum,mbst->retry_count,qp->qip,qp->qop,queue_items(qp));
       return 0;
   }
   else {
