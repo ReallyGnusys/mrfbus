@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -25,11 +25,11 @@
 //typedef struct volatile {
 #define MQUEUE_DEPTH 4
 
-template <class T> 
+template <class T>
 
 class MQueue
 
-{ 
+{
  public:
   MQueue();
   int full();
@@ -40,7 +40,11 @@ class MQueue
   const T* pop();
   int flush();
   const T* head();
-
+  const uint8 get_qip();
+  const uint8 get_qop();
+  const uint8 get_nitems();
+  const uint8 get_push_errors();
+  const uint8 get_pop_errors();
 
  private:
   volatile uint8 qip;
@@ -53,7 +57,7 @@ class MQueue
 };
 
 
-template <class T> 
+template <class T>
 
 MQueue<T>::MQueue(){
   qip = 0;
@@ -63,7 +67,32 @@ MQueue<T>::MQueue(){
   pop_errors = 0;
 }
 
-template <class T> 
+template <class T>
+const uint8 MQueue<T>::get_qip(){
+  return (const uint8)qip;
+}
+
+template <class T>
+const uint8 MQueue<T>::get_qop(){
+  return (const uint8)qop;
+}
+
+template <class T>
+const uint8 MQueue<T>::get_nitems(){
+  return (const uint8)nitems;
+}
+template <class T>
+const uint8 MQueue<T>::get_push_errors(){
+  return (const uint8)push_errors;
+}
+template <class T>
+const uint8 MQueue<T>::get_pop_errors(){
+  return (const uint8)pop_errors;
+}
+
+
+
+template <class T>
 
 int MQueue<T>::items(){
   int _nitems;
@@ -75,25 +104,26 @@ int MQueue<T>::items(){
   return _nitems;
 }
 
-template <class T> 
+
+template <class T>
 
 int MQueue<T>::flush(){
   int flushed = items();
-  
-  nitems = 0;  //FIXME shouldn't need this field - use function above 
+
+  nitems = 0;  //FIXME shouldn't need this field - use function above
   qop = 0;
   qip = 0;
-  
+
   //return (items == (MQUEUE_DEPTH -1 ));
   return flushed;
 }
-template <class T> 
+template <class T>
 
 int MQueue<T>::full(){
-  return ( items() >= MQUEUE_DEPTH);  
+  return ( items() >= MQUEUE_DEPTH);
   //return ((qip+1) % (MQUEUE_DEPTH*2)) == qop;
 }
-template <class T> 
+template <class T>
 
 int MQueue<T>::data_avail(){
   return (qip != qop);
@@ -102,33 +132,33 @@ int MQueue<T>::data_avail(){
 
 // sets elem for entry qip
 
-template <class T> 
+template <class T>
 
 void MQueue<T>::_q_elem_set(const T& val){
   buffer[qip % MQUEUE_DEPTH] = val;
 }
 
 
-template <class T> 
+template <class T>
 
 const T *MQueue<T>::head(){
   return (const T *)&buffer[qop % MQUEUE_DEPTH];
 }
 
-template <class T> 
+template <class T>
 
 int MQueue<T>::push(const T& data){
   if (full()){
     push_errors++;
     return -1;
   }
-  _q_elem_set(data);  
+  _q_elem_set(data);
   qip = (qip + 1) % (MQUEUE_DEPTH * 2);
   nitems++;
   return 0;
 }
 
-template <class T> 
+template <class T>
 
 const T *MQueue<T>::pop(){
   if (data_avail() == 0){

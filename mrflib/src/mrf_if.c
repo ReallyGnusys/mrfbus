@@ -12,11 +12,34 @@
 
 extern const MRF_IF _sys_ifs[NUM_INTERFACES]; //[NUM_INTERFACES];
 
+const char * ifstnames[] = {"MRF_ST_IDLE",
+                            "MRF_ST_ACK_DEL",
+                            "MRF_ST_TX_DEL",
+                            "MRF_ST_ACK",
+                            "MRF_ST_TX",
+                            "MRF_ST_TX_FOR_ACK",
+                            "MRF_ST_WAIT_ACK",
+                            "MRF_ST_TX_RETRY",
+                            "MRF_ST_TX_COMPLETE"
+};
+
+const char illegal_if_warning[] = "ILLEGAL_IF ERROR";
+
+
+
 const MRF_IF *mrf_if_ptr(I_F i_f){
   if (i_f < NUM_INTERFACES)
     return &_sys_ifs[i_f];
   else
     return (MRF_IF *)NULL;
+}
+
+const char * mrf_if_state_name(I_F i_f){
+  const MRF_IF *mif = mrf_if_ptr(i_f);
+  if (mif == NULL)
+    return illegal_if_warning;
+  else
+    return ifstnames[mif->status->state];
 }
 
 
@@ -84,7 +107,8 @@ void _mrf_if_print_all(){
   const MRF_IF *ifp;
   for ( i = 0 ; i < NUM_INTERFACES ; i++){
     ifp = mrf_if_ptr((I_F)i);
-    mrf_debug("I_F %d state %d txq_da %d\n",i,ifp->status->state,queue_data_avail(&(ifp->status->txqueue)));
+    mrf_debug("I_F %d state %s txq_da %d ackq da %d\n",i,mrf_if_state_name((I_F)i),
+              queue_data_avail(&(ifp->status->txqueue)),ifp->ackqueue->items());
   }
 }
 

@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -92,9 +92,9 @@ int mrf_app_init(){
   mrf_debug("%s","mrf_app_init host\n");
 
   mrf_app_tick_enable(2);
-  
+
   //mrf_arch_app_callback(_appl_fifo_callback);  // we want arch to manage a TCP server for server.py to access
-  
+
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -125,7 +125,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   else if  (resp->type == mrf_cmd_if_stats){
     IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("IF STATUS : rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u tx_overruns %u unexp_ack %u alloc_err %u st_err %u\n",if_stats->rx_pkts,if_stats->tx_pkts,if_stats->tx_acks,if_stats->tx_retries,if_stats->tx_overruns, if_stats->unexp_ack, if_stats->alloc_err, if_stats->st_err);
-  }  
+  }
   else if  (resp->type == mrf_cmd_get_time){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
@@ -134,7 +134,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if  (resp->type == mrf_cmd_buff_state){
     MRF_PKT_BUFF_STATE *bst = (MRF_PKT_BUFF_STATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     char *bstnames[] = {"FREE","LOADING","LOADED","TXQUEUE","TX","APPIN"};
@@ -147,7 +147,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if (resp->type == mrf_cmd_cmd_info){
     MRF_PKT_CMD_INFO *cmd_inf = (MRF_PKT_CMD_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("CMD INFO type %u name %s cflags 0x%02X req_size %u rsp_size %u\n",
@@ -171,7 +171,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if  (resp->type == mrf_cmd_usr_struct){
     char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("%s","usr_struct : this is slightly bonkers \n");
@@ -180,7 +180,7 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
     mrf_debug(":end of hex");
 */
-  }  
+  }
 
   else if  (resp->type >= _MRF_APP_CMD_BASE){
     mrf_debug("_MRF_APP_CMD  %d ( mrf_cmd code %d)\n",resp->type - _MRF_APP_CMD_BASE , resp->type);
@@ -189,8 +189,8 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
-  
+  }
+
 
   _mrf_buff_free(bnum);
 }
@@ -226,7 +226,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   else if  (resp->type == mrf_cmd_if_stats){
     IF_STATS *if_stats = (IF_STATS *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("IF STATUS : rx_pkts %u tx_pkts %u tx_acks %u tx_retries %u tx_overruns %u unexp_ack %u alloc_err %u st_err %u\n",if_stats->rx_pkts,if_stats->tx_pkts,if_stats->tx_acks,if_stats->tx_retries,if_stats->tx_overruns, if_stats->unexp_ack, if_stats->alloc_err, if_stats->st_err);
-  }  
+  }
   else if  (resp->type == mrf_cmd_get_time){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("TIMEDATE : %u-%u-%u  %u:%u:%u \n",td->day,td->mon,td->year,td->hour,td->min,td->sec);
@@ -235,7 +235,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if  (resp->type == mrf_cmd_buff_state){
     MRF_PKT_BUFF_STATE *bst = (MRF_PKT_BUFF_STATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     char *bstnames[] = {"FREE","LOADING","LOADED","TXQUEUE","TX","APPIN"};
@@ -248,7 +248,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if (resp->type == mrf_cmd_cmd_info){
     MRF_PKT_CMD_INFO *cmd_inf = (MRF_PKT_CMD_INFO *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("CMD INFO type %u name %s cflags 0x%02X req_size %u rsp_size %u\n",
@@ -272,7 +272,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
+  }
   else if  (resp->type == mrf_cmd_usr_struct){
     //char *buff = (char *)((uint8*)resp + sizeof(MRF_PKT_RESP));
     mrf_debug("%s","usr_struct : fixme for output \n");
@@ -281,7 +281,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)buff,sizeof(MRF_PKT_DBG_CHR32));
     mrf_debug(":end of hex");
 */
-  }  
+  }
 
   else if  (resp->type == _MRF_APP_CMD_BASE){
     TIMEDATE *td = (TIMEDATE *)((uint8*)resp + sizeof(MRF_PKT_RESP));
@@ -291,8 +291,8 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     _mrf_print_hex_buff((uint8 *)td,sizeof(TIMEDATE));
     mrf_debug(":end of hex");
     */
-  }  
-  
+  }
+
   _mrf_buff_free(bnum);
 
 }
@@ -309,7 +309,7 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 }
 
 int get_mem_stats(MRF_PKT_LNX_MEM_STATS *mst){
-  
+
   //MRF_PKT_LNX_MEM_STATS *mst = (MRF_PKT_LNX_MEM_STATS *)mrf_response_buffer(bnum);
 
   FILE* statm = fopen( "/proc/self/statm", "r" );
@@ -331,17 +331,16 @@ int tick_task(){
   if ((_tick_cnt > 2))
     mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_mstats,  (uint8 *)&_memstats, sizeof(MRF_PKT_LNX_MEM_STATS));
   return 0;
-  
+
 }
 
 
 MRF_CMD_RES mrf_app_mem_stats(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("%s","mrf_app_mem_stats entry\n");
-  
+
   get_mem_stats((MRF_PKT_LNX_MEM_STATS *)mrf_response_buffer(bnum));
-  
+
   mrf_send_response(bnum,sizeof(MRF_PKT_LNX_MEM_STATS));
-  mrf_debug("%s","mrf_app_task_test exit\n");
+  mrf_debug("%s","mrf_app_mem_stats exit\n");
   return MRF_CMD_RES_OK;
 }
-

@@ -170,7 +170,7 @@ if [ -n "$runtests" ] ; then
    echo "Start unit tests.."
 
 
-   python ${MRFBUS_HOME}/land/core_tests.py
+   python ${MRFBUS_HOME}/land/core_tests.py  > ${LOGDIR}/core_tests.log
    rv=$?
 
    echo "tests completed : rv=$rv"

@@ -148,7 +148,7 @@ int mrf_sack(uint8 bnum){
  acktag.dest   = hdr->hsrc;
 
  if(if_ptr->ackqueue->push(acktag) == 0){
-   mrf_debug("pushed acktag to ackqueue for %s num items %d\n",if_ptr->name,if_ptr->ackqueue->items());
+   mrf_debug("mrf_sack : pushed acktag to ackqueue for %s i_f %d  num items %d\n",if_ptr->name,route.i_f,if_ptr->ackqueue->items());
  }
  else {
    mrf_debug("ERROR failed to push acktag to ackqueue for %s num items %d\n",if_ptr->name,if_ptr->ackqueue->items());
@@ -231,9 +231,10 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
   mrf_nexthop(&route,MRFID,dest);
 
   if ((bnum = mrf_alloc_if(route.i_f)) == _MRF_BUFFS){
+    mrf_debug("%s","\nERROR mrf_send_structure : failed to allocate buffer!!!\n");
     return -1;
   }
-  mrf_debug("\nmrf_send_structure :  bnum %d  len %d\n",bnum,len);
+  mrf_debug("mrf_send_structure :  bnum %d  len %d\n",bnum,len);
 
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
@@ -252,6 +253,7 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
 
  resp->rlen = len;
  resp->type = code;
+ resp->msgid = hdr->msgid;  // FIXME - for usr_struct this has no meaning, only real response
  hdr->type = mrf_cmd_usr_struct; //_mrf_response_type(hdr->type);
  hdr->length = sizeof(MRF_PKT_HDR) + sizeof(MRF_PKT_RESP) + len;
  mrf_debug("%s","mrf_send_resp, responding - header follows(1)\n");
@@ -611,7 +613,7 @@ static int _mrf_buff_forward(uint8 bnum){
   _Dbg_fw();
   if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
     // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
-    mrf_debug("WARN:  could not queue tx on on i_f %d  \n",route.i_f);
+    mrf_debug("WARN:  could not queue tx of buff %d on on i_f %d  \n",bnum,route.i_f);
 
     mrf_sretry(bnum);
   }
@@ -668,7 +670,7 @@ int _mrf_process_buff(uint8 bnum)
     resptxbuff = buffer_responded(bnum,ifp);
     mrf_debug("buffer_responded bnum %u\n",resptxbuff);
     if (resptxbuff < _MRF_BUFFS){
-      mrf_debug("RESP counts as ack for buffer %d",resptxbuff);
+      mrf_debug("RESP counts as ack for buffer %d\n",resptxbuff);
       //ifp->status->stats.tx_pkts++;
       ifp->status->state = MRF_ST_TX_COMPLETE;
       //if( pkt->udest != MRFID){
@@ -835,8 +837,16 @@ int send_next_ack(int i,const MRF_IF *mif){
     mif->status->state = MRF_ST_IDLE;
     return -1;
   }
+  mrf_debug("ackqueue nitems %d items %d qip %d qop %d\n",
+            mif->ackqueue->get_nitems(),mif->ackqueue->items(),
+            mif->ackqueue->get_qip(),mif->ackqueue->get_qop());
 
   atp = mif->ackqueue->pop();
+
+  mrf_debug("ackqueue popped nitems %d items %d qip %d qop %d\n",
+            mif->ackqueue->get_nitems(),mif->ackqueue->items(),
+            mif->ackqueue->get_qip(),mif->ackqueue->get_qop());
+
   if (atp == NULL){
     mrf_debug("%s","ERROR tick ackqueue.pop got NULL\n");
     mif->status->stats.st_err += 1;
@@ -884,7 +894,7 @@ void _mrf_tick(){
     istate = mif->status->state;
 
     if ( istate > MRF_ST_IDLE){
-      mrf_debug("tick -  i_f %d state %d  timer %d\n",i,istate,mif->status->timer);
+      mrf_debug("tick -  i_f %d state %s  timer %d\n",i,mrf_if_state_name((I_F)i),mif->status->timer);
       if_busy = 1;
 
       if (istate == MRF_ST_TX_COMPLETE){
@@ -948,6 +958,8 @@ void _mrf_tick(){
 
     }
     else if (mif->ackqueue->data_avail()){ //and  MRF_ST_IDLE
+      mrf_debug("idle i_f %d has ackqueue data\n",i);
+
       mif->status->timer = mif->type->ack_del;
       mif->status->state = MRF_ST_ACK_DEL;
       if_busy = 1;

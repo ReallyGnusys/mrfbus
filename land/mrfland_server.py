@@ -574,15 +574,16 @@ class MrflandServer(object):
             print ("hdr is:\n%s\n"%repr(hdr))
             return None,None,None
 
-        if hdr.udest != 0: # only looking for packets destined for us
+        if hdr.udest != 0: # only looking for packets destined for us, except for receipts
 
             if hdr.usrc != 0:
                 mrflog.warn("not receipt for us")
                 return None,None,None
 
             if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
-                mrflog.warn("got receipt for active cmd  msgid %d"%hdr.msgid)
+                mrflog.warn("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
                 self.active_cmd.receipt = hdr
+                mrflog.warn(repr(hdr))
                 if len(resp) > hdr.length:
                     resp = resp[hdr.length:]
                     return None,None,resp
@@ -611,7 +612,7 @@ class MrflandServer(object):
             return None, None, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
-            mrflog.info("server parse input got hdr %s"%repr(hdr))
+            mrflog.warn("server parse input got hdr %s"%repr(hdr))
 
             # pass packet to rm , which runs device packet handler
             param, rsp = self.rm.packet(hdr,resp)

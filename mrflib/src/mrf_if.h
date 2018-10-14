@@ -121,5 +121,6 @@ void _mrf_if_print_all();
 int mrf_if_recieving(I_F i_f);
 int mrf_if_transmitting(I_F i_f);
 int mrf_if_can_sleep(I_F i_f);
+const char * mrf_if_state_name(I_F i_f);
 
 #endif

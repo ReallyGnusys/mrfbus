@@ -13,18 +13,18 @@ class MrfStruct(LittleEndianStructure):
         return getattr(self,attname)
     def attstr(self,attname):
         att = getattr(self,attname)
-        
+
         #return "%s"%repr(att)
         if type(att) == type(""):
             return att
-        if str(type(att)).find('c_ubyte_Array') > -1 :  #FIXME! 
+        if str(type(att)).find('c_ubyte_Array') > -1 :  #FIXME!
             atts = ""
             for i in att:
                 if i != 0:
                     atts += "%c"%chr(i)
                 else:
                     break
-        elif str(type(att)).find('c_uint_Array') > -1:  #FIXME! 
+        elif str(type(att)).find('c_uint_Array') > -1:  #FIXME!
             atts = "["
             first = True
             for i in att:
@@ -33,21 +33,21 @@ class MrfStruct(LittleEndianStructure):
                     atts +=","
                 else:
                     first = False
-                    
+
                 atts += "%u"%int(i)
             atts += "]"
         elif str(type(att)).find('PktTimeDate') > -1:  #FIXME!
             atts  = "%s"%repr(att)
-            
+
         else:
             #print "att is "+str(type(att))
-            atts = "%d"%int(att)
+            atts = "%s"%hex(int(att))
         return atts
     def iter_fields(self):
         for field in self._fields_:
             yield field[0]
     def __repr__(self):
-        s = ''
+        s = '\n'
         for field in self._fields_:
             #att = getattr(self,field[0])
 
@@ -181,7 +181,7 @@ class PktTimeDate(MrfStruct):
     def to_datetime(self):
         return datetime.datetime(year = self.year+2000,month=self.mon,day=self.day,hour=self.hour,minute=self.min,second=self.sec)
 
-        
+
 class PktCmdInfo(MrfStruct):
     _fields_ = [
         ("name",c_uint8*16),
@@ -238,7 +238,7 @@ class PktNDR(MrfStruct):
         ("hdest", c_uint8)
     ]
 
-    
+
 # FIXME should be able to generate core command set arg and return templates from C here
 mrf_cmd_ack = 0
 mrf_cmd_retry = 1
@@ -253,7 +253,7 @@ mrf_cmd_buff_state = 9
 mrf_cmd_cmd_info = 10
 mrf_cmd_app_info = 11
 mrf_cmd_app_cmd_info = 12
-mrf_cmd_test_1 = 13 
+mrf_cmd_test_1 = 13
 mrf_cmd_usr_struct = 14
 mrf_cmd_usr_resp = 15
 mrf_cmd_reset = 16
@@ -272,7 +272,7 @@ MrfSysCmds = {
     mrf_cmd_resp : {
         'name' : "RESPONSE",
         'param': PktResp,
-        'resp' : None        
+        'resp' : None
     },
     mrf_cmd_device_info :  {
         'name' : "DEVICE_INFO",
@@ -297,12 +297,12 @@ MrfSysCmds = {
     mrf_cmd_get_time : {
         'name' : "GET_TIME",
         'param': None,
-        'resp': PktTimeDate   
+        'resp': PktTimeDate
     },
     mrf_cmd_set_time : {
         'name' : "SET_TIME",
         'param': PktTimeDate,
-        'resp': PktTimeDate   
+        'resp': PktTimeDate
     },
     mrf_cmd_cmd_info: {
         'name' : "CMD_INFO",
@@ -322,32 +322,32 @@ MrfSysCmds = {
     mrf_cmd_usr_struct : {
         'name' : "USR_STRUCT",
         'param': PktResp,
-        'resp' : None        
+        'resp' : None
     },
     mrf_cmd_usr_resp : {
         'name' : "USR_RESP",
         'param': PktResp,
-        'resp' : None        
+        'resp' : None
     },
     mrf_cmd_reset : {
         'name' : "RESET",
         'param': None,
-        'resp' : None        
+        'resp' : None
     },
     mrf_cmd_ping : {
         'name' : "PING",
         'param': None,
-        'resp' : PktPingRes        
+        'resp' : PktPingRes
     },
 
     mrf_cmd_ndr : {
         'name' : "NDR",
         'param': PktNDR,
-        'resp' : None        
-    }    
+        'resp' : None
+    }
 }
-    
-    
+
+
 
 
 
@@ -362,4 +362,3 @@ def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
         respobj.load(rbytes)  ## and load with raw data
         return respobj
     return None
-
