@@ -87,16 +87,55 @@ typedef struct  __attribute__ ((packed))  {
 
 typedef struct  {
   IF_STATS stats;
+  IQUEUE txqueue;
   uint8 resp_timer;
   uint8 timer;
-  IQUEUE txqueue;
   uint8 rx_last_id;
   uint8 rx_last_src;
   uint8 tx_id;
   uint8 rx_on;  // default xbus mode , when not transmitting
-  IF_STATE state;
+  uint8 tx_buff; // I_F is tranmitting buffer at head of txq
+  uint8 tx_complete;   // set by i_f driver when data transmition is complete, whether ackbuff or txq head
+  uint8 waiting_resp;
+  IF_STATE state;  // this is actually just TX state - RX is async
 } IF_STATUS;
 
+// I_F logic is implemented largely in _mrf_tick ( mrf_sys.c )
+
+// sets initial flags for each transaction (tx_buff, tx_complete and waiting_resp/resp_timer) when initiating TX
+// and sets state to  tx_active
+
+// driver is required to
+// set tx_complete when buffer has been transmitted
+
+// RX callbacks, (currently buffer_responded from mrf_task_ack etc) clear waiting_resp
+
+// mrf_tick logic :
+/*
+ if ((istate==TX_ACTIVE) && tx_complete)
+     state = TX_IDLE
+
+ if (istate==TX_IDLE) {
+    if (waiting_resp) {
+      //dec resp_time and check for timeout
+      //
+    }
+    else if(tx_complete){
+      if(tx_buff){
+         pop txq
+      }
+      tx_complete = 0;
+    }
+
+    if(ackqueue)
+      tx ack
+
+    else if (not waiting resp and not tx_complete and txq)
+      tx q
+
+
+}
+*/
 
 typedef struct  {
   IF_STATUS *status;

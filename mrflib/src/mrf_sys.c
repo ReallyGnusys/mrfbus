@@ -812,11 +812,17 @@ int send_next_queued(int i,const MRF_IF *mif){
   tb = _mrf_buff_ptr(bnum);
   //mrf_debug("calling send func\n");
   //bs->retry_count++;
+  if (mif->status->resp_timer != 0 ){
+    mrf_debug("ERROR !! resp_timer %d when sending next queued",mif->status->resp_timer);
+
+  }
+
   bs->state = TX;
   if (needs_ack(pkt->type))
-    mif->status->state = MRF_ST_TX_FOR_ACK;
-  else
-    mif->status->state = MRF_ST_TX;
+    mif->status->resp_timer = 100;
+  //mif->status->state = MRF_ST_TX_FOR_ACK;
+  //else
+  mif->status->state = MRF_ST_TX;
   mrf_debug("tick - send buff %d tc %d retry_count %d state to %d\n",
             bnum,_tick_count,bs->retry_count,mif->status->state);
 
@@ -906,11 +912,13 @@ void _mrf_tick(){
       }
     }
 
+
     if ( istate > MRF_ST_IDLE){
       mrf_debug("tick -  i_f %d state %s  timer %d resp_timer %d\n",i,mrf_if_state_name((I_F)i),mif->status->timer,mif->status->resp_timer);
       if_busy = 1;
       if (istate == MRF_ST_TX_COMPLETE){
         mif->status->timer = 0;
+
 
         if (queue_data_avail(qp)!= 0) {
 
@@ -923,6 +931,9 @@ void _mrf_tick(){
           }
           else {
             mrf_debug("MRF_ST_TX_COMPLETE i_f %d but waiting for response for bnum %d resp_timer %d \n",i,bnum,mif->status->resp_timer);
+            //if (mif->ackqueue->data_avail()) // FIXME! What is this?
+            mif->status->state = MRF_ST_IDLE;
+
           }
         }
         else {
@@ -934,6 +945,7 @@ void _mrf_tick(){
 
       }
       else if (istate == MRF_ST_TX_RETRY){
+        if_busy = 1;
         if (queue_data_avail(qp)==0)
           {
             mrf_debug("%s","!!!!!ERROR!!!!! -nothing in txqueue when MRF_ST_TX_RETRY! \n");
