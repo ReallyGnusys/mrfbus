@@ -388,7 +388,7 @@ RF1AIE &= ~BIT8;                    // Disable TX end-of-packet interrupt
 
 void mrf_rf_idle(I_F i_f){
   const MRF_IF *ifp = mrf_if_ptr(i_f);
-  ifp->status->state = MRF_ST_IDLE;
+  //ifp->status->state = MRF_ST_IDLE;
   Strobe( RF_SIDLE );
   Strobe( RF_SWOR );
 
@@ -410,7 +410,7 @@ int _mrf_rf_tx_intr(I_F i_f){
     // we're now waiting for SACK
     ifp->status->state = MRF_ST_WAITSACK;
   }
-  else*/
+  else
   if((*if_state) ==  MRF_ST_ACK){
 
 #ifdef SLEEP_deep
@@ -424,11 +424,11 @@ int _mrf_rf_tx_intr(I_F i_f){
     else{
       _mrf_receive_enable();
     }
-      */
 
   }else { // some cockup
     ifp->status->stats.st_err ++;
   }
+*/
   return 0;
 }
 

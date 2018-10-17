@@ -820,12 +820,12 @@ static int send_next_queued(int i,const MRF_IF *mif){
             i,bnum,bs->state,_tick_count,ifs->tx_complete);
 
   if (ifs->tx_complete){
-    mrf_debug("ERROR - send_next_queued tx_complete on i_f %d",i);
+    mrf_debug("ERROR - send_next_queued tx_complete on i_f %d\n",i);
     return(-1);
   }
 
   if (ifs->waiting_resp){
-    mrf_debug("ERROR - send_next_queued waiting_resp on i_f %d",i);
+    mrf_debug("ERROR - send_next_queued waiting_resp on i_f %d\n",i);
     return(-1);
   }
   // if (_tick_count >10)
@@ -836,7 +836,7 @@ static int send_next_queued(int i,const MRF_IF *mif){
   //mrf_debug("calling send func\n");
   //bs->retry_count++;
   if (ifs->resp_timer != 0 ){
-    mrf_debug("ERROR !! resp_timer %d when sending next queued",ifs->resp_timer);
+    mrf_debug("ERROR !! resp_timer %d when sending next queued\n",ifs->resp_timer);
 
   }
 
@@ -879,7 +879,7 @@ int send_next_ack(int i,const MRF_IF *mif){
   }
 
   if (ifs->tx_complete){
-    mrf_debug("ERROR - send_next_ack tx_complete on i_f %d",i);
+    mrf_debug("ERROR - send_next_ack tx_complete on i_f %d\n",i);
     return(-1);
   }
 
@@ -958,10 +958,10 @@ void _mrf_tick(){
       if_busy = 1;
       if(ifs->timer==0){
         if(ifs->state==DELAY_ACK){
-          mrf_debug(" i_f %d  DELAY_ACK complete",i);
+          mrf_debug(" i_f %d  DELAY_ACK complete\n",i);
           send_next_ack(i,mif);
         } else {
-          mrf_debug(" i_f %d  DELAY_BUFF complete",i);
+          mrf_debug(" i_f %d  DELAY_BUFF complete\n",i);
           send_next_queued(i,mif);
         }
         continue;
@@ -973,7 +973,11 @@ void _mrf_tick(){
 
       if(ifs->tx_complete) {
         if(ifs->state == TX_ACK) { // ACK has been transmitted on channel go to idle
-          if_to_idle(ifs);
+          if(ifs->waiting_resp){
+            ifs->state = IDLE;
+          }
+          else
+            if_to_idle(ifs);
           continue;
         } else { // BUFF has been transmitted on channel - decide if can be freed etc.
           if(ifs->waiting_resp){ // go to idle - don't do anything - idle state checks this before allowing new tx buff

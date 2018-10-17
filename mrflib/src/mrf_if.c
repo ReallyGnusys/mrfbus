@@ -80,7 +80,6 @@ void mrf_if_init(){
 /*
 void mrf_if_register(I_F i_f,const MRF_IF_TYPE *type){
   _sys_ifs[i_f].type = type;
-
 }
 */
 
