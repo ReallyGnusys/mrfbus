@@ -33,17 +33,13 @@ typedef struct{
 
 typedef MQueue<ACK_TAG> AckQueue;
 
+// This is really just TX state - FIXME needs renaming
 typedef enum {
-  MRF_ST_IDLE,
-  MRF_ST_ACK_DEL,
-  MRF_ST_TX_DEL,
-  MRF_ST_ACK,
-  MRF_ST_TX,
-  MRF_ST_TX_FOR_ACK, // called if send_func - needs if to st to next state
-  MRF_ST_WAIT_ACK,  // wait for segment ack
-  MRF_ST_TX_RETRY,  // received sretry
-  MRF_ST_TX_COMPLETE // tx was acknowledged, if required
-} IF_STATE;
+  IDLE,
+  DELAY_ACK,
+  DELAY_BUFF,
+  TX_ACK,
+  TX_BUFF} IF_STATE;
 
 
 #include "device.h"
@@ -94,10 +90,12 @@ typedef struct  {
   uint8 rx_last_src;
   uint8 tx_id;
   uint8 rx_on;  // default xbus mode , when not transmitting
-  uint8 tx_buff; // I_F is tranmitting buffer at head of txq
+  //uint8 buff_active; // buff transaction in progress
   uint8 tx_complete;   // set by i_f driver when data transmition is complete, whether ackbuff or txq head
   uint8 waiting_resp;
-  IF_STATE state;  // this is actually just TX state - RX is async
+  uint8 resp_received;
+  uint8 tx_retried;  // set by RX callbacks - task_retry
+  IF_STATE state;
 } IF_STATUS;
 
 // I_F logic is implemented largely in _mrf_tick ( mrf_sys.c )
@@ -112,6 +110,28 @@ typedef struct  {
 
 // mrf_tick logic :
 /*
+
+if (istate==ACK_DEL){
+  dec timer
+  if timer == 0:
+    send_next_ack
+    cont
+}
+
+if (istate==TX_DEL){
+  dec timer
+  if timer == 0:
+    send_next_queued
+    cont
+
+}
+
+
+ || (istate==TX_DEL){
+  // check tx timeout
+}
+
+
  if ((istate==TX_ACTIVE) && tx_complete)
      state = TX_IDLE
 

@@ -11,20 +11,14 @@
 
 
 extern const MRF_IF _sys_ifs[NUM_INTERFACES]; //[NUM_INTERFACES];
-
-const char * ifstnames[] = {"MRF_ST_IDLE",
-                            "MRF_ST_ACK_DEL",
-                            "MRF_ST_TX_DEL",
-                            "MRF_ST_ACK",
-                            "MRF_ST_TX",
-                            "MRF_ST_TX_FOR_ACK",
-                            "MRF_ST_WAIT_ACK",
-                            "MRF_ST_TX_RETRY",
-                            "MRF_ST_TX_COMPLETE"
+const char * ifstnames[] = {"IDLE",
+                            "DELAY_ACK",
+                            "DELAY_BUFF",
+                            "TX_ACK",
+                            "TX_BUFF"
 };
 
 const char illegal_if_warning[] = "ILLEGAL_IF ERROR";
-
 
 
 const MRF_IF *mrf_if_ptr(I_F i_f){
@@ -42,30 +36,19 @@ const char * mrf_if_state_name(I_F i_f){
     return ifstnames[mif->status->state];
 }
 
-
 int mrf_if_can_sleep(I_F i_f){
   return 0;
 }
 
 
 int mrf_if_recieving(I_F i_f){
-  //FIXME
-
-  switch (mrf_if_ptr(i_f)->status->state)
-    {
-    case MRF_ST_IDLE:         return TRUE;
-    case MRF_ST_WAIT_ACK:    return TRUE;
-    default:                 return FALSE;
-    }
+  IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
+  return ifs->rx_on ;
 }
 
 int mrf_if_transmitting(I_F i_f){
-  switch (mrf_if_ptr(i_f)->status->state)
-    {
-    case MRF_ST_TX:         return TRUE;
-    case MRF_ST_TX_FOR_ACK: return TRUE;
-    default:                return FALSE;
-    }
+  IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
+  return (ifs->state==TX_BUFF) || (ifs->state==TX_ACK);
 }
 
 
@@ -83,7 +66,7 @@ void mrf_if_init(){
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;
     queue_init(&(mif->status->txqueue));
-    mif->status->state = MRF_ST_IDLE;
+    mif->status->state = IDLE;
 #ifdef MRF_ARCH_lnx
     *(mif->fd) =  (*(mif->type->funcs.init))((I_F)i); //needed for epoll
 #else
@@ -103,11 +86,12 @@ void mrf_if_register(I_F i_f,const MRF_IF_TYPE *type){
 
 void mrf_if_print_info(I_F i_f){
   const MRF_IF *ifp;
+  IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
   int i = (int)i_f;
   ifp = mrf_if_ptr((I_F)i);
-    mrf_debug("I_F %d state %s txq_da %d ackq da %d timer %d resp_timer %d\n",i,mrf_if_state_name((I_F)i),
-              queue_data_avail(&(ifp->status->txqueue)),ifp->ackqueue->items(),
-              ifp->status->timer,ifp->status->resp_timer);
+  mrf_debug("I_F %d waiting_resp %d txq_da %d ackq da %d timer %d resp_timer %d\n",i,ifs->waiting_resp,
+            queue_data_avail(&(ifs->txqueue)),ifp->ackqueue->items(),
+            ifs->timer,ifs->resp_timer);
 
 }
 void _mrf_if_print_all(){
@@ -120,27 +104,9 @@ void _mrf_if_print_all(){
 
 void mrf_if_tx_done(I_F i_f){
   const MRF_IF *mif = mrf_if_ptr(i_f);
-  if (mif->status->state == MRF_ST_ACK) {
-    mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_ACK to IDLE \n",i_f,mif->status->state);
-    mif->status->state = MRF_ST_IDLE;
-  }
 
-  else if (mif->status->state == MRF_ST_TX) {
-    mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_TX to TX_COMPLETE \n",i_f,mif->status->state);
-    mif->status->state = MRF_ST_TX_COMPLETE;
-
-  }
-  else if(mif->status->state == MRF_ST_TX_FOR_ACK) {
-    mrf_debug("mrf_if_tx_done I_F %d state %d from MRF_ST_TX_FOR_ACK to TX_COMPLETE \n",i_f,mif->status->state);
-    //mif->status->state = MRF_ST_WAIT_ACK;
-    mif->status->state = MRF_ST_TX_COMPLETE;
-    mif->status->resp_timer = 100;
-  }
-  else{
-
-    mrf_debug("ERROR!!! mrf_if_tx_done I_F %d state %d \n",i_f,mif->status->state);
-
-  }
+  mif->status->tx_complete = 1;
+  //mrf_debug("mrf_if_tx_done I_F %d state %d \n",i_f,mif->status->state);
 }
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){

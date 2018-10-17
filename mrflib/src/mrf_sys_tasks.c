@@ -68,13 +68,8 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
         mrf_debug("WARNING buffer_responded : acknowledge recieved for buffer %d but bs_state %s \n",bn,mrf_buff_state_name(bn));
 
       }
-      ifp->status->resp_timer = 0;
-      // pop queue and free buffer
-      queue_pop(qp);
-      _mrf_buff_free(bn);
-      ifp->status->stats.tx_pkts++;
-      mrf_debug("popped i_f %d txq and freed buff %d",i,bnum);
-      mrf_if_print_info((I_F)i);
+      ifp->status->resp_received = 1;
+      //mrf_if_print_info((I_F)i);
       //ifp->status->state = MRF_ST_TX_COMPLETE;
       return bn;
     }
@@ -97,17 +92,18 @@ extern MRF_CMD_RES mrf_task_ack(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   txbuff = buffer_responded(bnum, ifp);
 
-  if ( txbuff < _MRF_BUFFS){
+  if (txbuff < _MRF_BUFFS ){
 
     hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
     mrf_debug("mrf_task_ack.. ack matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
+
     //ifp->status->stats.tx_pkts++;
     //_mrf_buff_free(txbuff);
 
 
   } else {
 
-    mrf_debug("mrf_task_retry.. unexpected retry , txbuff %d\n",txbuff);
+    mrf_debug("%s","mrf_task_retry.. unexpected retry \n");
     ifp->status->stats.unexp_ack++;
 
   }
@@ -127,13 +123,12 @@ MRF_CMD_RES mrf_task_retry(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   MRF_PKT_HDR *hdr;
 
   txbuff = buffer_responded(bnum, ifp);
-
-  if ( txbuff < _MRF_BUFFS){
-
+  if (txbuff < _MRF_BUFFS ){
     hdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(txbuff)+ 0L);
     mrf_debug("mrf_task_retry.. matched to txbuff %d usrc %u\n",txbuff,hdr->usrc);
-    ifp->status->stats.tx_retried++;
-    ifp->status->state = MRF_ST_TX_RETRY;
+
+    ifp->status->tx_retried;
+
     if(hdr->usrc != MRFID)   // if we weren't initiator then send ndr to initiator
       mrf_ndr(NDR_RECD_SRETRY, txbuff);
 
