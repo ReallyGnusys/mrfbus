@@ -88,7 +88,8 @@ void mrf_if_print_info(I_F i_f){
   IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
   int i = (int)i_f;
   ifp = mrf_if_ptr((I_F)i);
-  mrf_debug("I_F %d waiting_resp %d txq_da %d ackq da %d timer %d resp_timer %d\n",i,ifs->waiting_resp,
+  mrf_debug("I_F %d state %s waiting_resp %d txq_da %d ackq da %d timer %d resp_timer %d\n",i,
+            mrf_if_state_name(i_f),ifs->waiting_resp,
             queue_data_avail(&(ifs->txqueue)),ifp->ackqueue->items(),
             ifs->timer,ifs->resp_timer);
 

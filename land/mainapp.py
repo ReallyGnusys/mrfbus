@@ -6,20 +6,20 @@ import os
 import base64
 import sys
 sys.path.append('../lib')
-from mrflog import mrf_log
+#from mrflog import mrf_log
 import templates
 import mrfland
-alog = mrf_log()
+#alog = mrf_log()
 from mrflog import mrflog
 
 def print_everything(*args):
-    alog.debug( "print *args")
+    mrflog.debug( "print *args")
     for count, thing in enumerate(args):
-        alog.debug( '{0}. {1}'.format(count, thing))
+        mrflog.debug( '{0}. {1}'.format(count, thing))
 def print_kwargs(**kwargs):
-    alog.debug("print_kwargs")
+    mrflog.debug("print_kwargs")
     for name, value in kwargs.items():
-        alog.debug('{0} = {1}'.format(name, value))
+        mrflog.debug('{0} = {1}'.format(name, value))
 
 
 conn = None
@@ -31,7 +31,7 @@ mrf_tp = tornado.template.Template(templates.mrf_tp)
 
 def login_page(rh):
     rh.add_header("Expires",0)
-    
+
     rh.write(login_tp.generate())
     #rh.write("Login page")
 
@@ -39,11 +39,11 @@ def logout_action(rh,sob,ip):
 
     ro = mrfland.staff_logout(sob['sid'],sob['username'],sob['wsid'],ip)
     rh.clear_cookie(install.sess_cookie)
-    
+
     rh.redirect('/login')
 
 
-_priv_js = { 
+_priv_js = {
     'system' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
     'sysadmin' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
     'admin' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
@@ -57,7 +57,7 @@ def _expand_priv_js(stype):
         for js in _priv_js[stype] :
             ht += '<script type="text/javascript" src="/static/secure/js/'+js+'"></script>\n'
     return ht
-            
+
 
 def mrf_pills(weblets):
     s = ""
@@ -69,7 +69,7 @@ def mrf_pills(weblets):
             first = False
         else:
             lic = ''
-                
+
         #s += '    <li%s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         s += '    <li><a data-toggle="pill" href="#%s">%s</a></li>\n'%(wl.tag,wl.label)
     return s
@@ -108,11 +108,11 @@ def mrf_weblet_table(weblets):
 
 
 def mrf_page(rh,sob,ws_url, ip,html_body):
-    alog.info("mrf_page: sob = "+str(sob))
+    mrflog.info("mrf_page: sob = "+str(sob))
     # they're in - they'll be served with a page with websocket url
     # prepared for them when they authenticated.....
     #pjs = _expand_priv_js(sob['type'])
-    #alog.info("pjs:"+pjs)
+    #mrflog.info("pjs:"+pjs)
     host = install.host
     rh.add_header("Expires",0)
     if install.domain:
@@ -123,37 +123,37 @@ def mrf_page(rh,sob,ws_url, ip,html_body):
 
 def request_ip(rh):
         rs =  rh._request_summary()
-        alog.debug("req_sum:"+rs)
+        mrflog.debug("req_sum:"+rs)
         regx = r'^GET /ws\?Id=%s \(([^\(]+)\)'%rh.id
         #print "rs:"+rs
         #print "regx:"+regx
         mob = re.match(regx,rs)
         if mob:
             ip = mob.group(1)
-            alog.info("client ip="+ip)
+            mrflog.info("client ip="+ip)
         else:
             ip = 'none'
-            alog.info("client ip not found!")
+            mrflog.info("client ip not found!")
             allow = False
 
         # handle nginx proxying
         return
         if rh.request.headers.has_key('X-Forwarded-For'):
             ip = rh.request.headers['X-Forwarded-For']
-        
-    
+
+
 
 def login_fail(rh,error):
     result = { 'result' : 'fail',
                'error' : error,
                'redirect' : '/login'
-               }    
+               }
     rh.write(mrfland.to_json(result))
 
 def post_login(rh):
-    alog.info('post_login : args')
-    alog.info(rh.request.arguments)
-    alog.info(rh.request)
+    mrflog.info('post_login : args')
+    mrflog.info(rh.request.arguments)
+    mrflog.info(rh.request)
 
     """
     if rh.request.headers.has_key('X-Real-Ip'):
@@ -164,57 +164,57 @@ def post_login(rh):
     """
     ip = rh.ip #rh.request.remote_ip
 
-    if not 'username' in rh.request.arguments.keys():   
+    if not 'username' in rh.request.arguments.keys():
         return login_fail(rh,'invalid post data')
-      
+
     username = rh.request.arguments['username']
-    alog.info('username : '+str(username) + " type : "+str(type(username)))
-    
+    mrflog.info('username : '+str(username) + " type : "+str(type(username)))
+
     if type(username) != type([]):
-        return login_fail(rh,'invalid post data')    
+        return login_fail(rh,'invalid post data')
     if len(username) != 1:
         return login_fail(rh,'invalid post data')
- 
-    username = username[0]
-    
 
-    if not 'password' in rh.request.arguments.keys():   
+    username = username[0]
+
+
+    if not 'password' in rh.request.arguments.keys():
         return login_fail(rh,'invalid post data')
-      
+
     password = rh.request.arguments['password']
-    alog.info('password : '+str(password) + " type : "+str(type(password)))
-    
+    mrflog.info('password : '+str(password) + " type : "+str(type(password)))
+
     if type(password) != type([]):
-        return login_fail(rh,'invalid post data')    
+        return login_fail(rh,'invalid post data')
     if len(password) != 1:
         return login_fail(rh,'invalid post data')
- 
+
     password = password[0]
 
-    alog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
- 
+    mrflog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
+
     authres = rh.rm.authenticate(username,password,ip,rh.request_host)
-    alog.info('authenticate result = '+str(authres) )
+    mrflog.info('authenticate result = '+str(authres) )
 
     if authres == None:
         return login_fail(rh,'invalid username or password')
-    
+
     ## user is authenticated
     secure_url =  '/'
-    alog.info('staff authenticated , id = '+str(authres) + " url = "+secure_url )
-    
+    mrflog.info('staff authenticated , id = '+str(authres) + " url = "+secure_url )
+
     ## set session id
     rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
     #rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
-   
-  
-    
+
+
+
     result = { 'result' : 'success',
                'data' : authres,
                'redirect' : secure_url
-               }    
+               }
     rh.write(mrfland.to_json(result))
 
 
@@ -224,7 +224,7 @@ def post_login(rh):
 
 
 
-    
+
 
 
 class mainapp(tornado.web.RequestHandler):
@@ -239,99 +239,99 @@ class mainapp(tornado.web.RequestHandler):
 
     def set_req_host(self):
         # handle nginx proxying
-        
-        
+
+
         if 'X-Forwarded-For' in self.request.headers.keys():
             self.ip = self.request.headers['X-Forwarded-For']
-            
+
             #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
         else:
             self.ip = self.request.remote_ip
         self.request_host = self.request.headers['Host']
-        
+
     def post(self, *args, **kwargs):
-        alog.info('post:'+str(self.request))
+        mrflog.info('post:'+str(self.request))
         mrflog.warn("mainapp post kwargs %s"%repr(kwargs))
         self.set_req_host()
-        
-        alog.info("uri : "+self.request.uri)
+
+        mrflog.info("uri : "+self.request.uri)
         uri = remarg.sub('',self.request.uri)
-        alog.info("uri : "+uri)
+        mrflog.info("uri : "+uri)
         reqa = uri.split('/')[1:]
         page = reqa[1]
-        alog.info("page = "+page)
+        mrflog.info("page = "+page)
         if page == 'login':
             post_login(self)
 
 
-        
+
     def get(self, *args, **kwargs):
-        alog.info('get:'+str(self.request))
-        alog.info("uri : "+self.request.uri)
-        alog.info("host : "+self.request.host)
-  
+        mrflog.info('get:'+str(self.request))
+        mrflog.info("uri : "+self.request.uri)
+        mrflog.info("host : "+self.request.host)
+
         uri = remarg.sub('',self.request.uri)
-        alog.warn("get headers is %s"%repr(self.request.headers.keys()))
+        mrflog.warn("get headers is %s"%repr(self.request.headers.keys()))
 
         for hn in ['Host','Port','X-Forwarded-For','Referer','X-Real-Ip']:
             if hn in self.request.headers.keys():
-                alog.warn("%s %s"%(hn,repr(self.request.headers[hn])))
+                mrflog.warn("%s %s"%(hn,repr(self.request.headers[hn])))
 
 
         self.set_req_host()
         ip = self.ip
 
-        alog.warn("got request_host "+self.request_host)
+        mrflog.warn("got request_host "+self.request_host)
 
-        
-        alog.info("ip: "+ip+" uri : "+uri)
+
+        mrflog.info("ip: "+ip+" uri : "+uri)
 
 
 
         reqa = uri.split('/')[1:]
-        
-        alog.info("reqa = "+str(reqa)+ " len "+str(len(reqa)))
+
+        mrflog.info("reqa = "+str(reqa)+ " len "+str(len(reqa)))
         page = reqa[0]
-        alog.info("page = "+page)
- 
+        mrflog.info("page = "+page)
+
         if len(reqa) > 1:
             action = reqa[1]
         else:
-            action = None            
-   
-        sessid = self.get_secure_cookie(install.sess_cookie)        
-        alog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
+            action = None
+
+        sessid = self.get_secure_cookie(install.sess_cookie)
+        mrflog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
         if sessid == None:
             if page == 'login':
-                alog.info("returning login page as requested")
-                return login_page(self)  
+                mrflog.info("returning login page as requested")
+                return login_page(self)
             else:
-                alog.info("no sessid - redirecting to login page")
+                mrflog.info("no sessid - redirecting to login page")
                 return self.redirect('/login')
-  
+
 
         sob = self.rm.comm.session_isvalid(sessid)  # if session is valid you're in
         if sob == None :
-            alog.info("session is invalid")
+            mrflog.info("session is invalid")
             if page == 'login':
-                return login_page(self)  
+                return login_page(self)
             else:
                 return self.redirect('/login')
 
         if  ( page == 'logout') :
-            alog.info("calling logout_action")
+            mrflog.info("calling logout_action")
             wsid = sob['wsid']
             self.rm.comm.staff_logout(sob,ip)
             self.clear_cookie(install.sess_cookie)
-    
+
             self.redirect('/login')
             return
 
         html_body = self.rm.html_body(sob['apps'])
         ws_url = self.rm.ws_url(sob['wsid'],sob['req_host'])
         return mrf_page(self,sob,ws_url,ip,html_body)
-     
-        
-        
+
+
+
 
 #static_handler = tornado.web.StaticFileHandler
