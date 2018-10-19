@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 
@@ -603,6 +604,8 @@ char buff[2048];
                     ntohs (clientname.sin_port));
          if ( servfd == -1) {
            servfd = newcon;
+           int optval = 1;
+           setsockopt(servfd, IPPROTO_TCP, TCP_NODELAY, (char *) &optval, sizeof(int));
            if ( app_callback != NULL ){
              //num_fds = NUM_INTERFACES+4;
              mrf_debug("adding epoll for app c fifo %d\n",servfd);
