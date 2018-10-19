@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -64,7 +64,7 @@
 //extern const MRF_CMD  *mrf_sys_cmds;
 
 long long mrf_timestamp(){
-struct timeval te; 
+struct timeval te;
     gettimeofday(&te, NULL); // get current time
     long long milliseconds = te.tv_sec*1000LL + te.tv_usec/1000; // caculate milliseconds
     // printf("milliseconds: %lld\n", milliseconds);
@@ -85,7 +85,7 @@ uint8 _nibble2hex(uint8 nib){
 
 #define _MAX_PRINTLEN 512
 void _mrf_print_hex_buff(uint8 *buff,uint16 len){
- 
+
   uint8 s[_MAX_PRINTLEN + 2];
   uint8 i;
   mrf_debug("print_hex_buff : len is %u buff:\n",len);
@@ -99,7 +99,7 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
     s[i*2+1] = _nibble2hex(buff[i]%16);
   }
   s[i*2] = '\0';
- 
+
   //s[0] = '\0';
   mrf_debug("%s\n",s);
 
@@ -136,7 +136,7 @@ static void print_elapsed_time(void)
 
 static void *_sys_loop(void *arg);
 
-// posix signal handler - not be confused with mrf signal which is handled by app 
+// posix signal handler - not be confused with mrf signal which is handled by app
 void sig_handler(int signum)
 {
   printf("Received signal %d\n", signum);
@@ -181,7 +181,7 @@ int make_listener_socket (uint16_t port)
   name.sin_addr.s_addr = inet_addr("127.0.0.1");
 
   setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(int));
-  
+
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
       mrf_debug("bind error for port %u",port);
@@ -233,18 +233,18 @@ void kill_signal (int sig)
   }
   mrf_debug("%s","ttfn\n");
   exit(0);
-    
+
 }
 
 static int _app_tick_seconds;
 //static MRF_APP_CALLBACK _app_tick_callback;
 static int _app_timerfd;
-static int  _sys_running, _app_tick_enabled; 
+static int  _sys_running, _app_tick_enabled;
 
 
 int mrf_app_tick_enable(int secs){
   struct itimerspec new_value;
- 
+
   if (_sys_running){
     _app_timerfd = timerfd_create(CLOCK_MONOTONIC,0);
     new_value.it_value.tv_sec = _app_tick_seconds;
@@ -261,7 +261,7 @@ int mrf_app_tick_enable(int secs){
   }
   _app_tick_seconds = secs;
   _app_tick_enabled = 1;
-  
+
 }
 int mrf_app_tick_disable(){
   if(_app_tick_enabled){
@@ -270,7 +270,7 @@ int mrf_app_tick_disable(){
   _app_tick_enabled = 0;
 
 }
-  
+
 int mrf_arch_boot(){
   // would like to handle sig USR1 at least for clean shutdown of sockets
   struct sigaction usr_action;
@@ -295,10 +295,10 @@ int mrf_arch_boot(){
   servfd = -1;
 
   return 0;
-  
+
 }
 int mrf_arch_run(){
-  
+
   // if app_callback is set we establish a simple server, to wait for connections from python land server
   if ( app_callback != NULL ){
     mrf_debug("%s","creating listening socket\n");
@@ -309,18 +309,18 @@ int mrf_arch_run(){
         mrf_debug("%s","failed to listen socket\n");
         return -1;
       }
-    
+
     mrf_debug("opened listener socket fd = %d\n\n", lisfd);
     if (lisfd < 1 ) {
-    
+
       mrf_debug("failed to open socket fd = %d\n\n",lisfd);
-    
+
       return -1;
     }
 
   }
 
-  
+
   //  _print_mrf_cmd(mrf_cmd_device_info);
   //  printf("mrf_arch_run entry: mrf_sys_cmds = %p mrf_sys_cmds[3] = %p 3.str = %p\n",mrf_sys_cmds,&(mrf_sys_cmds[3]),mrf_sys_cmds[3].str);
   (*_sys_loop)(NULL);
@@ -338,10 +338,10 @@ int is_hex_digit(uint8 dig){
 }
 
 uint8 int_to_hex_digit(int in){
-  
+
   in = in %16;
-  
-  if ( in < 10) 
+
+  if ( in < 10)
     return '0' + in;
   else
     return in - 10 + 'A';
@@ -368,10 +368,10 @@ char buff[2048];
 
 
  void *_sys_loop(void *arg){
-  
+
   struct itimerspec new_value;
   struct timespec now;
-  uint64_t exp, tot_exp; 
+  uint64_t exp, tot_exp;
   int timerfd,intfd,fd , i, tmp;
   ssize_t s;
   // input events for each i_f + one for timer tick plus optional app fifo
@@ -417,7 +417,7 @@ char buff[2048];
     printf("apptimer started - fd = %d\n",_app_timerfd);
 
   }
-  
+
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
@@ -451,7 +451,7 @@ char buff[2048];
   // timer event
   ievent[NUM_INTERFACES].data.u32 = NUM_INTERFACES;
   ievent[NUM_INTERFACES].events = EPOLLIN | EPOLLET;
-  // timer event must be enabled by system - do *not* enable here 
+  // timer event must be enabled by system - do *not* enable here
   /*
   epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
   printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,timerfd);
@@ -466,30 +466,30 @@ char buff[2048];
   // add server listener if initialised by appl
   //num_fds = NUM_INTERFACES+2;
   if (( app_callback != NULL ) && (lisfd > 0)){
-    mrf_debug("adding epoll for app fifo %d\n",lisfd); 
+    mrf_debug("adding epoll for app fifo %d\n",lisfd);
     ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
     ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
     epoll_ctl(efd, EPOLL_CTL_ADD, lisfd , &ievent[NUM_INTERFACES+2]);
     mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,lisfd);
   }
 
-  // add 
-  if (_app_timerfd != -1) {  
+  // add
+  if (_app_timerfd != -1) {
 
-    mrf_debug("adding epoll for _app_timerfd %d\n",_app_timerfd); 
+    mrf_debug("adding epoll for _app_timerfd %d\n",_app_timerfd);
     ievent[NUM_INTERFACES+4].data.u32 = NUM_INTERFACES+4;   // 3 is used when server connection is made
     ievent[NUM_INTERFACES+4].events = EPOLLIN | EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD,_app_timerfd , &ievent[NUM_INTERFACES+4]);
   }
 
-  _sys_running = 1; 
+  _sys_running = 1;
   while(1){
 
    nfds = epoll_wait(efd, revent, NUM_INTERFACES+5 , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
    //mrf_debug("nfds = %d\n",nfds);
-   
+
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
      inif = revent[i].data.u32; // data contains mrfbus i_f num
@@ -509,22 +509,22 @@ char buff[2048];
        //bind = mrf_alloc_if(inif);
 
        if (*(mrf_if_ptr((I_F)inif)->type->funcs.buff) != NULL){
-         //use interface method to copy to buff 
+         //use interface method to copy to buff
          int rv = (*(mrf_if_ptr((I_F)inif)->type->funcs.buff))((I_F)inif,(uint8 *)buff,s);
-         //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);                   
+         //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
          mrf_debug("%s","ERROR ERROR ERROR : lnx - no input/buff function\n\n");
          if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
-           mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);  
+           mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);
              _mrf_buff_free(bind);
-         } else 
-           mrf_buff_loaded(bind);           
+         } else
+           mrf_buff_loaded(bind);
 
        }
      }
-   
+
      else if (revent[i].data.u32 == NUM_INTERFACES){
        // sys timer tick  1kHz
        s = 1;
@@ -533,7 +533,7 @@ char buff[2048];
        s = read(timerfd, buff, 1024);
        buff[s] = 0;
        l++;
-       //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);  
+       //printf("TIMER event :count %d l %d read %d bytes  u32 = %u  inif = %d fd = %d \n",count,l,(int)s,revent[i].data.u32,inif,_input_fd[inif]);
 
        _mrf_tick();
        count++;
@@ -561,7 +561,7 @@ char buff[2048];
            if(strcmp(token,TICK_ENABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_enable\n");
              epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
-             //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);           
+             //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
            }
            else if (strcmp(token,TICK_DISABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_disable\n");
@@ -570,17 +570,17 @@ char buff[2048];
            }
            else if (strcmp(token,"wake") == 0){
              mrf_debug("%s","INTERNAL:wakeup\n");
-             int i = mrf_foreground(); 
+             int i = mrf_foreground();
              mrf_debug("ran %d foreground tasks\n",i);
            }
            else{
-         
+
              mrf_debug("internal control unrecognised string %s\n",buff);
            }
-           
-           
+
+
          }
-       } 
+       }
      } else if (revent[i].data.u32 == NUM_INTERFACES+2){
        // connection to server
 
@@ -605,7 +605,7 @@ char buff[2048];
            servfd = newcon;
            if ( app_callback != NULL ){
              //num_fds = NUM_INTERFACES+4;
-             mrf_debug("adding epoll for app c fifo %d\n",servfd); 
+             mrf_debug("adding epoll for app c fifo %d\n",servfd);
              ievent[NUM_INTERFACES+3].data.u32 = NUM_INTERFACES+3;
              ievent[NUM_INTERFACES+3].events = EPOLLIN | EPOLLET;
              epoll_ctl(efd, EPOLL_CTL_ADD, servfd , &ievent[NUM_INTERFACES+3]);
@@ -618,12 +618,12 @@ char buff[2048];
            mrf_debug("already have a connection ... closing %d",newcon);
            close(newcon);
 
-           
+
          }
 
 
 
-         
+
        }
      } else if (revent[i].data.u32 == NUM_INTERFACES+3){
        // app c fifo
@@ -633,7 +633,7 @@ char buff[2048];
          if ((*(app_callback))(servfd) == -1){
            mrf_debug("%s","looks like servers disconnected\n");
            servfd = -1;
-           
+
          }
        }
      }
@@ -644,12 +644,12 @@ char buff[2048];
        buff[s] = 0;
 
        mrf_app_signal(APP_SIG_TICK);
-       
+
 
      }
    }
   }
-       
+
   return NULL;
 
  }
@@ -666,7 +666,7 @@ int mrf_rtc_get(TIMEDATE *td){
   td->year = tm.tm_year - 100;  // mrf bus years start at 2000
   td->mon = tm.tm_mon + 1;  // matches cc RTC output months 1 - 12
   td->day = tm.tm_mday;
-  td->hour = tm.tm_hour;  
+  td->hour = tm.tm_hour;
   td->min = tm.tm_min;
   td->sec = tm.tm_sec;
   return 0;
@@ -689,7 +689,7 @@ int _write_internal_pipe(char *data, int len){
     return -1;
   }
   bc = write(fd, data,len);
-  close(fd); 
+  close(fd);
   return bc;
 }
 

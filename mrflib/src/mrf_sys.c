@@ -1099,7 +1099,7 @@ void _mrf_tick(){
     }
   else{
     _idle_count = 0;
-    // mrf_debug("mrf_tick - keeping tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
+    mrf_debug("mrf_tick - keeping tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
     _mrf_if_print_all();
 
   }

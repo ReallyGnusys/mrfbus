@@ -196,8 +196,8 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
   while (len > 0 ) {  // we can have multiple packets waiting
 
-
     uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
+
     mrf_debug("about to copy to mbuff len (ascii) %d \n",len);
 
     int nc;
@@ -278,6 +278,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   write(fd, txbuff,tb );
   fsync(fd);
   close(fd);
+  mrf_debug("%s closed\n",spath);
   mrf_if_tx_done(i_f);
   //mrf_debug("bc = %d  fd = %d\n",bc,fd);
   return 0;
