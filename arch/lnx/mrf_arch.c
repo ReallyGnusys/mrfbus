@@ -599,7 +599,7 @@ char buff[2048];
            mrf_debug("%s","big trouble accepting connection");
          }
        else {
-         mrf_debug ("Server: connect from host %s, port %hd.\n",
+         mrf_debug ("Server: connect from host %s, port %u \n",
                     inet_ntoa (clientname.sin_addr),
                     ntohs (clientname.sin_port));
          if ( servfd == -1) {

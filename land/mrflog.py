@@ -37,9 +37,9 @@ def mrf_log_init(level = install.log_level):
 
     mrflog.addHandler(hdlr)
 
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    mrflog.addHandler(ch)
+    #ch = logging.StreamHandler()
+    #ch.setFormatter(formatter)
+    #mrflog.addHandler(ch)
     mrflog.setLevel(level)
 
     return mrflog

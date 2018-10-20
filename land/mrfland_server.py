@@ -563,7 +563,7 @@ class MrflandServer(object):
         hdr = PktHeader()
 
         if len(resp) < len(hdr):  # no way valid
-            mrflog.warn("len(resp) was %d!"%len(resp))
+            mrflog.warn("ALERT len(resp) was %d!"%len(resp))
             return None,None,None
 
 
@@ -584,9 +584,8 @@ class MrflandServer(object):
                 mrflog.warn("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
                 self.active_cmd.receipt = hdr
                 mrflog.warn(repr(hdr))
-                if len(resp) > hdr.length:
-                    resp = resp[hdr.length:]
-                    return None,None,resp
+
+                return hdr, None,None
 
 
             else:
@@ -612,7 +611,7 @@ class MrflandServer(object):
             return None, None, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
-            mrflog.warn("server parse input got hdr %s"%repr(hdr))
+            mrflog.warn("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
 
             # pass packet to rm , which runs device packet handler
             param, rsp = self.rm.packet(hdr,resp)
@@ -657,59 +656,51 @@ class MrflandServer(object):
             self.tcp_server.write_to_client(self.active_cmd.tag,rstr)
 
     def _resp_handler(self,*args, **kwargs):
-        mrflog.info("Input on response pipe")
-        resp = os.read(self.rfd, MRFBUFFLEN)
+        rresp = os.read(self.rfd, 1024)
 
-        hdr , param, resp  = self.parse_input(resp)
-        ccnt = 0
-        while not (hdr == None and param == None and resp == None):
+        mrflog.warn("Input on response pipe len %d"%len(rresp))
+        while len(rresp):
 
-            ccnt += 1
-            if ccnt > 3:
-                break
+            hdr , param, resp  = self.parse_input(rresp)
 
-            #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
+            if hdr:
+                rresp=rresp[hdr.length:]
+            else:
+                mrflog.warn("no hdr len(rresp) %d type resp %s"%(len(rresp),str(type(resp))))
+                mrflog.warn("type hdr "+str(type(hdr)))
+
+
+
+                #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
             if hdr  and param  and resp :
-                mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                mrflog.warn("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
                 self.handle_response(hdr, param , resp, response=True )
 
-                if hdr.length < len(resp):
-                    mrflog.warn("more bytes...")
-                    resp = resp[hdr.length:]
 
-                    hdr , param, resp  = self.parse_input(resp)
-                else:
-                    hdr = None
-                    param = None
-                    resp = None
-
-            else:
-
-                if hdr == None and resp:
-                    mrflog.warn("_resp_handler , got residual resp %s"%repr(resp))
-                    hdr , param, resp  = self.parse_input(resp)
-
-                else:
-                    mrflog.warn("_resp_handler , got resp %s"%repr(resp))
-                    mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
-                    mrflog.warn("_resp_handler , got param %s"%repr(hdr))
-                    hdr = None
-                    param = None
-                    resp = None
-
+                mrflog.warn("_resp_handler , got resp %s"%repr(resp))
+                mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
+                mrflog.warn("_resp_handler , got param %s"%repr(hdr))
 
     def _struct_handler(self,*args, **kwargs):
-        mrflog.info("Input on data pipe")
-        resp = os.read(self.sfd, MRFBUFFLEN)
+        mrflog.warn("Input on data pipe")
+        rresp = os.read(self.sfd, 1024)
 
-        hdr , param, resp = self.parse_input(resp)
 
-        if hdr and param and resp :
-            mrflog.info("received object %s response from  %d"%(type(resp),hdr.usrc))
-            self.handle_response(hdr, param , resp)
-        else:
-            mrflog.warn("_struct_handler , got resp %s"%repr(resp))
-            mrflog.warn("_struct_handler , got hdr %s"%repr(hdr))
+        while len(rresp):
+            hdr , param, resp = self.parse_input(rresp)
+
+            if hdr:
+                rresp=rresp[hdr.length:]
+            else:
+                mrflog.warn("no hdr")
+            if hdr and param and resp :
+                mrflog.warn("received object %s response from  %d"%(type(resp),hdr.usrc))
+                self.handle_response(hdr, param , resp)
+            else:
+                mrflog.warn("_struct_handler , got resp %s"%repr(resp))
+                mrflog.warn("_struct_handler , got hdr %s"%repr(hdr))
+
+
     def _connect_to_mrfnet(self,port):
 
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
