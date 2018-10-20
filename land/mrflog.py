@@ -29,6 +29,7 @@ class MyFormatter(logging.Formatter):
 
 
 def mrf_log_init(level = install.log_level):
+    logging.basicConfig(filename=install.logdir+install.mrflog,level=level)
     formatter = logging.Formatter(fmt='%(asctime)s] %(levelname)s %(filename)s.%(lineno)d - %(message)s')# , datefmt='%Y-%m-%d,%H:%M:%S')
     #formatter = MyFormatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s', datefmt='%Y-%m-%d,%H:%M:%S')
     mrflog = logging.getLogger(install.logger_name)
