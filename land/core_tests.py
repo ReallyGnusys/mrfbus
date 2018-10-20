@@ -330,10 +330,11 @@ class TestMrfBus(DeviceTestCase):
 
 
     def test02_device_tests(self, dests=[ 0x01, 0x02, 0x20, 0x2f ] ):
-        for j in range(2):
+        for j in range(10):
             for dest in dests:
-                for i in range(3):
-                    self.device_tests(dest)
+                self.device_tests(dest)
+        for dest in dests:
+            self.dev_status_test(dest)
     def skipped_test02_ndr_tests(self, dests=[0x01,0x2e] ):
         for dest in dests:
             self.sys_info_test(dest)
