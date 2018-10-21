@@ -296,6 +296,36 @@ class DeviceTestCase(LandTestCase):
             print "got resp:\n%s"%str(resp)
 
 
+    def if_info_test(self,dest):
+        print "*********************************"
+        print "*  if_info_test (dest 0x%02x)"%dest
+        print "*********************************"
+        ccode = mrf_cmd_device_info
+        st = datetime.now()
+        self.cmd(dest,ccode,dstruct=None)
+        resp = self.response(timeout=self.timeout)
+        end = datetime.now()
+        self.assertTrue(type(resp)!=type(None))
+        print("resp:"+repr(resp))
+        self.assertTrue("num_ifs" in resp)
+
+        num_ifs = resp["num_ifs"]
+        print("num_ifs:"+repr(num_ifs))
+        ccode = mrf_cmd_if_stats   # eyup
+        paramstr = PktUint8()
+
+        for i_f in range(num_ifs):
+            paramstr.value = i_f
+            st = datetime.now()
+            self.cmd(dest,ccode,dstruct=paramstr)
+            resp = self.response(timeout=self.timeout)
+            end = datetime.now()
+            print "Response received in %s"%(end-st)
+            print "got resp:\n%s"%str(resp)
+            self.assertTrue(self.check_attrs(resp,PktIfStats()))
+
+
+
     def device_tests(self,dest):
         self.dev_info_test(dest)
         self.dev_status_test(dest)
@@ -304,6 +334,7 @@ class DeviceTestCase(LandTestCase):
         self.app_info_test(dest)
         self.app_cmd_info_test(dest)
         self.get_time_test(dest)
+        self.if_info_test(dest)
 
 class TestMrfBus(DeviceTestCase):
 
@@ -333,8 +364,10 @@ class TestMrfBus(DeviceTestCase):
         for j in range(10):
             for dest in dests:
                 self.device_tests(dest)
+    def skipped_test1000_dev_status_test(self, dests=[ 0x01, 0x02, 0x20, 0x2f ] ):
         for dest in dests:
             self.dev_status_test(dest)
+            #self.if_info_test(dest)
     def skipped_test02_ndr_tests(self, dests=[0x01,0x2e] ):
         for dest in dests:
             self.sys_info_test(dest)
