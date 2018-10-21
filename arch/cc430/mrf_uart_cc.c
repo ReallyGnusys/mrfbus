@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -37,7 +37,7 @@ static int mrf_uart_init_cc(I_F i_f);
 
 extern const MRF_IF_TYPE mrf_uart_cc_if = {
  tx_del : 4,
- ack_del : 3, 
+ ack_del : 3,
  funcs : { send : mrf_uart_send_cc,
            init : mrf_uart_init_cc,
            buff : NULL
@@ -56,7 +56,7 @@ uint8 _tbindex;
 uint8 _tbuff[_UBUFFLEN];
 
 static int disable_tx_int(){
-  UCA0IE &= ~UCTXIE;  // disable this intr    
+  UCA0IE &= ~UCTXIE;  // disable this intr
   return 0;
 }
 static int enable_tx_int(){
@@ -67,13 +67,13 @@ static int enable_tx_int(){
 }
 
 static void _tx_dbg(uint8 chr){
-  if (_tbindex < _UBUFFLEN) 
+  if (_tbindex < _UBUFFLEN)
     _tbuff[_tbindex++] = chr;
 }
 
 static inline void _tx_byte(uint8 chr){
   _tx_dbg(chr);
-  UCA0TXBUF = chr;     
+  UCA0TXBUF = chr;
 }
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   //UART_CSTATE  *txstate =  (UART_CSTATE*)sp;
@@ -88,7 +88,7 @@ static int mrf_uart_send_cc(I_F i_f, uint8 *buff){
   txstate.state = S_START;
   txstate.bindex = 0;
 
-  // debug 
+  // debug
   _tbindex = 0;
   int i;
   for ( i = 0 ; i < _UBUFFLEN; i++)
@@ -105,20 +105,20 @@ void rx_newpacket(){
 
 static int mrf_uart_init_cc(I_F i_f){
 
-  mrf_uart_init_rx_state(i_f,&rxstate);  
+  mrf_uart_init_rx_state(i_f,&rxstate);
   mrf_uart_init_tx_state(i_f,&txstate);
 
   //dbg
-  _tx_rdy_cnt =0 ;  
+  _tx_rdy_cnt =0 ;
 
   //
   UCA0CTL1 |= UCSWRST;                      // **Put state machine in reset**
 #if 0  // swap rxd txd
-  PMAPPWD = 0x02D52;                        // Get write-access to port mapping 
-  P1MAP6 = PM_UCA0RXD;                      // Map UCA0RXD output to P2.6 
-  P1MAP5 = PM_UCA0TXD;                      // Map UCA0TXD output to P2.7 
-  PMAPPWD = 0;                              // Lock port mapping registers 
-#endif 
+  PMAPPWD = 0x02D52;                        // Get write-access to port mapping
+  P1MAP6 = PM_UCA0RXD;                      // Map UCA0RXD output to P2.6
+  P1MAP5 = PM_UCA0TXD;                      // Map UCA0TXD output to P2.7
+  PMAPPWD = 0;                              // Lock port mapping registers
+#endif
 
   P1SEL |= BIT5 + BIT6; // uart function
   P1DIR |= BIT6;  // tx out
@@ -132,15 +132,15 @@ static int mrf_uart_init_cc(I_F i_f){
 #else
 #ifdef LP_57600
   UCA0CTL1 |= UCSSEL__SMCLK;
-  UCA0BRW =   145;       // trying 96              // 
+  UCA0BRW =   145;       // trying 96              //
   UCA0MCTL = UCBRS_5+UCBRF_0;               // Modulation UCBRSx=3, UCBRFx=0
 #else
 #ifdef LP_115200
   UCA0CTL1 |= UCSSEL__SMCLK;  // SMCLK should be 8192 * 1024 Hz  8388608Hz
-  UCA0BRW =   72;       // trying 96              // 
+  UCA0BRW =   72;       // trying 96              //
   UCA0MCTL = UCBRS_7+UCBRF_0;               // Modulation UCBRSx=7, UCBRFx=0
 #else
-    
+
   UCA0CTL1 |= UCSSEL__SMCLK;
   //UCA0BR0 = 69;                         //
   UCA0BR0 = 72;                           //
@@ -154,9 +154,9 @@ static int mrf_uart_init_cc(I_F i_f){
 #endif
 #endif
 #endif
- 
+
   UCA0CTL1 &= ~UCSWRST;                     // **Initialize USCI state machine**
-  UCA0IE |= UCRXIE;        // enable RX interrupt 
+  UCA0IE |= UCRXIE;        // enable RX interrupt
   _ubindex = 0; // dbg
   _tbindex = 0;
   //__bis_SR_register(GIE);  // leave for system to set
@@ -215,7 +215,7 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
   case 2:                                   // Vector 2 - RXIFG
     _uart_rx_int_cnt++;
     _rxb = _rx_byte();
-   
+
     if(mrf_uart_rx_byte(_rxb,&rxstate)){
       mrf_buff_loaded(rxstate.bnum);
       // need to allocate next buffer
@@ -237,6 +237,7 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
       UCA0IE |= UCTXIE;  //re-enable this int
     else {
       _dbg_pkt_sent(&txstate);
+      mrf_if_tx_done(UART0);  // FIXME! I_F can't be hardcoded in general case
       UCA0IE &= ~UCTXIE;
     }
 
@@ -250,5 +251,5 @@ interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
     */
     break;
   default: break;
-  }  
+  }
 }
