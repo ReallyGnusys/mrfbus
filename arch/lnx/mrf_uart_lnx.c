@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -50,7 +50,7 @@ static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen);
 
 extern const MRF_IF_TYPE mrf_uart_lnx_if = {
  tx_del : 4,
- ack_del : 2, 
+ ack_del : 2,
  funcs : { send : _usb_if_send_func,
            init : _mrf_uart_init_lnx,
            buff : _mrf_uart_input
@@ -123,12 +123,12 @@ static int _usb_if_send_func(I_F i_f, uint8 *buff){
   }
   _mrf_print_hex_buff(buff,10);
 
-  
+
   tb = copy_to_txbuff(buff,txbuff, &txstate );
   mrf_debug("post copy buff[0] %u tb = %d\n",buff[0],tb);
   _mrf_print_hex_buff(txbuff,15);
 
-  
+
   bc = write(fd, txbuff,tb);
   mrf_debug("attempted to send buff len %d after format %d written %d\n",buff[0],tb,bc);
   mrf_debug("txstate : bindex 0x%02x buff0 0x%02x  csum 0x%04x\n",txstate.bindex, txstate.buff[0],txstate.csum);
@@ -146,8 +146,9 @@ static int _usb_if_send_func(I_F i_f, uint8 *buff){
   mrf_debug("written %d blank bytes , requested %d\n",bc,tb);
   */
 
-  
+
   fsync(fd);
+  mrf_if_tx_done(i_f);
 
   return 0;
   //printf("bc = %d  fd = %d\n",bc,fd);
@@ -161,15 +162,15 @@ static struct termios _oldtio;
 int usb_open(const char *dev){
   struct termios newtio,chktio;
   struct serial_struct ser_info;
-  //int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC); 
-  int fd = open((char *)dev, O_RDWR); 
+  //int fd = open((char *)dev, O_RDWR | O_NOCTTY | O_SYNC);
+  int fd = open((char *)dev, O_RDWR);
   if (fd < 0) {
     mrf_debug("failed to open %s\n",dev);
-    perror(dev); 
-    return -1; 
+    perror(dev);
+    return -1;
   }
   mrf_debug("%s opened ok fd = %d\n",dev,fd);
-  tcgetattr(fd,&_oldtio); /* save current port settings */  
+  tcgetattr(fd,&_oldtio); /* save current port settings */
 
   mrf_debug("ispeed %d ospeed %d\n",cfgetispeed(&_oldtio),cfgetospeed(&_oldtio));
 
@@ -186,19 +187,19 @@ int usb_open(const char *dev){
   newtio.c_cflag = BAUDRATE | CS8 | CLOCAL | CREAD;
   newtio.c_iflag = IGNPAR;
   newtio.c_oflag = 0;
- 
+
   /* set input mode (non-canonical, no echo,...) */
   newtio.c_lflag = 0;
- 
+
   newtio.c_cc[VTIME]    = 0;   /* inter-character timer unused */
   newtio.c_cc[VMIN]     = 1;   /* blocking read until 5 chars received */
 
   tcflush(fd, TCIFLUSH);
-  int rv = tcsetattr(fd,TCSANOW,&newtio);  
+  int rv = tcsetattr(fd,TCSANOW,&newtio);
   mrf_debug("usb_open : fd = %d tcsetattr returned %d\n",fd,rv);
   mrf_debug("newtio.c_oflag %x newtio.c_iflag %x newtio.c_cflag %x newtio.c_lflag %x\n",
          newtio.c_oflag, newtio.c_iflag,newtio.c_cflag,newtio.c_lflag);
-  tcgetattr(fd,&chktio); /* check current port settings */  
+  tcgetattr(fd,&chktio); /* check current port settings */
   mrf_debug("chktio.c_oflag %x chktio.c_iflag %x chktio.c_cflag %x chktio.c_lflag %x\n",
          chktio.c_oflag, chktio.c_iflag,chktio.c_cflag,chktio.c_lflag);
 
@@ -209,18 +210,18 @@ int usb_open(const char *dev){
   mrf_debug("serial_struct ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
   ser_info.flags |= ASYNC_LOW_LATENCY;
   mrf_debug("serial_struct.xmit_fifo_size %d\n",ser_info.xmit_fifo_size);
- 
+
 
   ioctl(fd, TIOCSSERIAL, &ser_info);
   ioctl(fd, TIOCGSERIAL, &ser_info);
   mrf_debug("serial_struct (after set..before close) ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
-  
+
   close(fd);
-  fd = open((char *)dev, O_RDWR); 
+  fd = open((char *)dev, O_RDWR);
   if (fd < 0) {
     mrf_debug("failed to re-open %s\n",dev);
-    perror(dev); 
-    return -1; 
+    perror(dev);
+    return -1;
   }
   ioctl(fd, TIOCGSERIAL, &ser_info);
   mrf_debug("after re-open serial_struct ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
@@ -235,7 +236,7 @@ static int _mrf_uart_init_lnx(I_F i_f){
     mrf_debug("error mrf_uart_init_lnx i_f %d\n",i_f);
     return -1;
   }
-  const MRF_IF *mif = mrf_if_ptr(i_f); 
+  const MRF_IF *mif = mrf_if_ptr(i_f);
   mrf_debug("mrf_uart_init_lnx having a go at opening %s for i_f %d\n",mif->name,i_f);
 
   fd = usb_open(mif->name);
@@ -245,10 +246,10 @@ static int _mrf_uart_init_lnx(I_F i_f){
     _fd[i_f] = -1;
     return fd;
   }
-  
+
   mrf_debug("opened %s fd %d for i_f %d\n",mif->name,fd,i_f);
   _fd[i_f] = fd;
-  mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));  
+  mrf_uart_init_rx_state(i_f,&(rxstate[i_f]));
 
   return fd; // lnx arch needs it for epoll
 }

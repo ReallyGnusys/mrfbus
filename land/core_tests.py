@@ -380,4 +380,5 @@ class TestMrfBus(DeviceTestCase):
 
 
 if __name__ == "__main__":
-    unittest.main()
+    res = unittest.main()
+    print ("type res = "+str(type(res))+"  val is "+repr(res))
