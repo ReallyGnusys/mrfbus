@@ -240,7 +240,8 @@ void kill_signal (int sig)
 static int _app_tick_seconds;
 //static MRF_APP_CALLBACK _app_tick_callback;
 static int _app_timerfd;
-static int  _sys_running, _app_tick_enabled;
+static int  _sys_running, _app_tick_enabled, _tick_enabled;
+;
 
 
 int mrf_app_tick_enable(int secs){
@@ -291,6 +292,7 @@ int mrf_arch_boot(){
   // _app_tick_callback = NULL;
   _app_tick_seconds = 0;
   _app_tick_enabled = 0;
+  _tick_enabled = 0;
   _sys_running = 0;
   lisfd  = -1;
   servfd = -1;
@@ -559,15 +561,18 @@ char buff[2048];
          if (buff[bi] == 0) {
            j = 0;
            mrf_debug("token %s\n",token);
-           if(strcmp(token,TICK_ENABLE) == 0){
+           if(!_tick_enabled && strcmp(token,TICK_ENABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_enable\n");
              epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+             _tick_enabled = 1;
            }
-           else if (strcmp(token,TICK_DISABLE) == 0){
+           else if (_tick_enabled && strcmp(token,TICK_DISABLE) == 0){
              mrf_debug("%s","INTERNAL:tick_disable\n");
              epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+             _tick_enabled = 0;
+
            }
            else if (strcmp(token,"wake") == 0){
              mrf_debug("%s","INTERNAL:wakeup\n");
@@ -701,6 +706,7 @@ int _write_internal_pipe(char *data, int len){
 int mrf_tick_enable(){
   mrf_debug("%s","mrf_tick_enable : sending tick_enable signal\n");
   int bc = _write_internal_pipe(TICK_ENABLE, sizeof(TICK_ENABLE) );
+
   return bc;
 }
 

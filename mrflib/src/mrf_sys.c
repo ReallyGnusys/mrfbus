@@ -972,6 +972,7 @@ void _mrf_tick(){
       if_busy = 1;
 
       if(ifs->tx_complete) {
+        ifs->timer = 0;
         if(ifs->state == TX_ACK) { // ACK has been transmitted on channel go to idle
           if(ifs->waiting_resp){
             ifs->state = IDLE;
@@ -1099,8 +1100,8 @@ void _mrf_tick(){
     }
   else{
     _idle_count = 0;
-    mrf_debug("mrf_tick - keeping tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
-    _mrf_if_print_all();
+    // mrf_debug("mrf_tick - keeping tick - if_busy = %d  tc = %d\n",if_busy,_tick_count);
+    //_mrf_if_print_all();
 
   }
 }
