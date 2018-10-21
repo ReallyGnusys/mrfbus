@@ -84,13 +84,15 @@ class MrfDev(object):
             return None, None
 
         ## try and catch duplicate msgids - retransmissions , pending debug.. hmpff
-        if hdr.msgid == self.lastmsgid:
+        if self.lasthdr and self.lasthdr == hdr :   #hdr.msgid == self.lastmsgid and self.lasthdr.type == hdr.type:
             mrflog.error("MrfDev %s addr %s duplicate msgid %d - discarding"%(self.label,self.address,hdr.msgid))
             mrflog.error(repr(hdr))
             mrflog.error("lasthdr:")
             mrflog.error(repr(self.lasthdr))
 
             return None , None
+
+
         self.lastmsgid = hdr.msgid
         self.lasthdr = hdr
 
