@@ -974,6 +974,7 @@ void _mrf_tick(){
       if(ifs->tx_complete) {
         ifs->timer = 0;
         if(ifs->state == TX_ACK) { // ACK has been transmitted on channel go to idle
+          ifs->stats.tx_acks++;
           if(ifs->waiting_resp){
             ifs->state = IDLE;
             ifs->tx_complete = 0;
