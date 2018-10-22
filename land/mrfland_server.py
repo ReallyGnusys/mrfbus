@@ -608,7 +608,7 @@ class MrflandServer(object):
                 self.active_cmd = None
 
             self.rm.ndr(hdr,ndr)
-            return None, None, None
+            param, rsp = ndr, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
             mrflog.warn("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
