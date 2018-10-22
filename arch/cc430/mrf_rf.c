@@ -377,6 +377,7 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   }
   i = RF1ADOUTB;                            // reset RFDOUTIFG flag status byte
   sb_state(sv);
+  mrf_if_tx_done(RF0);  // FIXME! I_F can't be hardcoded in general case
 
 
   return 0;
