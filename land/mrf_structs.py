@@ -217,7 +217,10 @@ class PktIfStats(MrfStruct):
         ("tx_acks", c_uint32),
         ("tx_overruns", c_uint16),
         ("tx_retries", c_uint16),
+        ("tx_retried", c_uint16),
+        ("tx_errors", c_uint16),
         ("unexp_ack", c_uint16),
+        ("rx_ndr", c_uint16),
         ("alloc_err", c_uint8),
         ("st_err", c_uint8)
     ]
