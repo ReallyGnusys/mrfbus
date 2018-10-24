@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,8 +32,8 @@ typedef struct  __attribute__ ((packed)) {
   uint8 udest;// ultimate destination of this packet
   uint8 type;
   uint8 hsrc; // hop source
-  uint8 usrc; // ultimate source of this packet 
-  uint8 msgid; 
+  uint8 usrc; // ultimate source of this packet
+  uint8 msgid;
 }MRF_PKT_HDR ;
 
 typedef struct  __attribute__ ((packed)) timedate {
@@ -42,25 +42,26 @@ typedef struct  __attribute__ ((packed)) timedate {
   uint8 hour;
   uint8 day;
   uint8 mon;
-  uint8 year;  // 0 = 2000CE  
+  uint8 year;  // 0 = 2000CE
 }TIMEDATE;
 
 
 typedef struct  __attribute__ ((packed))   {
   uint8 type;
-  uint8 msgid; 
-  uint8 rlen;  
+  uint8 msgid;
+  uint8 rlen;
 } MRF_PKT_RESP;
 
 
 #define NDR_RECD_SRETRY 0
 #define NDR_MAX_RETRIES 1
+#define NDR_I_F_ERROR   2
 
 
 typedef struct  __attribute__ ((packed))   {
   uint8 code;
-  uint8 msgid; 
-  uint8 hsrc; 
+  uint8 msgid;
+  uint8 hsrc;
   uint8 hdest;
 } MRF_PKT_NDR;
 
@@ -115,7 +116,7 @@ typedef TIMEDATE MRF_PKT_TIMEDATE;
 typedef TIMEDATE MRF_TIMEDATE;
 
 typedef  enum { FREE,
-		LOADING, // allocated and being written by IF or app 
+		LOADING, // allocated and being written by IF or app
 		LOADED,  // loaded and awaiting classification
 		TXQUEUE, // loaded and requires forwarding via an interface ,
                 TX,  // currently being transmitted by I_F
@@ -160,7 +161,7 @@ typedef struct __attribute__ ((packed)){
   uint16 rx_long;
   uint16 tx_fails;
   uint16 tx_retries;
-  uint16 tx_no_eop; 
+  uint16 tx_no_eop;
   uint16 rx_overruns;
   uint16 rx_unexp_ack;
   uint16 tick_err;

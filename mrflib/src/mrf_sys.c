@@ -798,7 +798,7 @@ static int send_next_queued(int i,const MRF_IF *mif){
   IQUEUE *qp;
   MRF_BUFF_STATE *bs;
   IF_STATUS *ifs =  mif->status;
-  uint8 bnum;
+  uint8 bnum,bn;
   MRF_PKT_HDR *pkt;
   uint8 *tb;
 
@@ -860,7 +860,21 @@ static int send_next_queued(int i,const MRF_IF *mif){
             i,mrf_if_state_name((I_F)i));
 
   //ifs->stats.tx_pkts += 1;   // only inc this stat if ack recieved - i.e. in ack/resp handlers
-  (*(mif->type->funcs.send))((I_F)i,tb);
+  if((*(mif->type->funcs.send))((I_F)i,tb)==-1){
+    //send func errored - back out and send NDR
+
+    bn = queue_pop(qp);
+    mrf_debug("ERROR send func failed on i_f %d while sending bnum %d",i,bnum);
+    if (bn!=bnum){
+      mrf_debug("ERROR!! - popped bn %d != bnum %d previously at head!",bn,bnum);
+
+    }
+    mrf_ndr(NDR_I_F_ERROR,bnum);  // this reuses buffer for ndr
+
+    if_to_idle(ifs);
+
+    return -1;
+  }
 
   ifs->timer = TX_TIMEOUT_VAL;
 
@@ -914,7 +928,12 @@ int send_next_ack(int i,const MRF_IF *mif){
     ifs->state = TX_ACK;
 
     ifs->stats.tx_acks += 1;
-    (*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff));
+    if((*(mif->type->funcs.send))((I_F)i,(uint8 *)(mif->ackbuff))== -1){
+      mrf_debug("ERROR i_f %d send func error sending ack",i);
+      ifs->state = IDLE;
+      return -1;
+
+    }
     return 0;
   }
 }
@@ -1051,11 +1070,13 @@ void _mrf_tick(){
         bnum = queue_head(qp);
 
         bs = _mrf_buff_state(bnum);
+        mrf_debug("queue_head bnum %d retry_count %d\n",bnum,bs->retry_count);
+
         if(bs->retry_count >= _MRF_MAX_RETRY){
           mrf_debug("WARN retry limit reached  i_f %d bnum %s retry_count %d - abort buffer tx\n",i,bnum,bs->retry_count);
           ifs->stats.tx_errors++;
           mrf_debug("%s","retry limit reached - abort buffer tx\n");
-          ifs->stats.tx_errors++;
+          //ifs->stats.tx_errors++;
 
 
 
