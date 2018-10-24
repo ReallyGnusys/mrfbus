@@ -424,7 +424,7 @@ char buff[2048];
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  mrf_debug("created pipe %s res %d",sname,tmp);
+  mrf_debug("created pipe %s res %d\n",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
   mrf_debug("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
