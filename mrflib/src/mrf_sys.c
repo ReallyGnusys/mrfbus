@@ -1048,6 +1048,7 @@ void _mrf_tick(){
           bnum = queue_head(qp); // slightly penible to inc retry count on buffer
           bs = _mrf_buff_state(bnum);
           bs->retry_count++;
+          ifs->stats.tx_retries++;
           mrf_debug("WARNING timeout waiting for response:  i_f %d  buff %d retry_count %d\n",i,bnum,bs->retry_count);
           if_to_idle(ifs);  // clear flags
         }
@@ -1073,7 +1074,7 @@ void _mrf_tick(){
         mrf_debug("queue_head bnum %d retry_count %d\n",bnum,bs->retry_count);
 
         if(bs->retry_count >= _MRF_MAX_RETRY){
-          mrf_debug("WARN retry limit reached  i_f %d bnum %s retry_count %d - abort buffer tx\n",i,bnum,bs->retry_count);
+          mrf_debug("WARN retry limit reached  i_f %d bnum %d retry_count %d - abort buffer tx\n",i,bnum,bs->retry_count);
           ifs->stats.tx_errors++;
           mrf_debug("%s","retry limit reached - abort buffer tx\n");
           //ifs->stats.tx_errors++;

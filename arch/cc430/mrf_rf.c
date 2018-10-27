@@ -46,11 +46,12 @@ static struct rf_stats_t {
   uint32 rdbytes;
   uint32 rdnothing;
   uint32 rdlenerr;
-  uint32 lastnodef;
-  uint32 laststat;
   uint32 rx_strobe_err;
   uint32 tx_strobe_err;
   uint32 oddint;
+  uint16 lastnodef;
+  uint8 laststat;
+
 } rf_stats;
 
 int _Dbg_sresp(){
@@ -126,10 +127,14 @@ int _mrf_receive_reenable(){
 
   if (stb != 0x1f)
     _rf_rx_dbg(i);
-
+  /*
   RF1AIES |= BIT9;                          // neg edge of RFIFG9
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
+  */
+  RF1AIES &= BITA;                          // Pos edge of RFIFG10
+  RF1AIFG &= ~BITA;                         // Clear a pending interrupt
+  RF1AIE  |= BITA;                          // Enable the interrupt
 
   return 0;
 
@@ -163,10 +168,14 @@ int _mrf_initial_receive_enable(void){
 
   if (stb != 0x1f)
     _rf_rx_dbg(i);
-
+  /*
   RF1AIES |= BIT9;                          // Pos edge of RFIFG10
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
+  */
+  RF1AIES &= BITA;                          // Pos edge of RFIFG10
+  RF1AIFG &= ~BITA;                         // Clear a pending interrupt
+  RF1AIE  |= BITA;                          // Enable the interrupt
 
   return 0;
 
@@ -252,6 +261,9 @@ int _Dbg12(){
 int _Dbg15(){
   return 15;
 }
+int _Dbg17(){
+  return 17;
+}
 
 volatile static uint8 _dumpbyte;
 
@@ -261,11 +273,28 @@ int _xb_hw_rd_rx_fifo(I_F i_f){
   uint8 i, len,bnum;
   uint8 *buff;
   uint8 lenerr = FALSE;
+  uint8 rfstatus;
+  uint8 pktstatus;
+  uint16 ctl1_val;
+  uint16 err_val;
   const MRF_IF *mif;
   mif = mrf_if_ptr(i_f);
+
+  rfstatus = Strobe(RF_SNOP | RF_RXSTAT);  // nop read rx status
+  ctl1_val = RF1AIFCTL1;
+  err_val = RF1AIFERR;
+
+  pktstatus = ReadSingleReg(PKTSTATUS);
+
+
   len = ReadSingleReg( RXBYTES );
+  _Dbg17();
 
-
+  /* nonsense
+  if (len == 0) {
+    len = ReadSingleReg( RXBYTES );
+  }
+  */
   if (len == 0) {
     rf_stats.rdnothing++;
     _Dbg15();
@@ -346,9 +375,9 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   uint8_t sv;
   if ((len < 1 ) || ( len > 255 ))
     return -1;
-  RF1AIES &= BIT8;       // posedge
-  RF1AIFG &= ~BIT8;                         // clear interrupt flag
-  RF1AIE |= BIT8;                           // enable TX end-of-packet interrupt
+  RF1AIES |= BIT9;       // posedge
+  RF1AIFG &= ~BIT9;                         // clear interrupt flag
+  RF1AIE |= BIT9;                           // enable TX end-of-packet interrupt
   //Strobe( RF_STX );                       // Strobe STX
   /* total bodging - what is this for? */
   Strobe( RF_SIDLE );
@@ -384,7 +413,7 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
 }
 
 void inline xb_hw_disable_tx_eop(void){
-RF1AIE &= ~BIT8;                    // Disable TX end-of-packet interrupt
+RF1AIE &= ~BIT9;                    // Disable TX end-of-packet interrupt
 }
 
 void mrf_rf_idle(I_F i_f){
@@ -404,6 +433,7 @@ int _mrf_rf_tx_intr(I_F i_f){
         //  (*if_state) = XB_ST_IDLE;
         // P3OUT &= ~BIT6;
   mrf_if_tx_done(i_f);
+  _mrf_receive_enable;
   /*
   // Turn off LED after Transmit
   if ((*if_state) ==  MRF_ST_TX){
@@ -441,17 +471,21 @@ uint8 GetRF1ASTATB(){
 
 }
 
+unsigned int _dbg_iv(unsigned int iv){
+  return iv;
+}
 static unsigned int RF1AIVREG;
 
 interrupt(CC1101_VECTOR) CC1101_ISR(void)
 {
-  int xbreceiving = mrf_if_recieving(RF0);
+  //int xbreceiving = mrf_if_recieving(RF0);
   int xbtransmitting = mrf_if_transmitting(RF0);
   rf_stats.ints++;
   rf1stb = GetRF1ASTATB();
 
   // switch(__even_in_range(RF1AIV,32))        // Prioritizing Radio Core Interrupt
   RF1AIVREG = RF1AIV;
+  _dbg_iv(RF1AIVREG);
   //  switch(RF1AIV,32)        // Prioritizing Radio Core Interrupt
   switch(RF1AIVREG)        // Prioritizing Radio Core Interrupt
   {
@@ -466,31 +500,41 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
     case 14: break;                         // RFIFG6
     case 16: break;                         // RFIFG7
     case 18: break;                         // RFIFG8
-  case   RF1AIV_RFIFG8:
 
-      rf_stats.wrint++;
-      _mrf_rf_tx_intr(RF0);
-
-
-    break;
 #endif
 
-    case RF1AIV_RFIFG9:
+  case   RF1AIV_RFIFG9:
+    if (xbtransmitting){
+      rf_stats.wrint++;
+      _mrf_rf_tx_intr(RF0);
+    }else (xbreceiving) {
+      rf_stats.rdint++;
+      _xb_hw_rd_rx_fifo(RF0);
+    }
+
+    //else{
+    //  rf_stats.oddint++;
+    //}
+    if (mrf_wake_on_exit())
+      __bic_SR_register_on_exit(LPM3_bits);
+
+    break;
+
+
+
+    case RF1AIV_RFIFG10:
     if (xbreceiving) {
 
       rf_stats.rdint++;
       _xb_hw_rd_rx_fifo(RF0);
     }
-    else if (xbtransmitting){
+    /*
+    else{
       rf_stats.wrint++;
       _mrf_rf_tx_intr(RF0);
-
-
-
-
-    }
-    else
-      rf_stats.oddint++;
+      }*/
+    // else
+    //  rf_stats.oddint++;
 
     if (mrf_wake_on_exit())
       __bic_SR_register_on_exit(LPM3_bits);

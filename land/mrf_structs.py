@@ -78,7 +78,7 @@ class MrfStruct(LittleEndianStructure):
             atts = self.attstr(field[0])
             oatts = other.attstr(field[0])
             if atts != oatts:
-                print "cmp attname %s failed us %s other %s"%(field[0],atts,oatts)
+                #print "cmp attname %s failed us %s other %s"%(field[0],atts,oatts)
                 return False
         return True
 
