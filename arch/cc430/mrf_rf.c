@@ -478,8 +478,14 @@ static unsigned int RF1AIVREG;
 
 interrupt(CC1101_VECTOR) CC1101_ISR(void)
 {
-  //int xbreceiving = mrf_if_recieving(RF0);
+  int xbreceiving; // = mrf_if_recieving(RF0);
   int xbtransmitting = mrf_if_transmitting(RF0);
+
+  if (xbtransmitting==0)
+    xbreceiving=1;
+  else
+    xbreceiving=0;
+
   rf_stats.ints++;
   rf1stb = GetRF1ASTATB();
 
@@ -507,7 +513,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
     if (xbtransmitting){
       rf_stats.wrint++;
       _mrf_rf_tx_intr(RF0);
-    }else (xbreceiving) {
+    }else if(xbreceiving) {
       rf_stats.rdint++;
       _xb_hw_rd_rx_fifo(RF0);
     }
