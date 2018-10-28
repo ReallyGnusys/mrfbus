@@ -51,7 +51,10 @@ int mrf_if_recieving(I_F i_f){
 
 int mrf_if_transmitting(I_F i_f){
   IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
-  return (ifs->state==TX_BUFF) || (ifs->state==TX_ACK);
+  if ((ifs->state==TX_BUFF) || (ifs->state==TX_ACK))
+    return 1;
+  else
+    return 0;
 }
 
 

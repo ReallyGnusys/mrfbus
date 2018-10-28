@@ -134,9 +134,9 @@ int _mrf_receive_reenable(){
   RF1AIE  |= BIT9;                          // Enable the interrupt
   */
 
-  RF1AIES &= BITA;                          // Pos edge of RFIFG10
-  RF1AIFG &= ~BITA;                         // Clear a pending interrupt
-  RF1AIE  |= BITA;                          // Enable the interrupt
+  RF1AIES &= BIT9;                          // Pos edge of RFIFG10
+  RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
+  RF1AIE  |= BIT9;                          // Enable the interrupt
 
   return 0;
 
@@ -175,9 +175,9 @@ int _mrf_initial_receive_enable(void){
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
   */
-  RF1AIES &= BITA;                          // Pos edge of RFIFG10
-  RF1AIFG &= ~BITA;                         // Clear a pending interrupt
-  RF1AIE  |= BITA;                          // Enable the interrupt
+  RF1AIES &= BIT9;                          // Pos edge of RFIFG10
+  RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
+  RF1AIE  |= BIT9;                          // Enable the interrupt
 
   return 0;
 
@@ -201,6 +201,11 @@ int mrf_rf_init(I_F i_f){
 
   ResetRadioCore();
   _mrf_init_radio();
+
+  WriteSingleReg(IOCFG0,0x7);  // should be posedge RX CRC OK , negedge RX_FIFO read
+  WriteSingleReg(IOCFG1,0x6 | 0x40);  // posedge SYNC word send , negedge TX_FIFO underflow
+
+  //RF1AIES |= BIT1;  //GD01/IFG1 want negedge
 
   _mrf_initial_receive_enable();  // take longer to get PLL locked first time
   return 0;
@@ -242,11 +247,11 @@ uint16 rf_if_err(){
 
 }
 
-uint8 rf_if_iflg(){
+uint16 rf_if_iflg(){
   return RF1AIFIFG ;
 
 }
-uint8 rf_if_ien(){
+uint16 rf_if_ien(){
   return   RF1AIFIE;
 
 }
@@ -436,7 +441,7 @@ int _mrf_rf_tx_intr(I_F i_f){
         //  (*if_state) = XB_ST_IDLE;
         // P3OUT &= ~BIT6;
   mrf_if_tx_done(i_f);
-  _mrf_receive_enable;
+  _mrf_receive_enable();
   /*
   // Turn off LED after Transmit
   if ((*if_state) ==  MRF_ST_TX){
@@ -482,8 +487,10 @@ static unsigned int RF1AIVREG;
 interrupt(CC1101_VECTOR) CC1101_ISR(void)
 {
   int xbreceiving; // = mrf_if_recieving(RF0);
-  int xbtransmitting = mrf_if_transmitting(RF0);
+  int xbtransmitting;
 
+  uint8 rxstat,txstat,pktstatus;
+  xbtransmitting = mrf_if_transmitting(RF0);
   if (xbtransmitting==0)
     xbreceiving=1;
   else
@@ -493,6 +500,9 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
   rf1stb = GetRF1ASTATB();
   rf_stats.laststat = rf1stb;
 
+  rxstat = Strobe(0x3D + 0x80);
+  txstat = Strobe(0x3D);
+  pktstatus = ReadSingleReg(PKTSTATUS);
   // switch(__even_in_range(RF1AIV,32))        // Prioritizing Radio Core Interrupt
   RF1AIVREG = RF1AIV;
   _dbg_iv(RF1AIVREG);
@@ -518,12 +528,10 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
       rf_stats.wrint++;
       _mrf_rf_tx_intr(RF0);
     }
-    /*
     else if(xbreceiving) {
       rf_stats.rdint++;
       _xb_hw_rd_rx_fifo(RF0);
     }
-    */
     else{
       rf_stats.oddint++;
     }
@@ -534,7 +542,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 
 
 
-    case RF1AIV_RFIFG10:
+    case RF1AIV_RFIFG0:
     if (xbreceiving) {
 
       rf_stats.rdint++;
