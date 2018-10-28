@@ -74,6 +74,7 @@ int rf_if_send_func(I_F i_f, uint8 *buff){
 
 
   _xb_hw_wr_tx_fifo((int)buff[0] , buff);
+
   return 0;
 }
 
@@ -132,6 +133,7 @@ int _mrf_receive_reenable(){
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
   */
+
   RF1AIES &= BITA;                          // Pos edge of RFIFG10
   RF1AIFG &= ~BITA;                         // Clear a pending interrupt
   RF1AIE  |= BITA;                          // Enable the interrupt
@@ -375,9 +377,11 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   uint8_t sv;
   if ((len < 1 ) || ( len > 255 ))
     return -1;
+
   RF1AIES |= BIT9;       // posedge
   RF1AIFG &= ~BIT9;                         // clear interrupt flag
   RF1AIE |= BIT9;                           // enable TX end-of-packet interrupt
+
   //Strobe( RF_STX );                       // Strobe STX
   /* total bodging - what is this for? */
   Strobe( RF_SIDLE );
@@ -406,7 +410,6 @@ int  _xb_hw_wr_tx_fifo(int len , uint8 *buff){
   }
   i = RF1ADOUTB;                            // reset RFDOUTIFG flag status byte
   sb_state(sv);
-  mrf_if_tx_done(RF0);  // FIXME! I_F can't be hardcoded in general case
 
 
   return 0;
@@ -488,6 +491,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 
   rf_stats.ints++;
   rf1stb = GetRF1ASTATB();
+  rf_stats.laststat = rf1stb;
 
   // switch(__even_in_range(RF1AIV,32))        // Prioritizing Radio Core Interrupt
   RF1AIVREG = RF1AIV;
@@ -513,14 +517,16 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
     if (xbtransmitting){
       rf_stats.wrint++;
       _mrf_rf_tx_intr(RF0);
-    }else if(xbreceiving) {
+    }
+    /*
+    else if(xbreceiving) {
       rf_stats.rdint++;
       _xb_hw_rd_rx_fifo(RF0);
     }
-
-    //else{
-    //  rf_stats.oddint++;
-    //}
+    */
+    else{
+      rf_stats.oddint++;
+    }
     if (mrf_wake_on_exit())
       __bic_SR_register_on_exit(LPM3_bits);
 
@@ -534,13 +540,15 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
       rf_stats.rdint++;
       _xb_hw_rd_rx_fifo(RF0);
     }
+
     /*
-    else{
+    else if (xbtransmitting){
       rf_stats.wrint++;
       _mrf_rf_tx_intr(RF0);
-      }*/
-    // else
-    //  rf_stats.oddint++;
+      }
+    */
+     else
+       rf_stats.oddint++;
 
     if (mrf_wake_on_exit())
       __bic_SR_register_on_exit(LPM3_bits);
@@ -559,7 +567,6 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 #endif
   default : rf_stats.nodefint++;
             rf_stats.lastnodef = RF1AIVREG;
-            rf_stats.laststat = rf1stb;
 
   }
 
