@@ -94,7 +94,7 @@ int mrf_app_init(){
   ADC12MCTL0 = ADC12SREF_1 + ADC12INCH_10;  // ADC input ch A10 => temp sense
   ADC12CTL0 |= ADC12ENC;
 
-  //rtc_second_signal_enable();
+  rtc_second_signal_enable();
 
   return 0;
 }
@@ -109,7 +109,7 @@ int mrf_app_init(){
 
 
 int sec_task(){
-  return 0;  // TMP
+  //return 0;  // TMP
   if (_app_state == SYNC_TIME){ // relying on usr_resp to change state when response received
     mrf_send_command(_base_route.relay,  mrf_cmd_get_time,  NULL, 0);
   }

@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -127,36 +127,36 @@ void rtc_second_signal_enable(){
 
 void rtc_ps0_init(RTCDIVCODE div,VFUNCPTR func){
   // disable interrupt
-  RTCPS0CTL &= ~0x2;  
+  RTCPS0CTL &= ~0x2;
 
   _rtc_ps0_handler = func;
 
   //relying on enum order and encoding to set RT0IP bits
-  
+
   RTCPS0CTL &= ~((uint16)div << 2);
   RTCPS0CTL |= (uint16)div << 2;
 
   // clear flag
-  RTCPS0CTL &= ~0x1;  
+  RTCPS0CTL &= ~0x1;
 
 }
 void rtc_ps0_enable(VFUNCPTR func){
   _rtc_ps0_handler = func;
   // enable interrupt
-  RTCPS0CTL &= ~0x1;  
-  RTCPS0CTL |= 0x2;    
+  RTCPS0CTL &= ~0x1;
+  RTCPS0CTL |= 0x2;
 }
 
 void rtc_ps0_disable(){
   //  _rtc_ps0_handler = _rtc_default_ps0;
-  RTCPS0CTL &= ~0x2;  
+  RTCPS0CTL &= ~0x2;
   // disable interrupt
-  RTCPS0CTL &= ~0x1;  
- 
+  RTCPS0CTL &= ~0x1;
+
 }
 
 
-volatile int  _rtc_td_eq(TIMEDATE *td1,TIMEDATE *td2){  
+volatile int  _rtc_td_eq(TIMEDATE *td1,TIMEDATE *td2){
   if(td1->sec != td2->sec) return 0;
   if(td1->min != td2->min ) return 0;
   if(td1->hour != td2->hour) return 0;
@@ -166,7 +166,7 @@ volatile int  _rtc_td_eq(TIMEDATE *td1,TIMEDATE *td2){
   return 1;
 }
 
-void _rtc_td_cpy(TIMEDATE *source,TIMEDATE *dest){  
+void _rtc_td_cpy(TIMEDATE *source,TIMEDATE *dest){
   dest->sec = source->sec;
   dest->min = source->min;
   dest->hour = source->hour;
@@ -177,25 +177,25 @@ void _rtc_td_cpy(TIMEDATE *source,TIMEDATE *dest){
 
 uint8 daysinmonth(uint8 month, uint8 year){
   uint8 leap = (year % 4) == 0;
-  
+
   switch(month){
   case 9:  return 30;
   case 4:  return 30;
   case 6:  return 30;
   case 11:  return 30;
-  case 2:  
-    if (leap) 
+  case 2:
+    if (leap)
       return 29;
     else
       return 28;
   default: return 31;
 
-  }  
+  }
 
 }
 
 
-void _rtc_td_clr(TIMEDATE *td){  
+void _rtc_td_clr(TIMEDATE *td){
   td->sec = 0;
   td->min = 0;
   td->hour = 0;
@@ -204,7 +204,7 @@ void _rtc_td_clr(TIMEDATE *td){
   td->year = 0;
 }
 
-int _rtc_td_isclr(TIMEDATE *td){  
+int _rtc_td_isclr(TIMEDATE *td){
   if (td->sec != 0) return 0;
   if (td->min != 0) return 0;
   if (td->hour != 0) return 0;
@@ -214,7 +214,7 @@ int _rtc_td_isclr(TIMEDATE *td){
   return 1;
 }
 
-int _rtc_td_is_valid(TIMEDATE *td){  
+int _rtc_td_is_valid(TIMEDATE *td){
   if (td->sec > 59 ) return 0;
   if (td->min >  59) return 0;
   if (td->hour > 24) return 0;
@@ -225,7 +225,7 @@ int _rtc_td_is_valid(TIMEDATE *td){
 }
 
 void _rtc_set_error(TIMEDATE *td){
-  _rtc_td_cpy(td,&set_err_td);  
+  _rtc_td_cpy(td,&set_err_td);
   set_err_cnt++;
 }
 
@@ -278,7 +278,7 @@ void rtc_set(TIMEDATE *td)
     _rtc_get(&rdval);
 
   }
-  
+
   /*
   UpdateTime.sec = td->sec;
   UpdateTime.min = td->min;
@@ -321,12 +321,12 @@ int rtc_get_hang(TIMEDATE *td){
 
   while(!(RTCIV & RTCRDYIFG))
     __delay_cycles(5);
-  
-  
+
+
   _rtc_get(td);
   return 0;
 }
- 
+
 int rtc_get(TIMEDATE *td){
 
   TIMEDATE t1,t2,*old,*newtd,*tmp;
@@ -334,11 +334,11 @@ int rtc_get(TIMEDATE *td){
   old = &t1;
   newtd = &t2;
 
-  
-  
+
+
   _rtc_get(old);
   _rtc_get(newtd);
- 
+
   while(!_rtc_td_eq(old,newtd) && ((count < RTC_GET_TIMEOUT) || !_rtc_td_is_valid(newtd))){
 
     count++;
@@ -357,22 +357,22 @@ int rtc_get(TIMEDATE *td){
   if ( count >= RTC_GET_TIMEOUT){
     // error getting consistent reading, send cleared structure
     _rtc_td_clr(newtd);
-    _rtc_td_cpy(newtd,td);    
+    _rtc_td_cpy(newtd,td);
     return -1;
   }
 
-  
-  
-  _rtc_td_cpy(newtd,td); 
+
+
+  _rtc_td_cpy(newtd,td);
   //*td = t1;
   return 0;
 }
 
-  
+
 TIMEDATE *rtc_on_sec(){
-  
+
   ReadFlag = 1;
-  while(ReadFlag) 
+  while(ReadFlag)
     {
       RTCCTL0 |= RTCRDYIE ;
       __delay_cycles(100);
@@ -394,18 +394,18 @@ uint8  rtc_min_reached(){
 void rtc_wake_on_min(){
   _min_reached = 0;
   RTCCTL0 |= RTCTEVIE ;
-    
+
 }
 
 
 void rtc_clear_eveie(){
   RTCCTL0 &= ~RTCTEVIE ;
   _min_reached = 0;
- 
+
 
 }
 
-void rtc_sleep_til(TIMEDATE *td){  
+void rtc_sleep_til(TIMEDATE *td){
   RTCAMIN = td->min ;
   RTCAHOUR = td->hour;
   RTCADAY = td->day;
@@ -418,10 +418,10 @@ void rtc_sleep_til(TIMEDATE *td){
 void rtc_clear_alarm(){
   RTCAHOUR =0;
   RTCADAY = 0;
-  RTCADOW = 0; 
+  RTCADOW = 0;
   RTCAMIN = 0;
   RTCCTL0 &=  ~(RTCAIE |RTCAIFG) ;
-   
+
 
 
 }
@@ -437,7 +437,7 @@ void rtc_sleep_mins(uint8 mins){
     correction = 0;
   RTCAHOUR =0;
   RTCADAY = 0;
-  RTCADOW = 0; 
+  RTCADOW = 0;
   RTCAMIN = (td.min + mins + correction ) % 60 | 0x80 ;
   RTCCTL0 &=  ~RTCAIFG ;
   RTCCTL0 |=  RTCAIE;
@@ -472,9 +472,9 @@ interrupt(RTC_VECTOR) RTC_ISR()
       if (RTCSEC == _rtc_wake_on_sec){
 	rtc_dbg2();
         mrf_wake();
-        //__bic_SR_register_on_exit(LPM3_bits);    
+        //__bic_SR_register_on_exit(LPM3_bits);
       }
-	
+
     }
     //(*_rtc_rdy_handler)();
     if(UpdateFlag){
@@ -501,28 +501,28 @@ interrupt(RTC_VECTOR) RTC_ISR()
     break;
   case RTC_RTCAIFG:
     AlarmFlag = 1;
-    //__bic_SR_register_on_exit(LPM3_bits);    
+    //__bic_SR_register_on_exit(LPM3_bits);
     alarm_gone();
     break;
 
   case  RTC_RTCTEVIFG:
     _min_reached = 1;
-    //__bic_SR_register_on_exit(LPM3_bits);    
+    //__bic_SR_register_on_exit(LPM3_bits);
     break;
   case  RTC_RT0PSIFG:
     rtc_counts.pscnt++;
     (*_rtc_ps0_handler)();
     rtc_counts.pscnt2++;
     break;
-   
-     
+
+
   default:
-    
+
     break;
 
   }
-  
+
   rtc_counts.reticnt++;
 
-  
+
 }

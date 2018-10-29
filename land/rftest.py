@@ -82,7 +82,7 @@ class Rftest(DeviceTestCase):
        return
 
     def test05_soak(self):
-       for i in range(10):
+       for i in range(1000):
           self.device_tests(self.dest)
     def toggle_relay(self,chan=0):
         print "**********************"
