@@ -77,11 +77,13 @@ class Rftest(DeviceTestCase):
 
 
     def test01_core_tests(self):
-        self.set_time_test(self.dest,self.host)
-        #self.get_time_test(self.host)
-        return
+       self.set_time_test(self.dest,self.host)
+       #self.get_time_test(self.host)
+       return
 
-
+    def test05_soak(self):
+       for i in range(10):
+          self.device_tests(self.dest)
     def toggle_relay(self,chan=0):
         print "**********************"
         print "* pt1000 toggle relay test (dest 0x%02x) chan %d"%(self.dest,chan)
