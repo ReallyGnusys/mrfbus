@@ -67,7 +67,10 @@ class Rftest(DeviceTestCase):
         self.if_info_test(self.dest)
         #self.sys_info_test(self.dest)
 
-
+    def test001_dev_info(self):
+       self.dev_info_test(self.dest)
+    def test001_sys_info(self):
+       self.sys_info_test(self.dest)
     def test002_app_info_tests(self):
         self.app_info_test(self.dest)
         self.app_cmd_info_test(self.dest)
