@@ -233,6 +233,14 @@ void _rtc_set_error(TIMEDATE *td){
 #define _RTDAY (* ((volatile uint8_t *)0x04B4))
 
 void _rtc_get(TIMEDATE *td){
+  uint16 rdate =  (* ((volatile uint16_t *)RTCDATE_));
+  uint16 rtim0 =  (* ((volatile uint16_t *)RTCTIM0_));
+
+  td->mon = rdate >> 8;
+  td->day = rdate & 0x00ff;
+  td->min = rtim0 >> 8;
+  td->sec = rtim0 & 0x00ff;
+
   /*
   td->sec = ((TIMEDATE *)&ReadTime)->sec;
   td->min = ((TIMEDATE *)&ReadTime)->min;
@@ -241,20 +249,29 @@ void _rtc_get(TIMEDATE *td){
   td->mon = ((TIMEDATE *)&ReadTime)->mon;
   td->year = _y16_to_y8(((TIMEDATE *)&ReadTime)->year);
   */
-  td->sec = RTCSEC;
-  td->min = RTCMIN;
+  //td->sec = RTCSEC;
+  //td->min = RTCMIN;
   td->hour = RTCHOUR;
-  td->day = _RTDAY;
-  td->mon = RTCMON;
+  //td->day = _RTDAY;
+  //td->mon = RTCMON;
   td->year = _y16_to_y8(RTCYEAR) ;
 }
 void _rtc_set(TIMEDATE *td){
   //RTCCTL01 |= RTCHOLD  ;
-  RTCSEC = td->sec  ;
-  RTCMIN = td->min  ;
+  uint16 rdate = ((td->mon)<<8)|td->day;
+  uint16 rtim0 = ((td->min)<<8)|td->sec;
+
+
+  (* ((volatile uint16_t *)RTCDATE_)) = rdate;
+  (* ((volatile uint16_t *)RTCTIM0_)) = rtim0;
+
+  //RTCTIM0 = rtim0;
+  //RTCDATE = rdate;
+  //RTCSEC = td->sec  ;
+  //RTCMIN = td->min  ;
   RTCHOUR = td->hour  ;
-  _RTDAY = td->day  ;
-  RTCMON = td->mon  ;
+  //_RTDAY = td->day  ;
+  //RTCMON = td->mon  ;
   RTCYEAR = _y8_to_y16(td->year)  ;
   //RTCCTL01 &= ~RTCHOLD  ;
 

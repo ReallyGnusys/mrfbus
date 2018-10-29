@@ -150,6 +150,7 @@ int adc_res_ready(){
   temp = 100* temp / tgrad100;
 
   temp = temp - 270;  // single point calibration done wrt. modtc thermocouple device.. ho ho
+  temp = temp - 130;  // correction for another board??  reading about 1.3C over
   temp = temp / 10;
   temp = temp * 10;  // zero lsb
 

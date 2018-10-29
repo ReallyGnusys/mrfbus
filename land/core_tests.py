@@ -385,9 +385,9 @@ class TestMrfBus(DeviceTestCase):
         for dest in dests:
             self.dev_status_test(dest)
 
-    def test1001_disc2(self, dests=[ 0x01, 0x02,0x20 ] ):
+    def test1001_disc2(self, dests=[ 0x01, 0x02,0x20,0x21 ] ):
         self.test01_discover_devices(dests=dests)
-    def test1002_stat2(self, dests=[ 0x01, 0x02, 0x20 ] ):
+    def test1002_stat2(self, dests=[ 0x01, 0x02, 0x20,0x21 ] ):
         #self.test1000_dev_status_test(dests=dests)
         for dest in dests:
             self.if_info_test(dest)
