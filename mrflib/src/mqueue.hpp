@@ -20,12 +20,12 @@
 #define __MQUEUE_INCLUDED__
 
 #include "mrf_types.h"
-//#include "device.h"  // for MQUEUE_DEPTH
+//#include "device.h"  // for DEPTH
 
 //typedef struct volatile {
-#define MQUEUE_DEPTH 4
+//#define DEPTH 4
 
-template <class T>
+template <class T,int DEPTH>
 
 class MQueue
 
@@ -52,14 +52,14 @@ class MQueue
   volatile uint8 nitems;
   volatile uint8 push_errors;
   volatile uint8 pop_errors;
-  T buffer[MQUEUE_DEPTH];
+  T buffer[DEPTH];
   void _q_elem_set(const T& val);
 };
 
 
-template <class T>
+template <class T,int DEPTH>
 
-MQueue<T>::MQueue(){
+MQueue<T,DEPTH>::MQueue(){
   qip = 0;
   qop = 0;
   nitems = 0;  // FIXME kind of pointless ..
@@ -67,106 +67,106 @@ MQueue<T>::MQueue(){
   pop_errors = 0;
 }
 
-template <class T>
-const uint8 MQueue<T>::get_qip(){
+template <class T,int DEPTH>
+const uint8 MQueue<T,DEPTH>::get_qip(){
   return (const uint8)qip;
 }
 
-template <class T>
-const uint8 MQueue<T>::get_qop(){
+template <class T,int DEPTH>
+const uint8 MQueue<T,DEPTH>::get_qop(){
   return (const uint8)qop;
 }
 
-template <class T>
-const uint8 MQueue<T>::get_nitems(){
+template <class T,int DEPTH>
+const uint8 MQueue<T,DEPTH>::get_nitems(){
   return (const uint8)nitems;
 }
-template <class T>
-const uint8 MQueue<T>::get_push_errors(){
+template <class T,int DEPTH>
+const uint8 MQueue<T,DEPTH>::get_push_errors(){
   return (const uint8)push_errors;
 }
-template <class T>
-const uint8 MQueue<T>::get_pop_errors(){
+template <class T,int DEPTH>
+const uint8 MQueue<T,DEPTH>::get_pop_errors(){
   return (const uint8)pop_errors;
 }
 
 
 
-template <class T>
+template <class T,int DEPTH>
 
-int MQueue<T>::items(){
+int MQueue<T,DEPTH>::items(){
   int _nitems;
 
   if (qip >= qop)
     _nitems = qip - qop;
   else
-    _nitems = (MQUEUE_DEPTH*2 + qip) -  qop;
+    _nitems = (DEPTH*2 + qip) -  qop;
   return _nitems;
 }
 
 
-template <class T>
+template <class T,int DEPTH>
 
-int MQueue<T>::flush(){
+int MQueue<T,DEPTH>::flush(){
   int flushed = items();
 
   nitems = 0;  //FIXME shouldn't need this field - use function above
   qop = 0;
   qip = 0;
 
-  //return (items == (MQUEUE_DEPTH -1 ));
+  //return (items == (DEPTH -1 ));
   return flushed;
 }
-template <class T>
+template <class T,int DEPTH>
 
-int MQueue<T>::full(){
-  return ( items() >= MQUEUE_DEPTH);
-  //return ((qip+1) % (MQUEUE_DEPTH*2)) == qop;
+int MQueue<T,DEPTH>::full(){
+  return ( items() >= DEPTH);
+  //return ((qip+1) % (DEPTH*2)) == qop;
 }
-template <class T>
+template <class T,int DEPTH>
 
-int MQueue<T>::data_avail(){
+int MQueue<T,DEPTH>::data_avail(){
   return (qip != qop);
 }
 
 
 // sets elem for entry qip
 
-template <class T>
+template <class T,int DEPTH>
 
-void MQueue<T>::_q_elem_set(const T& val){
-  buffer[qip % MQUEUE_DEPTH] = val;
+void MQueue<T,DEPTH>::_q_elem_set(const T& val){
+  buffer[qip % DEPTH] = val;
 }
 
 
-template <class T>
+template <class T,int DEPTH>
 
-const T *MQueue<T>::head(){
-  return (const T *)&buffer[qop % MQUEUE_DEPTH];
+const T *MQueue<T,DEPTH>::head(){
+  return (const T *)&buffer[qop % DEPTH];
 }
 
-template <class T>
+template <class T,int DEPTH>
 
-int MQueue<T>::push(const T& data){
+int MQueue<T,DEPTH>::push(const T& data){
   if (full()){
     push_errors++;
     return -1;
   }
   _q_elem_set(data);
-  qip = (qip + 1) % (MQUEUE_DEPTH * 2);
+  qip = (qip + 1) % (DEPTH * 2);
   nitems++;
   return 0;
 }
 
-template <class T>
+template <class T,int DEPTH>
 
-const T *MQueue<T>::pop(){
+const T *MQueue<T,DEPTH>::pop(){
   if (data_avail() == 0){
     pop_errors++;
     return (const T *)NULL;
   }
   const T *data = head();
-  qop = (qop + 1) % (MQUEUE_DEPTH * 2);
+  qop = (qop + 1) % (DEPTH * 2);
   nitems--;
   return data;
 }

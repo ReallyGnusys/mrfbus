@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
@@ -66,7 +66,7 @@ APPMAKEF=${APPDIR}/Makefile.inc
 
 ifneq ($(wildcard ${APPDIR}/Makefile.inc),)
 include ${APPMAKEF}
-endif 
+endif
 
 #include ${APPDIR}/Makefile*.inc
 
@@ -78,7 +78,7 @@ APPINCL=-I${APPSRC}
 
 
 MOBJS=${MOBJ}/mrf.o ${MOBJ}/mrf_buff.o ${MOBJ}/mrf_sys.o ${MOBJ}/mrf_sys_tasks.o \
-	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o ${MOBJ}/iqueue.o \
+	${MOBJ}/mrf_route.o ${MOBJ}/mrf_if.o \
 	${MOBJ}/mrf_uart.o ${MOBJ}/mrf_sys_cmds.o ${MOBJ}/mrf_arch.o \
 	${MOBJ}/device.o  ${MOBJ}/mrf_app.o ${MOBJ}/mrf_app_cmds.o ${AOBJS} ${DEVOBJS}  ${APPOBJS} \
         ${MOBJ}/main.o
@@ -87,11 +87,11 @@ ifeq (,$(wildcard ${APPSRC}/main.c))
      MAIN := ${MSRC}/main.c
 else
      MAIN := ${APPSRC}/main.c
-endif      
+endif
 
 
 
-CCFLAGS=-I${MRFBUS_HOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DMRF_APP=${APP} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DSLEEP_${SLEEP} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${APPCCFLAGS} ${BFLAGS} 
+CCFLAGS=-I${MRFBUS_HOME}/mrflib/src -I${ARCHDIR}  -I${DEVDIR}  -I${NET} ${APPINCL}  -DMRFID=${MRFID} -DMRFNET=${MRFNET} -DDEVTYPE=${DEVTYPE} -DARCH=${ARCH} -DMRF_ARCH_${ARCH} -DMRF_APP=${APP} -DGITSH=${GITSH}  -DGITMOD=${GITMOD}  -DMRFPATH=${MRFPATH} -DSLEEP_${SLEEP} -DMRFBLD=${BUILD} ${ACCFLAGS}  ${DEVCCFLAGS} ${APPCCFLAGS} ${BFLAGS}
 
 
 ALL : ${BIN} ${MOBJ} ${LSTD} ${MOBJS} ${APPOBJS} ${TARG} ${LST} ${SIZEREP}
@@ -141,5 +141,3 @@ ${MOBJ}/%.o: ${ARCHDIR}/%.c
 
 ${MOBJ}/%.o: ${DEVDIR}/%.c
 	$(GCC)  -c $(CCFLAGS) $< -o $@
-
-

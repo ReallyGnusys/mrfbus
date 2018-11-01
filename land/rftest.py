@@ -85,6 +85,10 @@ class Rftest(DeviceTestCase):
        for i in range(10):
           for dest in [0x20,0x21]:
              self.device_tests(dest)
+    def test20_soak(self):
+       for i in range(10):
+          for dest in [0x20]:
+             self.device_tests(dest)
     def toggle_relay(self,chan=0):
         print "**********************"
         print "* pt1000 toggle relay test (dest 0x%02x) chan %d"%(self.dest,chan)

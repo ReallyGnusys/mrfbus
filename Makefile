@@ -5,9 +5,9 @@ HOSTFIFO=${TMP}/1-0-in
 STUBFIFO=${TMP}/0-app-in
 APPFIFO=${TMP}/0-app-str
 
-tests: ${TMP} FIFOS ${LOGDIR} BUILD BUILDCC QTEST
+tests: ${TMP} FIFOS ${LOGDIR} BUILD BUILDCC
 
-testsetup :  ${TMP} FIFOS ${LOGDIR} QTEST
+testsetup :  ${TMP} FIFOS ${LOGDIR}
 
 venv :	land/requirements.txt
 	./build_venv
@@ -45,6 +45,3 @@ BUILD:
 BUILDCC:
 	cd examples/usbrf && make clean && make
 	cd examples/pt1000usb && make clean && make
-
-QTEST:
-	cd mrflib/tests/iqueue && make clean && make

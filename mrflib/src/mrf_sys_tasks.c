@@ -35,7 +35,7 @@
 uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
   uint8 bn;
 
-  IQUEUE *qp = &(ifp->status->txqueue);
+  BuffQueue *qp = ifp->txqueue;
 
   MRF_PKT_HDR *ackhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bnum)+ 0L);
   MRF_PKT_HDR *txhdr;
@@ -46,12 +46,12 @@ uint8 buffer_responded(uint8 bnum, const MRF_IF *ifp){
     mrf_debug("ERROR: buffer_responded called when ifp resp_timer was %d\n",ifp->status->resp_timer);
 
   }
-  if (!queue_data_avail(qp)){
+  if (!qp->data_avail()){
     mrf_debug("buffer_responded, error nothing was queuing for ifp %p\n",ifp);
     return _MRF_BUFFS;
   }
   // clear buff state of ack buffer
-  bn = queue_head(qp);
+  bn = *(qp->head());
   bs = _mrf_buff_state(bn);
   txhdr = (MRF_PKT_HDR *)(_mrf_buff_ptr(bn)+ 0L);
   mrf_debug(" qhead is %d state %d - if state %d header:\n",bn,bs->state,ifp->status->state);

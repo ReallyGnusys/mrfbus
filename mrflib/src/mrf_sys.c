@@ -35,7 +35,7 @@
 #define TX_TIMEOUT_VAL 20   //FIXME prob needs to be i/f dependent
 //extern uint8 _mrfid;
 
-static IQUEUE _app_queue;
+static BuffQueue _app_queue;
 
 extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS];
 extern const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS];
@@ -540,7 +540,9 @@ int _mrf_ex_packet(uint8 bnum, MRF_PKT_HDR *pkt, const MRF_CMD *cmd,const MRF_IF
 }
 
 int mrf_app_queue_push(uint8 bnum){
-  int rv = queue_push(&_app_queue,bnum);
+
+
+  int rv = _app_queue.push(bnum);  //queue_push(&_app_queue,bnum);
 
   if ( rv == 0) {
     mrf_debug("%s","queue pushed.. waking\n");
@@ -750,22 +752,25 @@ void mrf_sys_init(){
   _tick_count = 0;
   _idle_count = 0;
   _txmsgid = 0;
-  queue_init(&_app_queue);
+  _app_queue = BuffQueue();
+  // queue_init(&_app_queue);
 }
 
 int mrf_app_queue_available(){
 
-  return queue_data_avail(&_app_queue);
+  return _app_queue.data_avail(); // queue_data_avail(&_app_queue);
 }
 
 int mrf_foreground(){
   /* empty application queue and return */
   uint8 bnum;
   int rv,cnt = 0;
-  while(queue_data_avail(&_app_queue)){
+  //while(queue_data_avail(&_app_queue)){
+  while(_app_queue.data_avail()){
     mrf_debug("%s","mrf_foreground : appq data available\n");
 
-    bnum = (uint8)queue_pop(&_app_queue);
+    //bnum = (uint8)queue_pop(&_app_queue);
+    bnum = *(_app_queue.pop());
     mrf_debug("mrf_foreground : got bnum %d\n",bnum);
 
     if (bnum >= MRF_BNUM_SIGNAL_BASE){
@@ -795,15 +800,15 @@ static void if_to_idle(IF_STATUS *ifs){
 
 // should only be called by _mrf_tick
 static int send_next_queued(int i,const MRF_IF *mif){
-  IQUEUE *qp;
+  BuffQueue *qp;
   MRF_BUFF_STATE *bs;
   IF_STATUS *ifs =  mif->status;
   uint8 bnum,bn;
   MRF_PKT_HDR *pkt;
   uint8 *tb;
 
-  qp = &(ifs->txqueue);
-  if (queue_data_avail(qp)==0)
+  qp = mif->txqueue;
+  if (qp->data_avail()==0)
     {
     mrf_debug("%s","ERROR -send_next_queued nothing in txqueue! \n");
     ifs->stats.st_err += 1;
@@ -811,7 +816,7 @@ static int send_next_queued(int i,const MRF_IF *mif){
     return -1;
     }
 
-  bnum = queue_head(qp);
+  bnum = *(qp->head());
 
   bs = _mrf_buff_state(bnum);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
@@ -863,7 +868,7 @@ static int send_next_queued(int i,const MRF_IF *mif){
   if((*(mif->type->funcs.send))((I_F)i,tb)==-1){
     //send func errored - back out and send NDR
 
-    bn = queue_pop(qp);
+    bn = *(qp->pop());
     mrf_debug("ERROR send func failed on i_f %d while sending bnum %d",i,bnum);
     if (bn!=bnum){
       mrf_debug("ERROR!! - popped bn %d != bnum %d previously at head!",bn,bnum);
@@ -947,7 +952,8 @@ void _mrf_tick(){
   MRF_BUFF_STATE *bs;
   uint8 bnum;
   uint8 if_busy = 0;
-  IQUEUE *qp;
+  BuffQueue *qp;
+
   const ACK_TAG *atp;
   _tick_count++;
   if ( (_tick_count % 1000 ) == 0)
@@ -958,7 +964,7 @@ void _mrf_tick(){
 
     mif = mrf_if_ptr((I_F)i);
     ifs =  mif->status;
-    qp = &(ifs->txqueue);
+    qp = mif->txqueue;
 
     // dec timers
     if(ifs->timer > 0){
@@ -1007,7 +1013,7 @@ void _mrf_tick(){
             ifs->state = IDLE;
             continue;
           }else { // can free buff and pop queue
-            bnum = queue_pop(qp);
+            bnum = *(qp->pop());
             mrf_debug("MRF_ST_TX_COMPLETE i_f %d freeing buff %d \n",i,bnum);
             _mrf_buff_free(bnum);
             ifs->stats.tx_pkts++;
@@ -1027,7 +1033,7 @@ void _mrf_tick(){
         if_busy = 1;
         if(ifs->resp_received) {
           // got response for buff transfer
-          bnum = queue_pop(qp);
+          bnum = *(qp->pop());
           mrf_debug("Response received on i_f %d freeing buff %d \n",i,bnum);
           _mrf_buff_free(bnum);
           ifs->stats.tx_pkts++;
@@ -1035,9 +1041,9 @@ void _mrf_tick(){
 
         }
         else if (ifs->tx_retried) {
-          bnum = queue_head(qp);
+          bnum = *(qp->head());
           mrf_debug("I_F %d  buffer %d has been retried - FIXME dropping for now\n",i,bnum);
-          bnum = queue_pop(qp);
+          bnum = *(qp->pop());
           mrf_debug("Response received on i_f %d freeing buff %d \n",i,bnum);
           _mrf_buff_free(bnum);
           ifs->stats.tx_retried++;
@@ -1045,7 +1051,7 @@ void _mrf_tick(){
         }
         else if (ifs->resp_timer==0){
           // timeout on buffer waiting for resp
-          bnum = queue_head(qp); // slightly penible to inc retry count on buffer
+          bnum = *(qp->head()); // slightly penible to inc retry count on buffer
           bs = _mrf_buff_state(bnum);
           bs->retry_count++;
           ifs->stats.tx_retries++;
@@ -1065,10 +1071,10 @@ void _mrf_tick(){
         ifs->state = DELAY_ACK;
       }
 
-      else if((ifs->waiting_resp==0)&&queue_data_avail(qp)){
+      else if((ifs->waiting_resp==0)&&qp->data_avail()){
         if_busy = 1;
         mrf_debug("idle i_f %d has queue data and is not waiting for response\n",i);
-        bnum = queue_head(qp);
+        bnum = *(qp->head());
 
         bs = _mrf_buff_state(bnum);
         mrf_debug("queue_head bnum %d retry_count %d\n",bnum,bs->retry_count);
@@ -1088,7 +1094,7 @@ void _mrf_tick(){
 #else
           mrf_ndr(NDR_MAX_RETRIES,bnum);  // this reuses buffer for ndr
 #endif
-          queue_pop(qp);
+          qp->pop();
           if_to_idle(ifs);
 
         }else {

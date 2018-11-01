@@ -25,78 +25,13 @@
 #include "iqueue.h"
 #include "mqueue.hpp"
 
-typedef struct{
-  uint8 type;
-  uint8 msgid;
-  uint8 dest;
-} ACK_TAG;
 
-typedef MQueue<ACK_TAG> AckQueue;
 
-// This is really just TX state - FIXME needs renaming
-typedef enum {
-  IDLE,
-  DELAY_ACK,
-  DELAY_BUFF,
-  TX_ACK,
-  TX_BUFF} IF_STATE;
+
 
 
 #include "device.h"
 
-typedef int (*IF_SEND_FUNCPTR)(I_F i_f, uint8* buf);
-typedef int (*IF_INIT_FUNCPTR)(I_F i_f);
-typedef int (*IF_BUFF_FUNCPTR)(I_F i_f, uint8* inbuff, uint8 inlen);
-
-typedef struct {
-  const IF_SEND_FUNCPTR send;
-  const IF_INIT_FUNCPTR init;
-  const IF_BUFF_FUNCPTR buff;
-} IF_FUNCS;
-
-typedef struct {
-  const uint8 tx_del;
-  const uint8 ack_del;
-  const IF_FUNCS funcs;
-} MRF_IF_TYPE;
-
-
-
-enum{
-  MRF_BUFF_NONE = 255
-};
-
-
-typedef struct  __attribute__ ((packed))  {
-  uint32 rx_pkts;
-  uint32 tx_pkts;
-  uint32 tx_acks;
-  uint16 tx_overruns;
-  uint16 tx_retries;
-  uint16 tx_retried;
-  uint16 tx_errors;
-  uint16  unexp_ack;
-  uint16  rx_ndr;
-  uint8  alloc_err;
-  uint8  st_err;
-} IF_STATS;
-
-typedef struct  {
-  IF_STATS stats;
-  IQUEUE txqueue;
-  uint8 resp_timer;
-  uint8 timer;
-  uint8 rx_last_id;
-  uint8 rx_last_src;
-  uint8 tx_id;
-  uint8 rx_on;  // default xbus mode , when not transmitting
-  //uint8 buff_active; // buff transaction in progress
-  uint8 tx_complete;   // set by i_f driver when data transmition is complete, whether ackbuff or txq head
-  uint8 waiting_resp;
-  uint8 resp_received;
-  uint8 tx_retried;  // set by RX callbacks - task_retry
-  IF_STATE state;
-} IF_STATUS;
 
 // I_F logic is implemented largely in _mrf_tick ( mrf_sys.c )
 
@@ -157,17 +92,6 @@ if (istate==TX_DEL){
 }
 */
 
-typedef struct  {
-  IF_STATUS *status;
-  const MRF_IF_TYPE *type;
-  MRF_PKT_HDR *ackbuff;
-  AckQueue  *ackqueue;
-#ifdef MRF_ARCH_lnx
-  int *fd;  // fd used by lnx epoll
-  const char *name;
-#endif
-  uint8 i_f;
-} MRF_IF;
 
 void mrf_if_init();
 
