@@ -26,7 +26,7 @@ extern const MRF_IF_TYPE mrf_pipe_lnx_if;
 
 extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
   MRF_IF_DEF(PIPE0,mrf_pipe_lnx_if),
-  MRF_IF_DEF_PATH(USB0,mrf_pipe_lnx_if,"/dev/MRFDEV2"),
-  MRF_IF_DEF_PATH(USB1,mrf_pipe_lnx_if,"/dev/MRFDEV4"),
-  MRF_IF_DEF_PATH(USB2,mrf_pipe_lnx_if,"/dev/MRFDEV6")
+  MRF_IF_DEF_PATH(USB0,mrf_uart_lnx_if,"/dev/MRFDEV2"),
+  MRF_IF_DEF_PATH(USB1,mrf_uart_lnx_if,"/dev/MRFDEV4"),
+  MRF_IF_DEF_PATH(USB2,mrf_uart_lnx_if,"/dev/MRFDEV6")
 };
