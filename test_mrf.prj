@@ -3,7 +3,7 @@ MRFNET 37
 DEVICE MRFID=0x01 APP=host    DEVTYPE=hostsim  ARCH=lnx
 DEVICE MRFID=0x02 APP=lnxtst  DEVTYPE=hostsim  ARCH=lnx
 DEVICE MRFID=0x20 APP=lnxtst  DEVTYPE=hostsim  ARCH=lnx
-DEVICE MRFID=0x2f APP=lnxtst  DEVTYPE=hostsim  ARCH=lnx
+DEVICE MRFID=0x21 APP=lnxtst  DEVTYPE=hostsim  ARCH=lnx
 
 
 SERVER test_server.py

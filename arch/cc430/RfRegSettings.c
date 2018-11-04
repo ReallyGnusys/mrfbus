@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -45,7 +45,7 @@
 // Sync mode = (3) 30/32 sync word bits detected
 // Format of RX/TX data = (0) Normal mode, use FIFOs for RX and TX
 // CRC operation = (1) CRC calculation in TX and CRC check in RX enabled
-// Forward Error Correction = 
+// Forward Error Correction =
 // Length configuration = (0) Fixed packet length, packet length configured by PKTLEN
 // Packetlength = 61
 // Preamble count = (2)  4 bytes
@@ -71,6 +71,7 @@ RF_SETTINGS rfSettings = {
     0x56,   // FREND1    Front end RX configuration.
     0x10,   // FREND0    Front end TX configuration.
     0x18,   // MCSM0     Main Radio Control State Machine configuration.
+    0x10,   // MCSM1     Main Radio Control State Machine configuration. - setting CCA mode
     0x16,   // FOCCFG    Frequency Offset Compensation Configuration.
     0x6C,   // BSCFG     Bit synchronization Configuration.
     0x43,   // AGCCTRL2  AGC control.
@@ -114,7 +115,7 @@ RF_SETTINGS rfSettings = {
 // Sync mode = (3) 30/32 sync word bits detected
 // Format of RX/TX data = (0) Normal mode, use FIFOs for RX and TX
 // CRC operation = (1) CRC calculation in TX and CRC check in RX enabled
-// Forward Error Correction = 
+// Forward Error Correction =
 // Length configuration = (0) Fixed packet length, packet length configured by PKTLEN
 // Packetlength = 61
 // Preamble count = (2)  4 bytes
@@ -140,6 +141,7 @@ RF_SETTINGS rfSettings = {
     0x56,   // FREND1    Front end RX configuration.
     0x10,   // FREND0    Front end TX configuration.
     0x18,   // MCSM0     Main Radio Control State Machine configuration.
+    0x10,   // MCSM1     Main Radio Control State Machine configuration. - setting CCA mode
     0x16,   // FOCCFG    Frequency Offset Compensation Configuration.
     0x6C,   // BSCFG     Bit synchronization Configuration.
     0x43,   // AGCCTRL2  AGC control.
@@ -169,5 +171,5 @@ RF_SETTINGS rfSettings = {
 #endif
 
 #if !defined (MHZ_868) && !defined (MHZ_915)
-#error "Please select MHZ_868 or MHZ_915 as the active project configuration" 
+#error "Please select MHZ_868 or MHZ_915 as the active project configuration"
 #endif

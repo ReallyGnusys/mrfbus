@@ -193,6 +193,7 @@ void WriteRfSettings(RF_SETTINGS *pRfSettings) {
     WriteSingleReg(FREND1,   pRfSettings->frend1);
     WriteSingleReg(FREND0,   pRfSettings->frend0);
     WriteSingleReg(MCSM0 ,   pRfSettings->mcsm0);
+    WriteSingleReg(MCSM1 ,   pRfSettings->mcsm1);
     WriteSingleReg(FOCCFG,   pRfSettings->foccfg);
     WriteSingleReg(BSCFG,    pRfSettings->bscfg);
     WriteSingleReg(AGCCTRL2, pRfSettings->agcctrl2);

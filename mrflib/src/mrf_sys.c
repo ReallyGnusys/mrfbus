@@ -983,15 +983,26 @@ void _mrf_tick(){
       if_busy = 1;
       if(ifs->timer==0){
         if(ifs->state==DELAY_ACK){
+          //if(mif->status->channel_clear){
           mrf_debug(" i_f %d  DELAY_ACK complete\n",i);
           send_next_ack(i,mif);
-        } else {
-          mrf_debug(" i_f %d  DELAY_BUFF complete\n",i);
-          send_next_queued(i,mif);
+          /*   }else { // restart timer
+            ifs->timer = mif->type->ack_del;
+            ifs->state = DELAY_ACK;
+            mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
+            }*/
+        } else {  // should be buff , but painfully similiar logic
+          if(mif->status->channel_clear){
+            mrf_debug(" i_f %d  DELAY_BUFF complete\n",i);
+            send_next_queued(i,mif);
+          }else { // restart timer
+            ifs->timer = mif->type->tx_del;
+            ifs->state = DELAY_BUFF;
+            mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
+          }
         }
         continue;
       }
-
     }
     else if ((ifs->state == TX_ACK)||(ifs->state == TX_BUFF)){
       if_busy = 1;
@@ -1024,7 +1035,7 @@ void _mrf_tick(){
       }
 
 
-    }
+        }
 
 
 
@@ -1068,6 +1079,7 @@ void _mrf_tick(){
         if_busy = 1;
 
         ifs->timer = mif->type->ack_del;
+        //mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);  // don't worry about CCA for acks
         ifs->state = DELAY_ACK;
       }
 
@@ -1105,6 +1117,8 @@ void _mrf_tick(){
 
           ifs->timer = mif->type->tx_del;
           ifs->state = DELAY_BUFF;
+          mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
+
         }
 
       }

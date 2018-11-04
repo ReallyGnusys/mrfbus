@@ -37,6 +37,7 @@
 
 static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff);
 static int _mrf_pipe_init_lnx(I_F i_f);
+static int _mrf_pipe_clear_lnx(I_F i_f);
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen);
 
 extern const MRF_IF_TYPE mrf_pipe_lnx_if = {
@@ -44,6 +45,7 @@ extern const MRF_IF_TYPE mrf_pipe_lnx_if = {
  ack_del: 1,
  funcs : { send : _mrf_pipe_send_lnx,
            init : _mrf_pipe_init_lnx,
+           clear : _mrf_pipe_clear_lnx,
            buff : _mrf_pipe_buff_lnx}
 };
 
@@ -70,6 +72,11 @@ static int _pipe_alloc_buff(I_F i_f){
   }
   return _bnum[i_f];
 }
+
+static int _mrf_pipe_clear_lnx(I_F i_f){ // always clear - full duplex RX always on
+  return 1;
+}
+
 int _mrf_pipe_init_lnx(I_F i_f){
   // open input pipes
   int fd,tmp;

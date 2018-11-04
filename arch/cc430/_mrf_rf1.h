@@ -9,7 +9,7 @@
  * Variable definition
  */
 
-#define  PATABLE_VAL        (0x51)          // 0 dBm output 
+#define  PATABLE_VAL        (0x51)          // 0 dBm output
 
 typedef struct S_RF_SETTINGS {
     unsigned char fsctrl1;   // Frequency synthesizer control.
@@ -27,6 +27,8 @@ typedef struct S_RF_SETTINGS {
     unsigned char frend1;    // Front end RX configuration.
     unsigned char frend0;    // Front end RX configuration.
     unsigned char mcsm0;     // Main Radio Control State Machine configuration.
+    unsigned char mcsm1;     // Main Radio Control State Machine configuration 1.
+
     unsigned char foccfg;    // Frequency Offset Compensation Configuration.
     unsigned char bscfg;     // Bit synchronization Configuration.
     unsigned char agcctrl2;  // AGC control.

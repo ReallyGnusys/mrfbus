@@ -46,6 +46,7 @@
 
 static int _usb_if_send_func(I_F i_f, uint8 *buff);
 static int _mrf_uart_init_lnx(I_F i_f);
+static int _mrf_uart_clear_lnx(I_F i_f);
 static int _mrf_uart_input(I_F i_f, uint8* inbuff, uint8 inlen);
 
 extern const MRF_IF_TYPE mrf_uart_lnx_if = {
@@ -53,6 +54,7 @@ extern const MRF_IF_TYPE mrf_uart_lnx_if = {
  ack_del : 2,
  funcs : { send : _usb_if_send_func,
            init : _mrf_uart_init_lnx,
+           clear: _mrf_uart_clear_lnx,
            buff : _mrf_uart_input
   }
 };
@@ -227,6 +229,9 @@ int usb_open(const char *dev){
   mrf_debug("after re-open serial_struct ASYNC_LOW_LATENCY =  %d\n",(ser_info.flags && ASYNC_LOW_LATENCY)!=0);
 #endif
   return fd;
+}
+static int _mrf_uart_clear_lnx(I_F i_f){ // always clear - full duplex RX always on
+  return 1;
 }
 
 

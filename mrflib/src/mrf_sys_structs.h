@@ -59,6 +59,7 @@ typedef int (*IF_BUFF_FUNCPTR)(I_F i_f, uint8* inbuff, uint8 inlen);
 typedef struct {
   const IF_SEND_FUNCPTR send;
   const IF_INIT_FUNCPTR init;
+  const IF_INIT_FUNCPTR clear;
   const IF_BUFF_FUNCPTR buff;
 } IF_FUNCS;
 
@@ -101,6 +102,7 @@ typedef struct  {
   uint8 tx_complete;   // set by i_f driver when data transmition is complete, whether ackbuff or txq head
   uint8 waiting_resp;
   uint8 resp_received;
+  uint8 channel_clear;
   uint8 tx_retried;  // set by RX callbacks - task_retry
   IF_STATE state;
 } IF_STATUS;

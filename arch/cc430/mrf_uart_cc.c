@@ -34,12 +34,14 @@
 
 static int mrf_uart_send_cc(I_F i_f, uint8 *buff);
 static int mrf_uart_init_cc(I_F i_f);
+static int _mrf_uart_clear_cc(I_F i_f);
 
 extern const MRF_IF_TYPE mrf_uart_cc_if = {
  tx_del : 4,
  ack_del : 3,
  funcs : { send : mrf_uart_send_cc,
            init : mrf_uart_init_cc,
+           clear: _mrf_uart_clear_cc,
            buff : NULL
    }
 };
@@ -101,6 +103,9 @@ void rx_newpacket(){
   rxstate.bindex = 0;
 }
 
+static int _mrf_uart_clear_cc(I_F i_f){ // always clear - full duplex RX always on
+  return 1;
+}
 
 
 static int mrf_uart_init_cc(I_F i_f){

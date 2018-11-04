@@ -29,12 +29,14 @@
 //#define mrf_alloc() mrf_alloc_if(RF0)
 int rf_if_send_func(I_F i_f, uint8 *buff);
 int mrf_rf_init(I_F i_f);
+int mrf_rf_clear(I_F i_f);
 
 extern const MRF_IF_TYPE mrf_rf_cc_if = {
  tx_del : 4,
  ack_del: 2,
  funcs : { send : rf_if_send_func,
            init : mrf_rf_init,
+           clear : mrf_rf_clear,
            buff : NULL}
 };
 
@@ -42,6 +44,7 @@ static struct rf_stats_t {
   uint32 ints;
   uint32 rdint;
   uint32 wrint;
+  uint32 ccaint;
   uint32 nodefint;
   uint32 rdbytes;
   uint32 rdnothing;
@@ -49,6 +52,9 @@ static struct rf_stats_t {
   uint32 rx_strobe_err;
   uint32 tx_strobe_err;
   uint32 oddint;
+  uint32 channel_not_clear;
+  uint32 channel_was_clear;
+  uint32 clear_called;
   int transmitting;
   uint16 lastnodef;
   uint8 laststat;
@@ -100,11 +106,16 @@ static void _mrf_radio_active_lpm3(){
 
 }
 
+uint8 mcsm1(){
+  return  ReadSingleReg(MCSM1);
+}
 static void _mrf_init_radio()
 {
-
+  uint8 mcsm1;
   WriteRfSettings(&rfSettings);
   WriteSinglePATable(PATABLE_VAL);
+  mcsm1 = ReadSingleReg(MCSM1);
+  WriteSingleReg(MCSM1,(mcsm1 & ~0x30) | 0x10); // set CCA_MODE=0x1 (RSSI below threshold)
   Strobe( RF_SIDLE );
 }
 
@@ -137,9 +148,9 @@ int _mrf_receive_reenable(){
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
   */
-
-  RF1AIES |= BIT9;                          // Pos edge of RFIFG10
+  RF1AIE  &= ~BIT9;                          // Disable the interrupt
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
+  RF1AIES |= BIT9;                          // Pos edge of RFIFG10
   RF1AIE  |= BIT9;                          // Enable the interrupt
 
   return 0;
@@ -179,11 +190,35 @@ int _mrf_initial_receive_enable(void){
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
   */
-  RF1AIES |= BIT9;                          // Pos edge of RFIFG10
+  RF1AIES |= BIT9;                          // Pos edge of RFIFG10  - neg edge???
   RF1AIFG &= ~BIT9;                         // Clear a pending interrupt
   RF1AIE  |= BIT9;                          // Enable the interrupt
 
   return 0;
+
+}
+
+int _clear_cca_fg(){
+  RF1AIFG &= ~BITC;                         // Clear a pending interrupt
+  return RF1AIFG;
+}
+
+uint16_t rf1ain_cca;
+int _channel_is_clear(){
+  rf1ain_cca = RF1AIN;
+  if ((rf1ain_cca & BITC) == 0 )
+    return 0;
+  else
+    return 1;
+}
+
+int mrf_rf_clear(I_F i_f){  // i_f ignored - only RF0 on cc arch
+  rf_stats.clear_called++;
+  RF1AIE  &= ~BITC;                          // Disable the interrupt
+  RF1AIFG &= ~BITC;                         // Clear a pending interrupt
+  RF1AIES |= BITC;                          // Neg edge of RFIFG12
+  RF1AIE  |= BITC;                          // Enable the interrupt
+  return _channel_is_clear();
 
 }
 
@@ -192,6 +227,7 @@ int mrf_rf_init(I_F i_f){
   rf_stats.ints = 0;
   rf_stats.rdint = 0;
   rf_stats.wrint = 0;
+  rf_stats.ccaint = 0;
   rf_stats.nodefint = 0;
   rf_stats.rdbytes = 0;
   rf_stats.rdnothing = 0;
@@ -200,13 +236,16 @@ int mrf_rf_init(I_F i_f){
   rf_stats.laststat = 0;
   rf_stats.rx_strobe_err = 0;
   rf_stats.tx_strobe_err = 0;
+  rf_stats.channel_not_clear = 0;
+  rf_stats.channel_was_clear = 0;
   rf_stats.oddint = 0;
+  rf_stats.clear_called = 0;
   _mrf_radio_active_lpm3();
 
   ResetRadioCore();
   _mrf_init_radio();
 
-  WriteSingleReg(IOCFG0,0x7);  // should be posedge RX CRC OK , negedge RX_FIFO read
+  WriteSingleReg(IOCFG0,0x1e);  // RSSI_VALID
   WriteSingleReg(IOCFG1,0x6 | 0x40);  // posedge SYNC word send , negedge TX_FIFO underflow
 
   //RF1AIES |= BIT1;  //GD01/IFG1 want negedge
@@ -278,6 +317,17 @@ int _Dbg17(){
 
 volatile static uint8 _dumpbyte;
 
+uint8 rssi(){
+  return ReadSingleReg(RSSI);
+}
+
+
+uint8 rx_status(){
+  return Strobe(RF_SNOP | RF_RXSTAT);
+}
+uint8 tx_status(){
+  return Strobe(RF_SNOP | RF_TXSTAT);
+}
 
 int _xb_hw_rd_rx_fifo(I_F i_f){
   //int i;
@@ -483,6 +533,36 @@ uint8 GetRF1ASTATB(){
 
 }
 
+uint16_t rfa1in;
+uint16_t rfa1flg;
+uint16_t rfa1ie;
+uint16_t rfa1ies;
+
+int cca_return_l1(){
+  return 0;
+}
+int _mrf_rf_cca(){
+  rfa1in = RF1AIN;
+  rfa1flg = RF1AIFG;
+  rfa1ie = RF1AIE;
+  rfa1ies = RF1AIES;
+
+  if (rfa1in & BITC){
+    mrf_if_ptr(RF0)->status->channel_clear = 1;
+    rf_stats.channel_was_clear++;
+  }
+  else {
+    mrf_if_ptr(RF0)->status->channel_clear = 0;
+    rf_stats.channel_not_clear++;
+  }
+  // disable int once triggered
+
+  RF1AIE &= ~BITC;
+
+  return cca_return_l1();
+  //return 0;
+}
+
 unsigned int _dbg_iv(unsigned int iv){
   return iv;
 }
@@ -536,7 +616,7 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 
 
 
-    case RF1AIV_RFIFG0:
+  case RF1AIV_RFIFG0:
     if (!rf_stats.transmitting) {
 
       rf_stats.rdint++;
@@ -557,6 +637,11 @@ interrupt(CC1101_VECTOR) CC1101_ISR(void)
 
       // else while(1); 			    // trap - sometimes gets in here -
     break;
+  case RF1AIV_RFIFG12:  // NB set for negedge, i.e. when a signal is detected
+    rf_stats.ccaint++;
+    _mrf_rf_cca();
+    break;
+
 
 #if 0
     case RF1AIV_RFIFG10:   break;                 // RFIFG10  - RX packet with checksum OK
