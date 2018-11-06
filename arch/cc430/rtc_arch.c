@@ -258,8 +258,8 @@ void _rtc_get(TIMEDATE *td){
 }
 void _rtc_set(TIMEDATE *td){
   //RTCCTL01 |= RTCHOLD  ;
-  uint16 rdate = ((td->mon)<<8)|td->day;
-  uint16 rtim0 = ((td->min)<<8)|td->sec;
+  uint16 rdate = ((td->mon)<<8)|(td->day);
+  uint16 rtim0 = ((td->min)<<8)|(td->sec);
 
 
   (* ((volatile uint16_t *)RTCDATE_)) = rdate;

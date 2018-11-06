@@ -186,7 +186,7 @@ int mrf_sretry(uint8 bnum){
  const MRF_IF *if_ptr = mrf_if_ptr(route.i_f);
 
 
-  ACK_TAG acktag;
+ ACK_TAG acktag;
 
  acktag.type  = mrf_cmd_retry;
  acktag.msgid = hdr->msgid;
@@ -986,11 +986,6 @@ void _mrf_tick(){
           //if(mif->status->channel_clear){
           mrf_debug(" i_f %d  DELAY_ACK complete\n",i);
           send_next_ack(i,mif);
-          /*   }else { // restart timer
-            ifs->timer = mif->type->ack_del;
-            ifs->state = DELAY_ACK;
-            mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
-            }*/
         } else {  // should be buff , but painfully similiar logic
           if(mif->status->channel_clear){
             mrf_debug(" i_f %d  DELAY_BUFF complete\n",i);
@@ -1035,7 +1030,7 @@ void _mrf_tick(){
       }
 
 
-        }
+    }
 
 
 
@@ -1110,14 +1105,16 @@ void _mrf_tick(){
           if_to_idle(ifs);
 
         }else {
+          ifs->timer = mif->type->tx_del;
+          ifs->state = DELAY_BUFF;
 
           mrf_debug("mrf_tick : sending buffer -IF = %d buffer is %d buff state %d retry_count %d  tc %d\n",
                     i,bnum,bs->state,bs->retry_count,_tick_count);
 
-
-          ifs->timer = mif->type->tx_del;
-          ifs->state = DELAY_BUFF;
-          mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
+          if (((MRF_PKT_HDR *)_mrf_buff_ptr(bnum))->type==mrf_cmd_resp)  // resp just goes on timer, like ack
+            mif->status->channel_clear = 1;
+          else
+            mif->status->channel_clear = (*(mif->type->funcs.clear))((I_F)i);
 
         }
 
