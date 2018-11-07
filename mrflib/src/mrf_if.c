@@ -62,13 +62,13 @@ int mrf_if_transmitting(I_F i_f){
 void mrf_if_init(){
   unsigned int i,j;
   uint8 *dptr;
-  //mrf_debug("mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
+  //mrf_debug(5,"mrf_if_init entry NUM_INTERFACES %d \n",NUM_INTERFACES);
   for (i = 0 ; i < NUM_INTERFACES ; i++){
-    //mrf_debug("interface %d\n",i);
+    //mrf_debug(5,"interface %d\n",i);
     const MRF_IF *mif = mrf_if_ptr((I_F)i);
     // rough zeroing of status data including stats
     dptr = (uint8 *)mif->status;
-    //mrf_debug("dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
+    //mrf_debug(5,"dptr = %p sizeof IF_STATUS %lu\n",dptr,sizeof(IF_STATUS));
     for ( j = 0 ; j < sizeof(IF_STATUS) ; j++)
       dptr[j] = 0;
     //queue_init(&(mif->status->txqueue));
@@ -95,7 +95,7 @@ void mrf_if_print_info(I_F i_f){
   IF_STATUS *ifs = mrf_if_ptr(i_f)->status;
   int i = (int)i_f;
   ifp = mrf_if_ptr((I_F)i);
-  mrf_debug("I_F %d state %s waiting_resp %d txq_da %d ackq da %d timer %d resp_timer %d\n",i,
+  mrf_debug(5,"I_F %d state %s waiting_resp %d txq_da %d ackq da %d timer %d resp_timer %d\n",i,
             mrf_if_state_name(i_f),ifs->waiting_resp,
             ifp->txqueue->data_avail(),ifp->ackqueue->items(),
             ifs->timer,ifs->resp_timer);
@@ -113,17 +113,17 @@ void mrf_if_tx_done(I_F i_f){
   const MRF_IF *mif = mrf_if_ptr(i_f);
 
   mif->status->tx_complete = 1;
-  //mrf_debug("mrf_if_tx_done I_F %d state %d \n",i_f,mif->status->state);
+  //mrf_debug(5,"mrf_if_tx_done I_F %d state %d \n",i_f,mif->status->state);
 }
 
 int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
   const MRF_IF *mif = mrf_if_ptr(i_f);
   MRF_BUFF_STATE *mbst = _mrf_buff_state(bnum);
   BuffQueue *qp = mif->txqueue;
-  //mrf_debug("mrf_if_tx_queue entry\n");
+  //mrf_debug(5,"mrf_if_tx_queue entry\n");
   if ( bnum >= _MRF_BUFFS)
     return -2;
-  //mrf_debug("mrf_if_tx_queue 1\n");
+  //mrf_debug(5,"mrf_if_tx_queue 1\n");
   if (qp->push(bnum) == 0)    {
     //_sys_ifs[i_f].status->state = MRF_ST_TXQ;
       mbst->owner = i_f;
@@ -131,7 +131,7 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
       mbst->state = TXQUEUE;
       mbst->retry_count = 0;
       mrf_tick_enable();
-      mrf_debug("mrf_if_tx_queue OK i_f %d buff %d retry_count %d qip %d qop %d items %d\n",
+      mrf_debug(5,"mrf_if_tx_queue OK i_f %d buff %d retry_count %d qip %d qop %d items %d\n",
                 i_f,bnum,mbst->retry_count,qp->get_qip(),qp->get_qop(),qp->items());
       return 0;
   }

@@ -65,10 +65,10 @@ static int _pipe_alloc_buff(I_F i_f){
 
   _bnum[i_f] = mrf_alloc_if(i_f);
   if ( _bnum[i_f] == _MRF_BUFFS){
-    mrf_debug("_pipe_alloc_buff houston,we have a prob - mrf_alloc_if returned %d\n", _bnum[i_f]);
+    mrf_debug(1,"_pipe_alloc_buff houston,we have a prob - mrf_alloc_if returned %d\n", _bnum[i_f]);
   }
   else{
-    mrf_debug("_pipe_alloc_buff mrf_alloc_if returned %d\n", _bnum[i_f]);
+    mrf_debug(5,"_pipe_alloc_buff mrf_alloc_if returned %d\n", _bnum[i_f]);
   }
   return _bnum[i_f];
 }
@@ -84,9 +84,9 @@ int _mrf_pipe_init_lnx(I_F i_f){
   sprintf(sname,"%s%d-%d-in",SOCKET_DIR,MRFID,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  mrf_debug("created pipe %s res %d\n",sname,tmp);
+  mrf_debug(5,"created pipe %s res %d\n",sname,tmp);
   fd = open(sname,O_RDONLY | O_NONBLOCK);
-  mrf_debug("opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
+  mrf_debug(5,"opened pipe i = %d  %s fd = %d\n",i_f,sname,fd);
   _pipe_alloc_buff(i_f);
   return fd; // lnx arch needs it for epoll
 }
@@ -98,7 +98,7 @@ static int hex_digit_to_int(uint8 dig){
   else if(( dig >= 'A') && ( dig <= 'F'))
     return 10 + dig - 'A';
   else {
-    mrf_debug("error dig was not hexdigit , got %d\n",dig);
+    mrf_debug(5,"error dig was not hexdigit , got %d\n",dig);
     return 0;
   }
 }
@@ -111,7 +111,7 @@ static int  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
   int i;
 
   if (len < sizeof(MRF_PKT_HDR) * 2){
-    mrf_debug("PACKET too short ( %d bytes )\n",len);
+    mrf_debug(5,"PACKET too short ( %d bytes )\n",len);
     return -1;
   }
 
@@ -122,15 +122,15 @@ static int  copy_to_mbuff(uint8 *buffer,int len,uint8 *mbuff){
 
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)mbuff;
 
-  mrf_debug("packet hdr->length is %d  len (ascii hex) %d\n",hdr->length,len);
+  mrf_debug(5,"packet hdr->length is %d  len (ascii hex) %d\n",hdr->length,len);
 
   if (hdr->length > _MRF_BUFFLEN) {
-    mrf_debug("PACKET too long ( hdr->length %d bytes len was %d )\n",hdr->length,len);
+    mrf_debug(5,"PACKET too long ( hdr->length %d bytes len was %d )\n",hdr->length,len);
     return -1;
   }
 
   if (((hdr->length)*2) > len) {
-    mrf_debug("looks like incomplete packet  in buffer ( hdr->length %d , but read len %d bytes hexascii)\n",hdr->length,len);
+    mrf_debug(5,"looks like incomplete packet  in buffer ( hdr->length %d , but read len %d bytes hexascii)\n",hdr->length,len);
     return -1;
   }
 
@@ -163,24 +163,24 @@ void trim_trailing_space(uint8 *buff);
 static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   int len;
   //_print_mrf_cmd(mrf_cmd_device_info);
-  //mrf_debug("%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
+  //mrf_debug(5,"%s","_mrf_pipe_buff_lnx about to trim_trailing_space\n");
 
   trim_trailing_space(inbuff);
   len = strlen((char *)inbuff);
 
-  mrf_debug("_mrf_pipe_buff_lnx entry i_f %d inlen %d  chk len %d\n",i_f,inlen,len);
+  mrf_debug(5,"_mrf_pipe_buff_lnx entry i_f %d inlen %d  chk len %d\n",i_f,inlen,len);
   /*
   if (len % 2){
-    mrf_debug("ALERT - odd length packet %d\n",len);
+    mrf_debug(5,"ALERT - odd length packet %d\n",len);
     len = len - 1;
   }
   */
-  //mrf_debug("len is %d\n",len);
-  //mrf_debug("%s\n",inbuff);
+  //mrf_debug(5,"len is %d\n",len);
+  //mrf_debug(5,"%s\n",inbuff);
   // sanity checking gone bonkers
   /*
   if ( len > _MRF_BUFFLEN * 2){
-    mrf_debug("ALERT - buffer oversized at %d\n",len);
+    mrf_debug(5,"ALERT - buffer oversized at %d\n",len);
     return -1;
   }
   */
@@ -189,13 +189,13 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   for (i = 0 ; i < len ; i ++ )
     {
       if (is_hex_digit(inbuff[i] == 0) ){
-        mrf_debug("dig %d ( %c ) not hex\n",i,inbuff[i]);
+        mrf_debug(5,"dig %d ( %c ) not hex\n",i,inbuff[i]);
         return -1;
       }
     }
   */
   if (len < sizeof(MRF_PKT_HDR) * 2){
-    mrf_debug("PACKET too short ( %d bytes )\n",len);
+    mrf_debug(5,"PACKET too short ( %d bytes )\n",len);
     return -1;
   }
 
@@ -205,30 +205,30 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
 
     uint8 *mbuff = _mrf_buff_ptr(_bnum[i_f]);
 
-    mrf_debug("about to copy to mbuff len (ascii) %d \n",len);
+    mrf_debug(5,"about to copy to mbuff len (ascii) %d \n",len);
 
     int nc;
     nc = copy_to_mbuff(inbuff+ibcnt,len,mbuff);
 
     if (nc == -1) {
-      mrf_debug("%s","problem copying to buff...\n");
+      mrf_debug(1,"%s","problem copying to buff...\n");
       return -1;
     }
     len -= nc;
     ibcnt += nc;
-    mrf_debug("copied %d bytes to mbuff i_f is %d , bnum is %d\n",nc,i_f,_bnum[i_f]);
+    mrf_debug(5,"copied %d bytes to mbuff i_f is %d , bnum is %d\n",nc,i_f,_bnum[i_f]);
 
     mrf_buff_loaded(_bnum[i_f]);
-    mrf_debug("%s","mbuff loaded!\n");
+    mrf_debug(5,"%s","mbuff loaded!\n");
     // need to alloc next buffer
     uint8 _bnum = _pipe_alloc_buff(i_f);
-    mrf_debug("_pipe_alloc_buff 'ed %d!\n",_bnum);
+    mrf_debug(5,"_pipe_alloc_buff 'ed %d!\n",_bnum);
 
     if(len > 0){
       if (is_hex_digit(inbuff[ibcnt])== 0){
         len -= 1;
         ibcnt += 1;
-        mrf_debug("got non hex_digit %d - removed from buff len is now %d\n",inbuff[ibcnt-1],len);
+        mrf_debug(5,"got non hex_digit %d - removed from buff len is now %d\n",inbuff[ibcnt-1],len);
 
       }
 
@@ -237,7 +237,7 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
   }
 
 
-  mrf_debug("%s","_mrf_pipe_buff_lnx exit\n");
+  mrf_debug(5,"%s","_mrf_pipe_buff_lnx exit\n");
   return 0;
 }
 
@@ -249,7 +249,7 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   //int bc;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
-  mrf_debug("_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
+  mrf_debug(5,"_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
 
   // rough hack to get up and down using correct sockets
@@ -264,29 +264,29 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   else  // zl-0
     sknum = 0;
   //printf("lnx_if_send_func i_f %d buff %p  len %d\n",i_f,buff,buff[0]);
-  // mrf_debug("hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
+  // mrf_debug(5,"hdest %d udest %d hsrc %d usrc %d\n",hdr->hdest,hdr->udest,hdr->hsrc,hdr->usrc);
   // apologies - this is how we frig the 'wiring' on the interface to write to the intended target
   sprintf(spath,"%s%d-%d-in",SOCKET_DIR,hdr->hdest,sknum);
-  mrf_debug("_mrf_pipe_send_lnx using socket *%s*\n",spath);
+  mrf_debug(5,"_mrf_pipe_send_lnx using socket *%s*\n",spath);
   fd = open(spath, O_WRONLY | O_NONBLOCK);
   if(fd == -1){
-    mrf_debug(" %d\n",fd);
-    mrf_debug("%s","ERROR file open\n");
+    mrf_debug(5," %d\n",fd);
+    mrf_debug(5,"%s","ERROR file open\n");
     return -1;
   }
   if(buff[0] > _MRF_BUFFLEN){
-    mrf_debug("%s","\nGOT DANGER ERROR COMING\n");
+    mrf_debug(5,"%s","\nGOT DANGER ERROR COMING\n");
   }
-  mrf_debug("copying to tx_buffer .. len %d\n",buff[0]);
+  mrf_debug(5,"copying to tx_buffer .. len %d\n",buff[0]);
   tb = copy_to_txbuff(buff,buff[0],txbuff);
-  mrf_debug("copied to tx_buffer .. len %d\n",tb);
+  mrf_debug(5,"copied to tx_buffer .. len %d\n",tb);
 
   //bc = write(fd, txbuff,tb );
   write(fd, txbuff,tb );
   fsync(fd);
   close(fd);
-  mrf_debug("%s closed\n",spath);
+  mrf_debug(5,"%s closed\n",spath);
   mrf_if_tx_done(i_f);
-  //mrf_debug("bc = %d  fd = %d\n",bc,fd);
+  //mrf_debug(5,"bc = %d  fd = %d\n",bc,fd);
   return 0;
 }

@@ -113,7 +113,7 @@ class MrfDev(object):
             # FIXME should do some validation of the decode here
             di = dict(resp.dic())
             self.sys[param.type] = di
-            mrflog.warn("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
+            mrflog.info("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
             for s in self.subscribers.keys():  # for now only update subscribers for sys command responses
                 self.subscribers[s](self.label,self.sys)
 

@@ -89,10 +89,10 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
 
   uint8 s[_MAX_PRINTLEN + 2];
   uint8 i;
-  mrf_debug("print_hex_buff : len is %u buff:\n",len);
+  mrf_debug(5,"print_hex_buff : len is %u buff:\n",len);
   //if (len >  _MRF_BUFFLEN){
   if (len > _MAX_PRINTLEN ){
-    mrf_debug("try len <= %u - you had %d\n",_MRF_BUFFLEN,len);
+    mrf_debug(5,"try len <= %u - you had %d\n",_MRF_BUFFLEN,len);
     len = _MAX_PRINTLEN;
   }
   for ( i=0; i<len ; i++){
@@ -102,7 +102,7 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len){
   s[i*2] = '\0';
 
   //s[0] = '\0';
-  mrf_debug("%s\n",s);
+  mrf_debug(5,"%s\n",s);
 
 }
 
@@ -148,14 +148,14 @@ void sig_handler(int signum)
 
 /*
 int _print_mrf_cmd(MRF_CMD_CODE cmd){
-  mrf_debug("_print_mrf_cmd entry cmd %d\n",cmd);
-  mrf_debug("mrf_sys_cmds %p  &mrf_sys_cmds[0] %p \n",mrf_sys_cmds,&mrf_sys_cmds[0]);
+  mrf_debug(5,"_print_mrf_cmd entry cmd %d\n",cmd);
+  mrf_debug(5,"mrf_sys_cmds %p  &mrf_sys_cmds[0] %p \n",mrf_sys_cmds,&mrf_sys_cmds[0]);
   if (cmd >= MRF_NUM_SYS_CMDS){
-    mrf_debug("cmd code too big %d\n",cmd);
+    mrf_debug(5,"cmd code too big %d\n",cmd);
     return -1;
   }
-  mrf_debug("cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
-  mrf_debug("cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
+  mrf_debug(5,"cmd %d is at %p\n",cmd, &mrf_sys_cmds[cmd]);
+  mrf_debug(5,"cmd desc is at %p\n",mrf_sys_cmds[cmd].str);
 }
 */
 
@@ -171,7 +171,7 @@ int make_listener_socket (uint16_t port)
   sock = socket (PF_INET, SOCK_STREAM, 0);
   if (sock < 0)
     {
-      mrf_debug("%s","sock creation error");
+      mrf_debug(5,"%s","sock creation error");
       return -1;
     }
 
@@ -185,7 +185,7 @@ int make_listener_socket (uint16_t port)
 
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
-      mrf_debug("bind error for port %u",port);
+      mrf_debug(5,"bind error for port %u",port);
       return -1;
     }
 
@@ -205,7 +205,7 @@ static int app_callback_fd;
 
 int mrf_arch_app_callback(MRF_APP_CALLBACK callback){
   // allow mrf_app_init to set fd and callback to add to epoll loop
-  mrf_debug("mrf_arch_app_callback mrfid %d\n",MRFID);
+  mrf_debug(5,"mrf_arch_app_callback mrfid %d\n",MRFID);
   app_callback    = callback;
   return 0;
 
@@ -222,17 +222,17 @@ int mrf_arch_servfd(){
 
 void kill_signal (int sig)
 {
-  mrf_debug("%s","kill signal received\n");
+  mrf_debug(5,"%s","kill signal received\n");
   if (lisfd != -1){
-    mrf_debug("closing lisfd %d\n",lisfd);
+    mrf_debug(5,"closing lisfd %d\n",lisfd);
     close(lisfd);
   }
 
   if (servfd != -1){
-    mrf_debug("closing servfd %d\n",servfd);
+    mrf_debug(5,"closing servfd %d\n",servfd);
     close(servfd);
   }
-  mrf_debug("%s","ttfn\n");
+  mrf_debug(5,"%s","ttfn\n");
   exit(0);
 
 }
@@ -285,7 +285,7 @@ int mrf_arch_boot(){
   usr_action.sa_flags = 0;
   sigaction (SIGUSR1, &usr_action, NULL);
 
-  mrf_debug("%s","lnx arch boot - installed SIGUSR1 handler\n");
+  mrf_debug(5,"%s","lnx arch boot - installed SIGUSR1 handler\n");
   // allow mrf_app_init to set  callback for established server connections
   app_callback = NULL;
   _app_timerfd = -1;
@@ -304,19 +304,19 @@ int mrf_arch_run(){
 
   // if app_callback is set we establish a simple server, to wait for connections from python land server
   if ( app_callback != NULL ){
-    mrf_debug("%s","creating listening socket\n");
+    mrf_debug(5,"%s","creating listening socket\n");
     lisfd = make_listener_socket(LISTEN_ON);
 
     if (listen (lisfd, 1) < 0)
       {
-        mrf_debug("%s","failed to listen socket\n");
+        mrf_debug(5,"%s","failed to listen socket\n");
         return -1;
       }
 
-    mrf_debug("opened listener socket fd = %d\n\n", lisfd);
+    mrf_debug(5,"opened listener socket fd = %d\n\n", lisfd);
     if (lisfd < 1 ) {
 
-      mrf_debug("failed to open socket fd = %d\n\n",lisfd);
+      mrf_debug(5,"failed to open socket fd = %d\n\n",lisfd);
 
       return -1;
     }
@@ -424,12 +424,12 @@ char buff[2048];
   i = NUM_INTERFACES + 1;
   sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
-  mrf_debug("created pipe %s res %d\n",sname,tmp);
+  mrf_debug(5,"created pipe %s res %d\n",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
-  mrf_debug("opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
+  mrf_debug(5,"opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
 
-  mrf_debug("mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
+  mrf_debug(5,"mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
 
   int count = 0;
 
@@ -448,7 +448,7 @@ char buff[2048];
     ievent[i].events = EPOLLIN | EPOLLET;
 
     epoll_ctl(efd, EPOLL_CTL_ADD, *(ifp->fd), &ievent[i]);
-    mrf_debug("I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
+    mrf_debug(5,"I_F event added i_f %d fd %d infd %d\n",i,ievent[i].data.fd,*(ifp->fd));
   }
   //_print_mrf_cmd(mrf_cmd_device_info);
   // timer event
@@ -463,23 +463,23 @@ char buff[2048];
   ievent[NUM_INTERFACES+1].data.u32 = NUM_INTERFACES+1;
   ievent[NUM_INTERFACES+1].events = EPOLLIN | EPOLLET;
   epoll_ctl(efd, EPOLL_CTL_ADD, intfd , &ievent[NUM_INTERFACES+1]);
-  mrf_debug("Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
+  mrf_debug(5,"Internal cntrl added %d u32 %u infd %d\n",NUM_INTERFACES+1,ievent[NUM_INTERFACES+1].data.u32,intfd);
 
 
   // add server listener if initialised by appl
   //num_fds = NUM_INTERFACES+2;
   if (( app_callback != NULL ) && (lisfd > 0)){
-    mrf_debug("adding epoll for app fifo %d\n",lisfd);
+    mrf_debug(5,"adding epoll for app fifo %d\n",lisfd);
     ievent[NUM_INTERFACES+2].data.u32 = NUM_INTERFACES+2;
     ievent[NUM_INTERFACES+2].events = EPOLLIN | EPOLLET;
     epoll_ctl(efd, EPOLL_CTL_ADD, lisfd , &ievent[NUM_INTERFACES+2]);
-    mrf_debug("Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,lisfd);
+    mrf_debug(5,"Application fifo added %d u32 %u applfd %d\n",NUM_INTERFACES+2,ievent[NUM_INTERFACES+2].data.u32,lisfd);
   }
 
   // add
   if (_app_timerfd != -1) {
 
-    mrf_debug("adding epoll for _app_timerfd %d\n",_app_timerfd);
+    mrf_debug(5,"adding epoll for _app_timerfd %d\n",_app_timerfd);
     ievent[NUM_INTERFACES+4].data.u32 = NUM_INTERFACES+4;   // 3 is used when server connection is made
     ievent[NUM_INTERFACES+4].events = EPOLLIN | EPOLLET;
 
@@ -491,22 +491,22 @@ char buff[2048];
 
    nfds = epoll_wait(efd, revent, NUM_INTERFACES+5 , -1);
    //s = read(fd, &exp, sizeof(uint64_t));
-   //mrf_debug("nfds = %d\n",nfds);
+   //mrf_debug(5,"nfds = %d\n",nfds);
 
    for ( i = 0 ; i < nfds ; i++){  // process epoll events
      //printf("epoll event %d - u32 = %d NUM_INTERFACES %d\n",i,revent[i].data.u32,NUM_INTERFACES);
      inif = revent[i].data.u32; // data contains mrfbus i_f num
-     //mrf_debug("fd %i is i_f %d\n",i,inif);
+     //mrf_debug(5,"fd %i is i_f %d\n",i,inif);
      if (inif < NUM_INTERFACES){
        //it's an input stream
        fd = *(mrf_if_ptr((I_F)inif)->fd);
        //sanity check
-       mrf_debug("event on fd %d\n",fd);
+       mrf_debug(5,"event on fd %d\n",fd);
        s = read(fd, buff, 1024); // FIXME need to handle multiple packets
        buff[s] = 0;
 
-       mrf_debug("read %d bytes\n",(int)s);
-       //mrf_debug("%s\n",buff);
+       mrf_debug(5,"read %d bytes\n",(int)s);
+       //mrf_debug(5,"%s\n",buff);
        //_mrf_print_hex_buff(buff,s);
        uint8 bind;
        //bind = mrf_alloc_if(inif);
@@ -514,13 +514,13 @@ char buff[2048];
        if (*(mrf_if_ptr((I_F)inif)->type->funcs.buff) != NULL){
          //use interface method to copy to buff
          int rv = (*(mrf_if_ptr((I_F)inif)->type->funcs.buff))((I_F)inif,(uint8 *)buff,s);
-         //mrf_debug(" arch lnx i_f %d buff function returned %d\n",inif,rv);
+         //mrf_debug(5," arch lnx i_f %d buff function returned %d\n",inif,rv);
        } else {
          // probably mistake here to not have buff function defined..
          // but assume buff contains mrf packet that needs straight copy
-         mrf_debug("%s","ERROR ERROR ERROR : lnx - no input/buff function\n\n");
+         mrf_debug(5,"%s","ERROR ERROR ERROR : lnx - no input/buff function\n\n");
          if ((s <  sizeof(MRF_PKT_HDR)) || (s > _MRF_BUFFLEN)){
-           mrf_debug("i_f %d had not buff function defined but buff len was %d",inif,(int)s);
+           mrf_debug(5,"i_f %d had not buff function defined but buff len was %d",inif,(int)s);
              _mrf_buff_free(bind);
          } else
            mrf_buff_loaded(bind);
@@ -553,35 +553,35 @@ char buff[2048];
        char token[64];  // we must split tokens
        int bi, j = 0;
        s = read(intfd, buff, 1024);
-       mrf_debug("internal control (1) : s = %d buff = %s\n",(int)s,buff);
+       mrf_debug(5,"internal control (1) : s = %d buff = %s\n",(int)s,buff);
 
        for (bi = 0 ; bi < s ; bi++){
          token[j] = buff[bi];
          j++;
          if (buff[bi] == 0) {
            j = 0;
-           mrf_debug("token %s\n",token);
+           mrf_debug(5,"token %s\n",token);
            if(!_tick_enabled && strcmp(token,TICK_ENABLE) == 0){
-             mrf_debug("%s","INTERNAL:tick_enable\n");
+             mrf_debug(5,"%s","INTERNAL:tick_enable\n");
              epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
              _tick_enabled = 1;
            }
            else if (_tick_enabled && strcmp(token,TICK_DISABLE) == 0){
-             mrf_debug("%s","INTERNAL:tick_disable\n");
+             mrf_debug(5,"%s","INTERNAL:tick_disable\n");
              epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
              //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
              _tick_enabled = 0;
 
            }
            else if (strcmp(token,"wake") == 0){
-             mrf_debug("%s","INTERNAL:wakeup\n");
+             mrf_debug(5,"%s","INTERNAL:wakeup\n");
              int i = mrf_foreground();
-             mrf_debug("ran %d foreground tasks\n",i);
+             mrf_debug(5,"ran %d foreground tasks\n",i);
            }
            else{
 
-             mrf_debug("internal control unrecognised string %s\n",buff);
+             mrf_debug(5,"internal control unrecognised string %s\n",buff);
            }
 
 
@@ -592,7 +592,7 @@ char buff[2048];
 
        struct sockaddr_in clientname;
        size_t size;
-       mrf_debug("server connection fd %d\n",lisfd);
+       mrf_debug(5,"server connection fd %d\n",lisfd);
 
        int newcon;
        size = sizeof (clientname);
@@ -601,10 +601,10 @@ char buff[2048];
                      (socklen_t*)&size);
        if (newcon < 0)
          {
-           mrf_debug("%s","big trouble accepting connection");
+           mrf_debug(5,"%s","big trouble accepting connection");
          }
        else {
-         mrf_debug ("Server: connect from host %s, port %u \n",
+         mrf_debug(5,"Server: connect from host %s, port %u \n",
                     inet_ntoa (clientname.sin_addr),
                     ntohs (clientname.sin_port));
          if ( servfd == -1) {
@@ -613,17 +613,17 @@ char buff[2048];
            setsockopt(servfd, IPPROTO_TCP, TCP_NODELAY, (char *) &optval, sizeof(int));
            if ( app_callback != NULL ){
              //num_fds = NUM_INTERFACES+4;
-             mrf_debug("adding epoll for app c fifo %d\n",servfd);
+             mrf_debug(5,"adding epoll for app c fifo %d\n",servfd);
              ievent[NUM_INTERFACES+3].data.u32 = NUM_INTERFACES+3;
              ievent[NUM_INTERFACES+3].events = EPOLLIN | EPOLLET;
              epoll_ctl(efd, EPOLL_CTL_ADD, servfd , &ievent[NUM_INTERFACES+3]);
-             mrf_debug("Server connection EPOLL  added %d u32 %u applfd %d\n",NUM_INTERFACES+3,ievent[NUM_INTERFACES+3].data.u32,servfd);
+             mrf_debug(5,"Server connection EPOLL  added %d u32 %u applfd %d\n",NUM_INTERFACES+3,ievent[NUM_INTERFACES+3].data.u32,servfd);
            }
 
          }
          else {
 
-           mrf_debug("already have a connection ... closing %d",newcon);
+           mrf_debug(5,"already have a connection ... closing %d",newcon);
            close(newcon);
 
 
@@ -636,10 +636,10 @@ char buff[2048];
      } else if (revent[i].data.u32 == NUM_INTERFACES+3){
        // app c fifo
 
-       printf("server socket  event\n");
+       mrf_debug(5,"%s","server socket  event\n");
        if (app_callback != NULL ){
          if ((*(app_callback))(servfd) == -1){
-           mrf_debug("%s","looks like servers disconnected\n");
+           mrf_debug(5,"%s","looks like servers disconnected\n");
            servfd = -1;
 
          }
@@ -667,9 +667,9 @@ char buff[2048];
 int mrf_rtc_get(TIMEDATE *td){
 
   time_t t = time(NULL);
-  mrf_debug("mrf_rtc_get t %lx\n",t);
+  mrf_debug(5,"mrf_rtc_get t %lx\n",t);
   struct tm tm = *localtime(&t);
-  mrf_debug("\nyear is %u mon %u day %u hour %u min %u sec %u ",
+  mrf_debug(5,"\nyear is %u mon %u day %u hour %u min %u sec %u ",
          tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
   td->year = tm.tm_year - 100;  // mrf bus years start at 2000
   td->mon = tm.tm_mon + 1;  // matches cc RTC output months 1 - 12
@@ -692,7 +692,7 @@ int _write_internal_pipe(char *data, int len){
   sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
-    mrf_debug("write internal pipe error, fd was %d  name %s\n",fd,sname);
+    mrf_debug(5,"write internal pipe error, fd was %d  name %s\n",fd,sname);
     perror("_write_internal_pipe ERROR sock open\n");
     return -1;
   }
@@ -704,19 +704,19 @@ int _write_internal_pipe(char *data, int len){
 
 
 int mrf_tick_enable(){
-  mrf_debug("%s","mrf_tick_enable : sending tick_enable signal\n");
+  mrf_debug(5,"%s","mrf_tick_enable : sending tick_enable signal\n");
   int bc = _write_internal_pipe(TICK_ENABLE, sizeof(TICK_ENABLE) );
 
   return bc;
 }
 
 int mrf_tick_disable(){
-  mrf_debug("%s","mrf_tick_disable : sending tick_disable signal\n");
+  mrf_debug(5,"%s","mrf_tick_disable : sending tick_disable signal\n");
   return  _write_internal_pipe(TICK_DISABLE, sizeof(TICK_DISABLE) );
 }
 
 int mrf_wake(){
-  mrf_debug("%s","mrf_wake..writing internal pipe\n");
+  mrf_debug(5,"%s","mrf_wake..writing internal pipe\n");
   return _write_internal_pipe("wake", sizeof("wake"));
 
 }

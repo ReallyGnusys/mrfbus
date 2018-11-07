@@ -364,7 +364,7 @@ class MrflandServer(object):
         if not kwargs.has_key('tag') or not kwargs.has_key('act'):
             mrflog.error("timer_callback got kwargs %s quitting"%repr(kwargs.keys))
             return
-        mrflog.warn("timer_callback got kwargs %s"%repr(kwargs.keys))
+        mrflog.info("timer_callback got kwargs %s"%repr(kwargs.keys))
         app = kwargs['app']
         tag = kwargs['tag']
         act = kwargs['act']
@@ -391,7 +391,7 @@ class MrflandServer(object):
         tid = app+"."+tag+"."+ act
         if self.timers.has_key(tid):
             tinf = self.timers[tid]
-            mrflog.warn("removing existing timeout for tid %s"%tid)
+            mrflog.info("removing existing timeout for tid %s"%tid)
             tornado.ioloop.IOLoop.instance().remove_timeout(tinf['thandle'])
 
         now = datetime.datetime.now()
@@ -406,7 +406,7 @@ class MrflandServer(object):
             tdt += datetime.timedelta(days=1)
 
         tts = time.mktime(tdt.timetuple())
-        mrflog.warn("setting timer %s with ts %s"%(tid,tts))
+        mrflog.info("setting timer %s with ts %s"%(tid,tts))
         th =  tornado.ioloop.IOLoop.instance().add_timeout(tts,self.timer_callback , app=app, tag=tag, act=act)
         self.timers[tid]  = { 'thandle' : th,  'tod' : tod, 'app' : app, 'tag' : tag , 'act' : act }
 
@@ -425,7 +425,7 @@ class MrflandServer(object):
 
 
         for dup in self.rm.dups:
-            mrflog.warn("%s calling _callback"%(self.__class__.__name__))
+            mrflog.info("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
         self.rm.dups = []
 
@@ -437,13 +437,13 @@ class MrflandServer(object):
 
     def _activate(self):  # ramp up tick while responses or txqueue outstanding
         if True or not self._active:
-            mrflog.warn("activating! qsize %s"%self.q.qsize())
+            mrflog.info("activating! qsize %s"%self.q.qsize())
             self.active_timer = 0
             self._active = True
             self._set_timeout(0.02)
 
     def _deactivate(self):  # ramp down tick when quiet
-        mrflog.warn("deactivating!")
+        mrflog.info("deactivating!")
         self._active = False
         self.active_cmd = None
         self._set_timeout(5.0)
@@ -454,10 +454,10 @@ class MrflandServer(object):
     def queue_cmd(self,tag, dest, cmd_code,dstruct=None):
         cobj = MrfCmdObj(tag, dest, cmd_code,dstruct)
         if self.active_cmd:
-            mrflog.warn("queuing cmd %s"%repr(cobj))
+            mrflog.info("queuing cmd %s"%repr(cobj))
             self.q.put(cobj)
         else:
-            mrflog.warn("running cmd immediately %s"%repr(cobj))
+            mrflog.info("running cmd immediately %s"%repr(cobj))
             if self._next_cmd(cobj) == 0:
                 self._activate()
 
@@ -465,10 +465,10 @@ class MrflandServer(object):
         if self._run_cmd(cobj) == 0:
             self.resp_timer = 0
             self.active_cmd = cobj
-            mrflog.warn("self.active_cmd %s"%repr(self.active_cmd))
+            mrflog.info("self.active_cmd %s"%repr(self.active_cmd))
             return 0
         else:
-            mrflog.warn("_run_cmd failed for %s"%repr(cobj))
+            mrflog.info("_run_cmd failed for %s"%repr(cobj))
             return -1
     def TBD_app_cmd_set(self,dest):
         for appn in self.apps.keys():
@@ -544,7 +544,7 @@ class MrflandServer(object):
             n = self.nsock.send(msg)
             #self.nsock.flush()
             #self.app_fifo.close()
-            mrflog.warn("written %d bytes to app_fifo"%n)
+            mrflog.debug("written %d bytes to app_fifo"%n)
             return 0
         else:
             mrflog.error("failed to write message to app_fifo %s"%repr(msg))
@@ -581,9 +581,9 @@ class MrflandServer(object):
                 return None,None,None
 
             if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
-                mrflog.warn("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
+                mrflog.info("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
                 self.active_cmd.receipt = hdr
-                mrflog.warn(repr(hdr))
+                mrflog.info(repr(hdr))
 
                 return hdr, None,None
 
@@ -611,7 +611,7 @@ class MrflandServer(object):
             param, rsp = ndr, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
-            mrflog.warn("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
+            mrflog.info("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
 
             # pass packet to rm , which runs device packet handler
             param, rsp = self.rm.packet(hdr,resp)
@@ -658,7 +658,7 @@ class MrflandServer(object):
     def _resp_handler(self,*args, **kwargs):
         rresp = os.read(self.rfd, 1024)
 
-        mrflog.warn("Input on response pipe len %d"%len(rresp))
+        mrflog.info("Input on response pipe len %d"%len(rresp))
         while len(rresp):
 
             hdr , param, resp  = self.parse_input(rresp)
@@ -673,16 +673,16 @@ class MrflandServer(object):
 
                 #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
             if hdr  and param  and resp :
-                mrflog.warn("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
                 self.handle_response(hdr, param , resp, response=True )
 
 
-                mrflog.warn("_resp_handler , got resp %s"%repr(resp))
-                mrflog.warn("_resp_handler , got hdr %s"%repr(hdr))
-                mrflog.warn("_resp_handler , got param %s"%repr(hdr))
+                mrflog.debug("_resp_handler , got resp %s"%repr(resp))
+                mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
+                mrflog.debug("_resp_handler , got param %s"%repr(hdr))
 
     def _struct_handler(self,*args, **kwargs):
-        mrflog.warn("Input on data pipe")
+        mrflog.debug("Input on data pipe")
         rresp = os.read(self.sfd, 1024)
 
 
@@ -694,11 +694,11 @@ class MrflandServer(object):
             else:
                 mrflog.warn("no hdr")
             if hdr and param and resp :
-                mrflog.warn("received object %s response from  %d"%(type(resp),hdr.usrc))
+                mrflog.debug("received object %s response from  %d"%(type(resp),hdr.usrc))
                 self.handle_response(hdr, param , resp)
             else:
-                mrflog.warn("_struct_handler , got resp %s"%repr(resp))
-                mrflog.warn("_struct_handler , got hdr %s"%repr(hdr))
+                mrflog.debug("_struct_handler , got resp %s"%repr(resp))
+                mrflog.debug("_struct_handler , got hdr %s"%repr(hdr))
 
 
     def _connect_to_mrfnet(self,port):
@@ -720,7 +720,7 @@ class MrflandServer(object):
             sys.exit(-1)
 
     def _callback(self, tag, dest, cmd,data=None):
-        mrflog.warn("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
+        mrflog.info("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
     def _start_tcp_service(self, port):
@@ -769,10 +769,10 @@ class MrflandServer(object):
 
     def _check_if_anything(self):
         if self.q.empty():
-            mrflog.warn("_check_if_anything -queue empty")
+            mrflog.debug("_check_if_anything -queue empty")
             self._deactivate()
         else:
-            mrflog.warn("_check_if_anything : running next command")
+            mrflog.debug("_check_if_anything : running next command")
             self._next_cmd(self.q.get())
 
 
@@ -783,7 +783,7 @@ class MrflandServer(object):
             if self.active_cmd == None:
                 mrflog.info("tick can run another cmd")
             else:
-                mrflog.warn("time_tick active resp_timer %d"%self.resp_timer)
+                mrflog.info("time_tick active resp_timer %d"%self.resp_timer)
                 self.resp_timer += 1
                 if self.resp_timer > 7:
                     mrflog.warn("give up waiting for response for %s"%( self.active_cmd))

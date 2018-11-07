@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -37,12 +37,12 @@ const uint8 _mrf_buffs = _MRF_BUFFS;
 void _mrf_buff_free(uint8 i){
   if (i < _MRF_BUFFS){
     _mrf_buffst[i].state = FREE;
-    _mrf_buffst[i].owner = NUM_INTERFACES;   
-    mrf_debug("_mrf_buff_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
+    _mrf_buffst[i].owner = NUM_INTERFACES;
+    mrf_debug(5,"_mrf_buff_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
 
     return;
   }
-  mrf_debug("_mrf_buff_free error buff num was %d\n",i);
+  mrf_debug(5,"_mrf_buff_free error buff num was %d\n",i);
 }
 
 
@@ -50,14 +50,14 @@ void _mrf_buff_free(uint8 i){
 int mrf_buff_loaded(uint8 bnum){
   const MRF_IF *ifp;
   if (bnum <  _MRF_BUFFS){
-    mrf_debug("mrf_buff_loaded bnum entry  %u owner %u\n",bnum, _mrf_buffst[bnum].owner);
+    mrf_debug(5,"mrf_buff_loaded bnum entry  %u owner %u\n",bnum, _mrf_buffst[bnum].owner);
     ifp = mrf_if_ptr( _mrf_buffst[bnum].owner);
-    mrf_debug("ifp = %p\n",ifp);
+    mrf_debug(5,"ifp = %p\n",ifp);
     ifp->status->stats.rx_pkts += 1;
     _mrf_buffst[bnum].state = LOADED;
     //_mrf_buff_print();
     _mrf_process_buff(bnum);
-    mrf_debug("%s","mrf_buff_loaded exit\n");
+    mrf_debug(5,"%s","mrf_buff_loaded exit\n");
     //_mrf_buff_print();
 
     return 0;
@@ -72,10 +72,10 @@ void mrf_free(uint8* buff){
   for ( i = 0 ; i < _MRF_BUFFS ; i++)
     if(buff == &(_mrf_buff[i][0])){
       _mrf_buff_free(i);
-      mrf_debug("mrf_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
+      mrf_debug(5,"mrf_free : free buff %d  %d/%d buffs free\n",i,mrf_buff_num_free(),_MRF_BUFFS);
       return;
     }
-  mrf_debug("%s","ERROR : buff was not found or freed\n\n");
+  mrf_debug(5,"%s","ERROR : buff was not found or freed\n\n");
 }
 
 void _mrf_buff_clear_status(){
@@ -109,16 +109,16 @@ const char * mrf_buff_state_name(uint8 bnum){
 
 
 
- 
+
 
 void _mrf_buff_print(){
   int i;
   MRF_BUFF_STATE *bst;
-  mrf_debug("_mrf_buff_print warning is %s\n",illegal_state_warning);
-  mrf_debug("free?  %s\n",mrf_buff_state_name(0));
+  mrf_debug(5,"_mrf_buff_print warning is %s\n",illegal_state_warning);
+  mrf_debug(5,"free?  %s\n",mrf_buff_state_name(0));
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     bst = _mrf_buff_state(i);
-    mrf_debug("buff %d state %d (%s) owner %d\n",i,bst->state,mrf_buff_state_name(i),_mrf_buffst[i].owner);    
+    mrf_debug(5,"buff %d state %d (%s) owner %d\n",i,bst->state,mrf_buff_state_name(i),_mrf_buffst[i].owner);
   }
 }
 
@@ -133,19 +133,19 @@ uint8 mrf_buff_num_free(){
 
 uint8 mrf_alloc_if(I_F i_f){
   uint8 i;
-  mrf_debug("mrf_alloc_if entry i_f %d\n",i_f);
+  mrf_debug(5,"mrf_alloc_if entry i_f %d\n",i_f);
   //_mrf_buff_print();
   for ( i = 0 ; i < _MRF_BUFFS ; i++){
     if ( _mrf_buffst[i].state == FREE)
       {
 	_mrf_buffst[i].state = LOADING;
-	_mrf_buffst[i].owner = i_f;	
-        mrf_debug("mrf_alloc_if : alloc buff %d to i_f %d\n",i,i_f);
+	_mrf_buffst[i].owner = i_f;
+        mrf_debug(5,"mrf_alloc_if : alloc buff %d to i_f %d\n",i,i_f);
         return i;
       }
   }
-  mrf_debug("mrf_alloc_if : ERROR failed to alloc buffer for i/f %d!!!\n",i_f);
- 
+  mrf_debug(5,"mrf_alloc_if : ERROR failed to alloc buffer for i/f %d!!!\n",i_f);
+
   return _MRF_BUFFS;
 }
 
@@ -154,8 +154,8 @@ I_F mrf_buff_owner(uint8 bnum){
     return _mrf_buffst[bnum].owner;
   } else {
     return NUM_INTERFACES;
-  }  
-} 
+  }
+}
 
 uint8 *mrf_alloc_if_tbd(I_F i_f){
   int i;
@@ -164,8 +164,8 @@ uint8 *mrf_alloc_if_tbd(I_F i_f){
     if ( _mrf_buffst[i].state == FREE)
       {
 	_mrf_buffst[i].state = LOADING;
-	_mrf_buffst[i].owner = i_f;	
-        mrf_debug("mrf_alloc_if_tbd : alloc buff %d to i_f %d\n",i,i_f);
+	_mrf_buffst[i].owner = i_f;
+        mrf_debug(5,"mrf_alloc_if_tbd : alloc buff %d to i_f %d\n",i,i_f);
 	return &(_mrf_buff[i][0]);
       }
   }
@@ -179,4 +179,3 @@ uint8 *_mrf_buff_ptr(uint8 bind){
     return NULL;
 
 }
-
