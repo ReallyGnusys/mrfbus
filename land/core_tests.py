@@ -52,7 +52,7 @@ class DeviceTestCase(LandTestCase):
         self.devname = 'hostsim'
         self.num_ifs = 4
         self.num_buffs = 16
-        self.checkgit = True
+        self.checkgit = False # True
 
     def dev_info_test(self,dest):
         print "*********************************"

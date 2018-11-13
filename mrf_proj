@@ -1,25 +1,51 @@
 #!/bin/bash
 
 if [ $# -lt 1 ] ; then
-  echo "Usage $0  <build|run|runtests|test>"
+  echo "Usage $0  <build|run|runtests|test|setup>"
   exit
 fi
+
+
+[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit 0
+
+
+
+LOGDIR=var/log
+FIFODIR=var/fifo
+
+
+if [ $1 == setup ] ; then
+    [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
+    [ ! -d $FIFODIR ] && echo "creating $FIFODIR" && mkdir -p $FIFODIR
+
+    HOSTFIFO=${FIFODIR}/1-0-in
+    STUBFIFO=${FIFODIR}/0-app-in
+    APPFIFO=${FIFODIR}/0-app-str
+    rm -f ${HOSTFIFO} && mkfifo -m 600 ${HOSTFIFO}
+    rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
+    rm -f ${APPFIFO} && mkfifo -m 600 ${APPFIFO}
+    if [ ! -e ./mrf.prj ] ; then
+        if [ $# -lt 2 ]  ; then
+            echo "no mrf.prj found in current dir and no param to setup .. e.g. test"
+            exit -1
+
+        fi
+        src=${MRFBUS_HOME}/${2}_mrf.prj
+        if [ -e $src ] ; then
+            cp $src ./mrf.prj
+        fi
+
+    fi
+
+    exit 0
+fi
+
 
 if [ ! -e ./mrf.prj ] ; then
   echo "no mrf.prj found in current dir"
   exit -1
 
 fi
-
-[ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit 0
-
-LOGDIR=log
-VARDIR=var
-
-[ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
-[ ! -d $VARDIR ] && echo "creating $VARDIR" && mkdir -p $VARDIR
-
-
 
 if [ $1 == build ] ; then
     mode=build
@@ -71,6 +97,7 @@ do
           mkdir $dn
           mf=${dn}/Makefile
           echo "MRFNET=$mrfnet" > $mf
+          echo "MRFPROJ="$(pwd) >> $mf
           for tok in "${fld[@]:1}" ; do
              echo ${tok} >> $mf
           done

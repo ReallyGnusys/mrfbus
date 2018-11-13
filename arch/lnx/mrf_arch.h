@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -20,7 +20,7 @@
 #ifndef _MRF_ARCH_INCLUDED_
 #define _MRF_ARCH_INCLUDED_
 
-#define SOCKET_DIR "/tmp/mrf_bus/"
+#define SOCKET_DIR "var/fifo/"
 
 int mrf_arch_app_callback(MRF_APP_CALLBACK callback);
 int mrf_arch_servfd();

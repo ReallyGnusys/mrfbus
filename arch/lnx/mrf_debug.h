@@ -24,15 +24,19 @@
 #define mrf_debug  printf
 */
 #include <stdio.h>
+//#define DEBUG_LEVEL 1
 
-#define MRF_DEBUG_LEVEL 1
+#ifndef DEBUG_LEVEL
+#define DEBUG_LEVEL 1
+#endif
+
 long long mrf_timestamp();
 //extern const uint8 _mrfid;
 
 //#define mrf_debug(x)  _mrf_debug("%s",x)
 
 #define mrf_debug(level,fmt, ...)                                       \
-  do { if (level<MRF_DEBUG_LEVEL) fprintf(stdout, "%lld ID:%02x %s:%d:(): " fmt, mrf_timestamp(),MRFID,__FILE__, \
+  do { if (level<DEBUG_LEVEL) fprintf(stdout, "%lld ID:%02x %s:%d:(): " fmt, mrf_timestamp(),MRFID,__FILE__, \
                                 __LINE__, __VA_ARGS__); } while (0)
       //         do { if (MRF_DEBUG) fprintf(stderr, fmt, __VA_ARGS__); } while (0)
 

@@ -29,7 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define SOCKET_DIR "/tmp/mrf_bus/"
 
 //extern uint8 _mrfid;
 
@@ -81,7 +80,7 @@ int _mrf_pipe_init_lnx(I_F i_f){
   // open input pipes
   int fd,tmp;
   char sname[64];
-  sprintf(sname,"%s%d-%d-in",SOCKET_DIR,MRFID,i_f);
+  sprintf(sname,"%s/%s%d-%d-in",SYM_NAME(MRFPROJ),SOCKET_DIR,MRFID,i_f);
   // create input fifo for i_f
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   mrf_debug(5,"created pipe %s res %d\n",sname,tmp);

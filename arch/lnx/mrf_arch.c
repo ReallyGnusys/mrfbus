@@ -185,7 +185,7 @@ int make_listener_socket (uint16_t port)
 
   if (bind (sock, (struct sockaddr *) &name, sizeof (name)) < 0)
     {
-      mrf_debug(5,"bind error for port %u",port);
+      mrf_debug(5,"bind error for port %u\n",port);
       return -1;
     }
 
@@ -422,13 +422,16 @@ char buff[2048];
   }
 
   i = NUM_INTERFACES + 1;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  sprintf(sname,"%s/%s%d-internal",SYM_NAME(MRFPROJ),SOCKET_DIR,MRFID);
   tmp = mkfifo(sname,S_IRUSR | S_IWUSR);
   mrf_debug(5,"created pipe %s res %d\n",sname,tmp);
   intfd = open(sname,O_RDONLY | O_NONBLOCK);
   mrf_debug(5,"opened pipe i = %d  %s fd = %d\n",i,sname,intfd);
 
+  if (intfd==-1){
 
+
+  }
   mrf_debug(5,"mrf_arch_main_loop:entry NUM_INTERFACES %d\n",NUM_INTERFACES);
 
   int count = 0;
@@ -689,7 +692,7 @@ int mrf_rtc_set(TIMEDATE *td){
 int _write_internal_pipe(char *data, int len){
   char sname[64];
   int fd,bc,tb;
-  sprintf(sname,"%s%d-internal",SOCKET_DIR,MRFID);
+  sprintf(sname,"%s/%s%d-internal",SYM_NAME(MRFPROJ),SOCKET_DIR,MRFID);
   fd = open(sname, O_WRONLY);
   if(fd == -1){
     mrf_debug(5,"write internal pipe error, fd was %d  name %s\n",fd,sname);
