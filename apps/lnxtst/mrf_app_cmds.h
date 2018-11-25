@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -17,13 +17,15 @@
 *
 ******************************************************************************/
 
-#include "device_include.h"
+#ifndef __MRF_APP_CMDS_INCLUDED__
+#define __MRF_APP_CMDS_INCLUDED__
 
-extern const MRF_IF_TYPE mrf_pipe_lnx_if;
+typedef enum mrf_app_cmd_code
+ {
+   mrf_app_cmd_test = 0,
+   mrf_app_cmd_mstats = 1,
+   
+   MRF_NUM_APP_CMDS = 2
+ } MRF_APP_CMD_CODE;
 
-extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
-  MRF_IF_DEF(PIPE0,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE1,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE2,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE3,mrf_pipe_lnx_if)
-};
+#endif

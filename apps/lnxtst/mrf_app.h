@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-*
+* 
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -17,13 +17,28 @@
 *
 ******************************************************************************/
 
-#include "device_include.h"
+#ifndef __MRF_APP_INCLUDED__
+#define __MRF_APP_INCLUDED__
+/* default app , no new pkts defined 
+ */
 
-extern const MRF_IF_TYPE mrf_pipe_lnx_if;
+/* mrf_app_task_test
+   returns current MRF_PKT_TIMEDATE 
+*/
 
-extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
-  MRF_IF_DEF(PIPE0,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE1,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE2,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE3,mrf_pipe_lnx_if)
-};
+typedef struct  __attribute__ ((packed))   {
+  uint32 sz;
+  uint32 res;
+  uint32 share;
+  uint32 text;
+  uint32 lib;
+  uint32 data;
+  uint32 dt;
+  
+} MRF_PKT_LNX_MEM_STATS;
+
+
+MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
+MRF_CMD_RES mrf_app_mem_stats(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp);
+
+#endif

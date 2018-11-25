@@ -68,9 +68,12 @@ int init_sockaddr (struct sockaddr_in *name,
 
 
 
+int tick_task();
 
 
 int signal_handler(uint8 signal){
+    if (signal == APP_SIG_TICK)
+    return tick_task();
   return 0;
 }
 
@@ -78,131 +81,20 @@ static int appfd , servfd;  // file desc for listener socket
 
 
 
-// this is called when read data available from python server
-
-static int  _appl_fifo_callback(int fd){
-  ssize_t s;
-  uint8 i;
-  mrf_debug(5,"server callback for fd %d\n",fd);
-  mrf_debug(5,"event on fd %d\n",fd);
-
-
-  s = read(fd, (char *)buff, 1024); // FIXME need to handle multiple packets
-  buff[s] = 0;
-
-  mrf_debug(5,"read %d bytes\n",(int)s);
-
-
-  if ((int)s == 0 ){
-    mrf_debug(5,"%s","_appl_callback - returning -1\n");
-    return -1;
-
-  }
-  if ( s < 4){
-    mrf_debug(5,"%s","ignoring pkt with len too small \n");
-    return 0;
-  }
-
-  _mrf_print_hex_buff(buff,s);
-
-
-  uint8 len = buff[0];
-
-  if (s != len){
-    mrf_debug(5,"not credible input buff[0] %u should be same as message length %u \n",len,(unsigned int)s);
-    return 0;
-  }
-
-  uint8 csum = 0;
-
-  for (i = 0 ; i < len-1 ; i++)
-    csum += buff[i];
-
-  mrf_debug(5,"calculated csum %u  received csum %u\n",csum,buff[s-1]);
-
-  if ( csum != buff[s-1]) {
-    mrf_debug(5,"%s","packet checksum error, discarding\n");
-    return 0;
-
-  }
-
-  uint8 udest = buff[1];
-  uint8 type = buff[2];
-  mrf_debug(5,"calling send_command udest %d type %d  len was %d\n",udest, type, len);
-
-  return  mrf_send_command_root(udest, type,  &(buff[3]), len - 4);   // len,dest,cmd and checksum not included in pl data
-
-}
-
 
 static int _outfd,_outfds;  // file descs for output pipes - response and structure
 
+static int _tick_cnt;
 int mrf_app_init(){
   char sname[64];
   int  tmp;
+  _tick_cnt = 0;
   mrf_debug(5,"%s","mrf_app_init host\n");
-  mrf_arch_app_callback(_appl_fifo_callback);  // we want arch to manage a TCP server for server.py to access
 
-}
-int structure_to_app(uint8 bnum){
-  // just squirt the raw buffer to python app via fifo
-  char sname[64];
-  uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
-  uint8 len = buff[0];
-  mrf_debug(5,"structure to app : bnum %d using opened app data pipe fd = %d\n", bnum, _outfds);
+  mrf_app_tick_enable(2);
 
+  //mrf_arch_app_callback(_appl_fifo_callback);  // we want arch to manage a TCP server for server.py to access
 
-  if(len > _MRF_BUFFLEN){
-    mrf_debug(5,"error - length is bonkers %u\n",len);
-    return -1;
-  }
-  servfd = mrf_arch_servfd();
-
-  if (servfd < 1 ){
-    mrf_debug(5,"response to app - no server fd - have %d\n",servfd);
-    return -1;
-  }
-
-  int bc = write(servfd, buff,len );
-  fsync(servfd);
-  mrf_debug(5,"wrote %d bytes to server connection\n",bc);
- _mrf_print_hex_buff(buff,len);
-
-  return 0;
-
-  }
-
-
-
-// FIXME structure_to_app is now same - get rid of it
-
-
-int response_to_app(uint8 bnum){
-  // just squirt the raw buffer to python app via fifo
-  char sname[64];
-  uint8 *buff =  (uint8 *)(_mrf_buff_ptr(bnum)+ 0L);
-  uint8 len = buff[0];
-
-  if(len > _MRF_BUFFLEN){
-    mrf_debug(5,"error - length is bonkers %u\n",len);
-    return -1;
-  }
-
-  servfd = mrf_arch_servfd();
-
-  if (servfd < 1 ){
-    mrf_debug(5,"response to app - no server fd - have %d\n",servfd);
-    return -1;
-  }
-
-  int bc = write(servfd, buff,len );
-
-  fsync(servfd);
-
-  mrf_debug(5,"response to app :wrote %d bytes to server conn from buff %d\n",bc,bnum);
-  _mrf_print_hex_buff(buff,len);
-  //  close(_outfd);
-  return 0;
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -298,11 +190,6 @@ MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     mrf_debug(5,":end of hex");
     */
   }
-
-  // squirt complete response packet to higher level app
-  mrf_debug(5,"%s","about to send response\n");
-  int rc = structure_to_app(bnum);
-  mrf_debug(5,"sent structur.. I think rc %d\n",rc);
 
 
   _mrf_buff_free(bnum);
@@ -406,10 +293,6 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
     */
   }
 
-  // squirt complete response packet to higher level app
-  mrf_debug(5,"%s","about to send response\n");
-  int rc = response_to_app(bnum);
-  mrf_debug(5,"send response.. I think rc %d\n",rc);
   _mrf_buff_free(bnum);
 
 }
@@ -422,5 +305,42 @@ MRF_CMD_RES mrf_app_task_test(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_rtc_get((TIMEDATE *)rbuff);
   mrf_send_response(bnum,sizeof(TIMEDATE));
   mrf_debug(5,"%s","mrf_app_task_test exit\n");
+  return MRF_CMD_RES_OK;
+}
+
+int get_mem_stats(MRF_PKT_LNX_MEM_STATS *mst){
+
+  //MRF_PKT_LNX_MEM_STATS *mst = (MRF_PKT_LNX_MEM_STATS *)mrf_response_buffer(bnum);
+
+  FILE* statm = fopen( "/proc/self/statm", "r" );
+
+  fscanf(statm,"%d %d %d %d %d %d %d",
+         &(mst->sz),&(mst->res),&(mst->share),&(mst->text),&(mst->lib),&(mst->data),&(mst->dt));
+
+  fclose(statm);
+  return 0;
+
+}
+
+int tick_task(){
+  _tick_cnt++;
+  MRF_PKT_LNX_MEM_STATS _memstats;
+  get_mem_stats(&_memstats);
+
+  // only send struct if readings or relays changed
+  if ((_tick_cnt > 2))
+    mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_mstats,  (uint8 *)&_memstats, sizeof(MRF_PKT_LNX_MEM_STATS));
+  return 0;
+
+}
+
+
+MRF_CMD_RES mrf_app_mem_stats(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  mrf_debug(5,"%s","mrf_app_mem_stats entry\n");
+
+  get_mem_stats((MRF_PKT_LNX_MEM_STATS *)mrf_response_buffer(bnum));
+
+  mrf_send_response(bnum,sizeof(MRF_PKT_LNX_MEM_STATS));
+  mrf_debug(5,"%s","mrf_app_mem_stats exit\n");
   return MRF_CMD_RES_OK;
 }

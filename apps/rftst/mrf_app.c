@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -28,6 +28,8 @@
 #include "mrf_pinmacros.h"
 
 #include "mrf_relays.h"
+#include "rtc_arch.h"
+void mrf_rf_idle(I_F i_f);
 
 typedef enum {
   SYNC_TIME,
@@ -70,7 +72,7 @@ int mrf_app_init(){
 
   P2DIR = 0xFC;
   P2OUT = 0x0;
-  
+
   init_relays();
   _app_state = SYNC_TIME;
   mrf_nexthop(&_base_route, MRFID, 0);  // get relay/basestation route
@@ -80,16 +82,16 @@ int mrf_app_init(){
   tgrad100 =  (100*((uint32_t)*((uint16_t *)0x1A1C) - *((uint16_t *)0x1A1A)))/55;  // cal points for 85 and 30C
   tycross100 =   (100*(uint32_t)(*((uint16_t *)0x1A1A))) - (30*tgrad100);
 
-  
+
   _adc_chan = ADC_TEMP;
   // set up ADC
 
-  REFCTL0 = REFMSTR+REFVSEL_0+REFON;  //+REFTCOFF; 
+  REFCTL0 = REFMSTR+REFVSEL_0+REFON;  //+REFTCOFF;
 
   //ADC12CTL0 = ADC12SHT02 + ADC12ON;         // Sampling time, ADC12 on
   ADC12CTL0 =   ADC12SHT0_8 + ADC12ON;         // Sampling time, ADC12 on
   ADC12CTL1 = ADC12SHP;                     // Use sampling timer
-  ADC12MCTL0 = ADC12SREF_1 + ADC12INCH_10;  // ADC input ch A10 => temp sense 
+  ADC12MCTL0 = ADC12SREF_1 + ADC12INCH_10;  // ADC input ch A10 => temp sense
   ADC12CTL0 |= ADC12ENC;
 
   rtc_second_signal_enable();
@@ -107,19 +109,19 @@ int mrf_app_init(){
 
 
 int sec_task(){
-
+  //return 0;  // TMP
   if (_app_state == SYNC_TIME){ // relying on usr_resp to change state when response received
     mrf_send_command(_base_route.relay,  mrf_cmd_get_time,  NULL, 0);
   }
   else {  // SHOW_TIME
     _sec_count++;
 
-    
+
       ADC12IE = 0x01;                           // Enable interrupt
       ADC12CTL0 |= ADC12SC;                   // Start sampling/conversion
   }
 
-  
+
   return 0;
 }
 
@@ -127,7 +129,7 @@ int sec_task(){
 int build_state(MRF_PKT_RFMODTC_STATE *state){
 
   //uint16 rd = ads1148_data();
-  
+
   mrf_rtc_get(&((*state).td));
   uint8 ch;
   for (ch = 0 ; ch < MAX_RTDS ; ch++){
@@ -148,10 +150,11 @@ int adc_res_ready(){
   temp = 100* temp / tgrad100;
 
   temp = temp - 270;  // single point calibration done wrt. modtc thermocouple device.. ho ho
+  temp = temp - 130;  // correction for another board??  reading about 1.3C over
   temp = temp / 10;
   temp = temp * 10;  // zero lsb
 
-  
+
   if ((_sec_count % 10) == 0){  // send avg every 10 secs
     avg = 0;
     for ( i = 0 ; i < 10 ; i++)
@@ -167,7 +170,7 @@ int adc_res_ready(){
 
   return 0;
 }
-  
+
 
 // this is run by mrf_foreground - so a foreground task
 int signal_handler(uint8 signal){
@@ -175,7 +178,7 @@ int signal_handler(uint8 signal){
     return sec_task();
    else if(signal == APP_SIG_ADC_RES)
      return adc_res_ready();
- 
+
   return 0;
 
 }
@@ -220,7 +223,7 @@ MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   set_relay_state(rs->chan,rs->val);
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -230,7 +233,7 @@ MRF_CMD_RES mrf_app_led_on(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   set_relay_state(0,1);
   rs.chan = 0;
   rs.val = get_relay_state(rs.chan);
-  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 MRF_CMD_RES mrf_app_led_off(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -239,7 +242,7 @@ MRF_CMD_RES mrf_app_led_off(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   set_relay_state(0,0);
   rs.chan = 0;
   rs.val = get_relay_state(rs.chan);
-  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -249,7 +252,7 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_task_relay entry\n");
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -271,7 +274,7 @@ int _adc_res_rdy(){
 
   mrf_app_signal(APP_SIG_ADC_RES);
 
-  
+
 }
 
 interrupt(ADC12_VECTOR) ADC12ISR(void)
@@ -283,13 +286,13 @@ interrupt(ADC12_VECTOR) ADC12ISR(void)
   case  2: break;                           // Vector  2:  ADC overflow
   case  4: break;                           // Vector  4:  ADC timing overflow
   case  6:                                  // Vector  6:  ADC12IFG0
-    
+
     ADC12IE = 0x0;                           // disable interrupt
-    
+
     _adc_res_rdy();
     if (mrf_wake_on_exit())
       __bic_SR_register_on_exit(LPM3_bits);
-    
+
     break;
   case  8: break;                           // Vector  8:  ADC12IFG1
   case 10: break;                           // Vector 10:  ADC12IFG2

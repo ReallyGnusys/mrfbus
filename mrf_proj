@@ -1,28 +1,57 @@
 #!/bin/bash
 
 if [ $# -lt 1 ] ; then
-  echo "Usage $0  <build|run|runtests|test>"
+  echo "Usage $0  <build|run|runtests|test|setup>"
   exit
 fi
 
-if [ ! -e ./mrf.prj ] ; then
-  echo "no mrf.prj found in current dir"
-  exit
-
-fi
 
 [ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit 0
 
-LOGDIR=log
-VARDIR=var
-
-[ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
-[ ! -d $VARDIR ] && echo "creating $VARDIR" && mkdir -p $VARDIR
 
 
+LOGDIR=var/log
+FIFODIR=var/fifo
+
+
+if [ $1 == setup ] ; then
+    [ ! -d $LOGDIR ] && echo "creating $LOGDIR" && mkdir -p $LOGDIR
+    [ ! -d $FIFODIR ] && echo "creating $FIFODIR" && mkdir -p $FIFODIR
+
+    HOSTFIFO=${FIFODIR}/1-0-in
+    STUBFIFO=${FIFODIR}/0-app-in
+    APPFIFO=${FIFODIR}/0-app-str
+    rm -f ${HOSTFIFO} && mkfifo -m 600 ${HOSTFIFO}
+    rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
+    rm -f ${APPFIFO} && mkfifo -m 600 ${APPFIFO}
+    if [ ! -e ./mrf.prj ] ; then
+        if [ $# -lt 2 ]  ; then
+            echo "no mrf.prj found in current dir and no param to setup .. e.g. test"
+            exit -1
+
+        fi
+        src=${MRFBUS_HOME}/${2}_mrf.prj
+        if [ -e $src ] ; then
+            cp $src ./mrf.prj
+        fi
+
+    fi
+
+    exit 0
+fi
+
+
+if [ ! -e ./mrf.prj ] ; then
+  echo "no mrf.prj found in current dir"
+  exit -1
+
+fi
 
 if [ $1 == build ] ; then
-   mode=build
+    mode=build
+    pushd $MRFBUS_HOME
+    make testsetup
+    popd
 elif  [ $1 == run ] ; then
    mode=run
    pids=""
@@ -31,8 +60,8 @@ elif  [ $1 == runtests ] ; then
    runtests=yes
    pids=""
 else
-   echo "illegal mode $1 - try build or run"
-   exit;
+   echo "illegal mode $1 - try build, run or runtests"
+   exit -1;
 fi
 
 declare -i valid=0
@@ -68,18 +97,33 @@ do
           mkdir $dn
           mf=${dn}/Makefile
           echo "MRFNET=$mrfnet" > $mf
+          echo "MRFPROJ="$(pwd) >> $mf
           for tok in "${fld[@]:1}" ; do
              echo ${tok} >> $mf
           done
           echo "" >> $mf
           echo 'include ${MRFBUS_HOME}/Makefile.inc'  >> $mf
 
-          cd $dn && make | tee  make.log && cd ..
+          pushd $dn
+          make
+
+
+
+          #| tee  make.log
+
+          mrv=$?
+
+          #echo "make done mrv $?  $mrv"
+
+          popd
+          [ $mrv -ne  0  ]  && echo "make failed" && exit $mrv
+
 
       elif [ $mode == run ] && [ $arch == lnx ]  ; then
 
           echo "starting lnx device $dn"
-          stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
+          #stdbuf -oL -i0 ${dn}/bin/${dn} >  /dev/null & #${LOGDIR}/${dn}.log  &
+          stdbuf -oL -i0 ${dn}/bin/${dn} >  ${LOGDIR}/${dn}.log  &
           pid=$!
           echo "pid is $pid"
           pids=${pids}" "$pid
@@ -111,7 +155,7 @@ function kill_devs {
 
 }
 
-[ $mode == build ] && echo "build complete" && exit
+[ $mode == build ] && echo "build complete" && exit 0
 
 
 if [ -n "${server}" ] ; then
@@ -153,10 +197,11 @@ if [ -n "$runtests" ] ; then
    echo "Start unit tests.."
 
 
-   python ${MRFBUS_HOME}/land/core_tests.py
+   python ${MRFBUS_HOME}/land/core_tests.py TestMrfBus.test02_device_tests   #  | tee  ${LOGDIR}/core_tests.log
+
    rv=$?
 
-   echo "tests completed"
+   echo "tests completed : rv=$rv"
    kill_devs
    if [ $rv == 0 ] ; then
 
@@ -164,7 +209,7 @@ if [ -n "$runtests" ] ; then
    else
      echo "FAILED"
    fi
-    exit $rv
+   exit $rv
 fi
 
 

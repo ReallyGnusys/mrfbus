@@ -21,7 +21,7 @@ from mrflog import mrflog
 
 
 class MrfDev(object):
-    """  
+    """
     base class : encapsulates physical mrfbus device which might have multiple
     sensors/ actuators
 
@@ -29,12 +29,14 @@ class MrfDev(object):
 
     """
     def __init__(self, rm, label, address, caplabels={}):
+        mrflog.warn("%s __init__ entry , label %s address 0x%x"%(self.__class__.__name__,label,address))
         self.address = address
         self.label = label
         self.rm = rm
         self.sys = {} # aims to contain all sys info responses from device_info upwards
         self.skey = 0
         self.lastmsgid = -1
+        self.lasthdr = None
         self.subscribers = dict()
 
         self.caps = {}
@@ -67,14 +69,14 @@ class MrfDev(object):
     def devupdate(self, cmd, data = {}):
         mrflog.warn("%s devupdate dest %s cmd %s data %s"%(self.__class__.__name__, self.address,cmd , repr(data)))
         self.rm.devupdaten(self.label, self.address, cmd, data)
-        
+
     def subscribe(self,callback):
         key = self.skey
         self.subscribers[key] = callback
         self.skey += 1
         return key
-               
-                
+
+
     def packet(self,hdr,rsp):  # server interface - all packets from this device are sent here
         mrflog.info("MrfDev packet for label %s addr %s"%(self.label,self.address))
         if hdr.usrc != self.address :
@@ -82,17 +84,27 @@ class MrfDev(object):
             return None, None
 
         ## try and catch duplicate msgids - retransmissions , pending debug.. hmpff
-        if hdr.msgid == self.lastmsgid:
-            mrflog.error("MrfDev %s addr %s duplicate msgid %d"%(self.label,self.address,hdr.msgid))
+        if self.lasthdr and self.lasthdr == hdr :   #hdr.msgid == self.lastmsgid and self.lasthdr.type == hdr.type:
+            mrflog.error("MrfDev %s addr %s duplicate msgid %d - discarding"%(self.label,self.address,hdr.msgid))
+            mrflog.error(repr(hdr))
+            mrflog.error("lasthdr:")
+            mrflog.error(repr(self.lasthdr))
+
             return None , None
+
+
         self.lastmsgid = hdr.msgid
-        
+        self.lasthdr = hdr
+
+
         param = MrfSysCmds[hdr.type]['param']()
         #print "have param type %s"%type(param)
         param_data = bytes(rsp)[len(hdr):len(hdr)+len(param)]
         param.load(param_data)
         #print "resp should be %s"%repr(param)
         respdat = bytes(rsp)[len(hdr)+len(param):]
+
+
 
         mrflog.info(" have response or struct object %s"%repr(param))
 
@@ -101,10 +113,10 @@ class MrfDev(object):
             # FIXME should do some validation of the decode here
             di = dict(resp.dic())
             self.sys[param.type] = di
-            mrflog.warn("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
+            mrflog.info("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
             for s in self.subscribers.keys():  # for now only update subscribers for sys command responses
                 self.subscribers[s](self.label,self.sys)
-                           
+
         else:
             resp = mrf_decode_buff(param.type, respdat, cmdset=self._cmdset)
         if not resp:
@@ -116,5 +128,3 @@ class MrfDev(object):
 
 
         return param, resp
-        
-        

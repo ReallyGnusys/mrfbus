@@ -25,9 +25,9 @@
 
 #define _CONCAT_(A,B) # A ## B
 
+#include "device.h"
 #include "mrf_types.h"
 #include "mrf_sys_structs.h"
-#include "device.h"
 #include "mrf_if.h"
 #include "mrf_buff.h"
 #include "mrf_sys_cmds.h"
@@ -48,7 +48,7 @@ typedef struct {
 } RX_PKT_INFO;
 
 
-typedef volatile struct  __attribute__ ((packed)){
+typedef struct  __attribute__ ((packed)){
  MRF_PKT_HDR hdr;
  MRF_PKT_TIMEDATE td; 
  uint8 xdata[64+2];  // RSSI and CRC appended
@@ -56,6 +56,7 @@ typedef volatile struct  __attribute__ ((packed)){
 
 
 extern volatile MRF_RX_BUFF _xb_rx_buff;
+/*
 typedef enum {
   MRF_CMD_RES_RETRY,
   MRF_CMD_RES_OK,
@@ -63,16 +64,15 @@ typedef enum {
   MRF_CMD_RES_WARN,
   MRF_CMD_RES_ERROR
 } MRF_CMD_RES;
+*/
 //#define MRF_CMD_RES int
 
 
 
 
-typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
+//typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
 
-#ifdef MRF_ARCH_lnx
 typedef int (*MRF_APP_CALLBACK)(int fd);
-#endif
 
 #ifndef HOSTBUILD
 #define MRF_CMD_FUNC_DEC(dec)   dec
@@ -96,7 +96,10 @@ typedef int (*MRF_APP_CALLBACK)(int fd);
 #define MRF_BNUM_SIGNAL_BASE (256 - MRF_NUM_SIGNALS)
 
 #define APP_SIG_SECOND  0
-#define APP_SIG_BUT1  1
+#define APP_SIG_TICK  1
+#define APP_SIG_BUT1  2
+#define APP_SIG_BUT2  3
+
 
 
 
@@ -105,6 +108,7 @@ typedef int (*MRF_APP_CALLBACK)(int fd);
 #define MRF_CFLG_NO_RESP 2   // send no resp when final recipient
 #define MRF_CFLG_INTR 4  // task is run in interrupt handler
 
+/*
 typedef struct {
   const uint8 str[16];
   const uint8 cflags;
@@ -113,7 +117,7 @@ typedef struct {
   const void *data;
   const MRF_CMD_FUNC func;
 } MRF_CMD;
-
+*/
 
 int _mrf_process_packet(I_F owner,uint8 bnum);
 //void _mrf_print_packet_header(MRF_PKT_HDR *hdr,I_F i_f);
@@ -136,13 +140,19 @@ int signal_handler(uint8 signal);
 int mrf_app_queue_available();
 
 // these are defined in arch  but here is prototype
-int mrf_arch_boot();
-int mrf_arch_run();
-int mrf_tick_enable();
-int mrf_tick_disable();
+
+// can be used by app
 int mrf_wake();
 int mrf_sleep();
 int mrf_wake_on_exit();
+int mrf_app_tick_enable(int secs);  // generate APP_SIG_TICK at interval secs
+int mrf_app_tick_disable();
+
+// system functions defined in arch
+int mrf_arch_boot();
+int mrf_arch_run();
+int mrf_tick_enable();  // this is actually system tick, not for app use
+int mrf_tick_disable();
 // end arch
 void mrf_sys_init();
 //int _mrf_buff_forward(uint8 bnum);
@@ -153,6 +163,7 @@ int mrf_data_response(uint8 bnum,const uint8 *data,uint8 len);
 int mrf_rtc_set(TIMEDATE *td);
 int mrf_rtc_get(TIMEDATE *td);
 int mrf_retry(I_F i_f,uint8 bnum);
+int mrf_ndr(uint8 code, uint8 bnum);
 
 int mrf_app_signal(uint8 signum);
 
@@ -161,10 +172,10 @@ int mrf_sleep_deep();  // must be defined by app for now
 #endif
 
 #include "mrf_sys_tasks.h"
-#include "mrf_sys_cmds.h"
+//#include "mrf_sys_cmds.h"
 
 
 #include "mrf_app.h"
 #include "mrf_app_cmds.h"
-#include "iqueue.h"
+//#include "iqueue.h"
 #endif

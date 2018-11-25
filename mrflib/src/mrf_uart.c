@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -28,7 +28,7 @@ int mrf_uart_init_rx_state(I_F i_f,UART_CSTATE *rxstate){
   rxstate->cnt  = 0;
   rxstate->bnum = mrf_alloc_if(i_f);
   if (rxstate->bnum == _MRF_BUFFS){
-    mrf_debug("%s","mrf_uart_init: failed to alloc buff!");
+    mrf_debug(5,"%s","mrf_uart_init: failed to alloc buff!");
     rxstate->buff = NULL;
     rxstate->errors = 1;
     return -1;
@@ -53,7 +53,7 @@ int mrf_uart_init(I_F i_f, IF_STATE *state){
 */
 
 
-// binary packet data on serial ports 
+// binary packet data on serial ports
 // intr handler for uart rx
 
 static uint8 _db22;
@@ -76,13 +76,13 @@ void _dbg_preamble(uint8 code){
 uint8 rcsum[2];
 
 uint8 preamble_errs;
-int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){ 
+int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
   switch (rxstate->state){
   case  S_START:
     if (rxbyte == _MRF_UART_PREAMBLE)
       rxstate->state = S_PREAMBLE_1;
     else
-      mrf_debug("mrf_uart_rx_byte : still syncing looking for preamble 1 got 0x%02x\n",
+      mrf_debug(5,"mrf_uart_rx_byte : still syncing looking for preamble 1 got 0x%02x\n",
                 rxbyte);
     break;
   case  S_PREAMBLE_1:
@@ -94,29 +94,29 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     }
     else {
       rxstate->state = S_START;
-      mrf_debug("mrf_uart_rx_byte : preamble sync error on preamble2 state got 0x%02x expected 0x%02x\n",
+      mrf_debug(5,"mrf_uart_rx_byte : preamble sync error on preamble2 state got 0x%02x expected 0x%02x\n",
                 rxbyte,_MRF_UART_PREAMBLE_1);
       _dbg_preamble(rxbyte);
     }
     break;
   case  S_LEN:
-    //mrf_debug("mrf_uart_rx_byte : S_SLEN  recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
+    //mrf_debug(5,"mrf_uart_rx_byte : S_SLEN  recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
 
     if ((rxbyte <= _MRF_BUFFLEN) && (rxbyte >= sizeof(MRF_PKT_HDR))){
       rxstate->state = S_ADDR;
       rxstate->bindex = 0;
       rxstate->buff[rxstate->bindex++] = rxbyte;
       rxstate->csum = rxbyte;
-    } 
+    }
     /*
-    else if (rxbyte != _MRF_UART_PREAMBLE){ // FIXME slight bodge that relies on preamble being reject above 
-      
+    else if (rxbyte != _MRF_UART_PREAMBLE){ // FIXME slight bodge that relies on preamble being reject above
+
       _dbg_len(rxbyte);
       rxstate->state = S_START;
       }*/
     else {
       _dbg_len(rxbyte);
-     mrf_debug("mrf_uart_rx_byte : len error   recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
+     mrf_debug(5,"mrf_uart_rx_byte : len error   recieved  0x%x  bindex %d rxstate %p\n",rxbyte, rxstate->bindex, rxstate);
      rxstate->state = S_START;  // hmpff
     }
     break;
@@ -131,12 +131,12 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       rxstate->buff[rxstate->bindex++] = rxbyte;
       rxstate->csum += rxbyte;
     } else {
-      mrf_debug("mrf_uart_rx_byte : netid error   recieved  0x%x  bindex %d rxstate %p\n",
+      mrf_debug(5,"mrf_uart_rx_byte : netid error   recieved  0x%x  bindex %d rxstate %p\n",
                 rxbyte, rxstate->bindex, rxstate);
       _dbg_wrongid(rxbyte);
       rxstate->state = S_START;
     }
-    break;    
+    break;
   case  S_DATA:
     if(rxstate->bindex < (rxstate->buff)[0]){
       rxstate->buff[rxstate->bindex++] = rxbyte;
@@ -148,7 +148,7 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
       _dbg_last(0x0d);
 
     }
-    break;    
+    break;
   case  S_CSUM_MS:
     rxstate->rxcsum = ((uint16)rxbyte << 8);
     rcsum[0] = rxbyte;
@@ -160,22 +160,22 @@ int mrf_uart_rx_byte(uint8 rxbyte, UART_CSTATE *rxstate){
     rxstate->rxcsum |= (uint16)rxbyte ;
 
     if (rxstate->rxcsum == rxstate->csum){
-      mrf_debug("mrf_uart_rx_byte : csum PASS    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
+      mrf_debug(5,"mrf_uart_rx_byte : csum PASS    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
                 rxstate, rxstate->csum, rxstate->rxcsum, rcsum[0],rcsum[1]);
       return 1;
 
     }
     else {
-      mrf_debug("mrf_uart_rx_byte : csum 2 error    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
+      mrf_debug(5,"mrf_uart_rx_byte : csum 2 error    bindex %d rxstate %p expected 0x%x  recieved  0x%x  rcsum[0] 0x%02x rcsum[1] 0x%02x\n", rxstate->bindex,
                 rxstate, rxstate->csum, rxstate->rxcsum, rcsum[0],rcsum[1]);
-#ifdef MRF_ARCH_lnx   
+#ifdef MRF_ARCH_lnx
       _mrf_print_hex_buff(rxstate->buff,(uint16)(rxstate->buff)[0]);
-#endif      
+#endif
       _dbg_csum(rxstate);
     }
     break;
-    
-    
+
+
   default :
     rxstate->state = S_START;
   }
@@ -191,7 +191,7 @@ int mrf_uart_to_buff(I_F i_f, uint8* inbuff, uint8 inlen, uint8 tobnum){
   rxstate.bindex = 0;
   rxstate.bnum = tobnum;
   rxstate.buff = _mrf_buff_ptr(rxstate.bnum);
-  rxstate.errors = 0;  
+  rxstate.errors = 0;
   for ( i = 0 ; i < inlen ; i++){
     if(mrf_uart_rx_byte(inbuff[i], &rxstate)){
       return 0;
@@ -235,7 +235,7 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
       txstate->csum = txstate->buff[0];
       return txstate->buff[0];
     } else {
-      mrf_debug("\nmrf_uart_tx_byte S_LEN got buff[0] %x\n",txstate->buff[0]);
+      mrf_debug(5,"\nmrf_uart_tx_byte S_LEN got buff[0] %x\n",txstate->buff[0]);
       txstate->state  = S_CSUM_MS;
       _dbg_txlen(txstate->buff[0]);
       (txstate->errors)++;
@@ -248,7 +248,7 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
     if(txstate->bindex >= txstate->buff[0]){
       txstate->state  = S_CSUM_MS;
     }
-    return tmp;     
+    return tmp;
   case  S_CSUM_MS:
     txstate->state  = S_CSUM_LS;
     _dbg_txcsum((txstate->csum) / 256);
@@ -264,4 +264,3 @@ uint8 mrf_uart_tx_byte(UART_CSTATE *txstate){
     return 0; // should never get here
   }
 }
-

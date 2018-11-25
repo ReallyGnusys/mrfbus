@@ -46,8 +46,8 @@ class MrfLandWebletDevs(MrflandWeblet):
         utest['last_result']   = ''
         self.pod = OrderedDict()
         self.pod['unit_test']   =  utest
-        self.pod['dev_info']    =  PktDeviceInfo().dic()        
-        self.pod['dev_status']  =  PktDeviceStatus().dic()        
+        self.pod['dev_info']    =  PktDeviceInfo().dic()
+        self.pod['dev_status']  =  PktDeviceStatus().dic()
         self.pod['sys_info']    =  PktSysInfo().dic()
         self.pod['app_info']    =  PktAppInfo().dic()
 
@@ -57,7 +57,7 @@ class MrfLandWebletDevs(MrflandWeblet):
             self.test_active[dn] = False
 
     def sens_callback(self, label, data ):
-        mrflog.warn("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        mrflog.info("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         for ccode in data.keys():
             if ccode == 3:
                 tab = 'dev_info'  # ouch .. this is vile
@@ -68,20 +68,20 @@ class MrfLandWebletDevs(MrflandWeblet):
             elif ccode == 11:
                 tab = 'app_info'
             else:
-                mrflog.error("DevsWeblet unknown ccode %s"%repr(ccode))
+                mrflog.debug("DevsWeblet unknown ccode %s"%repr(ccode))
                 continue
             tag = self.mktag( tab, label )
 
-            mrflog.warn("trying webupdate with tag %s  data %s"%(repr(tag),repr(data[ccode])))
+            mrflog.debug("trying webupdate with tag %s  data %s"%(repr(tag),repr(data[ccode])))
             self.rm.webupdate(self.mktag( tab, label ), data[ccode])
-                                      
+
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""
         cls = {'start_test' : 'glyphicon-check'}
         s =  """
         <h2>%s</h2>"""%self.label
         re1 = re.compile("_")
-        
+
         for tab in self.pod.keys():
             s += "<hr>\n"
             s += " <h3>%s</h3>\n"%re1.sub(" ", tab)
@@ -92,7 +92,7 @@ class MrfLandWebletDevs(MrflandWeblet):
 
         return s
     def subproc_callback(self, dn):
-        def _sbcb(rv):            
+        def _sbcb(rv):
             mrflog.warn("weblet devs subproc callback for dn %s returned %d"%(dn,rv))
             nowstr = datetime.datetime.now().isoformat()
             if rv == 0 :
@@ -102,8 +102,8 @@ class MrfLandWebletDevs(MrflandWeblet):
             data = {'last_result' : pstr , 'last_run': nowstr }
             self.rm.webupdate(self.mktag( 'unit_test', dn ), data)
             self.rm.server._run_updates() # ouch
-        return _sbcb 
-    
+        return _sbcb
+
     def cmd_mrfctrl(self,data, wsid=None):
         mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
         if not data.has_key("tab") or not data.has_key("row"):
@@ -115,7 +115,7 @@ class MrfLandWebletDevs(MrflandWeblet):
             return
 
         dn =  data["row"]
-        
+
         if not self.test_active.has_key(dn):
             mrflog.error("weblet devs cmd_mrfctrl row %s does not match any devname"%dn)
             return
@@ -127,18 +127,15 @@ class MrfLandWebletDevs(MrflandWeblet):
         if not self.rm.devices.has_key(dn):
             mrflog.warn( "can't find device  %s registered"%repr(dn))
             return
-            
+
         tdev = self.rm.devices[dn]
         address = tdev.address
-        
+
         mrflog.warn( "starting unit_test for device  %s address 0x%x"%(repr(dn),address))
 
-        
-        
 
-        
+
+
+
         rv = self.rm.subprocess(['/usr/bin/python', os.path.join(os.environ['MRFBUS_HOME'],'land','test_default.py' ), hex(address)] , self.subproc_callback(dn))
         mrflog.warn("subprocess returned")
-        
-                         
-

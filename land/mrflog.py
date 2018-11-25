@@ -2,18 +2,7 @@ import logging
 import install
 import datetime as dt
 
-class MrfLog(object):
-    def __init__(self, level = install.log_level):
-        formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s' , datefmt='%Y-%m-%d,%H:%M:%S')
-        self.log = logging.getLogger(install.logger_name)
-        hdlr = logging.FileHandler(install.logdir+install.mrflog)
-        hdlr.setFormatter(formatter)    
-        self.log.addHandler(hdlr) 
-        self.log.setLevel(level)  
-        
-    
-def mrf_log():
-    return logging.getLogger(install.logger_name);
+
 
 
 """
@@ -26,7 +15,7 @@ def logdeco(f):
 
 @logdeco
 def mrflog(*args, **kwargs)
-"""           
+"""
 class MyFormatter(logging.Formatter):
     converter=dt.datetime.fromtimestamp
     def formatTime(self, record, datefmt=None):
@@ -40,13 +29,20 @@ class MyFormatter(logging.Formatter):
 
 
 def mrf_log_init(level = install.log_level):
+    logging.basicConfig(filename=install.logdir+install.mrflog,level=level)
     formatter = logging.Formatter(fmt='%(asctime)s] %(levelname)s %(filename)s.%(lineno)d - %(message)s')# , datefmt='%Y-%m-%d,%H:%M:%S')
     #formatter = MyFormatter(fmt='%(asctime)s.%(msecs)03d] %(levelname)s %(filename)s.%(lineno)d - %(message)s', datefmt='%Y-%m-%d,%H:%M:%S')
     mrflog = logging.getLogger(install.logger_name)
     hdlr = logging.FileHandler(install.logdir+install.mrflog)
-    hdlr.setFormatter(formatter)    
-    mrflog.addHandler(hdlr) 
-    mrflog.setLevel(level)  
+    hdlr.setFormatter(formatter)
+
+    mrflog.addHandler(hdlr)
+
+    #ch = logging.StreamHandler()
+    #ch.setFormatter(formatter)
+    #mrflog.addHandler(ch)
+    mrflog.setLevel(level)
+
     return mrflog
 
 
@@ -54,11 +50,11 @@ def mrf_log_init(level = install.log_level):
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
     ch.setLevel(level)
-    alog.addHandler(ch) 
+    alog.addHandler(ch)
     logging.addLevelName( logging.WARNING, "\033[1;31m%s\033[1;0m" % logging.getLevelName(logging.WARNING))
     logging.addLevelName( logging.ERROR, "\033[1;41m%s\033[1;0m" % logging.getLevelName(logging.ERROR))
     return alog
-   
+
 mrflog = mrf_log_init()
 
 """
@@ -77,6 +73,6 @@ def warn(*args, **kwargs):
 def error(*args, **kwargs):
     log = mrf_log_init()
     log.error(*args, **kwargs)
-    
+
 
 """

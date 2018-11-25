@@ -16,14 +16,17 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *
 ******************************************************************************/
+#ifndef __DEVICE_INCLUDE_INCL__
+#define __DEVICE_INCLUDE_INCL__
+// should only be included in device.c
 
-#include "device_include.h"
+#include "mrf_sys_structs.h"
+static IF_STATUS   _if_status[NUM_INTERFACES];
+static MRF_PKT_HDR _if_ackbuffs[NUM_INTERFACES];
+static AckQueue    _if_ack_queues[NUM_INTERFACES];
+static BuffQueue   _if_tx_queues[NUM_INTERFACES];
+#ifdef MRF_ARCH_lnx
+static int   _if_fd[NUM_INTERFACES];
+#endif
 
-extern const MRF_IF_TYPE mrf_pipe_lnx_if;
-
-extern const MRF_IF _sys_ifs[NUM_INTERFACES] = {
-  MRF_IF_DEF(PIPE0,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE1,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE2,mrf_pipe_lnx_if),
-  MRF_IF_DEF(PIPE3,mrf_pipe_lnx_if)
-};
+#endif //#ifndef __DEVICE_INCLUDE_INCL__
