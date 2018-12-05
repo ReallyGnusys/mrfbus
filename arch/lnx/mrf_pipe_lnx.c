@@ -216,7 +216,6 @@ static int _mrf_pipe_buff_lnx(I_F i_f, uint8* inbuff, uint8 inlen){
     len -= nc;
     ibcnt += nc;
     mrf_debug(5,"copied %d bytes to mbuff i_f is %d , bnum is %d\n",nc,i_f,_bnum[i_f]);
-
     mrf_buff_loaded(_bnum[i_f]);
     mrf_debug(5,"%s","mbuff loaded!\n");
     // need to alloc next buffer
@@ -248,9 +247,17 @@ static int _mrf_pipe_send_lnx(I_F i_f, uint8 *buff){
   //int bc;
   uint8 sknum;
   MRF_PKT_HDR *hdr = (MRF_PKT_HDR *)buff;
+  MRF_PKT_RESP *resp = (MRF_PKT_RESP *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR));
   mrf_debug(5,"_mrf_pipe_send_lnx : i_f %d  buff[0] %d sending..\n",i_f,buff[0]);
   mrf_print_packet_header(hdr);
 
+#ifdef NOT_NEEDED_MRF_APP_lnxtst
+  if (( hdr->type == mrf_cmd_usr_struct) && ( resp->type == _MRF_APP_CMD_BASE + 1 )) {  // temp debug mstats
+    mrf_debug(5,"_mrf_pipe_send_lnx : i_f %d sending usr struct mstats \n",i_f);
+    MRF_PKT_LNX_MEM_STATS *mstats = (MRF_PKT_LNX_MEM_STATS *)(((uint8 *)hdr)+ sizeof(MRF_PKT_HDR)+sizeof(MRF_PKT_RESP));
+    print_mstats(mstats);
+  }
+#endif
   // rough hack to get up and down using correct sockets
   if (hdr->hdest >= SNETSZ)  // rf devices only have 1 i_f
     sknum = 0;

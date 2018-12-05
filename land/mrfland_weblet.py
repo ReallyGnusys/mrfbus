@@ -341,7 +341,7 @@ class MrfWebletSensorVar(MrfWebletVar):
         field = kwargs['field']
 
         if field not in val.output:
-            mrflog.error("%s field %s not found in sensor output  - got %s"%self.__class__.__name__,field,repr(val.output))
+            mrflog.error("%s field %s not found in sensor output  - got %s"%(self.__class__.__name__,field,repr(val.output)))
             return
 
         self.field = field
@@ -528,9 +528,13 @@ class MrflandWeblet(object):
             if not kwargs.has_key('field'):
                 mrflog.error("add_var initval was sensor but no field keyword")
                 return
+            mrflog.warn("%s add_var SensorVar name %s"%(self.__class__.__name__, name))
+
             v = MrfWebletSensorVar(self.tag, name, initval, callback=self.var_callback, **kwargs)
         elif initval.__class__ == int or initval.__class__ == float or initval.__class__ == bool or initval.__class__ == str: #FIXME!!
+            mrflog.warn("%s add_var ConfigVar name %s"%(self.__class__.__name__, name))
             v = MrfWebletConfigVar(self.tag, name, initval, callback=self.var_callback, **kwargs)
+
         else:
             mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:

@@ -30,4 +30,6 @@ void _mrf_print_hex_buff(uint8 *buff,uint16 len);
 int is_hex_digit(uint8 dig);
 uint8 int_to_hex_digit(int in);
 long long mrf_timestamp();
+int mrf_rtc_get(TIMEDATE *td);
+
 #endif

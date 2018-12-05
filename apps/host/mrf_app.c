@@ -144,6 +144,8 @@ int mrf_app_init(){
   mrf_arch_app_callback(_appl_fifo_callback);  // we want arch to manage a TCP server for server.py to access
 
 }
+
+
 int structure_to_app(uint8 bnum){
   // just squirt the raw buffer to python app via fifo
   char sname[64];
@@ -151,11 +153,13 @@ int structure_to_app(uint8 bnum){
   uint8 len = buff[0];
   mrf_debug(5,"structure to app : bnum %d using opened app data pipe fd = %d\n", bnum, _outfds);
 
-
   if(len > _MRF_BUFFLEN){
     mrf_debug(5,"error - length is bonkers %u\n",len);
     return -1;
   }
+
+
+
   servfd = mrf_arch_servfd();
 
   if (servfd < 1 ){

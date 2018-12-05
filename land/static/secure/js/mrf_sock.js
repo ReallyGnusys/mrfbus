@@ -20,7 +20,7 @@ $(document).ready(function() {
     $('#mrf-tabs a').click(function(e) {
         console.log("tab clicked");
         console.log(e);
-        
+
         e.preventDefault();
         $(this).tab('show');
         onresize();
@@ -48,7 +48,7 @@ $(document).ready(function() {
                        if (target == '#logout'){
 
                            if (window.confirm("Really logout?")){
-                               
+
                            }
                        }
                        onresize;
@@ -56,8 +56,8 @@ $(document).ready(function() {
 */
 
     onresize();
-    
-    
+
+
 });
 
 function ParseJsonString(str) {
@@ -94,7 +94,7 @@ MrfSocket.prototype.set_socket = function(socket){
     if ( typeof socket == 'object')
         this.socket = socket;
     else
-        this.socket = null;   
+        this.socket = null;
 
 }
 
@@ -103,9 +103,9 @@ MrfSocket.prototype.send = function(obj){
         var jso =  JSON.stringify(obj)
         this.socket.send(jso)
     }
-    
+
 }
-          
+
 
 
 var mrf_socket = new MrfSocket();
@@ -149,18 +149,18 @@ function mrf_web_update(obj){
         return;
     }
 
-    if(tag.tab == 'mrfgraph') {  
-        console.log("mrfgraph tag ");
-        console.log(tag);
+    if(tag.tab == 'mrfgraph') {
+        //console.log("mrfgraph tag ");
+        //console.log(tag);
         mrfgraph(tag.app, tag.row,  obj.data)
         return;
     }
-    
-        
+
+
     data = obj.data;
 
 
-    
+
     if(tag.hasOwnProperty('mrfvar')){
         //console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
@@ -172,11 +172,11 @@ function mrf_web_update(obj){
         sel = '.mrvar-ctrl-cb[app='+tag.app+'][name='+tag.mrfvar+']'
         cbs = $(sel)
         if (cbs.length > 0) {
-            console.log("testing sel "+sel)
-            console.log("matched "+cbs.length+" elements , setting checked to "+data.val)       
-            cbs.prop('checked',data.val)
+            //console.log("testing sel "+sel)
+            //console.log("matched "+cbs.length+" elements , setting checked to "+data.val)
+            //cbs.prop('checked',data.val)
         }
-        
+
         return;
     }
     //console.log("got tag");
@@ -187,12 +187,12 @@ function mrf_web_update(obj){
         jsl = sl + '.fld-'+fld;
         if (tag.app == 'timers'){
             console.log("tried to update select "+jsl + " with data "+data[fld]);
-            
+
         }
         $(jsl).html(data[fld]);
-            
+
     }
-        
+
 }
 
 
@@ -212,12 +212,27 @@ function mrfgraph_data_layout(gdata){
 
             console.log("this is temp");
             tsens = sn;
-        
+
             data.push( {
                 x : gdata[tsens].temp.ts,
                 y : gdata[tsens].temp.value,
                 name : tsens,
-                type : 'scatter'                
+                type : 'scatter'
+            });
+        }
+        else if ('memory' in sdata){
+
+            console.log("this is memory");
+            tsens = sn;
+            layout = {
+                yaxis: {title: 'memory'},
+            };
+
+            data.push( {
+                x : gdata[tsens].temp.ts,
+                y : gdata[tsens].temp.value,
+                name : tsens,
+                type : 'scatter'
             });
         }
         else if ('relay' in sdata){
@@ -241,14 +256,14 @@ function mrfgraph_data_layout(gdata){
                     autorange : false,
                     rangemode : 'nonnegative',
                     range : [0,1],
-                    type : 'scatter'                    
+                    type : 'scatter'
                 });
         } else {
 
-            console.log("not temp or relay!"+sn);
+            console.log("not temp memory or relay!"+sn);
         }
     }
- 
+
     return { data : data ,  layout : layout};
 }
 
@@ -264,14 +279,14 @@ function mrfgraph(app, graph, data){
     console.log(dl.layout);
     console.log("graph is "+graph);
     Plotly.newPlot(graph,dl.data,dl.layout);
-    
+
 }
 
 
 
 
 function mrf_auto_graph(label, data){
-    //console.log("graph update "+label);
+    console.log("mrf_auto_graph "+label);
     //console.log(data);
     if (!(label in _sensor_averages)){
         console.error("auto graph for label "+label+"  not found");
@@ -279,20 +294,20 @@ function mrf_auto_graph(label, data){
     }
     dbg = false
     if (label == 'HB1_FLOW') {
-        
+
         console.log("auto-graph label "+label);
         console.log(data);
         dbg = true;
     }
     for (var fld in data) {
-        
+
         if (fld != 'ts')
         {
             if (typeof(_sensor_averages[label][fld]) == 'undefined'){
                 console.error("failed to find fld  "+fld+"  in averages for "+label);
                 return;
             }
-                
+
             //console.log("have fld "+fld);
             _sensor_averages[label][fld].value.push(data[fld]);
             _sensor_averages[label][fld].ts.push(data['ts']);
@@ -303,7 +318,7 @@ function mrf_auto_graph(label, data){
                 console.log(dt);
             }
             limms = dt.getTime() - _sensor_hist_seconds * 1000;
-            
+
             fd =  new Date(_sensor_averages[label][fld].ts[0]);
 
             while (fd.getTime() < limms ) {
@@ -313,16 +328,16 @@ function mrf_auto_graph(label, data){
                 fd =  new Date(_sensor_averages[label][fld].ts[0]);
 
             }
-        }       
+        }
     }
     // need to update all plots that graph this sensor
     var plots = $(".mrf-graphs-"+label);
-
+    console.log("len .mrf-graphs-"+label+" = "+plots.length);
     for (var idx = 0 ; idx < plots.length ; idx++){
         plot = plots[idx];
         var divid = plot.getAttribute("id");
         var dl = plot_data_layout($(plot).data("sensors"));
-        //console.log("trying to update plot "+divid);
+        console.log("trying to update plot "+divid);
         Plotly.update(divid,dl.data,dl.layout);
         //console.log("updated plot "+divid);
     }
@@ -336,12 +351,12 @@ function plot_data_layout(sensors){
         };
         for (tid in sensors.temp) {
             tsens = sensors.temp[tid];
-            //console.log("trying tsens "+tsens)
+            console.log("plot_data_layout trying tsens "+tsens)
             data.push( {
                 x : _sensor_averages[tsens].temp.ts,
                 y : _sensor_averages[tsens].temp.value,
                 name : tsens,
-                type : 'scatter'                
+                type : 'scatter'
             });
         }
         // support optional graphing or relays on RHS second Y axis
@@ -363,11 +378,27 @@ function plot_data_layout(sensors){
                     autorange : false,
                     rangemode : 'nonnegative',
                     range : [0,1],
-                    type : 'scatter'                    
+                    type : 'scatter'
                 });
             }
         }
- 
+
+    /* FIXME! should be able to automate graph updates and shouldn't be copying */
+    for (tid in sensors.memory) {
+        tsens = sensors.memory[tid];
+        //console.log("plot_data_layout trying tsens "+tsens)
+        layout = {
+            yaxis: {title: 'memory'},
+        };
+        data.push( {
+            x : _sensor_averages[tsens].memory.ts,
+            y : _sensor_averages[tsens].memory.value,
+            name : tsens,
+            type : 'scatter'
+        });
+        }
+
+
     return { data : data ,  layout : layout};
 }
 
@@ -383,7 +414,7 @@ function init_graphs(){
         var divid =  plot.getAttribute('id')
         var sensors = $(plot).data('sensors')
         console.log("graph "+divid+" got sensors ");
-
+        console.log(sensors)
         dl = plot_data_layout(sensors);
 
         /*
@@ -401,7 +432,7 @@ function init_graphs(){
                 x : _sensor_averages[tsens].temp.ts,
                 y : _sensor_averages[tsens].temp.value,
                 name : tsens,
-                type : 'scatter'                
+                type : 'scatter'
             });
         }
         // support optional graphing or relays on RHS second Y axis
@@ -423,24 +454,24 @@ function init_graphs(){
                     autorange : false,
                     rangemode : 'nonnegative',
                     range : [0,1],
-                    type : 'scatter'                    
+                    type : 'scatter'
                 });
             }
         }
         */
         console.log("creating new plot in div "+divid+" with data");
         console.log(dl.data);
-        
+
         Plotly.newPlot(divid,dl.data,dl.layout);
     }
-    
+
 }
 
 function init_app(){
-    
+
     // init timepickers
     $(".mrfctrl_timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
-    
+
     $('.mrfctrl_timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
@@ -456,13 +487,13 @@ function init_app(){
         cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
         console.log(" mrf cb app :"+app );
         console.log(cdata)
-        
+
         ws.send(mrf_ccmd(app,"mrfctrl",cdata));
       });
-    
+
 
     $('.mrfctrl_timepick').timepicker().on('show.timepicker', function(e) {
-        
+
         console.log('Show : The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
         console.log('The minute is ' + e.time.minutes);
@@ -476,16 +507,16 @@ function init_app(){
         hval = $(".app-"+app+".tab-"+tab+".row-"+row+".fld-"+fld).html()
         console.log("hval = "+hval)
         $(this).timepicker('setTime', hval);
-        
-        
+
+
 
         cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" :val }
         console.log(" mrf cb app :"+app );
         console.log(cdata)
-        
+
         //ws.send(mrf_ccmd(app,"mrfctrl",cdata));
       });
-    
+
 
 
     //checkboxes
@@ -521,7 +552,7 @@ function init_app(){
             cdata = {"tab": tab , "row" : row, "fld" : fld,  "val" : 1 }
             console.log(" mrf butt app :"+app );
             console.log(cdata)
-            ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
+            ws.send(mrf_ccmd(app,"mrfctrl",cdata));
         });
 
 
@@ -530,11 +561,11 @@ function init_app(){
             var value = this.value;
             var app = $(this).attr('app');
             var tab = $(this).attr('tab');
-            var row = $(this).attr('row');            
+            var row = $(this).attr('row');
             var cdata = {"app" : app, "tab": tab , "row" : row , "value" : value}
             console.log("mrfctrl_sel changed");
             console.log(cdata);
-            ws.send(mrf_ccmd(app,"mrfctrl",cdata));           
+            ws.send(mrf_ccmd(app,"mrfctrl",cdata));
 
         });
     // new style var controls
@@ -582,10 +613,10 @@ function init_app(){
                 ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
             });
 
-    
+
 
     $(".mrfvar-ctrl-timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
-    
+
     $('.mrfvar-ctrl-timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
@@ -600,13 +631,13 @@ function init_app(){
         cdata = {"app": app , "name" : name, "op" : "set",  "val" : val }
         console.log(" mrf cb app :"+app );
         console.log(cdata)
-        
+
         ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
       });
-    
+
 
     $('.mrfvar-ctrl-timepick').timepicker().on('show.timepicker', function(e) {
-        
+
         console.log('Show : The time is ' + e.time.value);
         console.log(e);
         app = $(this).attr('app');
@@ -615,9 +646,9 @@ function init_app(){
         hval = $(".mrfvar-"+name).html()
         console.log("hval = "+hval)
         $(this).timepicker('setTime', hval);
-        
+
       });
-    
+
 
     $(".mrfvar-ctrl-sel").change(
         function(){
@@ -635,9 +666,9 @@ function init_app(){
         });
 
 
-    
 
-    
+
+
     //graphs
     init_graphs();
 }
@@ -662,42 +693,38 @@ function mrf_command(obj){
 }
 
 function init_socket(){
-    console.log("init_socket");    
+    console.log("init_socket");
     if ("WebSocket" in window) {
         ws = new WebSocket(_mrf_sdata.ws_url);
         console.log("ws constructed: typeof ws = "+typeof ws);
         sock = ws;
-    }            
+    }
     if ( typeof ws == "object"){
         console.log(ws);
         ws.onopen = function() {
             console.log("websocket opened : ok");
             mrf_socket.set_socket(ws);
         };
-        ws.onmessage = function (evt) { 
+        ws.onmessage = function (evt) {
             var msg = evt.data;
             //console.log("got ws message");
             //console.log(evt.data);
-	    
+
 	    obj = ParseJsonString(evt.data);
 	    if ( obj) {
 		//console.log(obj);
-		if(typeof obj.cmd == "string"){    
+		if(typeof obj.cmd == "string"){
 		    mrf_command(obj);
                 }
 	    }
         };
-        ws.onclose = function() { 
+        ws.onclose = function() {
             console.log("Connection is closed...logging out");
             alert("server has closed connection - try reloading page");
             //window.location.href = window.location.origin + '/logout';
-            
+
         };
     } else {
         console.log("WebSocket NOT supported by your Browser!");
     }
 }
-
-
-
-          

@@ -287,11 +287,13 @@ class MrflandRegManager(object):
 
 
     def graph_callback(self, label, data):
-        mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
+        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+        mrflog.warn("tag : "+repr(tag))
         self.webupdate(tag,data)
 
         stype = self.sensors[label]._stype_
+
         if data.has_key('ts') and data.has_key(stype) and self.server:
             dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
             self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])

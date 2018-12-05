@@ -86,16 +86,16 @@ class MrfStruct(LittleEndianStructure):
         return not self.__eq__(other)
 
     def tbd_unmunge(self):
-        print "mungeabletype is %s"%type(c_uint())
+        print ("mungeabletype is %s"%type(c_uint()))
         for field in self._fields_:
             att = getattr(self,field[0])
             attype = field[1]
-            print "got att %s  type %s"%(field[0],type(attype()))
+            print ("got att %s  type %s"%(field[0],type(attype())))
             if type(attype()) == type(c_uint()):
-                print "its for munging"
+                print ("its for munging")
                 nattr = att >> 16 + ((att & 0xffff) << 16)
                 setattr(self,field[0],nattr)
-        print repr(self)
+        print (repr(self))
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)

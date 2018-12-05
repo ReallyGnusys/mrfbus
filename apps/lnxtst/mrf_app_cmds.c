@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -20,8 +20,11 @@
 #include "mrf_sys.h"
 
 extern const MRF_CMD mrf_app_cmds[MRF_NUM_SYS_CMDS] = {
-  [ mrf_app_cmd_test      ] = {"APP_TEST"     , 0                               , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_app_task_test   },
-  [ mrf_app_cmd_mstats      ] = {"MEM_STATS"     , 0                               , 0                          , sizeof(MRF_PKT_LNX_MEM_STATS)   ,  NULL          , mrf_app_mem_stats   }
+  [ mrf_app_cmd_test      ] = {"APP_TEST"   , 0 , 0                           , sizeof(MRF_PKT_TIMEDATE)     ,  NULL  , mrf_app_task_test   },
+  [ mrf_app_cmd_mstats      ] = {"MEM_STATS", 0 , 0                           , sizeof(MRF_PKT_LNX_MEM_STATS),  NULL  , mrf_app_mem_stats   },
+  [ mrf_app_cmd_get_relay ]  = {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE), sizeof(MRF_PKT_RELAY_STATE)  ,  NULL  , mrf_app_get_relay   },
+  [ mrf_app_cmd_set_relay ]  = {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE), sizeof(MRF_PKT_RELAY_STATE)  ,  NULL  , mrf_app_set_relay   },
+
 };
 
 

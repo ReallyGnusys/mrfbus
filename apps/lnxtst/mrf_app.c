@@ -33,7 +33,7 @@
 
 #include <netdb.h>
 #include "mrf_route.h"
-
+#include "mrf_relays.h"
 //extern uint8 _mrfid;
 static uint8 buff[2048];
 
@@ -84,17 +84,27 @@ static int appfd , servfd;  // file desc for listener socket
 
 static int _outfd,_outfds;  // file descs for output pipes - response and structure
 
-static int _tick_cnt;
+static int _app_tick_cnt;
 int mrf_app_init(){
   char sname[64];
   int  tmp;
-  _tick_cnt = 0;
+  _app_tick_cnt = 0;
   mrf_debug(5,"%s","mrf_app_init host\n");
-
+  init_relays();
   mrf_app_tick_enable(2);
 
   //mrf_arch_app_callback(_appl_fifo_callback);  // we want arch to manage a TCP server for server.py to access
 
+}
+
+void print_mstats(MRF_PKT_LNX_MEM_STATS *mstats){
+
+  mrf_debug(5,"%s","**************************************\n");
+  mrf_debug(5,"%s","MRF_PKT_LNX_MEM_STATS\n");
+  mrf_debug(5," sz 0x%x res 0x%x share 0x%x text 0x%x  lib 0x%x data 0x%x\n",
+            mstats->sz,mstats->res,mstats->share,mstats->text,mstats->lib,mstats->data);
+  mrf_debug(5," relay_state 0x%x \n",mstats->relay_state);
+  mrf_debug(5,"%s","**************************************\n");
 }
 
 MRF_CMD_RES mrf_task_usr_struct(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -313,23 +323,32 @@ int get_mem_stats(MRF_PKT_LNX_MEM_STATS *mst){
   //MRF_PKT_LNX_MEM_STATS *mst = (MRF_PKT_LNX_MEM_STATS *)mrf_response_buffer(bnum);
 
   FILE* statm = fopen( "/proc/self/statm", "r" );
+  mrf_rtc_get(&(mst->td));
 
   fscanf(statm,"%d %d %d %d %d %d %d",
          &(mst->sz),&(mst->res),&(mst->share),&(mst->text),&(mst->lib),&(mst->data),&(mst->dt));
-
   fclose(statm);
+
+  mrf_debug(5,"get_mem_stats sz %d  mst->res %d\n",mst->sz,mst->res);
+
+  // extra features..
+  uint16 rs = relay_state();
+  mst->relay_state = (uint16)relay_state();
+  mrf_debug(5,"get_mem_stats rs 0x%u  mst->relay_state 0x%u\n",rs,mst->relay_state);
+
   return 0;
 
 }
 
+static MRF_PKT_LNX_MEM_STATS _memstats;
+
 int tick_task(){
-  _tick_cnt++;
-  MRF_PKT_LNX_MEM_STATS _memstats;
+  _app_tick_cnt++;
   get_mem_stats(&_memstats);
 
-  // only send struct if readings or relays changed
-  if ((_tick_cnt > 2))
+  if ((_app_tick_cnt > 2)){
     mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_mstats,  (uint8 *)&_memstats, sizeof(MRF_PKT_LNX_MEM_STATS));
+  }
   return 0;
 
 }
@@ -342,5 +361,29 @@ MRF_CMD_RES mrf_app_mem_stats(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   mrf_send_response(bnum,sizeof(MRF_PKT_LNX_MEM_STATS));
   mrf_debug(5,"%s","mrf_app_mem_stats exit\n");
+  return MRF_CMD_RES_OK;
+}
+
+
+
+
+MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  MRF_PKT_RELAY_STATE *rs;
+  mrf_debug(5,"%s","mrf_app_set_relay entry\n");
+  rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  set_relay_state(rs->chan,rs->val);
+  rs->val = get_relay_state(rs->chan);
+  mrf_debug(5,"mrf_app_set_relay exit rs->val = 0x%x relay_state 0x%x\n",rs->val,relay_state());
+
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
+  return MRF_CMD_RES_OK;
+}
+
+MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
+  MRF_PKT_RELAY_STATE *rs;
+  mrf_debug(5,"%s","mrf_app_get_relay entry\n");
+  rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
+  rs->val = get_relay_state(rs->chan);
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }

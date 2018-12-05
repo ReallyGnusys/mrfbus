@@ -73,7 +73,7 @@ class MrfSens(object):
         """ out_flds except dates """
         flds = []
         for f in self._out_flds_:
-            if f[0].find("_date") != -1:
+            if f[0].find("_date") == -1:
                 flds.append(f[0])
         return flds
 
@@ -124,7 +124,7 @@ class MrfSens(object):
                 mrflog.error("%s input output data type mismatch for key %s  %s vs %s"%(self.__class__.__name__, ditem, type(odata[ditem]), type(self._output[ditem]) ))
                 return None
 
-        mrflog.info("new item for sens %s - %s"%(self.label,repr(odata)))
+        mrflog.debug("new output for sens %s - %s"%(self.label,repr(odata)))
 
         self.output = odata
 

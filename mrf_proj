@@ -170,7 +170,16 @@ if [ -n "${server}" ] ; then
    echo "starting server ./${server}"
    export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
    source ${MRFBUS_HOME}/land/venv/bin/activate
-   stdbuf -oL  python  ./${server} --mrfnet=${mrfnet} > /dev/null&
+
+   if [ $# -lt 2 ]  ; then
+       echo "piping server to /dev/null"
+       stdbuf -oL  python  ./${server} --mrfnet=${mrfnet} > /dev/null&
+   else
+       echo "running server in foreground"
+       python  ./${server} --mrfnet=${mrfnet}
+   fi
+
+
 
    pid=$!
    echo "pid is $pid"

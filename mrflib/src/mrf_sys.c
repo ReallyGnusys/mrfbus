@@ -262,6 +262,7 @@ int mrf_send_structure(uint8 dest, uint8 code,  uint8 *data, uint8 len){
  _mrf_buff_state(bnum)->state = LOADED; //
  if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
    // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
+   mrf_debug(0,"ERROR : could not tx_queue on i_f %d structure resp->rlen = %u resp->type=%u\n",route.i_f,resp->rlen,resp->type);
 
    return -1;
  }

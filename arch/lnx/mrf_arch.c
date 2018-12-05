@@ -72,6 +72,22 @@ struct timeval te;
     return milliseconds;
 }
 
+/* TBD accidental re-implementation
+int mrf_rtc_get(TIMEDATE *td){
+  struct tm str_tm;
+  struct timeval te;
+  gettimeofday(&te, NULL); // get current time
+  localtime_r(&te.tv,&str_tm);
+  td->sec = (uint8)str_tm.tm_sec;
+  td->min = (uint8)str_tm.tm_min;
+  td->hour = (uint8)str_tm.tm_hour;
+  td->day = (uint8)str_tm.tm_mday;
+  td->mon = (uint8)str_tm.tm_mon;
+  td->year = (uint8)(str_tm.tm_year - 100);
+
+  return 0;
+}
+*/
 
 #define handle_error(msg)  \
   do { perror(msg); exit(EXIT_FAILURE); } while (0)
