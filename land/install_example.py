@@ -21,7 +21,7 @@ tcpport = 8912   # port used by tcp/json test service
 mrfbus_host_port = 8915  # port of mrfbus host device ( addr 1 )
 
 
-db_uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
+db_uri = "mongodb://username:password@host:27017/mrfbus?authSource=admin"
 
 
 https_server = False
