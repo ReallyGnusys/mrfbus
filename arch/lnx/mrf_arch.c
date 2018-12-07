@@ -666,7 +666,7 @@ char buff[2048];
      }
 
      else if (revent[i].data.u32 == NUM_INTERFACES+4){
-       printf("app timer  event\n");
+       mrf_debug(5,"%s","app timer  event\n");
        s = read(_app_timerfd, buff, 1024);
        buff[s] = 0;
 

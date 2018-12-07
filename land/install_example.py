@@ -1,9 +1,12 @@
 ## normally copy this your run dir  and name install.py
 ## setup as required
 
+## THIS FILE IS IN PROCESS OF DEPRECATION
+## Trying to move most of these to config for weblets in server.py
+## so watch out if changes here don't seem to do anything
+
 
 test = True
-#installdir = '/v/share/projects/msp/mrfbus/land/'
 
 instance = 'heat-1'
 #domain = 'localdom'
@@ -47,7 +50,7 @@ logger_name = 'mrfland'
 logdir = 'var/log/'
 mrflog = 'mrfland.log'
 
-#hard coded userdb
+#temp hard coded userdb for now
 users = {
     'home'  : { 'sid' : 1, 'type' : 'sysadmin', 'password' : 'hpass' , 'username': 'home'},
     'guest' : { 'sid' : 2, 'type' : 'sysadmin', 'password' : 'gpass' , 'username': 'guest',

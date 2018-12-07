@@ -265,14 +265,14 @@ class MrfSensPtRelay(MrfSens):
         cdata['val'] = int(on_off)
         param = PktRelayState()
         param.dic_set(cdata)
-        mrflog.warn("%s sending SET_RELAY with param %s"%
+        mrflog.debug("%s sending SET_RELAY with param %s"%
                     (self.__class__.__name__ , repr(param)))
         self.devupdate('SET_RELAY',param)
 
     def set(self, on_off):
         self.req_val = on_off
         if self.override == False and self.on_off != self.req_val:
-            mrflog.warn("%s %s changing relay state to %d"%(self.__class__.__name__,self.label,self.req_val))
+            mrflog.debug("%s %s changing relay state to %d"%(self.__class__.__name__,self.label,self.req_val))
             self._cmd(on_off)
 
     def force(self, on_off):

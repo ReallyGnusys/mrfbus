@@ -29,7 +29,7 @@ class MrfDev(object):
 
     """
     def __init__(self, rm, label, address, caplabels={}):
-        mrflog.warn("%s __init__ entry , label %s address 0x%x"%(self.__class__.__name__,label,address))
+        mrflog.info("%s __init__ entry , label %s address 0x%x"%(self.__class__.__name__,label,address))
         self.address = address
         self.label = label
         self.rm = rm
@@ -55,19 +55,19 @@ class MrfDev(object):
             self.caps[clab] = []
             chan = 0
             for slab in caplabels[clab]:
-                mrflog.warn("%s elaborating sensor %s  %s"%(self.__class__.__name__, clab, slab))
+                mrflog.info("%s elaborating sensor %s  %s"%(self.__class__.__name__, clab, slab))
                 #self.caps[clab].append(self._capspec[clab](slab, self.address, chan, mrflog))
                 self.caps[clab].append(self._capspec[clab](slab,self.devupdate,self.address,chan))
                 self.rm.senslink(slab, self.address ,chan)
                 chan += 1
-            mrflog.warn(self.caps[clab])
+            mrflog.debug(self.caps[clab])
 
         if hasattr(self, 'init'):  # run subclass init if defined
             self.init()
         self.rm.device_register(self)
 
     def devupdate(self, cmd, data = {}):
-        mrflog.warn("%s devupdate dest %s cmd %s data %s"%(self.__class__.__name__, self.address,cmd , repr(data)))
+        mrflog.debug("%s devupdate dest %s cmd %s data %s"%(self.__class__.__name__, self.address,cmd , repr(data)))
         self.rm.devupdaten(self.label, self.address, cmd, data)
 
     def subscribe(self,callback):

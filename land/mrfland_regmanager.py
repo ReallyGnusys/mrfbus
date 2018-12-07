@@ -288,8 +288,8 @@ class MrflandRegManager(object):
 
     def graph_callback(self, label, data):
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
-        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
-        mrflog.warn("tag : "+repr(tag))
+        #mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+        #mrflog.warn("tag : "+repr(tag))
         self.webupdate(tag,data)
 
         stype = self.sensors[label]._stype_
