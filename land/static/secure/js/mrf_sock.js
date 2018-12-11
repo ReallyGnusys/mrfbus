@@ -162,7 +162,7 @@ function mrf_web_update(obj){
 
 
     if(tag.hasOwnProperty('mrfvar')){
-        //console.log("var update "+tag.mrfvar+ " = "+data.val);
+        console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
 
         $(sl).html(""+data.val);
@@ -287,7 +287,7 @@ function mrfgraph(app, graph, data){
 
 function mrf_auto_graph(label, data){
     console.log("mrf_auto_graph "+label);
-    //console.log(data);
+    console.log(data);
     if (!(label in _sensor_averages)){
         console.error("auto graph for label "+label+"  not found");
         return;

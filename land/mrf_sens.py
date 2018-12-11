@@ -125,6 +125,10 @@ class MrfSens(object):
                 return None
 
         mrflog.debug("new output for sens %s - %s"%(self.label,repr(odata)))
+        if False and self.__class__.__name__ == 'MrfSensMemory' and self.address == 0x02:
+            mrflog.warn("new output for sens %s - %s  num subscribers %d"%(self.label,repr(odata),len(self.subscribers)))
+        else:
+            mrflog.debug("new output for sens %s - %s  num subscribers %d"%(self.label,repr(odata),len(self.subscribers)))
 
         self.output = odata
 
@@ -228,4 +232,6 @@ class MrfSens(object):
                 self.history[hfld].append(self.output[hfld])
 
         for s in self.subscribers.keys():
+            if False and self.__class__.__name__ == 'MrfSensMemory' and self.address == 0x02:
+                mrflog.warn("subscriber "+repr(s) + "  "+repr(self.subscribers[s]))
             self.subscribers[s](self.label,self.output)

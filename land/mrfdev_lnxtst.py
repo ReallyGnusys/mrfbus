@@ -108,7 +108,7 @@ class MrfSensMemory(MrfSens):
         for f in self.out_data_flds():
             #mrflog.warn("%s setting output for fld %s"%(self.__class__.__name__,f))
             if f == 'memory':
-                outdata[f] = indata['sz']
+                outdata[f] = indata['res']
             else:
                 outdata[f] = indata[f]
         #mrflog.warn("outdata : "+repr(outdata))

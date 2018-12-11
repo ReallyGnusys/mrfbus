@@ -36,7 +36,7 @@ class MrfLandWebletMem(MrflandWeblet):
         mrflog.warn("len sl %d"%len(self.sl))
         for s in self.sl:
             mrflog.warn("got label "+s.label)
-            self.add_var(s.label, s , field='sz', graph=True)
+            self.add_var(s.label, s , field='memory', graph=True)
             self.graph_mems.append(s.label)
         #else:
         #    self.add_var(s.label, s , field='sz')

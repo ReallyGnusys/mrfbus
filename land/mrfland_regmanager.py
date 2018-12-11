@@ -205,7 +205,7 @@ class MrflandRegManager(object):
         self.hostname = socket.gethostname()
         self.weblets = OrderedDict()  # has weblets by tag
         self.timers = {}
-        self.sgraphs = {}  # support graph data for these sensors during this mrfland service
+        self.sgraphs = {}  # support graph data for these sensors during this mrfland session
         self.graph_insts = 0
         self.config = config
         self.comm = mrf_comm(log=mrflog)

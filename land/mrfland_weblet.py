@@ -350,8 +350,11 @@ class MrfWebletSensorVar(MrfWebletVar):
         self.sens.subscribe(self._sens_callback)
 
     def _sens_callback(self, label, data):
-        ##mrflog.warn("_sen_callback %s self.value %s"%(label,repr(self.val)))
-        if self.val != self.last_val:
+        if False or label == 'mem_sx02':
+            mrflog.warn("_sen_callback %s self.value %s last_val %s"%(label,repr(self.val),repr(self.last_val)))
+        else:
+            mrflog.debug("_sen_callback %s self.value %s"%(label,repr(self.val)))
+        if self.last_val == None or self.val != self.last_val:
             self.last_val = self.val
             self.updated()
 
@@ -488,10 +491,14 @@ class MrflandWeblet(object):
 
 
     def var_callback(self,name,wsid=None):
-        #mrflog.warn("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
-
+        if False and self.__class__.__name__ == 'MrfSensMemory':
+            mrflog.warn("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
+        else:
+            mrflog.debug("%s var_callback for %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
         if self.var.__dict__[name].public:  # if set this var has been instanced in a webpage
-            #mrflog.warn("%s running webupdate for  %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
+
+            mrflog.debug("%s running webupdate for  %s value %s wsid %s"%(self.__class__.__name__, name, self.var.__dict__[name].val, repr(wsid)))
+
 
             self.rm.webupdate(self.var.__dict__[name].webtag,
                               { 'val' : self.var.__dict__[name].val}
