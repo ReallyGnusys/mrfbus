@@ -352,6 +352,7 @@ int ads1148_init(){
   OUTPUTPIN(MR);
 
   // DRDY INPUT
+  PULLUP(DRDY);
   INPUTPIN(DRDY);
 
   __delay_cycles(50);
@@ -505,6 +506,10 @@ int mrf_app_init(){
 
   for (ch = 0 ; ch < 20 ; ch++)
     __delay_cycles(1000);
+  // need GIE enabled for this to work - normally done in mrf_arch_run FIXME!
+  __bis_SR_register(GIE);  // GIE should always be set for foreground process
+
+
   ads1148_init();
   sampling = 1;
   //PINHIGH(START);  // start continous sampling
