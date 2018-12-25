@@ -5,6 +5,8 @@ if [ $# -lt 1 ] ; then
   exit
 fi
 
+[ -e .bashrc ] && echo "running local .bashrc" && source .bashrc
+
 
 [ -z "$MRFBUS_HOME" ] && echo "MRFBUS_HOME not defined" && exit 0
 
