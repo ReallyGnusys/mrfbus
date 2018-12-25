@@ -3,7 +3,8 @@ import platform
 import sys
 
 from tornado import tcpserver
-from tornado_console.compat import StringIO
+#from tornado_console.compat import StringIO
+from compat import StringIO
 
 
 __all__ = [

@@ -78,9 +78,11 @@ class MrfLandWebletHistory(MrflandWeblet):
 
         s += '<div id="'+self.graphid+'"></div>'
 
-
-        sens = self.rm.db_sensors
-        mrflog.warn("pane_html got sensors %s"%repr(sens))
+        if hasattr(self.rm,'db_sensors'):
+            sens = self.rm.db_sensors
+            mrflog.warn("pane_html got sensors %s"%repr(sens))
+        else:
+            sens = None
 
         if sens:
             s += """
@@ -89,4 +91,4 @@ class MrfLandWebletHistory(MrflandWeblet):
 </script>
 
 """
-            return s
+        return s
