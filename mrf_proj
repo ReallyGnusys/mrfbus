@@ -27,14 +27,20 @@ if [ $1 == setup ] ; then
     rm -f ${STUBFIFO} && mkfifo -m 600 ${STUBFIFO}
     rm -f ${APPFIFO} && mkfifo -m 600 ${APPFIFO}
     if [ ! -e ./mrf.prj ] ; then
+        echo "Getting mrj.prj"
         if [ $# -lt 2 ]  ; then
             echo "no mrf.prj found in current dir and no param to setup .. e.g. test"
             exit -1
 
         fi
         src=${MRFBUS_HOME}/${2}_mrf.prj
+
         if [ -e $src ] ; then
             cp $src ./mrf.prj
+            echo "Copied $src to ./mrf.prj"
+        else
+            echo "ERROR : could not find $src"
+            exit -1
         fi
 
     fi
