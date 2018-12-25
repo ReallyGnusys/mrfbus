@@ -30,13 +30,16 @@
 #define MRFID 1
 #endif
 
+/* MACRO to set channel number
+  should result in base station  MRFID * 0x10
+*/
+#define RF_CHANNEL_NUM (MRFID < SNETSZ ? (MRFID * (SNETSZ/2))  : (MRFID / SNETSZ) * SNETSZ)
 
-
-#define NUM_IFS MRFID == 1 ?  (256/SNETSZ)-1 : (MRFID / SNETSZ) ==0 ? 2 :1 
+//#define NUM_IFS MRFID == 1 ?  (256/SNETSZ)-1 : (MRFID / SNETSZ) ==0 ? 2 :1
 
 typedef struct {
   I_F  i_f;
-  uint8 relay;  
+  uint8 relay;
 } MRF_ROUTE;
 
 uint8 mrf_nexthop(MRF_ROUTE *route,uint8 us,uint8 dest);

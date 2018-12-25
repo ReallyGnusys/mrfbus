@@ -23,7 +23,7 @@
 #include  <msp430.h>
 #include <legacymsp430.h>
 #include "_mrf_rf1.h"
-
+#include "mrf_route.h"
 //#define mrf_buff_loaded(buff)  mrf_buff_loaded_if(RF0,buff)
 
 //#define mrf_alloc() mrf_alloc_if(RF0)
@@ -114,6 +114,9 @@ static void _mrf_init_radio()
   uint8 mcsm1;
   WriteRfSettings(&rfSettings);
   WriteSinglePATable(PATABLE_VAL);
+
+  WriteSingleReg(CHANNR,RF_CHANNEL_NUM); // set CCA_MODE=0x1 (RSSI below threshold)
+
   mcsm1 = ReadSingleReg(MCSM1);
   WriteSingleReg(MCSM1,(mcsm1 & ~0x30) | 0x10); // set CCA_MODE=0x1 (RSSI below threshold)
   Strobe( RF_SIDLE );

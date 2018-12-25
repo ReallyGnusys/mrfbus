@@ -8,7 +8,6 @@
 /********************
  * Variable definition
  */
-
 #define  PATABLE_VAL        (0x51)          // 0 dBm output
 
 typedef struct S_RF_SETTINGS {

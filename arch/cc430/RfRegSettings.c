@@ -125,6 +125,7 @@ RF_SETTINGS rfSettings = {
 // Device address = 0
 // GDO0 signal selection = ( 6) Asserts when sync word has been sent / received, and de-asserts at the end of the packet
 // GDO2 signal selection = (41) RF_RDY
+
 RF_SETTINGS rfSettings = {
     0x08,   // FSCTRL1   Frequency synthesizer control.
     0x00,   // FSCTRL0   Frequency synthesizer control.
