@@ -44,7 +44,13 @@ if [ $1 == setup ] ; then
         fi
 
     fi
+    echo "building venv"
 
+    virtualenv venv
+    source venv/bin/activate
+
+    echo "installing requirements"
+    pip install -r ${MRFBUS_HOME}/land/requirements.txt
     exit 0
 fi
 
@@ -177,7 +183,7 @@ if [ -n "${server}" ] ; then
    sleep 1
    echo "starting server ./${server}"
    export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
-   source ${MRFBUS_HOME}/land/venv/bin/activate
+   source venv/bin/activate
 
    if [ $# -lt 2 ]  ; then
        echo "piping server to /dev/null"

@@ -8,9 +8,6 @@ addons:
       - python-virtualenv
 
 script:
-  - make venv
-  - export MRFBUS_HOME=$(pwd)
-  - make testsetup
   - mkdir -p /tmp/mrftst/rftst
   - cd /tmp/mrftst/rftst ; ${MRFBUS_HOME}/mrf_proj setup rf &&  ${MRFBUS_HOME}/mrf_proj build
   - mkdir -p /tmp/mrftst/testrun
