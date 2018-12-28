@@ -28,8 +28,6 @@ if __name__ == '__main__':
     cfile = open('mrf_data.c','w')
     cfile.write("#include  <stdint.h>\n")
 
-    cfile.write("#define MRF_CHANN_OFFSET  %d\n"%args.chann_offset)
-
     cfile.write("const uint8_t  _mrf_key[16] = {")
 
     for i in range(16):
