@@ -5,12 +5,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ###############################################################################
@@ -26,14 +26,14 @@ LD=msp430-gcc
 OD=msp430-objdump -dt
 SIZE=msp430-size
 AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${MOBJ}/RfRegSettings.o \
-	${MOBJ}/rtc_arch.o
+	${MOBJ}/rtc_arch.o ${MOBJ}/mrf_data.o
 
 #ifdef MRF_SPI_B
 #      ${MOBJ}/mrf_spi_cc.o
 #endif
 
 
-ACCFLAGS= -mmcu=cc430f5137  -DMHZ_868 
+ACCFLAGS= -mmcu=cc430f5137  -DMHZ_868
 #ALDFLAGS= -nodefaultlibs
 #-lgcc
 # -g

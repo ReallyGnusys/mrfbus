@@ -63,9 +63,6 @@ fi
 
 if [ $1 == build ] ; then
     mode=build
-    pushd $MRFBUS_HOME
-    make testsetup
-    popd
 elif  [ $1 == run ] ; then
    mode=run
    pids=""
@@ -84,12 +81,14 @@ while read -r LINE
 do
 
  #echo "read line $LINE"
-
+ channel_offset=0
  valid=0
  read -r -a fld <<< "$LINE"
 
  if  [ "${fld[0]}" == "MRFNET" ] ; then
      mrfnet=${fld[1]}
+ elif  [ "${fld[0]}" == "CHANNEL_OFFSET" ] ; then
+     channel_offset=${fld[1]}
  elif  [ "${fld[0]}" == "SERVER" ] ; then
      server=${fld[1]}
  elif [ "${fld[0]}" == "DEVICE" ] ; then
@@ -107,6 +106,10 @@ do
       echo "valid device line detected app $app mrfid $mrfid"
       dn=${app}_${mrfid}
       if [ $mode == build ] ; then
+
+          # make new mrf_data if doesn't exist
+          [ ! -e "mrf_data.c" ] && echo "creating mrf_data.[ch]" && ${MRFBUS_HOME}/gen_mrf_data.py -chann_offset ${channel_offset}
+
           rm -rf $dn
           mkdir $dn
           mf=${dn}/Makefile
