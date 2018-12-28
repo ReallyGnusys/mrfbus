@@ -76,12 +76,12 @@ else
 fi
 
 declare -i valid=0
+declare -i channel_offset=0
 
 while read -r LINE
 do
 
  #echo "read line $LINE"
- channel_offset=0
  valid=0
  read -r -a fld <<< "$LINE"
 
