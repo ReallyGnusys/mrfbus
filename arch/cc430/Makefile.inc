@@ -26,7 +26,7 @@ LD=msp430-gcc
 OD=msp430-objdump -dt
 SIZE=msp430-size
 AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${MOBJ}/RfRegSettings.o \
-	${MOBJ}/rtc_arch.o ${MOBJ}/mrf_data.o
+	${MOBJ}/rtc_arch.o ${MOBJ}/mrf_kdata.o ${MOBJ}/mrf_aes.o
 
 #ifdef MRF_SPI_B
 #      ${MOBJ}/mrf_spi_cc.o

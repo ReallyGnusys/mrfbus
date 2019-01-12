@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -31,6 +31,7 @@
 #include "mrf_route.h"
 #include "LCD1x9.h"
 #include "rtc_arch.h"
+#include "mrf_aes.h"
 #include <stdio.h>
 void mrf_rf_idle(I_F i_f);
 
@@ -65,7 +66,7 @@ int mrf_app_init(){
 
   INPUTPIN(BUT1);
   P1REN &= ~BITNAME(BUT1);
-  P1IES |=  BITNAME(BUT1);  // hi to lo 
+  P1IES |=  BITNAME(BUT1);  // hi to lo
   P1IE  |=  BITNAME(BUT1);
   _app_mode = 0;
   _sec_count = 0;
@@ -91,14 +92,14 @@ int16 modtc_celx4(){
   int16 val;
 
   PINLOW(CS);
-  
+
   val = (int16)mrf_spi_rx_noblock();
   val <<= 8;
   val |= (int16)mrf_spi_rx_noblock();
   mrf_spi_flush_rx();
   mrf_spi_tx(0x0); // NOP
   mrf_spi_tx(0x0); // NOP
-  
+
   //mrf_spi_tx(0x0); // NOP
   //mrf_spi_tx(0x0); // NOP
 
@@ -108,7 +109,7 @@ int16 modtc_celx4(){
 
   while(mrf_spi_busy())
     __delay_cycles(10);
-  
+
   PINHIGH(CS);
 
   return val;
@@ -130,7 +131,7 @@ MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
        _app_state = SHOW_TIME;
      }
    }
-   else if (resp->type == mrf_cmd_ping) {     
+   else if (resp->type == mrf_cmd_ping) {
      MRF_PKT_PING_RES *pres = (MRF_PKT_PING_RES *)((void *)hdr + sizeof(MRF_PKT_HDR)+ sizeof(MRF_PKT_RESP));
 
      if (_app_mode == 1) {
@@ -165,7 +166,7 @@ MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   set_relay_state(rs->chan,rs->val);
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -175,7 +176,7 @@ MRF_CMD_RES mrf_app_led_on(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   set_relay_state(0,1);
   rs.chan = 0;
   rs.val = get_relay_state(rs.chan);
-  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 MRF_CMD_RES mrf_app_led_off(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -184,7 +185,7 @@ MRF_CMD_RES mrf_app_led_off(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   set_relay_state(0,0);
   rs.chan = 0;
   rs.val = get_relay_state(rs.chan);
-  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)&rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -194,7 +195,7 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_task_relay entry\n");
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -203,27 +204,27 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 void button_pressed(){
 
   _app_mode = ( _app_mode + 1 ) % 2;
-  
+
 
 }
 
 static unsigned int P1IVREG;
 
-interrupt(PORT1_VECTOR) PORT1_ISR (void) 
+interrupt(PORT1_VECTOR) PORT1_ISR (void)
 {
   // switch(__even_in_range(P1IV, 16))
- 
+
   P1IVREG = P1IV;
   switch(P1IVREG)
   {
     case  0: break;
     case  2:break;                         // P1.0 IFG
-    case  4: 
+    case  4:
       P1IE &= ~BIT1;                             // Debounce by disabling buttons
       button_pressed();
 
-      
-      //   __bic_SR_register_on_exit(LPM3_bits); // Exit active   
+
+      //   __bic_SR_register_on_exit(LPM3_bits); // Exit active
       break;                         // P1.1 IFG
     case  6: break;                         // P1.2 IFG
     case  8: break;                         // P1.3 IFG
@@ -238,7 +239,7 @@ interrupt(PORT1_VECTOR) PORT1_ISR (void)
 int build_state(MRF_PKT_RFMODTC_STATE *state){
 
   //uint16 rd = ads1148_data();
-  
+
   mrf_rtc_get(&((*state).td));
   uint8 ch;
   for (ch = 0 ; ch < MAX_RTDS ; ch++){
@@ -264,17 +265,44 @@ int _Dbg_ping(){
   return -15;
 }
 
+
+const uint16_t _aes_tst_iv[8] = {1,2,4,8,16,32,64,128};
+
+const uint16_t _aes_tst_in[8] = { 1,2112,1965,65535,32768,16384,8192,4096};
+
+uint16_t _aes_tst_out[8];
+uint16_t _aes_tst_out2[8];
+uint16_t _aes_tst_dec_out[8];
+
+
+int tst_encrypt(){
+
+
+  aes_encrypt((uint16_t *)_aes_tst_in, (uint16_t *)_aes_tst_out, (uint16_t *)_aes_tst_iv, 8);
+  /*
+  aes_encrypt2((uint16_t *)_aes_tst_in, (uint16_t *)_aes_tst_out2, (uint16_t *)_aes_tst_iv, 8);
+
+  aes_encrypt((uint16_t *)_aes_tst_in, (uint16_t *)_aes_tst_out, (uint16_t *)_aes_tst_iv, 8);
+
+  aes_encrypt2((uint16_t *)_aes_tst_in, (uint16_t *)_aes_tst_out2, (uint16_t *)_aes_tst_iv, 8);
+  */
+  aes_decrypt((uint16_t *)_aes_tst_out, (uint16_t *)_aes_tst_dec_out, (uint16_t *)_aes_tst_iv, 8);
+
+}
+
 int sec_task(){
   int val,tw,tf;
   //sprintf(_message,"sec %d",_sec_count);
   MRF_ROUTE route;
   P1IE |= BIT1;                             // hmpff -renable button ( crude debouncing )
 
+  tst_encrypt();
+
   if (_app_state == SYNC_TIME){ // relying on usr_resp to change state when response received
     mrf_send_command(_base_route.relay,  mrf_cmd_get_time,  NULL, 0);
     return 0;
   }
-  
+
 
   val = modtc_celx4();
   tw = val >> 2;
@@ -304,20 +332,19 @@ int sec_task(){
     mrf_send_command(_base_route.relay,  mrf_cmd_ping,  NULL, 0);
 
   }
-  
 
-  
+
+
   return 0;
 }
 
 
 // this is run by mrf_foreground - so a foreground task
 int signal_handler(uint8 signal){
- 
+
   if (signal == APP_SIG_SECOND)
     return sec_task();
 
   return 0;
 
 }
-

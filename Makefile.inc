@@ -31,7 +31,7 @@ BUILD ?= debug
 ifeq ($(BUILD),debug)
 	BFLAGS = -g -g3 -Wall
 else
-	BFLAGS = -g -g3 -O2 -Wall
+	BFLAGS = -g -g3 -O1 -Wall
 endif
 
 APP ?= default
@@ -127,8 +127,8 @@ ${SIZEREP}: ${TARG}
 ${MOBJ}/main.o: ${MAIN}
 	${GCC}  -c $(CCFLAGS) ${MAIN}   -o ${MOBJ}/main.o
 
-${MOBJ}/mrf_data.o: ../mrf_data.c
-	${GCC}  -c $(CCFLAGS) ../mrf_data.c   -o ${MOBJ}/mrf_data.o
+${MOBJ}/mrf_kdata.o: ../mrf_kdata.c
+	${GCC}  -c $(CCFLAGS) ../mrf_kdata.c   -o ${MOBJ}/mrf_kdata.o
 
 ${MOBJ}/%.o: ${APPDIR}/%.c
 	${GCC}  -c $(CCFLAGS) $< -o $@

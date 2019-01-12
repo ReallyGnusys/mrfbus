@@ -16,24 +16,35 @@ if __name__ == '__main__':
 
     akey = os.urandom(16)
 
-    hfile = open('mrf_data.h','w')
+    hfile = open('mrf_kdata.h','w')
     hfile.write("#include  <stdint.h>\n")
 
     hfile.write("#define MRF_CHANN_OFFSET  %d\n"%args.chann_offset)
 
-    hfile.write("extern const uint8_t  *_mrf_key;\n")
+    #hfile.write("extern const uint16_t  *_mrf_key;\n")
 
     hfile.close()
 
-    cfile = open('mrf_data.c','w')
+    cfile = open('mrf_kdata.c','w')
     cfile.write("#include  <stdint.h>\n")
 
-    cfile.write("const uint8_t  _mrf_key[16] = {")
+    cfile.write("extern const uint16_t  _mrf_key[8] = {")
 
+    wn = 0
     for i in range(16):
-        if (i%4) == 0:
-            cfile.write("\n   ")
-        cfile.write("0x%02x,"%akey[i])
+        if (i%2)== 0:
+            val = akey[i]
+        else:
+            val = val + (akey[i] * 256)
+
+            if (wn%4) == 0:
+                cfile.write("\n   ")
+            if i < 15:
+                cfile.write("0x%04x,"%val)
+            else:
+                cfile.write("0x%04x"%val)
+            wn += 1
+
     cfile.write("\n};\n")
 
     cfile.close()

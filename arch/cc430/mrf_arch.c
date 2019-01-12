@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -24,6 +24,7 @@
 #include "hal_pmm.h"
 
 #include "mrf_pinmacros.h"
+#include "mrf_aes.h"
 #define _WAKE_PORT P1
 #define _WAKE_BIT  0
 
@@ -51,7 +52,8 @@ int putchar(int c){
 
 int _print_mrf_cmd(MRF_CMD_CODE cmd){
   // empty for cc
-  // should not be calling this in cross platform code.. only during debug.. 
+  // should not be calling this in cross platform code.. only during debug..
+  return 0;
 }
 
 extern void init_clock(void);
@@ -69,7 +71,7 @@ static struct wake_stats_t {
 } wake_stats;
 
 
-  
+
 int mrf_arch_boot(){
 
   wake_stats.sleep = 0;
@@ -78,8 +80,8 @@ int mrf_arch_boot(){
   wake_stats.wake_on_exit_yes = 0;
   wake_stats.wake_on_exit_no = 0;
   wake_stats.woken = 0;
-  
-  WDTCTL = WDTPW + WDTHOLD; 
+
+  WDTCTL = WDTPW + WDTHOLD;
   SFRRPCR |= SYSRSTUP | SYSRSTRE;
 
 #ifdef MCLK_4MHZ_DCO   //FIXME - need better way
@@ -101,7 +103,11 @@ int mrf_arch_boot(){
   _mrf_wakeup = 0;
 
   rtc_init();
- 
+
+
+  aes_init();
+
+
   return 0;
 }
 
@@ -135,9 +141,9 @@ int _mrf_woken(){
   return 101;
 }
 
-int mrf_sleep(){ 
+int mrf_sleep(){
   // disable WDT
-  //WDTCTL = WDTPW + WDTHOLD; 
+  //WDTCTL = WDTPW + WDTHOLD;
   //PINLOW(WAKE);
   wake_stats.sleep++;
   __bis_SR_register(LPM3_bits);    // (LPM3_bits  + GIE);
@@ -160,7 +166,7 @@ int mrf_arch_run(){
     //if (mrf_app_queue_available() == 0)
 #ifndef SLEEP_none
     mrf_sleep();
-#endif    
+#endif
   }
   return 0;
 }
@@ -190,5 +196,3 @@ int mrf_tick_disable(){
 void mrf_reset(){
   WDTCTL = 0xDEAD;
 }
-
-

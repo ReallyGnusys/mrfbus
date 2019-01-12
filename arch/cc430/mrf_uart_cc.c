@@ -212,6 +212,7 @@ void _dbg_csum_ls(uint8 val){
   csum_ls  = val;
 }
 static uint8 _rxb;
+
 interrupt (USCI_A0_VECTOR) USCI_A0_ISR()
 {
   switch(UCA0IV)

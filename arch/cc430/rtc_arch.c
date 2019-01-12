@@ -258,12 +258,19 @@ void _rtc_get(TIMEDATE *td){
 }
 void _rtc_set(TIMEDATE *td){
   //RTCCTL01 |= RTCHOLD  ;
-  uint16 rdate = ((td->mon)<<8)|(td->day);
-  uint16 rtim0 = ((td->min)<<8)|(td->sec);
+
+  //uint16 rdate = ((td->mon)<<8)|(td->day);
+  //uint16 rtim0 = ((td->min)<<8)|(td->sec);
+
+  *(uint16_t *)0x04B0 =  ((td->min)<<8)|(td->sec);
+  *(uint16_t *)0x04B4 = ((td->mon)<<8)|(td->day);;
 
 
-  (* ((volatile uint16_t *)RTCDATE_)) = rdate;
-  (* ((volatile uint16_t *)RTCTIM0_)) = rtim0;
+  //(* ((volatile uint16_t *)RTCDATE_)) = rdate;
+  //(* ((volatile uint16_t *)RTCTIM0_)) = rtim0;
+
+  //*(uint16_t *)0x04B4 = rdate;
+  //*(uint16_t *)0x04B0 = rtim0;
 
   //RTCTIM0 = rtim0;
   //RTCDATE = rdate;
@@ -281,6 +288,7 @@ void _rtc_set(TIMEDATE *td){
 void rtc_set(TIMEDATE *td)
 {
   TIMEDATE setval,rdval;
+  uint16 set_rdate,set_rtim0,get_rdate,get_rtim0,y16;
   _rtc_td_cpy(td,&setval);
 
   if (!_rtc_td_is_valid(&setval))
@@ -288,12 +296,18 @@ void rtc_set(TIMEDATE *td)
       _rtc_set_error(&setval);
       return;
     }
-  _rtc_set(&setval);
-  _rtc_get(&rdval);
-  while(!_rtc_td_eq(&setval,&rdval)  || !_rtc_td_is_valid(&rdval)){
-    _rtc_set(&setval);
-    _rtc_get(&rdval);
 
+  set_rdate = ((td->mon)<<8)|(td->day);
+  set_rtim0 = ((td->min)<<8)|(td->sec);
+  y16 = _y8_to_y16(td->year);
+  *(volatile uint16_t *)0x04B0 = set_rtim0;
+  *(volatile uint16_t *)0x04B4 = set_rdate;
+  RTCHOUR = td->hour;
+  RTCYEAR =  y16;
+
+  while((*(volatile uint16_t *)0x04B0!=set_rtim0) || ( *(volatile uint16_t *)0x04B4 !=set_rdate )) {
+    *(uint16_t *)0x04B0 = set_rtim0;
+    *(uint16_t *)0x04B4 = set_rdate;
   }
 
   /*

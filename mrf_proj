@@ -108,7 +108,7 @@ do
       if [ $mode == build ] ; then
 
           # make new mrf_data if doesn't exist
-          [ ! -e "mrf_data.c" ] && echo "creating mrf_data.[ch]" && ${MRFBUS_HOME}/gen_mrf_data.py -chann_offset ${channel_offset}
+          [ ! -e "mrf_kdata.c" ] && echo "creating mrf_kdata.[ch]" && ${MRFBUS_HOME}/gen_mrf_data.py -chann_offset ${channel_offset}
 
           rm -rf $dn
           mkdir $dn
