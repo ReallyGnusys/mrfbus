@@ -7,6 +7,7 @@ import base64
 from collections import OrderedDict
 import socket
 import install
+import pdb
 
 from mrflog import mrflog
 
@@ -189,6 +190,7 @@ class mrf_comm(object):
 
 
 class MrflandRegManager(object):
+    _HISTORY_SECONDS_ = 60*5 # 60*60*24
     """ mrfland device and sensor/actuator registration manager """
     def __init__(self,config):
         self.labels = {}
@@ -209,7 +211,7 @@ class MrflandRegManager(object):
         self.graph_insts = 0
         self.config = config
         self.comm = mrf_comm(log=mrflog)
-        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type(""):
+        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "":
             from motor import motor_tornado
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))
@@ -226,13 +228,66 @@ class MrflandRegManager(object):
                 mrflog.warn( "calling run_init for weblet %s "%wtag)
                 getattr(wl, 'run_init')()
         ## rm should connect graph callbacks here
+        """ regmanager now keeps history for registered sensors """
+        self.shist = {}
+        self.shist_ts = []
+        self.shist_start_time = time.time()  ## should be consistent with self.shist_ts[0]
+        self.shist_last_time = self.shist_start_time ## last time reading arrived
         for sl in self.sgraphs.keys():
             mrflog.warn("graph subscribe %s"%sl)
-            self.sensors[sl].subscribe_minutes(self.graph_callback)
+            flds = self.sgraphs[sl]
+            self.shist[sl] = {}
+            for fld in flds:
+                self.shist[sl][fld] = []
+
+            #self.sensors[sl].subscribe_minutes(self.graph_callback)
 
         # get sensors that have data in db
         if hasattr(self,'db'):
             tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
+
+        ## start minute tick
+
+        self.server.start_minute_tick(0,self._minute_tick)
+
+    def _minute_tick(self):
+        #print("%s _minute_tick "%(self.__class__.__name__))
+        mrflog.warn("%s _minute_tick "%(self.__class__.__name__))
+        now = time.time()
+        lnow = time.localtime(now)
+        ltime = time.localtime(self.shist_last_time)
+
+        mrflog.warn("%s _minute_tick ltime %s "%(self.__class__.__name__,repr(ltime)))
+
+        ts = time.strftime("%Y-%m-%dT%H:%M:%S",ltime)
+        self.shist_ts.append(ts)
+
+        mrflog.warn("now %s"%(repr(lnow)))
+        #pdb.set_trace()
+        #self.shist_ts.append
+        mrflog.warn("sgraphs %s "%repr(self.sgraphs.keys()))
+        for sname in self.sgraphs.keys():
+            flds = self.sgraphs[sname]
+            savg = self.sensors[sname].gen_average()
+            for fld in flds:
+                if fld in savg.keys():
+                    self.shist[sname][fld].append(savg[fld])
+            savg['ts'] = ts
+            self.graph_callback(sname,savg)
+        mrflog.warn("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
+        self.shist_last_time = now
+
+        while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
+            mrflog.warn("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
+
+            for sname in self.sgraphs.keys():
+                flds = self.sgraphs[sname]
+                for fld in flds:
+                    del self.shist[sname][fld][0]
+            del self.shist_ts[0]
+            self.shist_start_time = time.mktime(time.strptime(self.shist_ts[0],"%Y-%m-%dT%H:%M:%S"))
+            mrflog.warn("new start_time %s",repr(time.localtime(self.shist_start_time)))
+
 
     def authenticate(self,username,password,ip,req_host):
         mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
@@ -288,8 +343,8 @@ class MrflandRegManager(object):
 
     def graph_callback(self, label, data):
         tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
-        #mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
-        #mrflog.warn("tag : "+repr(tag))
+        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+        mrflog.warn("tag : "+repr(tag))
         self.webupdate(tag,data)
 
         stype = self.sensors[label]._stype_
@@ -298,14 +353,17 @@ class MrflandRegManager(object):
             dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
             self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
 
-    def graph_req(self,slab):  #for weblets to request graph data capture for sensors
+    def graph_req(self,slab,fld):  #for weblets to request graph data capture for sensors
         if not self.sensors.has_key(slab):
             mrflog.error("%s graph_req no sensor named  %s "%(self.__class__.__name__,slab))
             return
 
         if not self.sgraphs.has_key(slab):
-            self.sgraphs[slab] = True # no need for sensor ref here
-            mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
+            self.sgraphs[slab] = [fld] # no need for sensor ref here
+            mrflog.warn("%s graph_req added for sensor  %s  fld %s"%(self.__class__.__name__,slab,fld))
+        elif not fld in self.sgraphs[slab]:
+            mrflog.warn("%s graph_req appended for sensor  %s  fld %s"%(self.__class__.__name__,slab,fld))
+            self.sgraphs[slab].append(fld)
     def graph_inst(self,sensors, width = "80%", height = "80%"): ## FIXME should move to weblet
         snames = []
 
@@ -550,32 +608,32 @@ class MrflandRegManager(object):
     def sensor_average_js(self):  # generate sensor average history js
         s = ""
 
-        if len(self.sensors.keys()) == 0:
+        if len(self.sgraphs.keys()) == 0:
             return s
 
         s += """
-var _sensor_hist_seconds = %d;"""%self.sensors[self.sensors.keys()[0]]._HISTORY_SECONDS_
+var _sensor_hist_seconds = %d;"""%self._HISTORY_SECONDS_
+        s += """
+var _sensor_ts = %s ;"""%mrfland.to_json(self.shist_ts)
         s += """
 var _sensor_averages = {"""
 
         for slab in self.sgraphs.keys():
+
+            flds = self.sgraphs[slab]
+
             sens = self.sensors[slab]
-            if hasattr(sens,"history"):
-                his = sens.averages
-                s += """
+            s += """
      %s : {\n"""%(slab)
-                for hfld in his.keys():
-                    if hfld == 'ts':
-                        continue
-                    s+= """
+            for hfld in flds:
+                s+= """
          %s :  {"""%hfld
-                    s+= """
-                  ts : %s, """%mrfland.to_json(his['ts'])
-                    s+= """
-                  %s : %s """%('value',mrfland.to_json(his[hfld]))
-                    s+= """
-                }
-            },"""
+                s+= """
+                ts : _sensor_ts,
+                %s : %s """%('value',mrfland.to_json(self.shist[slab][hfld]))
+                s+= """
+               }
+           },"""
         s += """
          }"""
 
@@ -584,7 +642,7 @@ var _sensor_averages = {"""
 
 
 
-
+    """
     @tornado.gen.coroutine
     def db_period_graph(self,**kwargs):
 
@@ -625,7 +683,7 @@ var _sensor_averages = {"""
 
         self.server._run_updates()
 
-
+    """
 
 
     def graph_day_data(self,gdata,sensor_id, stype, doc):

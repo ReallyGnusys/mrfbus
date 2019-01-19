@@ -307,6 +307,7 @@ class MrflandServer(object):
         self.rm = rm
         self.config = config
         self._timeout_handle = None
+        self._minute_tick_handle = None
         self.timers = dict()
         server = self  # FIXME ouch
         self.rm.setserver(server)  # double OUCH
@@ -428,6 +429,33 @@ class MrflandServer(object):
             mrflog.info("%s calling _callback"%(self.__class__.__name__))
             self._callback(dup['tag'], dup['dest'] , dup['cmd'] , dup['data'])
         self.rm.dups = []
+
+
+    def _set_next_min_timeout(self):
+        now = time.time()
+        nsecs = time.localtime(now).tm_sec  + (now % 1.0)
+        wsecs = self._minute_tick_secs - nsecs
+        if wsecs < 0.0:
+            wsecs += 60.0
+
+        ct = now + wsecs
+        if self._minute_tick_handle:
+            tornado.ioloop.IOLoop.instance().remove_timeout(self._minute_tick_handle)
+
+        self._minute_tick_handle = tornado.ioloop.IOLoop.instance().add_timeout(ct,self._minute_timeout)
+
+    def start_minute_tick(self,seconds,callback):
+        self._minute_tick_secs = float(seconds)
+        self._minute_callback = callback
+        self._set_next_min_timeout()
+
+    def _minute_timeout(self):
+
+        self._set_next_min_timeout()
+        t = time.time()
+
+        mrflog.warn("minutetimeout %f %s"%(t,repr(time.localtime(t))))
+        self._minute_callback()
 
     def _set_timeout(self,s):
         if self._timeout_handle:
