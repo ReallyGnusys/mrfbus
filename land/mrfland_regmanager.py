@@ -252,20 +252,20 @@ class MrflandRegManager(object):
 
     def _minute_tick(self):
         #print("%s _minute_tick "%(self.__class__.__name__))
-        mrflog.warn("%s _minute_tick "%(self.__class__.__name__))
+        mrflog.debug("%s _minute_tick "%(self.__class__.__name__))
         now = time.time()
         lnow = time.localtime(now)
         ltime = time.localtime(self.shist_last_time)
 
-        mrflog.warn("%s _minute_tick ltime %s "%(self.__class__.__name__,repr(ltime)))
+        mrflog.debug("%s _minute_tick ltime %s "%(self.__class__.__name__,repr(ltime)))
 
         ts = time.strftime("%Y-%m-%dT%H:%M:%S",ltime)
         self.shist_ts.append(ts)
 
-        mrflog.warn("now %s"%(repr(lnow)))
+        mrflog.debug("now %s"%(repr(lnow)))
         #pdb.set_trace()
         #self.shist_ts.append
-        mrflog.warn("sgraphs %s "%repr(self.sgraphs.keys()))
+        mrflog.debug("sgraphs %s "%repr(self.sgraphs.keys()))
 
         gdata = { 'ts' : ts,
                   'sensors' : {}
@@ -278,15 +278,15 @@ class MrflandRegManager(object):
                     self.shist[sname][fld].append(savg[fld])
             #savg['ts'] = ts
             gdata['sensors'][sname] = savg
-        mrflog.warn("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
-        mrflog.warn("gdata "+repr(gdata))
+        mrflog.debug("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
+        mrflog.debug("gdata "+repr(gdata))
 
         self.graph_callback(gdata)
 
         self.shist_last_time = now
 
         while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
-            mrflog.warn("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
+            mrflog.info("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
 
             for sname in self.sgraphs.keys():
                 flds = self.sgraphs[sname]
@@ -294,7 +294,7 @@ class MrflandRegManager(object):
                     del self.shist[sname][fld][0]
             del self.shist_ts[0]
             self.shist_start_time = time.mktime(time.strptime(self.shist_ts[0],"%Y-%m-%dT%H:%M:%S"))
-            mrflog.warn("new start_time %s",repr(time.localtime(self.shist_start_time)))
+            mrflog.info("new start_time %s",repr(time.localtime(self.shist_start_time)))
 
 
     def authenticate(self,username,password,ip,req_host):
@@ -601,7 +601,7 @@ class MrflandRegManager(object):
         return self.server.subprocess(arglist, callback)
 
     def quiet_task(self):  # server calls this task periodically
-        mrflog.warn("quiet task")
+        mrflog.debug("quiet task")
         for wapn in self.weblets.keys():
             wap = self.weblets[wapn]
             if wap._cfg_touched:

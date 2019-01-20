@@ -121,7 +121,7 @@ class MrfSens(object):
                 favg = fld[1](self.avg_tots[fld[0]] / periodsecs)
                 avg[fld[0]] = favg
                 self.avg_tots[fld[0]] = 0.0
-        mrflog.warn("%s 0x%x avg %s "%(self.__class__.__name__,self.address,repr(avg)))
+        mrflog.debug("%s 0x%x avg %s "%(self.__class__.__name__,self.address,repr(avg)))
         return avg
 
 
