@@ -38,9 +38,9 @@ class MrfSens(object):
         self.minute_subscribers = dict()
 
         """ keep running average of all sensors """
-        self.last_reading_time = time.time()  ## last time reading arrived
+        self.last_reading_time = None  # time.time()  ## last time reading arrived
         self.last_value = {}
-        self.last_avg_time = self.last_reading_time
+        self.last_avg_time =  self.last_reading_time
         self.avg_tots = {}
 
         """ below are prototypes to type check
@@ -100,9 +100,16 @@ class MrfSens(object):
         mrflog.warn("subscribe_minutes for sensor %s"%(self.label))
         return key
 
-    def update_avg_totals(self):
+    def update_avg_totals(self,newinput=False):
         """ accumulate time*reading for average calculation """
+        if self.last_reading_time == None and  newinput == False:
+            return
+
+
         new_time = time.time()
+        if self.last_reading_time == None:
+            self.last_reading_time = new_time
+            self.last_avg_time = self.last_reading_time
         dsecs = new_time - self.last_reading_time
         self.last_reading_time = new_time
         for fld in self._out_flds_:
@@ -112,10 +119,19 @@ class MrfSens(object):
 
     def gen_average(self):
         """ called by regmanager each minute """
+        avg = OrderedDict()
+
+        if self.last_reading_time == None:
+            for fld in self._out_flds_:
+                if fld[0].find("_date") == -1:
+                    favg = fld[1](self.avg_tots[fld[0]] / periodsecs)
+                    avg[fld[0]] = 0.0
+            return avg
+
+
         self.update_avg_totals()
         periodsecs = self.last_reading_time - self.last_avg_time
         self.last_avg_time = self.last_reading_time
-        avg = OrderedDict()
         for fld in self._out_flds_:
             if fld[0].find("_date") == -1:
                 favg = fld[1](self.avg_tots[fld[0]] / periodsecs)
@@ -166,7 +182,7 @@ class MrfSens(object):
 
         # new history
 
-        self.update_avg_totals()
+        self.update_avg_totals(newinput=True)
 
         # run subscriber callbacks with new output
         for s in self.subscribers.keys():
