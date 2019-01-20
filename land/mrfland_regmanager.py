@@ -351,8 +351,8 @@ class MrflandRegManager(object):
 
     def graph_callback(self, data):
         tag =  { 'app' : 'auto_graph', 'tab' : 'all' , 'row' : 'all' }
-        mrflog.warn("%s graph_callback  data %s "%(self.__class__.__name__,repr(data)))
-        mrflog.warn("tag : "+repr(tag))
+        mrflog.debug("%s graph_callback  data %s "%(self.__class__.__name__,repr(data)))
+        mrflog.debug("tag : "+repr(tag))
         self.webupdate(tag,data)
 
 
@@ -361,7 +361,7 @@ class MrflandRegManager(object):
             stype = self.sensors[slabel]._stype_
             if data.has_key('ts') and sdata.has_key(stype) and self.server:
                 dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
-                mrflog.warn("trying db insert sensor_id "+slabel+" stype "+stype+ " "+repr(dt)+"  data "+ repr(sdata[stype]))
+                mrflog.debug("trying db insert sensor_id "+slabel+" stype "+stype+ " "+repr(dt)+"  data "+ repr(sdata[stype]))
                 self.db_sensor_data_insert(sensor_id=slabel, stype=stype, dt = dt, value=sdata[stype])
 
     def graph_req(self,slab,fld):  #for weblets to request graph data capture for sensors

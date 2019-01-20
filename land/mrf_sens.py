@@ -101,6 +101,7 @@ class MrfSens(object):
         return key
 
     def update_avg_totals(self):
+        """ accumulate time*reading for average calculation """
         new_time = time.time()
         dsecs = new_time - self.last_reading_time
         self.last_reading_time = new_time

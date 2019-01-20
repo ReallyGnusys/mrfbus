@@ -162,7 +162,7 @@ function mrf_web_update(obj){
 
 
     if(tag.hasOwnProperty('mrfvar')){
-        console.log("var update "+tag.mrfvar+ " = "+data.val);
+        //console.log("var update "+tag.mrfvar+ " = "+data.val);
         sl = '.mrfapp-'+tag.app+'.mrfvar-'+tag.mrfvar;
 
         $(sl).html(""+data.val);
@@ -313,13 +313,13 @@ function mrf_auto_graph(label, data){
 
             //console.log("have fld "+fld);
             _sensor_averages[slabel][fld].value.push(sdata[fld]);
-            console.log("len _sensor_averages["+slabel+"]["+fld+"].value="+_sensor_averages[slabel][fld].value.length);
+            //console.log("len _sensor_averages["+slabel+"]["+fld+"].value="+_sensor_averages[slabel][fld].value.length);
            // _sensor_averages[label][fld].ts.push(data['ts']);
 
         }
     }
     _sensor_ts.push(data['ts']);
-    console.log("len _sensor_ts="+_sensor_ts.length)
+    //console.log("len _sensor_ts="+_sensor_ts.length)
     dt = new Date(data['ts']);
     if ( dbg) {
         console.log("len is "+ _sensor_ts.length+" latest date is");
@@ -339,7 +339,7 @@ function mrf_auto_graph(label, data){
             for (var fld in data.sensors[slabel])
                 _sensor_averages[slabel][fld].value.shift();
 
-            console.warn("deleted old value for "+slabel+" "+fld+" "+fd);
+            console.log("deleted old value for "+slabel+" "+fld+" "+fd);
 
         }
     }
