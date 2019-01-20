@@ -288,51 +288,66 @@ function mrfgraph(app, graph, data){
 function mrf_auto_graph(label, data){
     console.log("mrf_auto_graph "+label);
     console.log(data);
-    if (!(label in _sensor_averages)){
-        console.error("auto graph for label "+label+"  not found");
-        return;
-    }
     dbg = false
-    if (label == 'HB1_FLOW') {
 
-        console.log("auto-graph label "+label);
-        console.log(data);
-        dbg = true;
-    }
-    for (var fld in data) {
 
-        if (fld != 'ts')
-        {
-            if (typeof(_sensor_averages[label][fld]) == 'undefined'){
-                console.error("failed to find fld  "+fld+"  in averages for "+label);
-                return;
+    for (var slabel in data.sensors) {
+
+
+        if (!(slabel in _sensor_averages)){
+            console.error("auto graph for label "+label+"  not found");
+            continue;
+        }
+
+        sdata = data.sensors[slabel];
+
+        for (var fld in sdata) {
+
+            if (fld == 'ts') // shouldn't happen
+                continue;
+
+            if (typeof(_sensor_averages[slabel][fld]) == 'undefined'){
+                console.error("failed to find fld  "+fld+"  in averages for "+slabel);
+                continue;
             }
 
             //console.log("have fld "+fld);
-            _sensor_averages[label][fld].value.push(data[fld]);
-            _sensor_averages[label][fld].ts.push(data['ts']);
+            _sensor_averages[slabel][fld].value.push(sdata[fld]);
+            console.log("len _sensor_averages["+slabel+"]["+fld+"].value="+_sensor_averages[slabel][fld].value.length);
+           // _sensor_averages[label][fld].ts.push(data['ts']);
 
-            dt = new Date(data['ts']);
-            if ( dbg) {
-                console.log("len is "+ _sensor_averages[label][fld].ts.length+" latest date is");
-                console.log(dt);
-            }
-            limms = dt.getTime() - _sensor_hist_seconds * 1000;
-
-            fd =  new Date(_sensor_averages[label][fld].ts[0]);
-
-            while (fd.getTime() < limms ) {
-                _sensor_averages[label][fld].ts.shift();
-                _sensor_averages[label][fld].value.shift();
-                //console.log("deleted old value for "+label+" fld "+fld+" "+fd);
-                fd =  new Date(_sensor_averages[label][fld].ts[0]);
-
-            }
         }
     }
-    // need to update all plots that graph this sensor
-    var plots = $(".mrf-graphs-"+label);
-    console.log("len .mrf-graphs-"+label+" = "+plots.length);
+    _sensor_ts.push(data['ts']);
+    console.log("len _sensor_ts="+_sensor_ts.length)
+    dt = new Date(data['ts']);
+    if ( dbg) {
+        console.log("len is "+ _sensor_ts.length+" latest date is");
+        console.log(dt);
+    }
+
+
+    limms = dt.getTime() - _sensor_hist_seconds * 1000;
+
+    fd =  new Date(_sensor_ts[0]);
+
+    while (fd.getTime() < limms ) {
+        _sensor_ts.shift();
+        fd =  new Date(_sensor_ts[0]);
+        for (var slabel in data.sensors) {
+
+            for (var fld in data.sensors[slabel])
+                _sensor_averages[slabel][fld].value.shift();
+
+            console.warn("deleted old value for "+slabel+" "+fld+" "+fd);
+
+        }
+    }
+
+
+    // need to update all plots
+    var plots = $(".mrf-graph");
+    console.log("len .mrf-graph = "+plots.length);
     for (var idx = 0 ; idx < plots.length ; idx++){
         plot = plots[idx];
         var divid = plot.getAttribute("id");

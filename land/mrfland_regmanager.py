@@ -190,7 +190,7 @@ class mrf_comm(object):
 
 
 class MrflandRegManager(object):
-    _HISTORY_SECONDS_ = 60*5 # 60*60*24
+    _HISTORY_SECONDS_ = 60*60*24
     """ mrfland device and sensor/actuator registration manager """
     def __init__(self,config):
         self.labels = {}
@@ -266,15 +266,23 @@ class MrflandRegManager(object):
         #pdb.set_trace()
         #self.shist_ts.append
         mrflog.warn("sgraphs %s "%repr(self.sgraphs.keys()))
+
+        gdata = { 'ts' : ts,
+                  'sensors' : {}
+                  }
         for sname in self.sgraphs.keys():
             flds = self.sgraphs[sname]
             savg = self.sensors[sname].gen_average()
             for fld in flds:
                 if fld in savg.keys():
                     self.shist[sname][fld].append(savg[fld])
-            savg['ts'] = ts
-            self.graph_callback(sname,savg)
+            #savg['ts'] = ts
+            gdata['sensors'][sname] = savg
         mrflog.warn("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
+        mrflog.warn("gdata "+repr(gdata))
+
+        self.graph_callback(gdata)
+
         self.shist_last_time = now
 
         while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
@@ -341,17 +349,20 @@ class MrflandRegManager(object):
         self.server._run_updates()
 
 
-    def graph_callback(self, label, data):
-        tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
-        mrflog.warn("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
+    def graph_callback(self, data):
+        tag =  { 'app' : 'auto_graph', 'tab' : 'all' , 'row' : 'all' }
+        mrflog.warn("%s graph_callback  data %s "%(self.__class__.__name__,repr(data)))
         mrflog.warn("tag : "+repr(tag))
         self.webupdate(tag,data)
 
-        stype = self.sensors[label]._stype_
 
-        if data.has_key('ts') and data.has_key(stype) and self.server:
-            dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
-            self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
+        for slabel in data['sensors']:
+            sdata = data['sensors'][slabel]
+            stype = self.sensors[slabel]._stype_
+            if data.has_key('ts') and sdata.has_key(stype) and self.server:
+                dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
+                mrflog.warn("trying db insert sensor_id "+slabel+" stype "+stype+ " "+repr(dt)+"  data "+ repr(sdata[stype]))
+                self.db_sensor_data_insert(sensor_id=slabel, stype=stype, dt = dt, value=sdata[stype])
 
     def graph_req(self,slab,fld):  #for weblets to request graph data capture for sensors
         if not self.sensors.has_key(slab):
