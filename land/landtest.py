@@ -25,7 +25,7 @@ import unittest
 import select
 import socket
 import signal
-from mrfland import to_json, json_parse
+from mrfutil import to_json, json_parse
 
 
 
@@ -72,7 +72,7 @@ class LandTestCase(unittest.TestCase):
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
             print "CTRL-C pressed , quitting"
-            self.tearDown()            
+            self.tearDown()
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
         #unittest.installHandler()
@@ -106,13 +106,13 @@ class LandTestCase(unittest.TestCase):
         else:
             print "unrecognised cmd_code (01xs) %d"%cmd_code
             return -1
-            
-         
+
+
         if type(dstruct) == type(None) and type(paramtype) != type(None):
             print "No param sent , expected %s"%type(paramtype)
             print "got %s"%repr(dstruct)
             return -1
-        
+
         if type(paramtype) == type(None) and type(dstruct) != type(None):
             print "Param sent ( type %s ) but None expected"%type(dstruct)
             return -1
@@ -131,7 +131,7 @@ class LandTestCase(unittest.TestCase):
 
 
         mobj = { 'dest' : dest , 'cmd' : cmd_code }
-        
+
 
         if ddic:
             mobj['data'] = ddic
@@ -139,7 +139,7 @@ class LandTestCase(unittest.TestCase):
 
         mstr = to_json(mobj)
         print "trying to send str %s"%mstr
-        
+
         self.sock.send(mstr+"\n")
         return 0
     def response(self,timeout = 0.2):
@@ -147,18 +147,18 @@ class LandTestCase(unittest.TestCase):
         tinc = 0.1
         resp = readjsonstr(self.sock)
         print "landtest:got response %s"%resp
-        
+
         robj = json_parse(resp)
 
         #print "after parse it's %s"%repr(robj)
 
         return robj
-                        
+
     def quit(self):
         print "landtest quit...doing nothing"
 
-        
-        
+
+
     def check_attrs(self,rsp,exp,checkval=False):  # rsp is a dict
         edic = exp.dic()
         #print "check_attrs rsp %s"%repr(rsp)
@@ -179,7 +179,7 @@ class LandTestCase(unittest.TestCase):
                 print "check_attrs: attr %s found in response but not expected"%at
                 return False
         return True
-        
+
     def check_resp(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
         for at in exp.iter_fields():
@@ -190,7 +190,7 @@ class LandTestCase(unittest.TestCase):
                 print "check_resp value mismatch for key %s in  rsp %s exp %s"%(at,repr(rsp),repr(exp))
                 return False
         return True
-        
+
     def cmd_test(self,dest,cmd_code,expected,dstruct=None):
         """
         simple test interface to send cmds to destinations, supplying expected values for checking
@@ -201,7 +201,7 @@ class LandTestCase(unittest.TestCase):
         rsp = self.response()
 
         print "received:\n %s"%repr(rsp)
-        print "expected:\n %s"%repr(expected)        
+        print "expected:\n %s"%repr(expected)
         if self.check_resp(rsp,expected) == False:
             print "ERROR "
             print "cmd_test failed"

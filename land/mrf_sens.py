@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from mrf_structs import *
 from mrflog import mrflog
 import math
-from mrfland_regmanager import DateTimeFormat
+from mrfutil import DateTimeFormat
 
 class MrfSens(object):
     _HISTORY_SECONDS_ = 60*60*24   # keep a day of history by default .. one minute averages
