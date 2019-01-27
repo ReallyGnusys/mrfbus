@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,11 +26,12 @@
 #include <legacymsp430.h>
 #include "cc430f5137.h"
 #include "mrf_pinmacros.h"
+#include "rtc_arch.h"
 
 #define NUM_RELAY_CHANNELS 8
 #include "mrf_relays.h"
 
-// all gpio pins to TI EVM 
+// all gpio pins to TI EVM
 
 
 #define _MR_PORT P2
@@ -48,7 +49,7 @@
 
 #define _DRDY_PORT P2
 
-#ifndef _DRDY_BIT 
+#ifndef _DRDY_BIT
  #define _DRDY_BIT 3
 #endif
 
@@ -100,7 +101,7 @@ uint16 ads1148_data(){
   //PINHIGH(START);  // leave continuous sampling
   PINLOW(CS);
   //__delay_cycles(10);
-  mrf_spi_flush_rx(); 
+  mrf_spi_flush_rx();
   mrf_spi_tx(0xff); // NOP
   mrf_spi_tx(0xff); // NOP
   //b1 = mrf_spi_rx();  // discard first
@@ -111,7 +112,7 @@ uint16 ads1148_data(){
   b1 = mrf_spi_rx();  // get third  - lsb of result
   rv += b1;
 
-  
+
   //PINLOW(START);  // leave continuous sampling
   //PINHIGH(CS);
 
@@ -166,17 +167,17 @@ uint8 ads1148_write_noblock(uint8 reg,uint8 data){
 
   if (mrf_spi_txq(b1) == -1)
     err_spi_tx();
-  //__delay_cycles(10);  
-  if (mrf_spi_txq(0) == -1)  
+  //__delay_cycles(10);
+  if (mrf_spi_txq(0) == -1)
     err_spi_tx();
   //  mrf_spi_tx(0); // 1 byte
-  //__delay_cycles(10);  
-  if (mrf_spi_txq(data) == -1)  
+  //__delay_cycles(10);
+  if (mrf_spi_txq(data) == -1)
     err_spi_tx();
   //mrf_spi_tx(data);
-  //__delay_cycles(10);  
+  //__delay_cycles(10);
   mrf_spi_start_tx();
- 
+
   return 0;
 }
 
@@ -184,7 +185,7 @@ uint8 ads1148_write_noblock(uint8 reg,uint8 data){
 // clear all spi transactions
 void flush_spi(){
   while(mrf_spi_tx_data_avail()){ // FIXME
-    __delay_cycles(10);  
+    __delay_cycles(10);
   }
   mrf_spi_flush_rx();
 }
@@ -196,7 +197,7 @@ uint8 ads1148_write(uint8 reg,uint8 data){
   }
   */
 
- 
+
   mrf_spi_flush_rx();
   ads1148_write_noblock(reg,data);
 
@@ -263,7 +264,7 @@ static void cycle_input(){
     err_spi_tx();
   if (mrf_spi_txq(0x00) == -1)   // GPIOCFG
     err_spi_tx();
-  
+
   if (mrf_spi_txq(0x40 + ( MUX0_OFFS & 0xf )) == -1)  // write at MUX0
     err_spi_tx();
   if (mrf_spi_txq(3) == -1)   // 4 regs
@@ -278,11 +279,11 @@ static void cycle_input(){
     err_spi_tx();
   mrf_spi_start_tx();
 
-  
+
   _curr_adc_channel = next_chan;
 
-  PINHIGH(START);  // pulse start - start should actually stay high 
-  
+  PINHIGH(START);  // pulse start - start should actually stay high
+
 
 
   return;
@@ -291,7 +292,7 @@ static void cycle_input(){
 
 void sample_start(){
  uint8 b1 = 0x14;
-  mrf_spi_flush_rx();   
+  mrf_spi_flush_rx();
 
  if (mrf_spi_tx(b1) == -1)
    err_spi_tx();
@@ -302,7 +303,7 @@ void sample_start(){
 
 void sample_stop(){  // stop continous sampling command
  uint8 b1 = 0x16;
-  mrf_spi_flush_rx();   
+  mrf_spi_flush_rx();
 
  if (mrf_spi_tx(b1) == -1)
    err_spi_tx();
@@ -311,16 +312,16 @@ void sample_stop(){  // stop continous sampling command
 
 
 
-  
-  
+
+
 
 int ads1148_config(){
   // setup ads1148 to measure up to 7  2-wire RTDs with negative connections
-  // commoned to AIN7 
+  // commoned to AIN7
   // positive connections of RTDs are connected to AIN0-AIN6
-  // A ratiometric measurement process is used , generating REF voltage 
+  // A ratiometric measurement process is used , generating REF voltage
   // from in series Rref across REFP and REFN
-  
+
   ads1148_write(VBIAS_OFFS, 0 );
   ads1148_write(MUX1_OFFS,  ( 1 << 5) | ( 0 << 3) ); // VREF ON, ADC ref is REF0 pin pair
   ads1148_write(SYS0_OFFS, 0 );  // PGA = 1 , 5 SPS
@@ -330,7 +331,7 @@ int ads1148_config(){
   _curr_adc_channel = 0;
   ads1148_write(MUX0_OFFS, (_curr_adc_channel << 3) | 0x7 );
   ads1148_write(IDAC1_OFFS,(_curr_adc_channel << 4) | 0xf ); // IDAC 1 to channel, IDAC 2 disconnected
-  mrf_spi_flush_rx();   
+  mrf_spi_flush_rx();
   flush_spi();
 
 }
@@ -351,12 +352,13 @@ int ads1148_init(){
   OUTPUTPIN(MR);
 
   // DRDY INPUT
+  PULLUP(DRDY);
   INPUTPIN(DRDY);
 
   __delay_cycles(50);
   PINLOW(MR);
   __delay_cycles(200);
-  PINHIGH(MR);  
+  PINHIGH(MR);
   __delay_cycles(2000);
 
   mrf_spi_flush_rx();
@@ -365,26 +367,26 @@ int ads1148_init(){
   // need to enable interrupts on DRDY
   P2REN |= BITNAME(DRDY);
   P2OUT |= BITNAME(DRDY);
-  P2IE  |= BITNAME(DRDY);  
+  P2IE  |= BITNAME(DRDY);
   P2IES |= BITNAME(DRDY);
   P2IFG &= ~BITNAME(DRDY);
   port2_icnt = 0;
   cyc_cnt = 0;
 
   int i,j;
-  for (i = 0; i < 1000 ; i++)  
-    for (j = 0; j < 4 ; j++)  
+  for (i = 0; i < 1000 ; i++)
+    for (j = 0; j < 4 ; j++)
       __delay_cycles(1000); //should only need to wait 16ms
 
 
 
 
-  for (i = 0; i < 2 ; i++)  
+  for (i = 0; i < 2 ; i++)
       __delay_cycles(1000); // need to wait 16ms
   ads1148_config();
   __delay_cycles(200);
   flush_spi();
-  for (i = 0; i < 2 ; i++)  
+  for (i = 0; i < 2 ; i++)
       __delay_cycles(1000); // need to wait 16ms
   //ads1148_config();  // temp desperation
   __delay_cycles(100);
@@ -397,8 +399,8 @@ int ads1148_init(){
   //PINHIGH(START);  // pulse start
   //  __delay_cycles(8);
   //PINLOW(START);  // continuous sampling
-  
-  
+  return 0;
+
 }
 
 uint32_t eval_milliohms(uint16_t adc){
@@ -414,7 +416,7 @@ uint32_t eval_milliohms(uint16_t adc){
 int build_state(MRF_PKT_PT1000_STATE *state){
 
   //uint16 rd = ads1148_data();
-  
+
   mrf_rtc_get(&((*state).td));
   uint8 ch;
   for (ch = 0 ; ch < MAX_RTDS ; ch++){
@@ -424,7 +426,7 @@ int build_state(MRF_PKT_PT1000_STATE *state){
   (*state).ref_i   = _ref_i;
   (*state).relay_cmd   = 0;
   (*state).relay_state = relay_state();
-  //(*state).milliohms[0]= eval_milliohms(0);  // temp  
+  //(*state).milliohms[0]= eval_milliohms(0);  // temp
   return 0;
 }
 
@@ -441,7 +443,7 @@ int state_diff(MRF_PKT_PT1000_STATE *sta, MRF_PKT_PT1000_STATE *stb){
     return 1;
 
   for ( ch = 0 ; ch < MAX_RTDS ; ch++)
-    if (sta->milliohms[ch] != stb->milliohms[ch]) 
+    if (sta->milliohms[ch] != stb->milliohms[ch])
       return 1;
   return 0;
 }
@@ -452,13 +454,13 @@ int tick_task(){
   //return 0;
 
   stind = _tick_cnt % 2;
-    build_state(&_state[stind]);
+  build_state(&_state[stind]);
 
   // only send struct if readings or relays changed
   if ((_tick_cnt > 2) && state_diff(&_state[0], &_state[1]))
     mrf_send_structure(0,  _MRF_APP_CMD_BASE + mrf_app_cmd_read_state,  (uint8 *)&_state[stind], sizeof(MRF_PKT_PT1000_STATE));
   return 0;
-  
+
 }
 
 
@@ -468,7 +470,7 @@ int signal_handler(uint8 signal){
   if (signal == APP_SIG_SECOND)
     return tick_task();
   return 0;
-  
+
 }
 
 
@@ -489,26 +491,31 @@ int mrf_app_init(){
   //_ref_r = (uint32_t)2490*(uint32_t)1000; // nominal resistance between ref+ and ref-
   //_ref_i = (uint32_t)47*(uint32_t)1000;   // nominal resistance in series with PT1000
 
-  __delay_cycles(1000);  
+  __delay_cycles(1000);
 
   init_relays();
   for (ch = 0 ; ch < MAX_RTDS ; ch++)
     _last_reading[ch] = 0;
 
   for (ch = 0 ; ch < 10 ; ch++)
-  __delay_cycles(1000);  
+  __delay_cycles(1000);
 
   _spi_tx_err_cnt = 0;
   mrf_spi_init();
   _spi_tx_busy_cnt = 0;
 
   for (ch = 0 ; ch < 20 ; ch++)
-    __delay_cycles(1000);  
+    __delay_cycles(1000);
+  // need GIE enabled for this to work - normally done in mrf_arch_run FIXME!
+  __bis_SR_register(GIE);  // GIE should always be set for foreground process
+
+
   ads1148_init();
   sampling = 1;
   //PINHIGH(START);  // start continous sampling
+  rtc_second_signal_enable();
 
-  rtc_rdy_enable(on_second);
+  return 0;
 }
 
 MRF_CMD_RES mrf_task_usr_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
@@ -598,7 +605,7 @@ extern uint16 _spi_rxov_err;
 MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_spi_debug entry bnum %d\n",bnum);
   MRF_PKT_SPI_DEBUG pkt;  // FIXME why not get pointer to buffer and cast to MRF_PKT_SPI_DEBUG?
-  // e.g. MRF_PKT_SPI_DEBUG  *pkt = (MRF_PKT_SPI_DEBUG *)mrf_response_buffer(bnum); 
+  // e.g. MRF_PKT_SPI_DEBUG  *pkt = (MRF_PKT_SPI_DEBUG *)mrf_response_buffer(bnum);
 
   pkt.spi_rx_int_cnt = _spi_rx_int_cnt;
   pkt.spi_tx_int_cnt = _spi_tx_int_cnt;
@@ -610,17 +617,17 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   pkt.spi_rx_queue_data_avail = (uint8)mrf_spi_data_avail();
   pkt.spi_tx_queue_data_avail = (uint8)mrf_spi_tx_data_avail();
 
-  IQUEUE *spi_rx_q = mrf_spi_rx_queue();
-  pkt.rxq_qip = spi_rx_q->qip;
-  pkt.rxq_qop = spi_rx_q->qop;
-  pkt.rxq_push_errors = spi_rx_q->push_errors;
-  pkt.rxq_pop_errors = spi_rx_q->pop_errors;
+  BuffQueue *spi_rx_q = mrf_spi_rx_queue();
+  pkt.rxq_qip = spi_rx_q->get_qip();
+  pkt.rxq_qop = spi_rx_q->get_qop();
+  pkt.rxq_push_errors = spi_rx_q->get_push_errors();
+  pkt.rxq_pop_errors = spi_rx_q->get_pop_errors();
 
-  IQUEUE *spi_tx_q = mrf_spi_tx_queue();
-  pkt.txq_qip = spi_tx_q->qip;
-  pkt.txq_qop = spi_tx_q->qop;
-  pkt.txq_push_errors = spi_tx_q->push_errors;
-  pkt.txq_pop_errors = spi_tx_q->pop_errors;
+  BuffQueue *spi_tx_q = mrf_spi_tx_queue();
+  pkt.txq_qip = spi_tx_q->get_qip();
+  pkt.txq_qop = spi_tx_q->get_qop();
+  pkt.txq_push_errors = spi_tx_q->get_push_errors();
+  pkt.txq_pop_errors = spi_tx_q->get_pop_errors();
 
 
   pkt.cyc_err1 = cyc_err1;
@@ -630,7 +637,7 @@ MRF_CMD_RES mrf_app_spi_debug(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
   pkt.chan_err_last = chan_err_last;
 
-  mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));  
+  mrf_data_response( bnum,(uint8 *)&pkt,sizeof(MRF_PKT_SPI_DEBUG));
 
 
   return MRF_CMD_RES_OK;
@@ -642,7 +649,7 @@ MRF_CMD_RES mrf_app_set_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   set_relay_state(rs->chan,rs->val);
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -651,7 +658,7 @@ MRF_CMD_RES mrf_app_get_relay(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug("mrf_app_task_relay entry\n");
   rs = (MRF_PKT_RELAY_STATE *)((uint8 *)_mrf_buff_ptr(bnum) + sizeof(MRF_PKT_HDR));
   rs->val = get_relay_state(rs->chan);
-  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));  
+  mrf_data_response( bnum,(uint8 *)rs,sizeof(MRF_PKT_RELAY_STATE));
   return MRF_CMD_RES_OK;
 }
 
@@ -675,7 +682,7 @@ MRF_CMD_RES mrf_app_sample_stop(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
 
 interrupt(PORT2_VECTOR) PORT2_ISR()
 {
-  
+
   P2IFG &= ~BITNAME(DRDY);                          // DRDY int cleared
   port2_icnt++;
   if (sample_stop_flg) {

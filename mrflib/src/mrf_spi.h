@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -32,6 +32,6 @@ int mrf_spi_data_avail();  // rx data
 int mrf_spi_tx_data_avail();
 int mrf_spi_tx_queue_items();
 int mrf_spi_rx_queue_items();
-IQUEUE *mrf_spi_tx_queue();
-IQUEUE *mrf_spi_rx_queue();
+BuffQueue *mrf_spi_tx_queue();
+BuffQueue *mrf_spi_rx_queue();
 #endif

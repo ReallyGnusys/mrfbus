@@ -39,6 +39,7 @@ from collections import OrderedDict
 #comm = mrf_comm(log=mrflog)   # FIXME! 
     
 
+DateTimeFormat = '%Y-%m-%dT%H:%M:%S'
     
 
 

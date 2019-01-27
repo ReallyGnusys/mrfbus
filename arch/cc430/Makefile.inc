@@ -16,8 +16,13 @@
 ###############################################################################
 
 
-GCC=msp430-gcc
-LD=msp430-ld
+#GCC=msp430-gcc
+#LD=msp430-ld
+
+GCC=msp430-g++
+
+LD=msp430-gcc
+
 OD=msp430-objdump -dt
 SIZE=msp430-size
 AOBJS=${MOBJ}/mrf_rf.o  ${MOBJ}/_mrf_rf1.o ${MOBJ}/clock.o ${MOBJ}/hal_pmm.o ${MOBJ}/RfRegSettings.o \

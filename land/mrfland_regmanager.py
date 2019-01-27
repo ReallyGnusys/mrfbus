@@ -7,6 +7,7 @@ import base64
 from collections import OrderedDict
 import socket
 import install
+import pdb
 
 from mrflog import mrflog
 
@@ -15,7 +16,6 @@ import mrfland
 #from mrfland import to_json
 
 
-DateTimeFormat = '%Y-%m-%dT%H:%M:%S'
 
 
 class socket_info(object):
@@ -48,10 +48,10 @@ class staff_socket(object):
     def close(self):
         self.closed = datetime.datetime.now()
         self.isopen = False
-        
 
 
-    
+
+
 class mrf_comm(object):
     def __init__(self,log):
         self.log = log
@@ -61,26 +61,26 @@ class mrf_comm(object):
     def prepare_socket(self,sid,wsid,sessid,username,stype,apps,ip,req_host):
         mrflog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
         self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,apps,ip,req_host)
-        
+
     def check_socket(self,wsid,ip):  # FIXME should have timeout if socket not opened in v short time after prepare_socket
         mrflog.info("checking socket id %s  ip %s"%(wsid,ip))
         if not wsid in self.sockets.keys():
-            mrflog.warn("wsid not found...(%s)"%wsid)            
+            mrflog.warn("wsid not found...(%s)"%wsid)
             return None
         skt = self.sockets[wsid]
         if skt.ip != ip:
             mrflog.error("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
             #return None
-            
+
         return socket_info(skt)
 
-        
-        
+
+
     def add_client(self,wsid,data):
-        #self.sockets[sid] = staff_socket(sid)        
+        #self.sockets[sid] = staff_socket(sid)
         mrflog.info("adding wsid %s"%wsid)
         self.clients[wsid] = data
-        
+
     def del_client(self,wsid):
         mrflog.info("deleting wsid %s"%wsid)
         if wsid in self.clients:
@@ -91,11 +91,11 @@ class mrf_comm(object):
         wsid = sob['wsid']
         mrflog.warn("staff_logout wsid "+wsid)
         self.del_client(wsid)
-        
+
     def _jso_broadcast(self,app,raw):
         mrflog.debug( "mrf.comm._jso_broadcast : app"+str(app)+" "+str(len(self.clients))+" clients")
-        mrflog.debug(" clients = "+str(self.clients))    
-        for wsid in self.clients.keys() :   
+        mrflog.debug(" clients = "+str(self.clients))
+        for wsid in self.clients.keys() :
             mrflog.debug( "client wsid:"+wsid)
             client = self.clients[wsid]
             if (app == 'auto_graph') or app in client['apps']:
@@ -107,7 +107,7 @@ class mrf_comm(object):
             mrflog.error(errstr)
             return
         client = self.clients[id]
-        
+
         #username = self.clients[id]['username']
         username = client['username']
 
@@ -121,7 +121,7 @@ class mrf_comm(object):
             app = None
         else:
             app = data['tag']['app']
-         
+
         mrflog.info( "send_object_to_client: sent cmd "+str(obj['cmd'])+ " to  "+username)
         msg = mrfland.to_json(obj)
         mrflog.debug(msg)
@@ -142,7 +142,7 @@ class mrf_comm(object):
             mrflog.warn("broadcasting timer obj:"+msg)
             mrflog.info( "mrf.comm._jso_broadcast : "+str(len(self.clients))+" clients")
             mrflog.info(" clients = "+str(self.clients))
-    
+
         self._jso_broadcast(app,msg)
     def set_session_expire(self,id,seconds = install.session_timeout):
         self.sockets[id].expire = int(time.time() + seconds)
@@ -151,12 +151,12 @@ class mrf_comm(object):
         skt = self.sockets[wsid]
         data = { 'sid' : skt.sid , 'expire' : skt.expire }
         return mrfland.mrf_cmd('session-expire',data)
-        
+
     def session_isvalid(self,sessid):
         self.log.info("checking session_isvalid %s"%sessid)
         self.log.info("self.sockets.keys %s"%repr(self.sockets.keys()))
         self.log.info("self.sockets %s"%repr(self.sockets))
-        
+
         for wsid in self.sockets.keys():
             skt = self.sockets[wsid]
             self.log.info("wsid %s  skt %s"%(wsid,skt))
@@ -168,7 +168,7 @@ class mrf_comm(object):
                 else:
                     return None
         return None
-        
+
     def comm(self,id,ro):
         if not mrfland.is_ret_obj(ro):
             mrflog.error("mrf_comm: ro not ret_obj")
@@ -176,7 +176,7 @@ class mrf_comm(object):
         if id != None:
             mrflog.warn("comm id = %s ro %s"%(repr(id),repr(ro)))
             for ob in ro.a():
-                self.send_object_to_client(id,ob)  
+                self.send_object_to_client(id,ob)
             if True or ro.touch or ( len(ro.a()) > 0 ) :  # now touch session for every command received
                 self.set_session_expire(id,1200) # 1200 = 20mins
                 self.send_object_to_client(id,self.session_expire_notice(id))
@@ -185,11 +185,12 @@ class mrf_comm(object):
         mrflog.info("have %d obs to broadcast"%nobs)
         for ob in ro.b():
             mrflog.info(repr(ob))
-            self.broadcast(ob)                
+            self.broadcast(ob)
         return 1
 
 
 class MrflandRegManager(object):
+    _HISTORY_SECONDS_ = 60*60*24
     """ mrfland device and sensor/actuator registration manager """
     def __init__(self,config):
         self.labels = {}
@@ -197,7 +198,7 @@ class MrflandRegManager(object):
         self.devmap  = {} ## hash devices by address
         self.sensors = {}  ### hash sensors by label
         self.senstypes = {} ### hash lists of sensors by sensor type
-        self.senscaps = {}  ## hash lists by cap string 
+        self.senscaps = {}  ## hash lists by cap string
         self.actuators = {}
         self.sensmap = {}  ## keep physical mapping here - addr, chan dict returned for each sensor label
         self.addresses = {}  ### hash devices by address - must be unique
@@ -206,17 +207,17 @@ class MrflandRegManager(object):
         self.hostname = socket.gethostname()
         self.weblets = OrderedDict()  # has weblets by tag
         self.timers = {}
-        self.sgraphs = {}  # support graph data for these sensors during this mrfland service
+        self.sgraphs = {}  # support graph data for these sensors during this mrfland session
         self.graph_insts = 0
         self.config = config
         self.comm = mrf_comm(log=mrflog)
-        if self.config.has_key('db_uri'):
+        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "":
             from motor import motor_tornado
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))
 
         self.server = None
-        
+
 
     def setserver(self,server):  # OUCH , we let the server set a reference to itself..for now
         self.server = server   # Please only let a mrfland_server or subclass ever call this function
@@ -227,34 +228,97 @@ class MrflandRegManager(object):
                 mrflog.warn( "calling run_init for weblet %s "%wtag)
                 getattr(wl, 'run_init')()
         ## rm should connect graph callbacks here
+        """ regmanager now keeps history for registered sensors """
+        self.shist = {}
+        self.shist_ts = []
+        self.shist_start_time = time.time()  ## should be consistent with self.shist_ts[0]
+        self.shist_last_time = self.shist_start_time ## last time reading arrived
         for sl in self.sgraphs.keys():
             mrflog.warn("graph subscribe %s"%sl)
-            self.sensors[sl].subscribe_minutes(self.graph_callback)
+            flds = self.sgraphs[sl]
+            self.shist[sl] = {}
+            for fld in flds:
+                self.shist[sl][fld] = []
+
+            #self.sensors[sl].subscribe_minutes(self.graph_callback)
 
         # get sensors that have data in db
         if hasattr(self,'db'):
             tornado.ioloop.IOLoop.current().run_sync(lambda: self.db_get_sensors())
-            
-    def authenticate(self,username,password,ip,req_host):             
+
+        ## start minute tick
+
+        self.server.start_minute_tick(0,self._minute_tick)
+
+    def _minute_tick(self):
+        #print("%s _minute_tick "%(self.__class__.__name__))
+        mrflog.debug("%s _minute_tick "%(self.__class__.__name__))
+        now = time.time()
+        lnow = time.localtime(now)
+        ltime = time.localtime(self.shist_last_time)
+
+        mrflog.debug("%s _minute_tick ltime %s "%(self.__class__.__name__,repr(ltime)))
+
+        ts = time.strftime("%Y-%m-%dT%H:%M:%S",ltime)
+        self.shist_ts.append(ts)
+
+        mrflog.debug("now %s"%(repr(lnow)))
+        #pdb.set_trace()
+        #self.shist_ts.append
+        mrflog.debug("sgraphs %s "%repr(self.sgraphs.keys()))
+
+        gdata = { 'ts' : ts,
+                  'sensors' : {}
+                  }
+        for sname in self.sgraphs.keys():
+            flds = self.sgraphs[sname]
+            savg = self.sensors[sname].gen_average()
+            for fld in flds:
+                if fld in savg.keys():
+                    savg[fld] = round(savg[fld],2)
+                    self.shist[sname][fld].append(savg[fld])  #limit to 2 dp precision
+            #savg['ts'] = ts
+            gdata['sensors'][sname] = savg
+        mrflog.debug("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
+        mrflog.debug("gdata "+repr(gdata))
+
+        self.graph_callback(gdata)
+
+        self.shist_last_time = now
+        mrflog.debug("shist_last_time %s graph_callback called with  %s"%(repr(self.shist_last_time),repr(gdata)))
+        #mrflog.debug("len wups %d"%(len(self.wups)))
+        while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
+            mrflog.info("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
+
+            for sname in self.sgraphs.keys():
+                flds = self.sgraphs[sname]
+                for fld in flds:
+                    del self.shist[sname][fld][0]
+            del self.shist_ts[0]
+            self.shist_start_time = time.mktime(time.strptime(self.shist_ts[0],"%Y-%m-%dT%H:%M:%S"))
+            mrflog.info("new start_time %s",repr(time.localtime(self.shist_start_time)))
+
+
+    def authenticate(self,username,password,ip,req_host):
         mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
         if username not in install.users.keys():
             return None
 
         uinf =  install.users[username]
-    
+
         if password != uinf['password']:
             return None
-    
 
-    
+
+
         mrflog.warn('authenticated ip '+ip)
-        wsid = os.urandom(16).encode('hex')  
+        wsid = os.urandom(16).encode('hex')
         sessid = gen_sessid()
 
-        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip,req_host)    
+        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip,req_host)
         self.comm.set_session_expire(wsid)
 
-        return { 'sid' : uinf['sid'] , 'sessid' : sessid} 
+        return { 'sid' : uinf['sid'] , 'sessid' : sessid}
 
 
     def ws_url(self, wsid,req_host):
@@ -271,11 +335,11 @@ class MrflandRegManager(object):
         """
         url = install.wsprot+req_host+'/ws?Id='+wsid
 
-        
-        return url
-            
 
-    
+        return url
+
+
+
     def web_client_command(self,wsid,app,cmd,data):
         if app not in self.weblets.keys():
             mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
@@ -283,28 +347,37 @@ class MrflandRegManager(object):
         mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
         self.weblets[app].cmd(cmd,data,wsid)
 
-        
+
         self.server._run_updates()
 
-        
-    def graph_callback(self, label, data):
-        mrflog.info("%s graph_callback label %s  data %s "%(self.__class__.__name__,label,data))
-        tag =  { 'app' : 'auto_graph', 'tab' : label , 'row' : label }
+
+    def graph_callback(self, data):
+        tag =  { 'app' : 'auto_graph', 'tab' : 'all' , 'row' : 'all' }
+        mrflog.debug("%s graph_callback  data %s "%(self.__class__.__name__,repr(data)))
+        mrflog.debug("tag : "+repr(tag))
         self.webupdate(tag,data)
 
-        stype = self.sensors[label]._stype_
-        if data.has_key('ts') and data.has_key(stype) and self.server:
-            dt = datetime.datetime.strptime(data['ts'],DateTimeFormat)
-            self.db_sensor_data_insert(sensor_id=label, stype=stype, dt = dt, value=data[stype])
-            
-    def graph_req(self,slab):  #for weblets to request graph data capture for sensors
+        self.server._run_updates()
+
+        for slabel in data['sensors']:
+            sdata = data['sensors'][slabel]
+            stype = self.sensors[slabel]._stype_
+            if data.has_key('ts') and sdata.has_key(stype) and self.server:
+                dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
+                mrflog.debug("trying db insert sensor_id "+slabel+" stype "+stype+ " "+repr(dt)+"  data "+ repr(sdata[stype]))
+                self.db_sensor_data_insert(sensor_id=slabel, stype=stype, dt = dt, value=sdata[stype])
+
+    def graph_req(self,slab,fld):  #for weblets to request graph data capture for sensors
         if not self.sensors.has_key(slab):
             mrflog.error("%s graph_req no sensor named  %s "%(self.__class__.__name__,slab))
             return
-                         
+
         if not self.sgraphs.has_key(slab):
-            self.sgraphs[slab] = True # no need for sensor ref here
-            mrflog.warn("%s graph_req added for sensor  %s "%(self.__class__.__name__,slab))
+            self.sgraphs[slab] = [fld] # no need for sensor ref here
+            mrflog.warn("%s graph_req added for sensor  %s  fld %s"%(self.__class__.__name__,slab,fld))
+        elif not fld in self.sgraphs[slab]:
+            mrflog.warn("%s graph_req appended for sensor  %s  fld %s"%(self.__class__.__name__,slab,fld))
+            self.sgraphs[slab].append(fld)
     def graph_inst(self,sensors, width = "80%", height = "80%"): ## FIXME should move to weblet
         snames = []
 
@@ -312,14 +385,14 @@ class MrflandRegManager(object):
         for stype in sensors.keys():
             for sname in sensors[stype]:
                 graphs += "mrf-graphs-"+sname+" "
-                
-        
+
+
         s = """
      <div id="mrf-graph-%d" class="mrf-graph %s" data-sensors='%s' width="%s" height="%s"> </div>
 """%(self.graph_insts,graphs,mrfland.to_json(sensors),width,height)
         self.graph_insts += 1  # they need unique ids for plotly
         return s
-            
+
     def set_timer(self, tod, app, tag, act):
         self.server.set_timer(tod,app,tag,act)
 
@@ -338,7 +411,7 @@ class MrflandRegManager(object):
             mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
             return
         self.weblets[app]._timer_callback(tag, act)
-            
+
         #for f in self.timers[tid]:
         #    f(tag,act)
     def senslookup(self,label):
@@ -375,7 +448,7 @@ class MrflandRegManager(object):
                 svtmp[level] = s
 
         levels.sort(reverse=True)
-        
+
         for l in levels:
             sv[l] = svtmp[l]
         return sv
@@ -385,13 +458,13 @@ class MrflandRegManager(object):
         if sv == None or len(sv) == 0:
             return None
         return sv[sv.keys()[0]]
-    
+
     def webupdate(self, tag , data , wsid=None):
         if wsid:
             update = { 'tag': tag , 'data': data , 'wsid': wsid}
             #mrflog.warn("webupdate %s"%repr(update))
             self.wups.append(update)
-            
+
         else:
             self.wups.append({ 'tag': tag , 'data': data})
 
@@ -404,27 +477,36 @@ class MrflandRegManager(object):
             mrflog.error("cmdcode - device at address %d has no command %s"%(dest,cmdname))
             return None
         return dev.cmdnames[cmdname]
-                           
+
     def devupdaten(self,tag, dest, cmdname, data = {}):
 
         cmd = self.cmdcode(dest,cmdname)  # lookup cmdcode from name
         if not cmd:
             return
-        
+
         mrflog.warn("%s devupdaten dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
-        
-        
+
+
     def devupdate(self,tag, dest, cmd, data = {}):
-        
+
         mrflog.warn("%s devupdate dest %s"%(self.__class__.__name__, dest))
         self.dups.append({ 'tag': tag , 'dest': dest, 'cmd' : cmd , 'data': data})
-        
-        
+
+
+    def ndr(self,hdr,ndr):
+
+        mrflog.warn("got NDR %s"%repr(ndr))
+        mrflog.warn("header was  %s"%repr(hdr))
+        return None
+
+
     def packet(self,hdr,resp):
+
         if self.devmap.has_key(hdr.usrc):
             return self.devmap[hdr.usrc].packet(hdr,resp)
         else:
+            mrflog.warn("got packet but no dev registered for usrc %d"%hdr.usrc)
             return None, None
 
     def weblet_register(self, weblet):
@@ -447,7 +529,7 @@ class MrflandRegManager(object):
                     first = False
                 else:
                     lic = ''
-            
+
                 s += '    <li %s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         return s
 
@@ -514,58 +596,58 @@ class MrflandRegManager(object):
                 if not self.senscaps.has_key(cap):
                     self.senscaps[cap] = []
                 self.senscaps[cap].append(sens)
-                
+
                 mrflog.warn("chan %d type  %s"%(ch,type(sens)))
-                
+
     def subprocess(self, arglist, callback):
-        mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))        
+        mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))
         return self.server.subprocess(arglist, callback)
 
-    def quiet_task(self):  # server calls this task periodically 
-        mrflog.warn("quiet task")
+    def quiet_task(self):  # server calls this task periodically
+        mrflog.debug("quiet task")
         for wapn in self.weblets.keys():
             wap = self.weblets[wapn]
             if wap._cfg_touched:
                 mrflog.warn("wap %s cfg change"%wapn)
-                doc = wap.var.cfg_doc()                
+                doc = wap.var.cfg_doc()
                 wap._cfg_touched = False
                 doc['hostname'] = self.hostname
                 doc['tag'] = wap.tag
                 doc['label'] = wap.label
                 doc['cls'] = wap.__class__.__name__
-                
+
                 mrflog.warn(repr(doc))
                 self.db_app_cfg_data_replace(apptag=wapn,doc=doc)
 
     def sensor_average_js(self):  # generate sensor average history js
         s = ""
 
-        if len(self.sensors.keys()) == 0:
+        if len(self.sgraphs.keys()) == 0:
             return s
-        
+
         s += """
-var _sensor_hist_seconds = %d;"""%self.sensors[self.sensors.keys()[0]]._HISTORY_SECONDS_
+var _sensor_hist_seconds = %d;"""%self._HISTORY_SECONDS_
+        s += """
+var _sensor_ts = %s ;"""%mrfland.to_json(self.shist_ts)
         s += """
 var _sensor_averages = {"""
 
         for slab in self.sgraphs.keys():
+
+            flds = self.sgraphs[slab]
+
             sens = self.sensors[slab]
-            if hasattr(sens,"history"):
-                his = sens.averages
-                s += """
+            s += """
      %s : {\n"""%(slab)
-                for hfld in his.keys():
-                    if hfld == 'ts':
-                        continue
-                    s+= """
+            for hfld in flds:
+                s+= """
          %s :  {"""%hfld
-                    s+= """
-                  ts : %s, """%mrfland.to_json(his['ts'])
-                    s+= """
-                  %s : %s """%('value',mrfland.to_json(his[hfld]))
-                    s+= """
-                }
-            },"""
+                s+= """
+                ts : _sensor_ts,
+                %s : %s """%('value',mrfland.to_json(self.shist[slab][hfld]))
+                s+= """
+               }
+           },"""
         s += """
          }"""
 
@@ -574,7 +656,7 @@ var _sensor_averages = {"""
 
 
 
-
+    """
     @tornado.gen.coroutine
     def db_period_graph(self,**kwargs):
 
@@ -582,21 +664,21 @@ var _sensor_averages = {"""
         stype = kwargs['stype']
         dt_start = kwargs['date_start']
         dt_end = kwargs['date_end']
-        
+
         wtag = kwargs['wtag']
         wsid = kwargs['wsid']
 
-            
+
 
         start_date = dt_start.date()
         end_date = dt_end.date()
 
 
-        
+
         docdate = datetime.datetime.combine(start_date,datetime.time())
 
         gdata = {}
-    
+
         for sensor_id in sensor_ids:
 
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
@@ -615,9 +697,9 @@ var _sensor_averages = {"""
 
         self.server._run_updates()
 
+    """
 
 
-    
     def graph_day_data(self,gdata,sensor_id, stype, doc):
         """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
 
@@ -635,18 +717,18 @@ var _sensor_averages = {"""
         #mrflog.warn("graph_day_data - stype is %s starting with gdata %s"%(stype,repr(gdata)))
         gvals =  gdata[sensor_id][stype]
         gtime = doc['docdate']
-    
+
         for hour in xrange(24):
             for minute in xrange(60):
                 if not (doc['data'][hour][minute] == doc['nullval']):
-                    gvals['ts'].append(gtime.strftime(DateTimeFormat))
+                    gvals['ts'].append(gtime.strftime(mrfland.DateTimeFormat))
                     gvals['value'].append(doc['data'][hour][minute])
-                #else:                    
+                #else:
                 #    print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
-            
+
                 gtime = gtime + datetime.timedelta(minutes=1)
         #mrflog.warn("graph_day_data - finish with gdata %s"%(repr(gdata)))
-         
+
         return gdata
 
 
@@ -657,21 +739,21 @@ var _sensor_averages = {"""
         stype = kwargs['stype']
         dt_start = kwargs['date_start']
         dt_end = kwargs['date_end']
-        
+
         wtag = kwargs['wtag']
         wsid = kwargs['wsid']
 
-            
+
 
         start_date = dt_start.date()
         end_date = dt_end.date()
 
 
-        
+
         docdate = datetime.datetime.combine(start_date,datetime.time())
 
         gdata = {}
-    
+
         for sensor_id in sensor_ids:
 
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
@@ -691,8 +773,8 @@ var _sensor_averages = {"""
         self.server._run_updates()
 
 
-    
-        
+
+
     @tornado.gen.coroutine
     def db_days_graph(self,**kwargs):
 
@@ -706,21 +788,21 @@ var _sensor_averages = {"""
             days = kwargs['days']
         else:
             days = 1
-            
+
         startdate = datetime.datetime.combine(dt.date(),datetime.time())
-        
+
         gdata = {}
-    
+
         for sensor_id in sensor_ids:
             docdate = startdate - datetime.timedelta(days=days-1)
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
 
             for day in xrange(days):
-                mrflog.warn("%s %d) %s"%(sensor_id,day,repr(docdate))) 
+                mrflog.warn("%s %d) %s"%(sensor_id,day,repr(docdate)))
                 doc = yield coll.find_one({'docdate' : docdate})
 
 
-                
+
                 try:
                     stype = doc['stype']
 
@@ -730,7 +812,7 @@ var _sensor_averages = {"""
                     #mrflog.warn("gdata %s %s"%(sensor_id,repr(gdata)))
                 except:
                     mrflog.warn("no doc for %s %s"%(sensor_id,repr(docdate)))
-                
+
                 docdate += datetime.timedelta(days=1)
 
         #mrflog.warn("gdata %s"%repr(gdata))
@@ -746,10 +828,10 @@ var _sensor_averages = {"""
 
 
         cnames = yield self.db.collection_names()
-    
+
 
         mrflog.warn("got cnames %s"%repr(cnames))
-    
+
         sensors = dict()
 
         for cn in cnames:
@@ -763,31 +845,31 @@ var _sensor_averages = {"""
 
         for stype in sensors.keys():
             sensors[stype].sort()
-        
+
         mrflog.warn("got sensors %s"%repr(sensors))
         self.db_sensors = sensors
 
     @tornado.gen.coroutine
     def db_sensor_data_insert(self, **kwargs):
-        
+
         if not hasattr(self,'db'):
             return
 
         mrflog.info("sensor_db_insert : kwargs %s"%repr(kwargs))
         sensor_id = kwargs['sensor_id']
         stype = kwargs['stype']
-        dt = kwargs['dt']    
+        dt = kwargs['dt']
         minute = dt.minute
         hour = dt.hour
         value  = kwargs['value']
 
-    
+
         #docdate should always have zero time ..let's do this now
         docdate = datetime.datetime.combine(dt.date(),datetime.time())
 
-        
+
         coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
-            
+
         future = coll.update({'docdate':docdate},
                                  { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
         result = yield future
@@ -810,63 +892,63 @@ var _sensor_averages = {"""
                 mrflog.warn("doc update(2) result good %s "%repr(result))
             else:
                 mrflog.error("result(2) bad %s "%repr(result))
-            
+
 
     @tornado.gen.coroutine
     def db_app_cfg_data_replace(self, **kwargs):
-        
+
         if not hasattr(self,'db'):
             return
 
         mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
         apptag = kwargs['apptag']
         doc    = kwargs['doc']
-        
+
         if kwargs.has_key('sid'):
             sid = kwargs['sid']
         else:
             sid = -1
-            
+
         doc['sid'] = sid
-        
-        
+
+
 
         docdate = datetime.datetime.now()
         doc['docdate'] = docdate
-        
+
         collname =  '%s.cfg.webapps'%(self.hostname)
         coll = self.db.get_collection(collname)
 
         filt = {'tag' : apptag }
 
-        
-        
+
+
         future = coll.replace_one(filt, doc, True)
         result = yield future
 
         mrflog.warn("result %s"%repr(result))
-            
+
 
     @tornado.gen.coroutine
     def db_app_load_cfg_data(self, **kwargs):
-        
+
         if not hasattr(self,'db'):
             return
 
         mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
         apptag = kwargs['apptag']
-        
-        
-        
 
-        
+
+
+
+
         collname =  '%s.cfg.webapps'%(self.hostname)
         coll = self.db.get_collection(collname)
 
         filt = {'tag' : apptag }
 
-        
-        
+
+
         future = coll.find_one(filt)
         result = yield future
 
@@ -877,4 +959,3 @@ var _sensor_averages = {"""
 
 def gen_sessid():
     return base64.b64encode(os.urandom(18))
-

@@ -49,8 +49,8 @@ class PktSpiDebug(MrfStruct):
         ("cyc_err1", c_uint32),
         ("cyc_err2", c_uint32),
         ("cyc_err3", c_uint32),
-        ("chan_err_last", c_uint8),
-        
+        ("chan_err_last", c_uint8)
+
     ]
 
 MAX_RTDS = 7
@@ -62,16 +62,16 @@ class PktPt1000State(MrfStruct):
         ("relay_state", c_uint8),
         ("milliohms", c_uint32*MAX_RTDS),
         ("ref_r",c_uint32),
-        ("ref_i",c_uint32),
+        ("ref_i",c_uint32)
         ]
 
 class PktRelayState(MrfStruct):
     _fields_ = [
         ("chan", c_uint8),
-        ("val", c_uint8),
+        ("val", c_uint8)
         ]
 
-    
+
 
 mrf_app_cmd_test = 128
 mrf_cmd_spi_read = 129
@@ -93,19 +93,19 @@ Pt1000AppCmds = {
         'resp'  : PktTimeDate
     },
     mrf_cmd_spi_read : {
-        
+
         'name'  : "SPI_READ",
         'param' : PktUint8,
         'resp'  : PktUint8
     },
     mrf_cmd_spi_write : {
-        
+
         'name'  : "SPI_WRITE",
         'param' : PktUint8_2,
         'resp'  : None
     },
     mrf_cmd_spi_debug : {
-        
+
         'name'  : "SPI_DEBUG",
         'param' : None,
         'resp'  : PktSpiDebug
@@ -155,14 +155,14 @@ Pt1000AppCmds = {
 class MrfSensPt1000(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
                   ('milliohms' , long) ]  # hmpff
-    
+
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),
                    ('milliohms' , int ),
                    ('temp'      , float) ]
 
     _history_ =  { 'fields' : ['temp']
-                 } 
+                 }
 
     _stype_    =  'temp'
     def res_to_temp(self,milliohms):
@@ -186,13 +186,13 @@ class MrfSensPt1000(MrfSens):
         T = T/10.0
         return T
 
-    
+
     def filter(self, ntaps):
         self.ftaps = deque()
 
         for i in range(ntaps):
             self.ftaps.append(0)
-            
+
     def filter_out(self,newval): # cheap and nasty filter option
         self.ftaps.popleft()
         self.ftaps.append(newval)
@@ -201,9 +201,9 @@ class MrfSensPt1000(MrfSens):
             tot += v
         mo = 1.0 * tot / len(self.ftaps)
         return int(mo)
-        
+
     def genout(self,indata):
-            
+
         outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
@@ -225,18 +225,18 @@ class MrfSensPt1000(MrfSens):
         #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         self.last_temp = outdata['temp']
         return outdata
-        
+
 
 class MrfSensPtRelay(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
                   ('relay' , int) ]  # hmpff
-    
+
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),
                    ('relay' , int )
     ]
     _history_ =  { 'fields' : ['relay']
-                 } 
+                 }
     _stype_ = 'relay'
     def init(self):
         self.req_val     = 0
@@ -248,7 +248,7 @@ class MrfSensPtRelay(MrfSens):
         self.override    = False
         self.on_off      = 1  # yes we need this to get a turn off command sent on init
         self.set(0)  # turn off all relays on server start
-        
+
     def genout(self,indata):
         outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
@@ -265,40 +265,52 @@ class MrfSensPtRelay(MrfSens):
         cdata['val'] = int(on_off)
         param = PktRelayState()
         param.dic_set(cdata)
-        mrflog.warn("%s sending SET_RELAY with param %s"%
+        mrflog.debug("%s sending SET_RELAY with param %s"%
                     (self.__class__.__name__ , repr(param)))
         self.devupdate('SET_RELAY',param)
 
     def set(self, on_off):
+        """ FIXME - this is messed up, could do with review - got here because of timers + algos + manual overrides"""
         self.req_val = on_off
-        if self.override == False and self.on_off != self.req_val:
-            mrflog.warn("%s %s changing relay state to %d"%(self.__class__.__name__,self.label,self.req_val))
+        if (self.override == False and self.on_off != self.req_val) or (self.req_val != self.output['relay']):
+            mrflog.warn("%s %s changing relay state to %d - override %s on_off %d req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.req_val,self.override,self.on_off,self.req_val,self.output['relay']))
             self._cmd(on_off)
+        else:
+            mrflog.warn("%s %s NOT changing relay state to %d on_off %d override %d on_off %d req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.req_val,self.on_off,self.override,self.on_off,self.req_val,self.output['relay']))
 
     def force(self, on_off):
         self.force_val = on_off
         self.override = True
-        if self.on_off != on_off:
+        if self.on_off != on_off or on_off != self.output['relay']:
+            mrflog.warn("%s %s force relay state to %d self.on_off %d  output %d"%
+                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
             self._cmd(on_off)
-        
+        else:
+            mrflog.warn("%s %s NOT force relay state to %d self.on_off %d  output %d"%
+                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
+
     def release(self):
         self.override = False
-        if self.on_off != self.req_val:  # restore request value
+        if self.on_off != self.req_val or self.req_val != self.output['relay']:  # restore request value
             self._cmd(self.req_val)
-    
-        
+            mrflog.warn("%s %s release relay state to %d self.on_off %d  req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.on_off,self.self.output['relay']))
+
+
 class Pt1000Dev(MrfDev):
 
     _capspec = {
         'temp' : MrfSensPt1000,
-        'relay' : MrfSensPtRelay}                 
+        'relay' : MrfSensPtRelay}
     _cmdset = Pt1000AppCmds
 
     def init(self):
-        self.filt_ind = 0 
+        self.filt_ind = 0
     def app_packet(self, hdr, param , resp):
         mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
-        
+
         mrflog.info("Pt1000Dev app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
@@ -312,12 +324,12 @@ class Pt1000Dev(MrfDev):
 
 
             for ch in range(len(self.caps['relay'])):
-                (resp.relay_state >> ch) & 0x01
+                #(resp.relay_state >> ch) & 0x01
                 inp = { 'date' : resp.td,
                         'relay' :  (resp.relay_state >> ch) & 0x01
                 }
                 self.caps['relay'][ch].input(inp)
-                
+
 
         elif  param.type == mrf_cmd_set_relay or param.type == mrf_cmd_get_relay:
             now = datetime.datetime.now()
@@ -327,4 +339,3 @@ class Pt1000Dev(MrfDev):
                     'relay' :  resp.val
             }
             self.caps['relay'][resp.chan].input(inp)
-            

@@ -24,12 +24,11 @@ import re
 class MrfLandWebletTemps(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-
         if not self.rm.senscaps.has_key('temp'):
             mrflog.error("%s post_init failed to find sensor category temp in rm"%self.__class__.__name__)
             return
+
         self.sl = self.rm.senscaps['temp']
-        
         self.graph_temps = []
 
         for s in self.sl:
@@ -39,8 +38,6 @@ class MrfLandWebletTemps(MrflandWeblet):
             else:
                 self.add_var(s.label, s , field='temp')
 
-
-                
     def pane_html(self):
         if self.var.__dict__.has_key('LOUNGE_AMBIENT') and self.var.__dict__.has_key('OUTSIDE_AMBIENT'):
             s =  """
@@ -48,14 +45,14 @@ class MrfLandWebletTemps(MrflandWeblet):
 
         else:
             s = ""
-            
+
         s += """
         <hr> """
 
         s += self.rm.graph_inst({
             "temp" : self.graph_temps
         })
-            
+
         s += self.html_var_table(self.sl)
-           
+
         return s

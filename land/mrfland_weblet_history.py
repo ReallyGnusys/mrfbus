@@ -30,21 +30,21 @@ class MrfLandWebletHistory(MrflandWeblet):
                       'sel_list' : ['Ambient Temps' , 'Store Temps']
                   }
                  )]
-    
+
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
         self.graphid = "graph1"
         self.days = 1
         self.graph_type = 'Ambient'
 
-        
+
     def cmd_mrfctrl(self,data,wsid):
         mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
 
         if data['tab'] != self.graphid:
             return
 
-        
+
 
 
         if data['row'] == 'days':
@@ -58,37 +58,37 @@ class MrfLandWebletHistory(MrflandWeblet):
             sensor_ids=["ACC_100","ACC_60","ACC_30","ACC_RET"]
         else:
             sensor_ids=["ACC_100","ACC_60","ACC_30","OUTSIDE_AMBIENT"]
-            
+
 
         docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time())
 
         self.rm.db_days_graph(sensor_ids=sensor_ids,stype='temp',docdate=docdate,wsid=wsid, wtag=self.graphtag(self.graphid),days=self.days)
-    
+
     def pane_html(self):
 
-        sens = self.rm.db_sensors
-        mrflog.warn("pane_html got sensors %s"%repr(sens))
         s = """<hr>
         <div>
         """
         s += mrfctrl_select_html(self.tag,self.graphid, 'days', ['1','7','28'],'Days')
         s += mrfctrl_select_html(self.tag,self.graphid, 'type', ['Ambient','Store','Energy'],'Graph')
-        
+
         s += """
       </div>
 """
-        
+
         s += '<div id="'+self.graphid+'"></div>'
-        return s
 
-        s += """
+        if hasattr(self.rm,'db_sensors'):
+            sens = self.rm.db_sensors
+            mrflog.warn("pane_html got sensors %s"%repr(sens))
+        else:
+            sens = None
+
+        if sens:
+            s += """
 <script type="text/javascript">
-
 """+to_json(sens)+"""
 </script>
 
-
 """
         return s
-
-
