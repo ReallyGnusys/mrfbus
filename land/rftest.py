@@ -28,6 +28,7 @@ MRFBUFFLEN = 128
 import ctypes
 import random
 from datetime import datetime
+import argparse
 
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
@@ -37,6 +38,7 @@ from mrfdev_rftst import *
 
 class Rftest(DeviceTestCase):
     DEST = 0x20
+    CHAN = 0
     def setUp(self):
         DeviceTestCase.setUp(self)
         self.devname = 'usbrf'
@@ -130,17 +132,71 @@ class Rftest(DeviceTestCase):
         self.assertTrue(self.check_attrs(rst,PktPt1000State()))
 
 
+    def force_relay_high(self):
+        print "**********************"
+        print "* rftest force relay high (dest 0x%02x chan %d)"%(self.dest,Rftest.CHAN)
+        print "**********************"
+
+        data = PktRelayState()
+        data.chan = Rftest.CHAN
+        data.val = 0
+        ## get initial relay state for chan 0
+        self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
+        resp = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp)
+        self.assertTrue(self.check_attrs(resp,PktRelayState()))
+
+        # set relay state
+        data.val = 1
+
+        self.cmd(self.dest,mrf_cmd_set_relay,dstruct=data)
+        resp2 = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp2)
+        self.assertTrue(self.check_attrs(resp2,data,checkval=True))
+
+
+    def force_relay_low(self):
+        print "**********************"
+        print "* rftest force relay low (dest 0x%02x chan %d)"%(self.dest,Rftest.CHAN)
+        print "**********************"
+
+        data = PktRelayState()
+        data.chan = Rftest.CHAN
+        data.val = 0
+        ## get initial relay state for chan
+        self.cmd(self.dest,mrf_cmd_get_relay,dstruct=data)
+        resp = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp)
+        self.assertTrue(self.check_attrs(resp,PktRelayState()))
+
+        # set relay state
+        data.val = 0
+
+        self.cmd(self.dest,mrf_cmd_set_relay,dstruct=data)
+        resp2 = self.response(timeout=self.timeout)
+        print "resp %s"%repr(resp2)
+        self.assertTrue(self.check_attrs(resp2,data,checkval=True))
 
 
 if __name__ == "__main__":
-   """
-    if len(sys.argv) > 1:
-       print "sys.argv = %s"%repr(sys.argv)
-       #pa = sys.argv.pop()
-       #print "pa is %s"%repr(pa)
-       #print "sys.argv = %s"%repr(sys.argv)
 
-       Rftest.DEST = int(sys.argv.pop(),16)
-       print "setting dest to 0x%x"%Rftest.DEST
-   """
+   parser = argparse.ArgumentParser()
+   parser.add_argument('-addr',type=int,default=0x2,help="address of device to test, default is 0x2")
+   parser.add_argument("-chan", type=int, default=0,help="channel for channel related tests")
+   parser.add_argument('unittest_args', nargs='*')
+   args = parser.parse_args()
+
+   sys.argv[1:] = args.unittest_args
+   if len(sys.argv) > 1:
+      print "sys.argv = %s"%repr(sys.argv)
+      #pa = sys.argv.pop()
+      #print "pa is %s"%repr(pa)
+      #print "sys.argv = %s"%repr(sys.argv)
+
+      Rftest.DEST = args.addr
+      Rftest.CHAN = args.chan
+
+      print "setting dest to 0x%x"%Rftest.DEST
+
+
    unittest.main()

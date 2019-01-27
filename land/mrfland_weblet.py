@@ -165,7 +165,7 @@ class MrfWebletVar(object):
 
     def updated(self,wsid=None): #notice that value has changed - should be no need to pass anything
         if self._app_callback:
-            self._app_callback(self.name,wsid=None)
+            self._app_callback(self.name,wsid=wsid)
     @property
     def webtag(self):
         return { 'app' : self.app, 'mrfvar' : self.name }

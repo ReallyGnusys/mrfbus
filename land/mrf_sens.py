@@ -124,7 +124,6 @@ class MrfSens(object):
         if self.last_reading_time == None:
             for fld in self._out_flds_:
                 if fld[0].find("_date") == -1:
-                    favg = fld[1](self.avg_tots[fld[0]] / periodsecs)
                     avg[fld[0]] = 0.0
             return avg
 

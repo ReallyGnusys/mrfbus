@@ -275,7 +275,8 @@ class MrflandRegManager(object):
             savg = self.sensors[sname].gen_average()
             for fld in flds:
                 if fld in savg.keys():
-                    self.shist[sname][fld].append(savg[fld])
+                    savg[fld] = round(savg[fld],2)
+                    self.shist[sname][fld].append(savg[fld])  #limit to 2 dp precision
             #savg['ts'] = ts
             gdata['sensors'][sname] = savg
         mrflog.debug("self.shist_ts[0] %s shist_start_time %s"%(repr(self.shist_ts[0]),repr(time.localtime(self.shist_start_time))))
@@ -284,7 +285,8 @@ class MrflandRegManager(object):
         self.graph_callback(gdata)
 
         self.shist_last_time = now
-
+        mrflog.debug("shist_last_time %s graph_callback called with  %s"%(repr(self.shist_last_time),repr(gdata)))
+        #mrflog.debug("len wups %d"%(len(self.wups)))
         while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
             mrflog.info("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
 
@@ -355,6 +357,7 @@ class MrflandRegManager(object):
         mrflog.debug("tag : "+repr(tag))
         self.webupdate(tag,data)
 
+        self.server._run_updates()
 
         for slabel in data['sensors']:
             sdata = data['sensors'][slabel]

@@ -201,24 +201,34 @@ class SimpleTcpClient(object):
                 #s = line.decode('utf-8').strip()
                 #mrflog('got |%s|' % repr(s))
                 ob = mrfland.json_parse(line)
+                obdecoded = False
                 if ob:
                     data = None
                     mrflog.info("json ob : %s"%repr(ob))
+
                     if ob.has_key('dest') and ob.has_key('cmd'):
-                        if ob.has_key('data'):
-                            if ob['cmd'] in MrfSysCmds:
-                                if MrfSysCmds[ob['cmd']]['param'] != None:
-                                    data = MrfSysCmds[ob['cmd']]['param']()
-                                    data.dic_set(ob['data'])
-                            else:
-                                appcmdset = self.landserver._dev_cmd_set(ob['dest'])
-                                if appcmdset:
-                                    if appcmdset[ob['cmd']]['param'] != None:
-                                        data = appcmdset[ob['cmd']]['param']()
-                                        data.dic_set(ob['data'])
+                        if ob['cmd'] in MrfSysCmds:
+                            obdecoded = True
+                            if MrfSysCmds[ob['cmd']]['param'] != None:
+                                data = MrfSysCmds[ob['cmd']]['param']()
+                        else:
+                            appcmdset = self.landserver._dev_cmd_set(ob['dest'])
+                            if appcmdset and ob['cmd'] in appcmdset:
+                                obdecoded = True
+                                if appcmdset[ob['cmd']]['param'] != None:
+                                    data = appcmdset[ob['cmd']]['param']()
 
 
-                        self.landserver._callback(self.id, ob['dest'],ob['cmd'],data)
+
+
+                        if obdecoded == False: #cmd code not found - error to client
+                            mrflog.warn("cmd %d not found for device %d in ob  %s"%(ob['dest'],ob['cmd'],repr(ob)))
+                            self.stream.write('{"error" : "not valid cmd for device" }')
+                        else:
+                            if 'data' in ob:
+                                data.dic_set(ob['data'])
+                            self.landserver._callback(self.id, ob['dest'],ob['cmd'],data)
+
                     else:
                         mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
@@ -454,7 +464,7 @@ class MrflandServer(object):
         self._set_next_min_timeout()
         t = time.time()
 
-        mrflog.warn("minutetimeout %f %s"%(t,repr(time.localtime(t))))
+        mrflog.debug("minutetimeout %f %s"%(t,repr(time.localtime(t))))
         self._minute_callback()
 
     def _set_timeout(self,s):
@@ -496,8 +506,11 @@ class MrflandServer(object):
             mrflog.info("self.active_cmd %s"%repr(self.active_cmd))
             return 0
         else:
-            mrflog.info("_run_cmd failed for %s"%repr(cobj))
+            mrflog.warn("_run_cmd failed for %s"%repr(cobj))
+            mrflog.info("sending empty response for tcp client %d"%cobj.tag)
+            self.tcp_server.write_to_client(cobj.tag, mrfland.to_json({}))
             return -1
+
     def TBD_app_cmd_set(self,dest):
         for appn in self.apps.keys():
             app = self.apps[appn]
@@ -520,7 +533,7 @@ class MrflandServer(object):
         appcmds = self._dev_cmd_set(cobj.dest)
         if cobj.cmd_code in MrfSysCmds.keys():
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
-        elif (appcmds):
+        elif (appcmds and cobj.cmd_code in appcmds):
             paramtype = appcmds[cobj.cmd_code]['param']
             mrflog.info("app supplied command set for dest %d param is %s"%(cobj.dest,repr(paramtype)))
 
