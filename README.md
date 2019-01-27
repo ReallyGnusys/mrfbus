@@ -1,6 +1,42 @@
-**mrfbus** is a framework for building ultra low-power microcontroller network applications
+**mrfbus** is a framework for building ultra low-power microcontroller network applications in a linux environment
 
 [![Build Status](https://travis-ci.org/ReallyGnusys/mrfbus.svg?branch=master)](https://travis-ci.org/ReallyGnusys/mrfbus)
+
+## Quickstart instructions
+ * Ensure you're running a credible linux distro and looking at a bash shell prompt
+ * Create a directory to clone MRFBUS project into, and set env variable MRFBUS_HOME to this value
+    ```
+      export MRFBUS_HOME='path to mrfbus clone directory'
+      mkdir -p $MRFBUS_HOME
+     
+     
+ * cd to MRFBUS_HOME and clone repo
+    ```
+    cd $MRFBUS_HOME
+    git clone https://github.com/ReallyGnusys/mrfbus.git .
+    
+    
+    
+ * Create a directory to build and run your MRFBUS project and cd to it
+   ```
+    export MRFBUS_RUN=~/mrfrun
+    cd $MRFBUS_RUN
+    
+ * Setup example linux test project
+    ```
+     $MRFBUS_HOME/mrf_proj setup test
+     ```
+ * Build example test project
+    ```
+     $MRFBUS_HOME/mrf_proj build
+     ```
+
+ * Run example test project
+    ```
+     $MRFBUS_HOME/mrf_proj run
+   ```
+
+ 
 
 ## FAQ
 

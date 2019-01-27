@@ -165,7 +165,7 @@ class MrfWebletVar(object):
 
     def updated(self,wsid=None): #notice that value has changed - should be no need to pass anything
         if self._app_callback:
-            self._app_callback(self.name,wsid=None)
+            self._app_callback(self.name,wsid=wsid)
     @property
     def webtag(self):
         return { 'app' : self.app, 'mrfvar' : self.name }
@@ -547,7 +547,7 @@ class MrflandWeblet(object):
         if v:
             setattr(self.var, name, v)
             if kwargs.has_key('graph') and kwargs['graph'] == True :  # FIXME : MUST only be sensor var
-                self.rm.graph_req(v.sens.label)  # ask for managed graph
+                self.rm.graph_req(v.sens.label,kwargs['field'])  # ask for managed graph
 
     def has_var(self,name):
         return name in self.var.__dict__

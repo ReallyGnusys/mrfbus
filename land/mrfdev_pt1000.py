@@ -270,21 +270,33 @@ class MrfSensPtRelay(MrfSens):
         self.devupdate('SET_RELAY',param)
 
     def set(self, on_off):
+        """ FIXME - this is messed up, could do with review - got here because of timers + algos + manual overrides"""
         self.req_val = on_off
-        if self.override == False and self.on_off != self.req_val:
-            mrflog.debug("%s %s changing relay state to %d"%(self.__class__.__name__,self.label,self.req_val))
+        if (self.override == False and self.on_off != self.req_val) or (self.req_val != self.output['relay']):
+            mrflog.warn("%s %s changing relay state to %d - override %s on_off %d req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.req_val,self.override,self.on_off,self.req_val,self.output['relay']))
             self._cmd(on_off)
+        else:
+            mrflog.warn("%s %s NOT changing relay state to %d on_off %d override %d on_off %d req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.req_val,self.on_off,self.override,self.on_off,self.req_val,self.output['relay']))
 
     def force(self, on_off):
         self.force_val = on_off
         self.override = True
-        if self.on_off != on_off:
+        if self.on_off != on_off or on_off != self.output['relay']:
+            mrflog.warn("%s %s force relay state to %d self.on_off %d  output %d"%
+                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
             self._cmd(on_off)
+        else:
+            mrflog.warn("%s %s NOT force relay state to %d self.on_off %d  output %d"%
+                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
 
     def release(self):
         self.override = False
-        if self.on_off != self.req_val:  # restore request value
+        if self.on_off != self.req_val or self.req_val != self.output['relay']:  # restore request value
             self._cmd(self.req_val)
+            mrflog.warn("%s %s release relay state to %d self.on_off %d  req_val %d output %d"%
+                        (self.__class__.__name__,self.label,self.on_off,self.self.output['relay']))
 
 
 class Pt1000Dev(MrfDev):

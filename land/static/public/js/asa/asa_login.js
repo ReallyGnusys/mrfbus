@@ -10,13 +10,13 @@ function ajax_success(data){
     console.log(data);
     if (( typeof data.result != 'string') || ( data.result != 'success'))
         return login_failure(data);
-    
+
     if ( typeof data.redirect != 'string')
-        return login_failure(data);    
+        return login_failure(data);
     console.log("about to redirect to "+data.redirect);
 
     window.location.href = data.redirect;
-    
+
 }
 
 function staff_login_callback(data){
@@ -32,13 +32,14 @@ function staff_login_callback(data){
             console.log(jqXHR);
             console.log(status);
             console.log(error);
+            console.log("end error");
         },
         dataType: 'json'
     });
-    
-          
+
+
 }
- 
+
 $(document).ready(function() {
     console.log("asa_login  : document ready");
     //form1 = new AsaForm('login_form','.staff-login-form',fm,'Login',staff_login_callback,_sl_frm1.template,_sl_frm1.items,null,true);
@@ -49,7 +50,7 @@ $(document).ready(function() {
                                            password : $("#inputPassword").val()
                                          };
                                   staff_login_callback(data);
-                                  
+
                               });
     console.log("(doc ready: form constructed");
     //var felem = "#asa-fcntrl-login_form-password"
