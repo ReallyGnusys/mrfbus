@@ -296,7 +296,7 @@ class MrfSensPtRelay(MrfSens):
         if self.on_off != self.req_val or self.req_val != self.output['relay']:  # restore request value
             self._cmd(self.req_val)
             mrflog.warn("%s %s release relay state to %d self.on_off %d  req_val %d output %d"%
-                        (self.__class__.__name__,self.label,self.on_off,self.self.output['relay']))
+                        (self.__class__.__name__,self.label,self.on_off,self.output['relay']))
 
 
 class Pt1000Dev(MrfDev):
