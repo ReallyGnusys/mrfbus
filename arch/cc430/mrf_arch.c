@@ -105,7 +105,7 @@ int mrf_arch_boot(){
   rtc_init();
 
 
-  aes_init();
+  //aes_init();
 
 
   return 0;
