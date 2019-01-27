@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -56,6 +56,7 @@
 #define PINLOW(signame)   OUTREG(signame) &= (~BITNAME(signame))
 #define PINHIGH(signame)  OUTREG(signame) |= BITNAME(signame)
 #define NOPULLUP(signame) RENREG(signame) &= (~BITNAME(signame))
+#define PULLUP(signame) RENREG(signame) |= BITNAME(signame)
 
 #define ANALOGUEPIN(signame)  SELREG(signame) |= BITNAME(signame) ; MAPREG(signame) = 31
 

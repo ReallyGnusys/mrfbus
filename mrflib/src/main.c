@@ -19,13 +19,6 @@
 
 #include <mrf.h>
 
-const uint8 _mrfid = MRFID;
-
-#define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
-
-const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
-const MRF_PKT_SYS_INFO sys_info        = {  SYM_NAME(GITSH), SYM_NAME(MRFBLD), (const uint8)MRF_NUM_SYS_CMDS,GITMOD };
-const MRF_PKT_APP_INFO app_info        = {SYM_NAME(MRF_APP), MRF_NUM_APP_CMDS};
 
 
 int main(void){

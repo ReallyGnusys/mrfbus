@@ -19,6 +19,7 @@
 
 #ifndef __MRF_SYS_CMDS_INCLUDED__
 #define __MRF_SYS_CMDS_INCLUDED__
+#include "mrf_sys.h"
 
 typedef enum mrf_cmd_code
  {
@@ -39,11 +40,31 @@ typedef enum mrf_cmd_code
    mrf_cmd_usr_struct = 14,
    mrf_cmd_usr_resp = 15,
    mrf_cmd_reset = 16,
-   mrf_cmd_ping = 17,   
-   MRF_NUM_SYS_CMDS = 18
+   mrf_cmd_ping = 17,
+   mrf_cmd_ndr = 18,   
+   MRF_NUM_SYS_CMDS = 19
  } MRF_CMD_CODE;
 
+typedef enum {
+  MRF_CMD_RES_RETRY,
+  MRF_CMD_RES_OK,
+  MRF_CMD_RES_IGNORE,
+  MRF_CMD_RES_WARN,
+  MRF_CMD_RES_ERROR
+} MRF_CMD_RES;
 
 
+typedef MRF_CMD_RES (*MRF_CMD_FUNC)(MRF_CMD_CODE cmd, uint8 bnum , const MRF_IF *ifp);
+
+typedef struct {
+  const uint8 str[16];
+  const uint8 cflags;
+  const uint8 req_size;
+  const uint8 rsp_size;
+  const void *data;
+  const MRF_CMD_FUNC func;
+} MRF_CMD;
+
+const MRF_CMD *mrf_cmd_ptr(uint8 type);
 
 #endif

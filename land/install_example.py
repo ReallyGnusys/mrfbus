@@ -1,9 +1,12 @@
 ## normally copy this your run dir  and name install.py
 ## setup as required
 
+## THIS FILE IS IN PROCESS OF DEPRECATION
+## Trying to move most of these to config for weblets in server.py
+## so watch out if changes here don't seem to do anything
+
 
 test = True
-#installdir = '/v/share/projects/msp/mrfbus/land/'
 
 instance = 'heat-1'
 #domain = 'localdom'
@@ -21,7 +24,7 @@ tcpport = 8912   # port used by tcp/json test service
 mrfbus_host_port = 8915  # port of mrfbus host device ( addr 1 )
 
 
-db_uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
+db_uri = "mongodb://username:password@host:27017/mrfbus?authSource=admin"
 
 
 https_server = False
@@ -44,16 +47,16 @@ logger_name = 'mrfland'
 
 
 
-logdir = 'log/'
+logdir = 'var/log/'
 mrflog = 'mrfland.log'
 
-#hard coded userdb
+#temp hard coded userdb for now
 users = {
     'home'  : { 'sid' : 1, 'type' : 'sysadmin', 'password' : 'hpass' , 'username': 'home'},
     'guest' : { 'sid' : 2, 'type' : 'sysadmin', 'password' : 'gpass' , 'username': 'guest',
                 'apps' : ['temps','history']},
 
-    
+
     'q'     : { 'sid' : 3, 'type' : 'sysadmin', 'password' : 'q'     , 'username': 'q',
                 'apps' : ['store','rad1', 'rad2', 'DHW1','DHW2','temps','timers','relays','devs','history']},
     'p'     : { 'sid' : 4, 'type' : 'sysadmin', 'password' : 'p'     , 'username': 'p',
@@ -64,5 +67,5 @@ users = {
 
 
 
-_ssl_cert_file = 'certs/'+host+'/cert.pem' 
-_ssl_key_file =  'certs/'+host+'/private/key.pem'  
+_ssl_cert_file = 'certs/'+host+'/cert.pem'
+_ssl_key_file =  'certs/'+host+'/private/key.pem'

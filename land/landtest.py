@@ -80,7 +80,19 @@ class LandTestCase(unittest.TestCase):
         self.app_cmds = {}  # need to override in some ugly way to allow app command testing for now
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(('localhost',8912))  #FIXME need config param or something here
+
+        conn_attempts = 0
+        connected = False
+        while not connected and (conn_attempts < 5):
+            try :
+                self.sock.connect(('localhost',8912))  #FIXME need config param or something here
+                connected = True
+            except:
+                conn_attempts += 1
+                print("failed to connected to server , attempt "+repr(conn_attempts))
+                time.sleep(1)
+
+        print ("connected to server")
         #self.sock.setblocking(0)
 
     def tearDown(self):

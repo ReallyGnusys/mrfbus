@@ -15,8 +15,11 @@
 ###############################################################################
 
 
-GCC=gcc
-LD=ld
+GCC=g++
+LD=g++
+#GCC=gcc
+#LD=gcc
+
 OD=objdump -dt
 SIZE=size
 AOBJS=${MOBJ}/mrf_pipe_lnx.o ${MOBJ}/mrf_uart_lnx.o

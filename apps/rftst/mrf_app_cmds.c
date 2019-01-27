@@ -21,15 +21,15 @@
 
 //#include "mrf_app_cmds.h"
 
-const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
-  [ mrf_app_cmd_test      ] = {"APP_TEST"  , 0 , 0                        , sizeof(MRF_PKT_TIMEDATE)  ,  NULL  , mrf_app_task_test  },
-  [ mrf_app_cmd_set_relay ]  = {"LED_ON" , 0  ,  sizeof(MRF_PKT_RELAY_STATE) , 0   ,  NULL  , mrf_app_led_on   },
+extern const MRF_CMD mrf_app_cmds[MRF_NUM_APP_CMDS] = {
+  {"APP_TEST"  , 0 , 0                        , sizeof(MRF_PKT_TIMEDATE)  ,  NULL  , mrf_app_task_test  },
+  {"LED_ON" , 0  ,  sizeof(MRF_PKT_RELAY_STATE) , 0   ,  NULL  , mrf_app_led_on   },
 
-  [ mrf_app_cmd_set_relay ]  = {"LED_OFF" , 0  ,  sizeof(MRF_PKT_RELAY_STATE) , 0   ,  NULL  , mrf_app_led_off   },
+  {"LED_OFF" , 0  ,  sizeof(MRF_PKT_RELAY_STATE) , 0   ,  NULL  , mrf_app_led_off   },
 
-  [ mrf_app_cmd_get_relay ]  = {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_get_relay   },
-  [ mrf_app_cmd_set_relay ]  = {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_set_relay   },
-  [ mrf_app_cmd_read_state] = {"READ_STATE", 0  , 0    , sizeof(MRF_PKT_RFMODTC_STATE)  ,  NULL  , mrf_app_read_state   },
+  {"GET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_get_relay   },
+  {"SET_RELAY" , 0  , sizeof(MRF_PKT_RELAY_STATE) , sizeof(MRF_PKT_RELAY_STATE)   ,  NULL  , mrf_app_set_relay   },
+  {"READ_STATE", 0  , 0    , sizeof(MRF_PKT_RFMODTC_STATE)  ,  NULL  , mrf_app_read_state   }
   
 };
 
