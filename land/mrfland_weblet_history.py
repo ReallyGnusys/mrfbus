@@ -84,7 +84,7 @@ class MrfLandWebletHistory(MrflandWeblet):
         else:
             sens = None
 
-        if sens:
+        if False:  # sens:    FIXME - what is this , generates javascript browser error - NOT VALID!!
             s += """
 <script type="text/javascript">
 """+to_json(sens)+"""

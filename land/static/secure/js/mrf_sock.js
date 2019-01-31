@@ -306,8 +306,8 @@ function mrf_auto_graph(label, data){
             if (fld == 'ts') // shouldn't happen
                 continue;
 
-            if (typeof(_sensor_averages[slabel][fld]) == 'undefined'){
-                console.error("failed to find fld  "+fld+"  in averages for "+slabel);
+            if (typeof(_sensor_averages[slabel][fld]) == 'undefined'){  // skip any flds not in graphs - system sends all outputs for now
+                //console.("failed to find fld  "+fld+"  in averages for "+slabel);
                 continue;
             }
 
@@ -337,9 +337,12 @@ function mrf_auto_graph(label, data){
         for (var slabel in data.sensors) {
 
             for (var fld in data.sensors[slabel])
-                _sensor_averages[slabel][fld].value.shift();
+                if (typeof(_sensor_averages[slabel][fld]) == 'undefined') {// skip any flds not in graphs - system sends all outputs for now
 
-            console.log("deleted old value for "+slabel+" "+fld+" "+fd);
+                    _sensor_averages[slabel][fld].value.shift();
+
+                    console.log("deleted old value for "+slabel+" "+fld+" "+fd);
+                }
 
         }
     }
