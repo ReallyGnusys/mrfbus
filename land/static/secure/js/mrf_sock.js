@@ -337,7 +337,7 @@ function mrf_auto_graph(label, data){
         for (var slabel in data.sensors) {
 
             for (var fld in data.sensors[slabel])
-                if (typeof(_sensor_averages[slabel][fld]) == 'undefined') {// skip any flds not in graphs - system sends all outputs for now
+                if (typeof(_sensor_averages[slabel][fld]) != 'undefined') {// skip any flds not in graphs - system sends all outputs for now
 
                     _sensor_averages[slabel][fld].value.shift();
 
