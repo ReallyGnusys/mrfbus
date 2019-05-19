@@ -633,8 +633,8 @@ class MrflandWeblet(object):
 
     def _eval_timer(self,label):
         sensmap =  self._relay_lut[label]['smap']
-        pl = self._relay_lut[label]['tag']
-        relay = self.rm.sensors[pl]
+        pl      =  self._relay_lut[label]['tag']
+        relay   = self.rm.sensors[pl]
         was_active = relay.req_val
         is_active = False
         for tn in self._relay_shares[pl]:
