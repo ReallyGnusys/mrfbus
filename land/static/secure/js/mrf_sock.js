@@ -363,33 +363,37 @@ function mrf_auto_graph(label, data){
 
 function plot_data_layout(sensors){
 
-       var data = [];
-        var layout = {
-            yaxis: {title: 'temp'},
-        };
-        for (tid in sensors.temp) {
-            tsens = sensors.temp[tid];
+    var data = [];
+    var lhs = Object.keys(sensors)[0];
+
+
+    var layout = {
+        yaxis: {title: lhs},
+    };
+        for (tid in sensors[lhs]) {
+            tsens = sensors[lhs][tid];
             console.log("plot_data_layout trying tsens "+tsens)
             data.push( {
-                x : _sensor_averages[tsens].temp.ts,
-                y : _sensor_averages[tsens].temp.value,
+                x : _sensor_averages[tsens][lhs].ts,
+                y : _sensor_averages[tsens][lhs].value,
                 name : tsens,
                 type : 'scatter'
             });
         }
-        // support optional graphing or relays on RHS second Y axis
-        if (typeof(sensors.relay) != 'undefined'){
+    // support optional graphing or relays on RHS second Y axis
+    if (Object.keys(sensors).length > 1){
+            rhs =  Object.keys(sensors)[1] //if (typeof(sensors.relay) != 'undefined'){
             layout.yaxis2 =  {
-                title: 'relay',
+                title: rhs,
                 overlaying: 'y',
                 side: 'right'
             };
-            for (tid in sensors.relay) {
+            for (tid in sensors[rhs]) {
                 //console.log("trying relay "+tsens)
-                tsens = sensors.relay[tid];
+                tsens = sensors[rhs][tid];
                 data.push( {
-                    x : _sensor_averages[tsens].relay.ts,
-                    y : _sensor_averages[tsens].relay.value,
+                    x : _sensor_averages[tsens][rhs].ts,
+                    y : _sensor_averages[tsens][rhs].value,
                     name : tsens,
                     yaxis : 'y2',
                     type : 'linear',

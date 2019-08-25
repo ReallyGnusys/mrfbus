@@ -25,7 +25,7 @@ from mrfland_regmanager import MrflandRegManager
 
 if __name__ == '__main__':
     #mrf_log_init()
-    define("mrfnet", type=int, help="mrfnet ID",default=0x25)
+    define("mrfnet", type=int, help="mrfnet ID",default=0x25)  # for tornado  - do we still need this?
 
     parse_command_line()
 

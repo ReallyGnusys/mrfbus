@@ -8,8 +8,9 @@ from collections import OrderedDict
 import socket
 import install
 import pdb
-
+from mrf_sens_period import MrfSensPeriod
 from mrflog import mrflog
+from mrf_structs import PktTimeDate
 
 import mrfland
 
@@ -216,6 +217,17 @@ class MrflandRegManager(object):
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))
 
+        self.period_timers = {}
+        self.period_lut = {}
+        if self.config.has_key('periods') and type(self.config['periods'])==type([]):
+            mrflog.warn("setting up period sensors")
+            pchan = 0
+            for pr in self.config['periods']:
+                sn = pr + '_PERIOD'  # sensor name
+                self.period_timers[pr] = {} # have dict of MrfTimer components for each period
+                psens = MrfSensPeriod(sn, None, 0, pchan)
+                pchan += 1
+                self.add_sensor(psens,'period')
         self.server = None
 
 
@@ -393,6 +405,58 @@ class MrflandRegManager(object):
         self.graph_insts += 1  # they need unique ids for plotly
         return s
 
+    def add_timer(self,app, name, tmr):  # timers control period sensors now - controls are in app, but evaluation is here
+        if tmr.period not in self.period_timers:
+            mrflog.error("adding timer %s for period %s failed - as not in period_timers"%(name,tmr.period))
+            return
+        if name in self.period_timers[tmr.period]:
+            mrflog.error("%s alread registered"%name)
+            return
+        self.period_timers[tmr.period][name] = tmr
+        self.period_lut[name] = tmr.period
+
+
+    def eval_period(self,pn):
+        if not pn in self.period_timers:
+            mrflog.error("%s not found in period_timers"%pn)
+        psn = pn + '_PERIOD'
+        persens =  self.sensors[psn]
+        mrflog.warn("evaluating period for sensor %s"%repr(persens))
+        was_active = persens.output['active']
+        is_active = False
+
+        for tn in self.period_timers[pn]:
+            tmr = self.period_timers[pn][tn]
+            tn_act = tmr.is_active()
+            is_active = is_active or tn_act
+            mrflog.warn("%s tn is_active %s "%(tn,repr(tn_act)))
+
+        mrflog.warn("evaluated period for sensor %s was_active %s is_active %s"%(repr(persens),repr(was_active),repr(is_active)))
+
+        if was_active != is_active:
+            mrflog.warn("sensor changing to %s"%repr(is_active))
+            inp = {}
+            inp['active'] = is_active
+            td = PktTimeDate()
+            td.set(datetime.datetime.now())
+            inp['date']   = td
+            persens.input(inp)
+
+    def timer_changed(self,app,name):
+        if not name in self.period_lut:
+            mrflog.error("%s not found in period_lut"%name)
+            return
+        pn = self.period_lut[name]
+        mrflog.warn("timer_changed %s for period %s"%(name,pn))
+        tmr = self.period_timers[pn][name]
+        mrflog.warn(repr(tmr))
+        self.eval_period(pn)
+        if tmr.en.val :   # make sure timers are set
+            for act in ['on','off']:
+                aval = tmr.__dict__[act]
+                self.set_timer( aval.tod , app, name , act)
+
+
     def set_timer(self, tod, app, tag, act):
         self.server.set_timer(tod,app,tag,act)
 
@@ -406,12 +470,13 @@ class MrflandRegManager(object):
 
     def timer_callback(self, app, tag , act):
         mrflog.warn("RegManager timer_callback, app %s tag %s act %s",app, tag,act)
-
+        self.timer_changed(app,tag)  # calling this will do
+        """
         if not self.weblets.has_key(app):
             mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
             return
         self.weblets[app]._timer_callback(tag, act)
-
+        """
         #for f in self.timers[tid]:
         #    f(tag,act)
     def senslookup(self,label):
@@ -585,19 +650,21 @@ class MrflandRegManager(object):
             mrflog.warn("enumerating sensors type %s"%cap)
             for ch in range(len(dev.caps[cap])):
                 sens = dev.caps[cap][ch]
-                if self.sensors.has_key(sens.label):
-                    mrflog.error("%s device_register duplicate sensor label %s"%sens.label)
-                    return
-                self.sensors[sens.label] = sens
-                if not self.senstypes.has_key(type(sens)):
-                    self.senstypes[type(sens)] = []
-                self.senstypes[type(sens)].append(sens)
-
-                if not self.senscaps.has_key(cap):
-                    self.senscaps[cap] = []
-                self.senscaps[cap].append(sens)
+                self.add_sensor(sens,cap)
 
                 mrflog.warn("chan %d type  %s"%(ch,type(sens)))
+    def add_sensor(self, sens,cap):
+        if self.sensors.has_key(sens.label):
+            mrflog.error("%s device_register duplicate sensor label %s"%sens.label)
+            return
+        self.sensors[sens.label] = sens
+        if not self.senstypes.has_key(type(sens)):
+            self.senstypes[type(sens)] = []
+        self.senstypes[type(sens)].append(sens)
+
+        if not self.senscaps.has_key(cap):
+            self.senscaps[cap] = []
+        self.senscaps[cap].append(sens)
 
     def subprocess(self, arglist, callback):
         mrflog.warn("RegManager subprocess call : arglist %s "%repr(arglist))

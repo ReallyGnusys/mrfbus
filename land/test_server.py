@@ -15,7 +15,7 @@ from mrfland_regmanager import MrflandRegManager
 from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_relays import MrfLandWebletRelays
 from mrfland_weblet_mem   import MrfLandWebletMem
-
+from mrfland_weblet_period_test import MrfLandWebletPeriodTest
 import install
 
 if __name__ == '__main__':
@@ -25,7 +25,8 @@ if __name__ == '__main__':
 
     rm = MrflandRegManager(
         {
-            'http_port'       : 8889
+            'http_port'       : 8889,
+            'periods'  : ["RAD2", "RAD20"]
         })
 
     MrfDevHost(rm, "host", 1)
@@ -73,6 +74,14 @@ if __name__ == '__main__':
                            'label': 'Devices'
                        })
 
+
+    MrfLandWebletPeriodTest(rm,
+                        {
+                           'tag'  : 'periods',
+                            'label': 'Periods',
+                            'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2', 'RAD20_P1','RAD20_P2']
+
+                       })
 
     ml =  MrflandServer(rm,
                         {

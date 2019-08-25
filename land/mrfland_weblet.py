@@ -239,8 +239,8 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self.val.__class__ == str:
             mrflog.warn("yes it's str")
             r = parse_timestr(self.val)
-            if r.__class__ == datetime.time:
-                mrflog.warn("yes it's time")
+            #if r.__class__ == datetime.time:
+            #    mrflog.warn("yes it's time")
             self.tod = r
         else:
             #mrflog.warn("check_tod he say no - got class %s val %s"%(self.val.__class__, repr(self.val)))
@@ -280,8 +280,10 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self._val != value:
             self._val = value
             self.check_tod()
+            mrflog.warn("var changed to %s - app %s name %s"%(repr(value),repr(self.app),repr(self.name)))
             self.updated(wsid=wsid)
-
+        else:
+            mrflog.warn("var not changed from  %s - app %s name %s"%(repr(value),repr(self.app),repr(self.name)))
 
 
     @property
@@ -379,8 +381,9 @@ class MrflandWebletVars(object):
         return dc
 
 class MrfTimer(object):
-    def __init__(self,name,en,on,off,active):
+    def __init__(self,name,period,en,on,off,active):
         self.name = name
+        self.period = period
         self.en   = en
         self.on   = on
         self.off  = off
@@ -426,8 +429,8 @@ class MrflandWeblet(object):
 
         self._timers = OrderedDict()
 
-        self._relay_lut = dict()
-        self._relay_shares = dict()
+        #self._relay_lut = dict()
+        #self._relay_shares = dict()
 
         if self.cdata.has_key('timers'):
             for tn in self.cdata['timers']:
@@ -445,12 +448,6 @@ class MrflandWeblet(object):
                     init_val = citem[1]
 
                 self.add_var(citem[0],init_val, **citem[2])
-                """
-                if type(citem[1]) == type(False):
-                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val))
-                elif type(citem[1]) == type(1) or type(citem[1]) == type(1.0):
-                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val, min_val= citem[3],max_val=citem[4],step=citem[5]))
-                """
 
         if hasattr(self, 'init'):
             self.init()
@@ -507,12 +504,22 @@ class MrflandWeblet(object):
 
 
 
+
+        if self.var.__dict__[name].__class__.__name__ == 'MrfWebletConfigVar':
+            self._cfg_touched = True
+        if hasattr(self,'var_changed'):
+            self.var_changed(name,wsid=wsid)
+
+
         # hmpff... see if this var belongs to a timer
 
         mob = MrflandWeblet._ret.match(name)
         if mob and self._timers.has_key(mob.group(1)):
             tn = mob.group(1)
             mrflog.warn("timer var changed %s  timer %s"%(name,tn))
+            self.rm.timer_changed(self.tag,tn)
+
+        """
             self._eval_timer(tn)
             tmr = self._timers[tn]
             if tmr.en.val :   # make sure timers are set
@@ -520,11 +527,7 @@ class MrflandWeblet(object):
                     aval = tmr.__dict__[act]
                     self.set_timer( aval.tod , tn , act)
 
-        if self.var.__dict__[name].__class__.__name__ == 'MrfWebletConfigVar':
-            self._cfg_touched = True
-        if hasattr(self,'var_changed'):
-            self.var_changed(name,wsid=wsid)
-
+        """
     def add_var(self, name, initval, **kwargs):
         v = None
 
@@ -567,10 +570,14 @@ class MrflandWeblet(object):
 
     def switch_timer(self, name):  # create a managed switch timer and associated vars
         mob = MrflandWeblet._rer.match(name)
-        if not mob:  # expect all labels to end in _on or _off
+        if not mob:  # expect all labels to end in _NNN - where NNN is unique for each first portion
             mrflog.error("%s switch_timer unexpected name %s"%(self.__class__.__name__, name))
             return
                  # try to find matching pump label
+
+        period = mob.group(1)
+
+        """
         pl = mob.group(1) + "_PUMP"
         mrflog.warn("trying to match timer label %s to pump %s"%(name,pl))
 
@@ -593,7 +600,7 @@ class MrflandWeblet(object):
         if not self._relay_shares.has_key(pl):
             self._relay_shares[pl] = dict()
         self._relay_shares[pl][name] = True  # this is just a lookup for keys, val doesn't matter
-
+        """
         # create vars for timer on, off, enable and active
 
         en = name+'_en'
@@ -612,9 +619,10 @@ class MrflandWeblet(object):
         off_var = self.var.__dict__[off]
         active_var = self.var.__dict__[active]
 
-        self._timers[name] = MrfTimer(name,en_var,on_var,off_var,active_var)
+        tmr = MrfTimer(name,period,en_var,on_var,off_var,active_var)
+        self._timers[name] = tmr
 
-
+        self.rm.add_timer(self.tag,name,tmr)
 
     def _timer_callback(self, label, act):
         mrflog.warn("%s : _timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
@@ -632,7 +640,7 @@ class MrflandWeblet(object):
             self.timer_callback(label,act)
 
     def _eval_timer(self,label):
-        sensmap =  self._relay_lut[label]['smap']
+        #sensmap =  self._relay_lut[label]['smap']
         pl      =  self._relay_lut[label]['tag']
         relay   = self.rm.sensors[pl]
         was_active = relay.req_val
@@ -675,6 +683,7 @@ class MrflandWeblet(object):
 
             s += """
             <tr><td>"""+self.var.__dict__[vname].name+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
+            self.var.__dict__[vname].public = True
 
         s += """
           </tbody>
