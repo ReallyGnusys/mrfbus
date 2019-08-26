@@ -187,7 +187,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
     def var_changed(self,name,wsid=None):
         #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
-
+        """
         if name == 'enabled':
             if self.var.__dict__[name].val:
                 self.var.state.set('REST')
@@ -198,28 +198,30 @@ class MrfLandWebletHotWater(MrflandWeblet):
             else:
                 next_state = 'DISABLED'
                 self.hx_relay.set(0)
-
+        """
         if name != 'state':  # otherwise infinite recursion!
             self.state_update()
 
 
-
+    # check/set hx_relay state for every input change
     def state_update(self, timeout = False):
         next_state = self.var.state.val
+        pump_curr = self.var.hx_relay.val
+
+        pump_next  = 0
 
         if self.var.enabled.val == False:
             next_state = 'DISABLED'
-
         elif self.var.state.val == 'REST':
             if timeout:
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
             if self.var.tank_top.val < (self.var.target_temp.val - self.var.hysteresis.val):
-                if self.var.acc_top.val > (self.var.tank_top.val + 12.0):
+                if self.var.acc_top.val > (self.var.tank_top.val + self.var.min_head.val):
                     if self.var.hx_flow.val > (self.var.tank_top.val - 3.0):
                         mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                         next_state = 'CHARGE1'
-                        self.hx_relay.set(1)
+                        pump_next = 1
                         self.set_timeout(60*10)
 
                     else:
@@ -230,11 +232,12 @@ class MrfLandWebletHotWater(MrflandWeblet):
         elif self.var.state.val == 'PREPUMP':
             if timeout or self.var.hx_flow.val > (self.var.tank_top.val - 3.0):
                 self.clear_rad_timer()
-                self.hx_relay.set(1)
+                pump_next = 1
                 next_state = 'CHARGE1'
                 self.set_timeout(60*10)
 
         elif self.var.state.val == 'CHARGE1':
+            pump_next = 1
             if timeout:
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 next_state = 'CHARGING'
@@ -243,12 +246,12 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 next_state = 'REST'
                 self.set_timeout(60*60*self.var.min_wait_hours.val)
-                self.hx_relay.set(0)
-
+                pump_next = 0
 
         elif self.var.state.val == 'CHARGING':
 
             trans = False
+            pump_next = 1
 
             if timeout:
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
@@ -267,9 +270,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 trans = True
 
             if trans:
-                self.hx_relay.set(0)
+                pump_next = 0
                 next_state = 'REST'
                 self.set_timeout(60*60*self.var.min_wait_hours.val)   # wait 2 hours before checking again
+
+        if pump_next != pump_curr:
+            mrflog.warn("pump_next %d != pump_curr - setting hx_relay to %d"%(pump_next,pump_curr,pump_next))
+            self.hx_relay.set(pump_next)
 
         if next_state != self.var.state.val:
             self.var.state.set(next_state)
