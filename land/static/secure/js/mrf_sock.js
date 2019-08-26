@@ -69,22 +69,6 @@ function ParseJsonString(str) {
     return obj;
 }
 
-/* retiring pending appeal ..
-
-function convert_obj_date(obj){
-    if ((typeof obj == 'object') && (typeof obj.date == 'string'))
-        obj.date = new Date(obj.date);
-    return obj;
-
-}
-
-function convert_obj_date_name(obj,name){
-    if ((typeof obj == 'object') &&  ( obj != null ) && obj.hasOwnProperty(name) &&  ( typeof obj[name] == 'string'))
-        obj[name] = new Date(obj[name]);
-    return obj;
-
-}
-*/
 
 function MrfSocket(socket){
     this.set_socket(socket);
@@ -286,8 +270,8 @@ function mrfgraph(app, graph, data){
 
 
 function mrf_auto_graph(label, data){
-    console.log("mrf_auto_graph "+label);
-    console.log(data);
+    //console.log("mrf_auto_graph "+label);
+    //console.log(data);
     dbg = false
 
 
@@ -355,7 +339,7 @@ function mrf_auto_graph(label, data){
         plot = plots[idx];
         var divid = plot.getAttribute("id");
         var dl = plot_data_layout($(plot).data("sensors"));
-        console.log("trying to update plot "+divid);
+        //console.log("trying to update plot "+divid);
         Plotly.update(divid,dl.data,dl.layout);
         //console.log("updated plot "+divid);
     }
@@ -372,7 +356,7 @@ function plot_data_layout(sensors){
     };
         for (tid in sensors[lhs]) {
             tsens = sensors[lhs][tid];
-            console.log("plot_data_layout trying tsens "+tsens)
+            //console.log("plot_data_layout trying tsens "+tsens)
             data.push( {
                 x : _sensor_averages[tsens][lhs].ts,
                 y : _sensor_averages[tsens][lhs].value,
