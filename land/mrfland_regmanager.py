@@ -436,7 +436,7 @@ class MrflandRegManager(object):
         if was_active != is_active:
             mrflog.warn("sensor changing to %s"%repr(is_active))
             inp = {}
-            inp['active'] = is_active
+            inp['active'] = int(is_active)
             td = PktTimeDate()
             td.set(datetime.datetime.now())
             inp['date']   = td

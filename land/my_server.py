@@ -31,9 +31,11 @@ if __name__ == '__main__':
 
 
     rm = MrflandRegManager( {
-            'http_port'       : 8888,
-            'db_uri'          : install.db_uri
-        })
+        'http_port'       : 8888,
+        'db_uri'          : install.db_uri,
+        'periods'  : ["RAD1", "RAD2","DHW1","DHW2","UFH"]
+
+    })
 
     MrfDevHost(rm, "host", 1)
 
@@ -81,6 +83,7 @@ if __name__ == '__main__':
                              'label'      : 'Main Rads',
                              'rad'        : 'RAD1',
                              'pump'       : 'RAD1_PUMP',
+                             'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB1_FLOW',
                              'retsens'    : 'RAD1_RET',
                              'timers'     :  [ 'RAD1_P0', 'RAD1_P1' , 'RAD1_P2']
@@ -96,6 +99,7 @@ if __name__ == '__main__':
                              'label'      : 'Guest Rads',
                              'rad'        : 'RAD2',
                              'pump'       : 'RAD2_PUMP',
+                             'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB2_FLOW',
                              'retsens'    : 'HB2_RET',
                              'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2']
@@ -149,7 +153,7 @@ if __name__ == '__main__':
                         {
                             'tag':'timers',
                             'label':'Timers',
-                            'timers':  [ "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
+                            'timers':  ["UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
 
                         })
 

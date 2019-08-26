@@ -132,6 +132,7 @@ class PktResp(MrfStruct):
 class PktDeviceInfo(MrfStruct):
     _fields_ = [
         ("dev_name", c_uint8*10),
+        ("arch"    , c_uint8*10),
         ("mrfid", c_uint8),
         ("netid", c_uint8),
         ("num_buffs", c_uint8),
@@ -240,6 +241,13 @@ class PktNDR(MrfStruct):
         ("hrsc", c_uint8),
         ("hdest", c_uint8)
     ]
+
+
+class PktRelayState(MrfStruct):
+    _fields_ = [
+        ("chan", c_uint8),
+        ("val", c_uint8)
+        ]
 
 
 # FIXME should be able to generate core command set arg and return templates from C here

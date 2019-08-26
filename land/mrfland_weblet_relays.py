@@ -14,11 +14,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
+from mrf_sens_relay import MrfSensRelay
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable
 from mrflog import mrflog
+from collections import OrderedDict
 
 class MrfLandWebletRelays(MrflandWeblet):
     def init(self):
@@ -26,18 +27,18 @@ class MrfLandWebletRelays(MrflandWeblet):
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
-        if not self.rm.senstypes.has_key(MrfSensPtRelay):
-            mrflog.error("%s post_init failed to find sensor type MrfSensPtRelay in rm"%self.__class__.__name__)
+        if not self.rm.senstypes.has_key(MrfSensRelay):
+            mrflog.error("%s post_init failed to find sensor type MrfSensRelay in rm"%self.__class__.__name__)
             return
-        self.sl = self.rm.senstypes[MrfSensPtRelay]
+        self.sl = self.rm.senstypes[MrfSensRelay]
 
-        mrflog.info("num MrfSensPtRelay found was %d"%len(self.sl))
+        mrflog.info("num MrfSensRelay found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
-        mrflog.info("MrfSensPtRelay : %s"%repr(self.slabs))
+        mrflog.info("MrfSensRelay : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
@@ -45,13 +46,13 @@ class MrfLandWebletRelays(MrflandWeblet):
         mrflog.warn("%s run_init .. clearing relay states")
         for s in self.sens.keys():
             self.sens[s].clear()
-        
+
     def sens_callback(self, label, data ):
         mrflog.info("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
-                          
-        
-    
+
+
+
     def pane_html(self):
         """ want to display pt1000sens output stucture with column of controls"""
         s =  """
@@ -89,8 +90,8 @@ class MrfLandWebletRelays(MrflandWeblet):
         cdata['val'] = data['val']
         param = PktRelayState()
         param.dic_set(cdata)
-        
+
         mrflog.info("cmd_mrfctrl have data %s"%repr(data))
         self.rm.devupdaten(self.tag,sensmap['addr'],'SET_RELAY',param)
-    
+
         """

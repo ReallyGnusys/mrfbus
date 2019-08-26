@@ -21,19 +21,19 @@ from mrf_structs import *
 
 class MrfSensPeriod(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('active' , bool) ]  # hmspff
+                  ('active' , int) ]  # hmspff
 
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),
                    ('active' , bool )
     ]
-    _history_ =  { 'fields' : ['active']
+    _history_ =  { 'fields' : ['int']
                  }
     _stype_ = 'relay'
     def init(self):
         self.clear()
     def clear(self):
-        self.active = False
+        self.active = 0
 
     def genout(self,indata):
         outdata = dict()

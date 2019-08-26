@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,7 +23,7 @@ const uint8 _mrfid = MRFID;
 
 #define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
 
-const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) ,SYM_NAME(ARCH),  MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
 const MRF_PKT_SYS_INFO sys_info        = {  SYM_NAME(GITSH), SYM_NAME(MRFBLD), /*(const uint8)*/MRF_NUM_SYS_CMDS,GITMOD };
 const MRF_PKT_APP_INFO app_info        = {SYM_NAME(MRF_APP), MRF_NUM_APP_CMDS};
 
