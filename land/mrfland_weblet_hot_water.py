@@ -14,9 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
+from mrfdev_pt1000 import MrfSensPt1000
+from mrf_sens_relay import MrfSensRelay
+
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar
 from mrflog import mrflog
 import re
@@ -32,6 +34,20 @@ class MrfLandWebletHotWater(MrflandWeblet):
                  ('hysteresis'   ,  4.0   , { 'min_val' :  2.0,  'max_val' :  12.0, 'step' : 1.0})
     ]
 
+    def __init__(self, rm, cdata, vdata={}):
+        if not 'rad' in cdata:
+            mrflog.error('no rad in cdata')
+            self.radtimer = None
+        else:
+            pumpname = cdata['rad'] + '_PUMP'
+            timer_name = cdata['rad'] + '_dhwcirculate' # create new timer for rad to allow us to pump cold water out of pipes
+            if not 'timers' in cdata:
+                cdata['timers'] = []
+            cdata['timers'].append(timer_name)
+            mrflog.warn("added timer "+timer_name)
+            self.radtimer = timer_name
+
+        super(MrfLandWebletHotWater, self).__init__(rm,cdata,vdata)
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
 
@@ -43,10 +59,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
 
-        ## expect MrfSensPtRelay types
+        ## expect MrfSensRelay types
 
-        if not self.rm.senstypes.has_key(MrfSensPtRelay):
-            mrflog.error("%s post_init failed to find sensor type MrfSensPtRelay in rm"%self.__class__.__name__)
+        if not self.rm.senstypes.has_key(MrfSensRelay):
+            mrflog.error("%s post_init failed to find sensor type MrfSensRelay in rm"%self.__class__.__name__)
             return
 
 
@@ -112,6 +128,21 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.add_var('state','REST')
 
 
+        # set timer vars for convenience
+        # place holder for timer vars set in init
+        self.rtimer_onv = None
+        self.rtimer_offv = None
+        self.rtimer_actv = None
+
+        if not self.radtimer:
+            mrflog.error("radtimer not set!")
+            return
+        tmr = self._timers[self.radtimer]
+        self.rtimer_onv  = tmr.__dict__['on']
+        self.rtimer_offv = tmr.__dict__['off']
+        self.rtimer_env  = tmr.__dict__['en']
+        self.rtimer_actv = tmr.__dict__['active']
+
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
         # start timer
@@ -128,6 +159,26 @@ class MrfLandWebletHotWater(MrflandWeblet):
         td  = timedelta(seconds = seconds)
         tod = now + td
         self.set_timer( tod.time() , 'state' , 'TO')
+
+    def set_rad_timer(self,seconds): # pulse on rad timer if we need to pump cold water out of pipe before charge
+        if not self.radtimer:
+            mrflog.error("radtimer not set!")
+            return
+        start = datetime.datetime.now()
+        end = start + datetime.timedelta(seconds = seconds)
+        self.rtimer_onv.set(start.strftime("%H:%M"))
+        self.rtimer_offv.set(end.strftime("%H:%M"))
+        self.rtimer_env.set(True)
+
+    def clear_rad_timer(self): # pulse on rad timer if we need to pump cold water out of pipe before charge
+        if not self.radtimer:
+            mrflog.error("radtimer not set!")
+            return
+
+        self.rtimer_onv.set("00:00")
+        self.rtimer_offv.set("00:00")
+        self.rtimer_env.set(False)
+
 
     def timer_callback(self, label, act):
         mrflog.warn("%s : timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
@@ -173,12 +224,12 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
                     else:
                         next_state = 'PREPUMP'
-                        self.rad_relay.force(1)
+                        self.set_rad_timer(60*4)
                         self.set_timeout(60*4)
 
         elif self.var.state.val == 'PREPUMP':
             if timeout or self.var.hx_flow.val > (self.var.tank_top.val - 3.0):
-                self.rad_relay.release()
+                self.clear_rad_timer()
                 self.hx_relay.set(1)
                 next_state = 'CHARGE1'
                 self.set_timeout(60*10)

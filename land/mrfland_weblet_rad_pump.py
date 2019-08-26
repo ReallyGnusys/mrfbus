@@ -14,9 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
+
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
+from mrf_sens_relay import MrfSensRelay
+from mrfdev_pt1000  import MrfSensPt1000
 from mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar, mrfctrl_butt_html
 from mrflog import mrflog
 import re
@@ -42,10 +44,10 @@ class MrfLandWebletRadPump(MrflandWeblet):
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
 
-        ## expect MrfSensPtRelay types
+        ## expect MrfSensRelay types
 
-        if not self.rm.senstypes.has_key(MrfSensPtRelay):
-            mrflog.error("%s post_init failed to find sensor type MrfSensPtRelay in rm"%self.__class__.__name__)
+        if not self.rm.senstypes.has_key(MrfSensRelay):
+            mrflog.error("%s post_init failed to find sensor type MrfSensRelay in rm"%self.__class__.__name__)
             return
 
 
@@ -79,7 +81,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
         # find period sensor
 
         sn = self.cdata['rad'] + "_PERIOD"
-        self.periodsens = self.rm.sens_search(self.cdata['flowsens'])
+        self.periodsens = self.rm.sens_search(sn)
         self.add_var('active',self.periodsens, field='active')
 
         # find store sensor
@@ -151,7 +153,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
     def var_changed(self,name,wsid):
         mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
-        pump_curr = self.var.pump.val;
+        pump_curr = self.var.pump.val
 
         if not self.var.active.val: # only turn pump on when period active
             pump_next = False
@@ -183,34 +185,6 @@ class MrfLandWebletRadPump(MrflandWeblet):
         else:
             mrflog.warn("leaving pump %s"%repr(pump_next))
 
-
-    def var_changed_tbd(self,name,wsid):
-        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
-        # manage P0 timer expiry , simply clear associated variables
-        if name == self.cdata['rad']+'_P0' + '_active':
-            mrflog.warn(self.cdata['rad']+'_P0' + '_active changed to %s'%repr(self.var.__dict__[name]))
-            if self.var.__dict__[name].val == False:
-                mrflog.warn(self.cdata['rad']+'_P0' + '_active is False')
-                tmr = self._timers[self.cdata['rad']+'_P0']
-                onv = tmr.__dict__['on']
-                offv = tmr.__dict__['off']
-                env = tmr.__dict__['en']
-                onv.set("00:00")
-                offv.set("00:00")
-                env.set(False)
-        elif name == 'return_temp':
-            # modulate pump to limit return temperature
-            #mrflog.warn("rad return temp changed")
-            if self.var.state.val == 'UP':
-                if self.var.return_temp.val > self.var.max_return.val:
-                    mrflog.warn("%s rad upper return temp limit reached forcing off")
-                    self.var.state.set("DOWN")
-                    self.pump.force(0)
-            elif self.var.state.val == 'DOWN':
-                if self.var.return_temp.val < (self.var.max_return.val - self.var.hysterisis.val):
-                    mrflog.warn("%s rad lower return temp limit reached releasing pump control")
-                    self.var.state.set("UP")
-                    self.pump.release()
 
 
 

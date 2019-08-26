@@ -470,15 +470,15 @@ class MrflandRegManager(object):
 
     def timer_callback(self, app, tag , act):
         mrflog.warn("RegManager timer_callback, app %s tag %s act %s",app, tag,act)
-        self.timer_changed(app,tag)  # calling this will do
-        """
+
+        if tag in self.period_lut:
+            return self.timer_changed(app,tag)  # calling this will do
+
         if not self.weblets.has_key(app):
             mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
             return
         self.weblets[app]._timer_callback(tag, act)
-        """
-        #for f in self.timers[tid]:
-        #    f(tag,act)
+
     def senslookup(self,label):
         if self.sensmap.has_key(label):
             return self.sensmap[label]

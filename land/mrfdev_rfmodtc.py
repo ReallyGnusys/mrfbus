@@ -25,8 +25,9 @@ from math import sqrt
 from mrflog import mrflog
 from collections import deque
 
+from mrf_sens_relay import MrfSensRelay
 
-from mrfdev_pt1000 import PktRelayState, MrfSensPtRelay
+#from mrfdev_pt1000 import PktRelayState, MrfSensPtRelay
 MAX_RTDS = 1
 
 class PktRfmodtcState(MrfStruct):
@@ -36,7 +37,7 @@ class PktRfmodtcState(MrfStruct):
         ("relay_state", c_uint8),
         ("tempX100", c_uint32*MAX_RTDS)
         ]
-    
+
 
 mrf_app_cmd_test = 128
 mrf_cmd_led_on   = 129
@@ -78,7 +79,7 @@ RfmodtcAppCmds = {
         'param' : None,
         'resp'  : PktRfmodtcState
     },
-    
+
 
 }
 
@@ -87,23 +88,23 @@ RfmodtcAppCmds = {
 class MrfSensTempX100(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
                   ('tempX100' , long) ]  # hmpff
-    
+
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),
                    ('temp'      , float) ]
 
     _history_ =  { 'fields' : ['temp']
-                 } 
+                 }
 
     _stype_    =  'temp'
 
-    
+
     def filter(self, ntaps):
         self.ftaps = deque()
 
         for i in range(ntaps):
             self.ftaps.append(0)
-            
+
     def filter_out(self,newval): # cheap and nasty filter option
         self.ftaps.popleft()
         self.ftaps.append(newval)
@@ -112,9 +113,9 @@ class MrfSensTempX100(MrfSens):
             tot += v
         mo = 1.0 * tot / len(self.ftaps)
         return int(mo)
-        
+
     def genout(self,indata):
-            
+
         outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
         outdata['send_date'] = indata['date'].to_datetime()
@@ -135,23 +136,23 @@ class MrfSensTempX100(MrfSens):
         #mrflog.info("%s gend output type %s data %s"%(self.__class__.__name__, type(outdata), outdata))
         self.last_temp = outdata['temp']
         return outdata
-        
 
 
 
-        
+
+
 class DevRfmodtc(MrfDev):
 
     _capspec = {
         'temp' : MrfSensTempX100,
-        'relay' : MrfSensPtRelay}                 
+        'relay' : MrfSensRelay}
     _cmdset = RfmodtcAppCmds
 
     def init(self):
-        self.filt_ind = 0 
+        self.filt_ind = 0
     def app_packet(self, hdr, param , resp):
         mrflog.info("%s app_packet type %s"%(self.__class__.__name__, type(resp)))
-        
+
         mrflog.info("DevRfmodtc app_packet, hdr %s param %s resp %s"%(repr(hdr), repr(param), repr(resp)))
 
         if param.type == mrf_cmd_read_state:
@@ -170,7 +171,7 @@ class DevRfmodtc(MrfDev):
                         'relay' :  (resp.relay_state >> ch) & 0x01
                 }
                 self.caps['relay'][ch].input(inp)
-                
+
 
         elif  param.type == mrf_cmd_set_relay or param.type == mrf_cmd_get_relay:
             now = datetime.datetime.now()
@@ -180,4 +181,3 @@ class DevRfmodtc(MrfDev):
                     'relay' :  resp.val
             }
             self.caps['relay'][resp.chan].input(inp)
-            
