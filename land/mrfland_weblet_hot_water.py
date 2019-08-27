@@ -26,30 +26,37 @@ from datetime import datetime, timedelta
 
 class MrfLandWebletHotWater(MrflandWeblet):
 
-    _config_ = [ ('enabled'      ,  False , {}),
+    _config_ = [
                  ('target_temp'  ,  60.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
                  ('delta_targ_rx',  8.0   , { 'min_val' :  6.0,  'max_val' :  10.0, 'step' : 0.5}),
                  ('min_wait_hours', 16.0   , { 'min_val' :  1.0,  'max_val' : 24.0, 'step' : 0.5}),
                  ('min_head',       10.0   , { 'min_val' :  9.0,  'max_val' : 12.0, 'step' : 0.5}),
+                 ('immersion_temp' ,  62.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
                  ('hysteresis'   ,  4.0   , { 'min_val' :  2.0,  'max_val' :  12.0, 'step' : 1.0})
     ]
 
     def __init__(self, rm, cdata, vdata={}):
+        if not 'timers' in cdata:
+            cdata['timers'] = []
         if not 'rad' in cdata:
             mrflog.error('no rad in cdata')
             self.radtimer = None
         else:
             pumpname = cdata['rad'] + '_PUMP'
             timer_name = cdata['rad'] + '_dhwcirculate' # create new timer for rad to allow us to pump cold water out of pipes
-            if not 'timers' in cdata:
-                cdata['timers'] = []
             cdata['timers'].append(timer_name)
             mrflog.warn("added timer "+timer_name)
             self.radtimer = timer_name
 
+
         super(MrfLandWebletHotWater, self).__init__(rm,cdata,vdata)
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
+
+        # make ref for IM tagperiod variable
+
+        self.im_period = self.var.__dict__[self.tagperiodvar['IM']]
+        self.hx_period = self.var.__dict__[self.tagperiodvar['HX']]
 
         # begin sanity checks
 
@@ -127,6 +134,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         self.add_var('state','REST')
 
+        ## normal var for heater hysterisis state
+        self.heater_state = 'UP'
+
 
         # set timer vars for convenience
         # place holder for timer vars set in init
@@ -185,33 +195,86 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.state_update(timeout=True)
 
 
-    def var_changed(self,name,wsid=None):
-        #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
-        """
-        if name == 'enabled':
-            if self.var.__dict__[name].val:
-                self.var.state.set('REST')
-                now = datetime.now()
-                td  = timedelta(seconds = 10)
-                tod = now + td
-                self.set_timer( tod.time() , 'state' , 'TO')
+
+    def run_init(self):
+        mrflog.warn("%s run_init"%(self.__class__.__name__))
+        # start timer
+
+        if self.hx_period.val == False:
+            self.var.state.set('DISABLED')
+
+        else:
+            self.var.state.set('IDLE')
+
+
+
+    def cmd_mrfctrl(self,data,wsid):
+        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+
+        if data['tab'] != 'timer_pulse':
+            return
+
+        tmr = self._timers[self.cdata['rad']+'_P0']
+        onv = tmr.__dict__['on']
+        offv = tmr.__dict__['off']
+        env = tmr.__dict__['en']
+        actv = tmr.__dict__['active']
+
+        if data['row'] == 'add':
+            mrflog.warn( "try to set timer to 5 mins")
+            start = datetime.datetime.now()
+
+            if actv.val:  # if timer active we add 5 mins otherwise set 5 mins from now
+                end = datetime.datetime.combine(start.date(),offv.tod) +  datetime.timedelta(minutes = self.var.pulse_time.val)
             else:
-                next_state = 'DISABLED'
-                self.hx_relay.set(0)
-        """
-        if name != 'state':  # otherwise infinite recursion!
-            self.state_update()
+                end = start + datetime.timedelta(minutes = self.var.pulse_time.val)
+
+            onv.set(start.strftime("%H:%M"))
+            offv.set(end.strftime("%H:%M"))
+            env.set(True)
+        elif data['row'] == 'clear':
+            mrflog.warn( "try to clear timer")
+            onv.set("00:00")
+            offv.set("00:00")
+            env.set(False)
 
 
-    # check/set hx_relay state for every input change
-    def state_update(self, timeout = False):
+    def var_changed(self,name,wsid):
+        if name == 'state':  # otherwise infinite recursion!
+            return
+        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+        self.state_update()
+    def state_update(self, timeout=False):
+
+        ## evalute Immersion heater rules for setting heater relay
+        heat_curr = self.var.heat_relay.val
+
+        ## eval hysterisis state of heater
+
+        if self.heater_state == 'UP' and self.var.tank_top.val > self.var.immersion_temp.val:
+            self.heater_state = 'DOWN'
+        elif self.heater_state == 'DOWN' and self.var.tank_top.val < ( self.var.immersion_temp.val - 1.5):
+            self.heater_state = 'UP'
+
+        ## set heater relay on whenever period is active and heater_state == UP
+        if self.im_period.val and self.heater_state == 'UP':
+            heat_next = 1
+        else:
+            heat_next = 0
+
+        if heat_next != heat_curr:
+            mrflog.warn("heat_next %d != heat_curr %d - setting heat_relay to %d"%(heat_next,heat_curr,heat_next))
+            self.heat_relay.set(heat_next)
+
+        # Control HX charging
         next_state = self.var.state.val
         pump_curr = self.var.hx_relay.val
-
         pump_next  = 0
 
-        if self.var.enabled.val == False:
+        if self.hx_period.val == False:
             next_state = 'DISABLED'
+        elif self.var.state.val == 'DISABLED' and self.hx_period.val:
+            next_state = 'IDLE'
         elif self.var.state.val == 'REST':
             if timeout:
                 next_state = 'IDLE'
@@ -287,16 +350,41 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
     def pane_html(self):
         s =  """
-        <h2>"""+self.label+"    "+self.var.tank_top.html+" &#176;C</h2>"
+        <h1>"""+self.label+"    "+self.var.tank_top.html+" &#176;C</h1>"
 
         s += self.rm.graph_inst({
             "temp" : [self.top_ts.label, self.flow_sens.label, self.return_sens.label, self.acc_sens.label],
             "relay": [self.hx_relay.label, self.rad_relay.label, self.heat_relay.label]
         })
+        s += """
+        <hr>
+        <h2>Immersion heater</h2>"""
+
+        s += self.html_var_table(
+            [
+                self.tagperiodvar['IM'],
+                self.var.tank_top.name,
+                self.var.heat_relay.name
+            ]
+        )
+        s += self.html_var_ctrl_table(
+            [
+                self.var.immersion_temp.name
+            ])
+
+        s += self.timer_ctrl_table(include_list=self.tagperiods['IM'])
+
 
         s += """
         <hr>
-        <h3>Status</h3>"""
+        <h2>Heat exchanger</h2>"""
+
+        s += self.html_var_table(
+            [
+                self.tagperiodvar['HX']
+            ]
+        )
+        s += self.timer_ctrl_table(include_list=self.tagperiods['HX'])
 
         s += self.html_var_table(
             [
@@ -305,20 +393,14 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.var.hx_flow.name,
                 self.var.hx_ret.name,
                 self.var.state.name,
-                self.var.enabled.name,
                 self.var.hx_relay.name,
-                self.var.rad_relay.name,
-                self.var.heat_relay.name
+                self.var.rad_relay.name
             ]
         )
 
-        s += """
-        <hr>
-        <h3>Config</h3>"""
 
         s += self.html_var_ctrl_table(
             [
-                self.var.enabled.name,
                 self.var.target_temp.name,
                 self.var.min_head.name,
                 self.var.min_wait_hours.name

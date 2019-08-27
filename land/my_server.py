@@ -33,7 +33,7 @@ if __name__ == '__main__':
     rm = MrflandRegManager( {
         'http_port'       : 8888,
         'db_uri'          : install.db_uri,
-        'periods'  : ["RAD1", "RAD2","DHW1","DHW2","UFH"]
+        'periods'  : ["RAD1", "RAD2","DHW1_HX","DHW1_IM", "DHW2_HX", "DHW2_IM", "UFH"]
 
     })
 
@@ -117,7 +117,9 @@ if __name__ == '__main__':
                               'rad'        : 'RAD1',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB1',
+                              'tagperiods' : ['HX','IM'],
                               'litres'     : 200
+
                           },
                           {
                               'target_temp': 60.0,
@@ -133,6 +135,7 @@ if __name__ == '__main__':
                               'rad'        : 'RAD2',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB2',
+                              'tagperiods' : ['HX','IM'],
                               'litres'     : 200
                           },
                           {

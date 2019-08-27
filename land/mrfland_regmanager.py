@@ -212,7 +212,7 @@ class MrflandRegManager(object):
         self.graph_insts = 0
         self.config = config
         self.comm = mrf_comm(log=mrflog)
-        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "":
+        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "" and not 'password' in self.config['db_uri']:
             from motor import motor_tornado
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))

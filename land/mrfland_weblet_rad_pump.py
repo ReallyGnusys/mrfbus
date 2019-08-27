@@ -107,9 +107,14 @@ class MrfLandWebletRadPump(MrflandWeblet):
         ## declare state var
 
         if self.var.return_temp.val < self.var.max_return.val:
-            self.add_var('state','UP')  # values UP DOWN , i.e. hysterisis ref select
+            self.add_var('state','UP', save=False)  # values UP DOWN , i.e. hysterisis ref select
         else:
-            self.add_var('state','DOWN')  # values UP DOWN , i.e. hysterisis ref select
+            self.add_var('state','DOWN', save=False)  # values UP DOWN , i.e. hysterisis ref select
+
+        ## normal vars to keep state of algo
+
+        self.return_state = 'UP'
+        self.store_state  = 'UP'
 
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
@@ -155,30 +160,33 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         pump_curr = self.var.pump.val
 
-        if not self.var.active.val: # only turn pump on when period active
-            pump_next = False
-            mrflog.warn("period active %s "%repr(self.var.active.val))
-        elif self.var.store_temp.val <  self.var.min_store.val:  # don't pump when store gets too cold
-            mrflog.warn("store_temp %.2f <  min_store %.2f"%(self.var.store_temp.val,self.var.min_store.val))
-            pump_next = False
-        elif self.var.state.val == 'UP':
-            if self.var.return_temp.val > self.var.max_return.val:
-                mrflog.warn("rad upper return temp limit reached turning off")
-                self.var.state.set("DOWN")
-                pump_next = False
-            else:
-                mrflog.warn("state is UP still pumping")
-                pump_next = True
+        ## eval hysterisis states
 
-        elif self.var.state.val == 'DOWN':
-            if self.var.return_temp.val < (self.var.max_return.val - self.var.hysterisis.val):
-                mrflog.warn("%s rad lower return temp limit reached turning on pump control")
-                self.var.state.set("UP")
-                pump_next = True
-            else:
-                mrflog.warn("state is DOWN still off")
-                pump_next = False
+        if self.return_state == 'UP'and self.var.return_temp.val > self.var.max_return.val:
+                self.return_state = 'DOWN'
+        elif self.return_state == 'DOWN' and  self.var.return_temp.val < (self.var.max_return.val - self.var.hysterisis.val):
+            self.return_state = 'UP'
 
+
+        if self.store_state == 'UP' and self.var.store_temp.val < self.var.min_store.val:
+                self.store_state == 'DOWN'
+        elif self.store_state == 'DOWN' and  self.var.store_temp.val >  (self.var.min_store.val + self.var.hysterisis.val):
+            self.store_state == 'UP'
+
+
+        if self.store_state == 'UP' and self.return_state == 'UP':  # for debug aid
+            self.var.state.set("UP")
+        else:
+            self.var.state.set("DOWN")
+
+        # determine pump setting
+
+        if self.var.active.val and self.var.state.val == 'UP': # only turn pump on when period active and hyst_up
+            pump_next = True
+        else:
+            pump_next = False
+
+        # set relay if not already correct
         if pump_next != pump_curr:
             mrflog.warn("setting pump to %s"%repr(pump_next))
             self.pump.set(pump_next)
@@ -212,6 +220,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         s += self.html_var_table(
             [
+                self.var.active.name,
                 self.var.store_temp.name,
                 self.var.flow_temp.name,
                 self.var.return_temp.name,
@@ -227,6 +236,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         s += self.html_var_ctrl_table(
             [
+                self.var. min_store.name,
                 self.var.max_return.name,
                 self.var.hysterisis.name,
                 self.var.pulse_time.name,

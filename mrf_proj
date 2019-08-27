@@ -169,16 +169,22 @@ function kill_devs {
 
 }
 
-[ $mode == build ] && echo "build complete" && exit 0
+if [ $mode == build ] ; then
+   if [ -n "${server}" ] ; then
+
+      [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1
+
+
+      [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
+      [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land/install_example.py" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
+   fi
+   echo "build complete" && exit 0
+
+fi
 
 
 if [ -n "${server}" ] ; then
 
-   [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1
-
-
-   [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
-   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land/install_example.py" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
    echo "" > ${LOGDIR}/mrfland.log
    sleep 1
    echo "starting server ./${server}"

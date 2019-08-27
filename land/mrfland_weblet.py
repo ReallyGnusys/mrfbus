@@ -426,6 +426,34 @@ class MrflandWeblet(object):
         self.var = MrflandWebletVars()
         self._cfg_touched = False
 
+        # add timers implied by tagperiods - assumes periods defined based on our tag in regmanager instantiation
+        if not 'timers' in  self.cdata:
+            self.cdata['timers'] = []
+
+        if 'tagperiodnum' in self.cdata:
+            tpn = self.cdata['tagperiodnum']
+        else:
+            tpn = 2
+
+        self.tagperiods = {} # can use in derived class to create timer controls etc
+
+        self.tagperiodvar = {} # keys above
+        if 'tagperiods' in self.cdata:
+            for ttmr in self.cdata['tagperiods']:
+                periodname = self.tag + '_' + ttmr+'_PERIOD'
+                if not ttmr in self.tagperiods:
+                    self.tagperiods[ttmr] = []
+                psens = self.rm.sensors[periodname]
+                mrflog.warn("creating tag period var "+psens.label)
+                self.add_var(psens.label, psens , field='active', graph=True)
+                self.tagperiodvar[ttmr] = psens.label
+
+                for tmri in range(tpn):
+
+                    ttn = self.tag + '_' + ttmr+'_'+str(tmri)
+                    self.cdata['timers'].append(ttn)
+                    self.tagperiods[ttmr].append(ttn)
+
 
         self._timers = OrderedDict()
 
@@ -801,7 +829,7 @@ class MrflandWeblet(object):
                 rocols[tc] = tcols[tc]
                 del tcols[tc]
 
-        return self.html_mc_var_table('Name',tcnames, tcols ,ctrl=True,rocols=rocols)
+        return self.html_mc_var_table('Timer',tcnames, tcols ,ctrl=True,rocols=rocols)
 
 
     def cmd(self,cmd, data,wsid=None):
