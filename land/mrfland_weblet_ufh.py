@@ -57,6 +57,11 @@ class MrfLandWebletUFH(MrflandWeblet):
             mrflog.error("%s , no ambient in data"%self.__class__.__name__)
             return
 
+        if not self.cdata.has_key('outside'):
+            mrflog.error("%s , no outside in data"%self.__class__.__name__)
+            return
+
+
         if not self.cdata.has_key('pump'):
             mrflog.error("%s , no pump in data"%self.__class__.__name__)
             return
@@ -100,6 +105,10 @@ class MrfLandWebletUFH(MrflandWeblet):
         # ambient
         self.ambientsens = self.rm.sens_search(self.cdata['ambient'])
         self.add_var('ambient',self.ambientsens, field='temp', graph=True)
+
+        # outside
+        self.outsidesens = self.rm.sens_search(self.cdata['outside'])
+        self.add_var('outside',self.outsidesens, field='temp', graph=True)
 
 
         # find relay
@@ -201,10 +210,10 @@ class MrfLandWebletUFH(MrflandWeblet):
 
     def pane_html(self):
         s =  """
-        <h2>"""+self.label+" "+ self.var.ambient.html + " &#176;C  #   "+self.var.tank_top.html+" &#176;C</h2>"
+        <h2>"""+self.label+" "+ self.var.ambient.html + " &#176;C  Outside "+self.var.outside.html+" &#176;C</h2>"
 
         s += self.rm.graph_inst({
-            "temp" : [self.flowsens.label, self.retsens.label, self.storesens.label],
+            "temp" : [self.ambientsens.label, self.outsidesens.label, self.flowsens.label, self.retsens.label, self.storesens.label],
             "relay": [self.pump.label]
         })
 
@@ -224,11 +233,11 @@ class MrfLandWebletUFH(MrflandWeblet):
         s += self.html_var_table(
             [
                 self.var.active.name,
-                self.var.store_temp.name,
                 self.var.flow_temp.name,
                 self.var.return_temp.name,
                 self.var.ambient.name,
                 self.var.pump.name,
+                self.var.store_temp.name,
                 self.var.state.name
 
             ]

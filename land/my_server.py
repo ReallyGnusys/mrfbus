@@ -83,6 +83,7 @@ if __name__ == '__main__':
                              'label'      : 'Lounge',
                              'period'     : 'UFH',
                              'ambient'    : 'LOUNGE_AMBIENT',
+                             'outside'    : 'OUTSIDE_AMBIENT',
                              'pump'       : 'UFH_PUMP',
                              'storesens'  : 'ACC_100',
                              'flowsens'   : 'UFH_FLOW',
