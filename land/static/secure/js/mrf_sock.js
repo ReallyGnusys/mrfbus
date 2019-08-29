@@ -348,7 +348,17 @@ function mrf_auto_graph(label, data){
 function plot_data_layout(sensors){
 
     var data = [];
-    var lhs = Object.keys(sensors)[0];
+    var lhs;
+
+    // FIXME hard coding here of numbers on LHS ( only one type - e.g. temp, memory ) - and logic on RHS ( 0 or 1 values)
+    // no built in way of determining type at present, hence following
+    if ('temp' in sensors)
+        lhs = 'temp';
+    else if('memory' in sensors)
+        lhs = 'memory';
+    else // default
+        lhs = Object.keys(sensors)[0];
+
 
 
     var layout = {
@@ -366,13 +376,19 @@ function plot_data_layout(sensors){
         }
     // support optional graphing or relays on RHS second Y axis
     if (Object.keys(sensors).length > 1){
-            rhs =  Object.keys(sensors)[1] //if (typeof(sensors.relay) != 'undefined'){
-            layout.yaxis2 =  {
+        if ('relay' in sensors)
+            rhs = 'relay';
+        else if('active' in sensors)
+            rhs = 'active';
+        else // default
+            rhs = Object.keys(sensors)[1];
+
+        layout.yaxis2 =  {
                 title: rhs,
                 overlaying: 'y',
                 side: 'right'
-            };
-            for (tid in sensors[rhs]) {
+        };
+        for (tid in sensors[rhs]) {
                 //console.log("trying relay "+tsens)
                 tsens = sensors[rhs][tid];
                 data.push( {
@@ -389,7 +405,9 @@ function plot_data_layout(sensors){
             }
         }
 
+
     /* FIXME! should be able to automate graph updates and shouldn't be copying */
+    /*
     for (tid in sensors.memory) {
         tsens = sensors.memory[tid];
         //console.log("plot_data_layout trying tsens "+tsens)
@@ -403,7 +421,7 @@ function plot_data_layout(sensors){
             type : 'scatter'
         });
         }
-
+        */
 
     return { data : data ,  layout : layout};
 }
