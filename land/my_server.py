@@ -11,11 +11,11 @@ from mrfdev_rfmodtc import DevRfmodtc
 
 from mrfland_weblet_temps  import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
-from mrfland_weblet_timers import MrfLandWebletTimers
 from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_weblet_rad_pump import MrfLandWebletRadPump
+from mrfland_weblet_ufh import MrfLandWebletUFH
 from mrfland_weblet_history import MrfLandWebletHistory
 
 from mrfland_server import MrflandServer
@@ -77,6 +77,20 @@ if __name__ == '__main__':
 
                     })
 
+    MrfLandWebletUFH(rm,
+                         {
+                             'tag'        : 'ufh1',
+                             'label'      : 'Lounge',
+                             'period'     : 'UFH',
+                             'ambient'    : 'LOUNGE_AMBIENT',
+                             'pump'       : 'UFH_PUMP',
+                             'storesens'  : 'ACC_100',
+                             'flowsens'   : 'UFH_FLOW',
+                             'retsens'    : 'UFH_RET',
+                             'timers'     :  [ 'UFH_P0', 'UFH_P1' , 'UFH_P2']
+                         })
+
+
     MrfLandWebletRadPump(rm,
                          {
                              'tag'        : 'rad1',
@@ -87,10 +101,6 @@ if __name__ == '__main__':
                              'flowsens'   : 'HB1_FLOW',
                              'retsens'    : 'RAD1_RET',
                              'timers'     :  [ 'RAD1_P0', 'RAD1_P1' , 'RAD1_P2']
-                         },
-                         {
-                             'max_return' : 45.0,
-                             'hysterisis' : 5.0
                          })
 
     MrfLandWebletRadPump(rm,
@@ -103,10 +113,6 @@ if __name__ == '__main__':
                              'flowsens'   : 'HB2_FLOW',
                              'retsens'    : 'HB2_RET',
                              'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2']
-                         },
-                         {
-                             'max_return' : 45.0,
-                             'hysterisis' : 5.0
                          })
 
 
@@ -152,13 +158,6 @@ if __name__ == '__main__':
                            'label': 'Temperatures'
                        })
 
-    MrfLandWebletTimers(rm,
-                        {
-                            'tag':'timers',
-                            'label':'Timers',
-                            'timers':  ["UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
-
-                        })
 
     MrfLandWebletRelays(rm,
                         {

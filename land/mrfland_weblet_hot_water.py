@@ -360,6 +360,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
         <hr>
         <h2>Immersion heater</h2>"""
 
+        s += self.timer_ctrl_table(include_list=self.tagperiods['IM'])
+
         s += self.html_var_table(
             [
                 self.tagperiodvar['IM'],
@@ -372,19 +374,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.var.immersion_temp.name
             ])
 
-        s += self.timer_ctrl_table(include_list=self.tagperiods['IM'])
-
 
         s += """
         <hr>
         <h2>Heat exchanger</h2>"""
+
+        s += self.timer_ctrl_table(include_list=self.tagperiods['HX'])
 
         s += self.html_var_table(
             [
                 self.tagperiodvar['HX']
             ]
         )
-        s += self.timer_ctrl_table(include_list=self.tagperiods['HX'])
 
         s += self.html_var_table(
             [
