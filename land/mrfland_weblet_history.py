@@ -38,8 +38,8 @@ class MrfLandWebletHistory(MrflandWeblet):
         self.graph_type = 'Ambient'
 
 
-    def cmd_mrfctrl(self,data,wsid):
-        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+    def mrfctrl_handler(self,data,wsid):
+        mrflog.warn("mrfctrl_handler here, data was %s"%repr(data))
 
         if data['tab'] != self.graphid:
             return

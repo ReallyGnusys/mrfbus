@@ -124,7 +124,7 @@ if __name__ == '__main__':
                               'rad'        : 'RAD1',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB1',
-                              'tagperiods' : ['HX','IM'],
+                              'tagperiods' : [{'name':'HX','pulse' :True}, {'name' : 'IM','pulse':True}],
                               'litres'     : 200
 
                           },
@@ -142,7 +142,7 @@ if __name__ == '__main__':
                               'rad'        : 'RAD2',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB2',
-                              'tagperiods' : ['HX','IM'],
+                              'tagperiods' : [{'name':'HX','pulse' :True}, {'name' : 'IM','pulse':True}],
                               'litres'     : 200
                           },
                           {

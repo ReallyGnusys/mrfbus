@@ -116,6 +116,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
         self.return_state = 'UP'
         self.store_state  = 'UP'
 
+
     def run_init(self):
         mrflog.warn("%s run_init"%(self.__class__.__name__))
         # start timer
@@ -124,35 +125,16 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
 
-    def cmd_mrfctrl(self,data,wsid):
-        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
-
+    def mrfctrl_handler (self,data,wsid):
+        mrflog.warn( "mrfctrl_handler here (returning), data was %s"%repr(data))
+        return
         if data['tab'] != 'timer_pulse':
             return
 
-        tmr = self._timers[self.cdata['rad']+'_P0']
-        onv = tmr.__dict__['on']
-        offv = tmr.__dict__['off']
-        env = tmr.__dict__['en']
-        actv = tmr.__dict__['active']
-
         if data['row'] == 'add':
-            mrflog.warn( "try to set timer to 5 mins")
-            start = datetime.datetime.now()
-
-            if actv.val:  # if timer active we add 5 mins otherwise set 5 mins from now
-                end = datetime.datetime.combine(start.date(),offv.tod) +  datetime.timedelta(minutes = self.var.pulse_time.val)
-            else:
-                end = start + datetime.timedelta(minutes = self.var.pulse_time.val)
-
-            onv.set(start.strftime("%H:%M"))
-            offv.set(end.strftime("%H:%M"))
-            env.set(True)
+            self.pulse_timer_ctrl(self.cdata['rad']+'_P0',self.var.pulse_time.val*60)
         elif data['row'] == 'clear':
-            mrflog.warn( "try to clear timer")
-            onv.set("00:00")
-            offv.set("00:00")
-            env.set(False)
+            self.pulse_timer_ctrl(self.cdata['rad']+'_P0',0)
 
 
     def var_changed(self,name,wsid):
@@ -205,13 +187,9 @@ class MrfLandWebletRadPump(MrflandWeblet):
             "relay": [self.pump.label]
         })
 
-        s += mrfctrl_butt_html(self.tag,'timer_pulse','add','5mins', cls='glyphicon-time')
-        s += mrfctrl_butt_html(self.tag,'timer_pulse','clear','clear', cls='glyphicon-remove')
 
+        s += self.timer_ctrl_table()
 
-        s += self.timer_ctrl_table(include_list=[self.cdata['rad']+'_P0'],ro=True)
-
-        s += self.timer_ctrl_table(exclude_list=[self.cdata['rad']+'_P0'])
 
 
         s += """

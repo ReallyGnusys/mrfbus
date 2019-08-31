@@ -27,12 +27,17 @@ from datetime import datetime, timedelta
 class MrfLandWebletHotWater(MrflandWeblet):
 
     _config_ = [
-                 ('target_temp'  ,  60.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
-                 ('delta_targ_rx',  8.0   , { 'min_val' :  6.0,  'max_val' :  10.0, 'step' : 0.5}),
-                 ('min_wait_hours', 16.0   , { 'min_val' :  1.0,  'max_val' : 24.0, 'step' : 0.5}),
-                 ('min_head',       10.0   , { 'min_val' :  9.0,  'max_val' : 12.0, 'step' : 0.5}),
-                 ('immersion_temp' ,  62.0  , { 'min_val' : 40.0,  'max_val' :  65.0, 'step' : 0.5}),
-                 ('hysteresis'   ,  4.0   , { 'min_val' :  2.0,  'max_val' :  12.0, 'step' : 1.0})
+        ('target_temp'  ,  60.0  ,  { 'min_val' :  40.0,  'max_val' :  65.0, 'step' : 0.5}),
+        ('min_head',       10.0   , { 'min_val' :   9.0,  'max_val' :  12.0, 'step'  : 0.5}),
+        ('min_wait_hours', 16.0   , { 'min_val' :   0.5,  'max_val' :  24.0, 'step'  : 0.5}),
+        ('hx_timeout_mins', 90.0   , { 'min_val':  20.0,  'max_val' :  120.0, 'step' : 5.0}),
+        ('delta_targ_rx',  10.0   , { 'min_val' :   6.0,  'max_val' :  25.0, 'step' : 0.5}), #
+        ('delta_flow_tank',  -2.0 , { 'min_val' :  -5.0,  'max_val' :  5.0, 'step' : 0.5}),
+        ('immersion_temp' ,  62.0  , { 'min_val':  40.0,  'max_val' :  65.0, 'step': 0.5}),
+        ('hysteresis'   ,  4.0   , { 'min_val'  :   0.5,  'max_val' :  4.0, 'step'  : 0.1}),
+        ('imm_pulse_time',    30   ,   { 'min_val' :  10,  'max_val' :  60, 'step' : 5}),
+        ('hx_pulse_time',    10   ,   { 'min_val' :  5,  'max_val' :  30 , 'step' : 5})
+
     ]
 
     def __init__(self, rm, cdata, vdata={}):
@@ -208,42 +213,41 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
 
 
-    def cmd_mrfctrl(self,data,wsid):
-        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
-
-        if data['tab'] != 'timer_pulse':
-            return
-
-        tmr = self._timers[self.cdata['rad']+'_P0']
-        onv = tmr.__dict__['on']
-        offv = tmr.__dict__['off']
-        env = tmr.__dict__['en']
-        actv = tmr.__dict__['active']
-
-        if data['row'] == 'add':
-            mrflog.warn( "try to set timer to 5 mins")
-            start = datetime.datetime.now()
-
-            if actv.val:  # if timer active we add 5 mins otherwise set 5 mins from now
-                end = datetime.datetime.combine(start.date(),offv.tod) +  datetime.timedelta(minutes = self.var.pulse_time.val)
-            else:
-                end = start + datetime.timedelta(minutes = self.var.pulse_time.val)
-
-            onv.set(start.strftime("%H:%M"))
-            offv.set(end.strftime("%H:%M"))
-            env.set(True)
-        elif data['row'] == 'clear':
-            mrflog.warn( "try to clear timer")
-            onv.set("00:00")
-            offv.set("00:00")
-            env.set(False)
-
 
     def var_changed(self,name,wsid):
         if name == 'state':  # otherwise infinite recursion!
             return
         mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
         self.state_update()
+
+    def hx_pump_next(self,pump_curr):
+        stopped = int(pump_curr == 0)
+        running = int(pump_curr == 1)
+        # checks temp against target ( with hysterisis)
+        if not (self.var.tank_top.val < (self.var.target_temp.val - stopped * self.var.hysteresis.val)):
+            if pump_curr:  # print message if threshold reached while pumping
+                mrflog.warn("target temperature reached - now  %.2f"%self.var.tank_top.val)
+            return 0
+
+        # checks sufficient accumulator head ( with hysterisis)
+
+        if not (self.var.acc_top.val > (self.var.tank_top.val + self.var.min_head.val - running * self.var.hysteresis.val)):
+            if pump_curr: # print message if threshold reached while pumping
+                mrflog.warn("min_head threshold reached acc %.2f , tank  %.2f"%(self.var.acc_top.val,self.var.tank_top.val))
+
+            return 0
+
+        # hx_ret is not over threshold ( with hysterisis)
+        if not (self.var.hx_ret.val > (self.var.target_temp.val - self.var.delta_targ_rx.val - stopped * self.var.hysteresis.val)):
+            if pump_curr: # print message if threshold reached while pumping
+                mrflog.warn("hx_ret threshold reached  %.2f "%(self.var.hx_ret.val))
+
+            return 0
+
+
+
+        return 1
+
     def state_update(self, timeout=False):
 
         ## evalute Immersion heater rules for setting heater relay
@@ -266,6 +270,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             mrflog.warn("heat_next %d != heat_curr %d - setting heat_relay to %d"%(heat_next,heat_curr,heat_next))
             self.heat_relay.set(heat_next)
 
+
         # Control HX charging
         next_state = self.var.state.val
         pump_curr = self.var.hx_relay.val
@@ -279,37 +284,26 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if timeout:
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
-            if self.var.tank_top.val < (self.var.target_temp.val - self.var.hysteresis.val):
-                if self.var.acc_top.val > (self.var.tank_top.val + self.var.min_head.val):
-                    if self.var.hx_flow.val > (self.var.tank_top.val - 3.0):
-                        mrflog.warn("%s state_update to CHARGE1 flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
-                        next_state = 'CHARGE1'
-                        pump_next = 1
-                        self.set_timeout(60*10)
+            if self.hx_pump_next(self,pump_curr):
+                if self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
+                    mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
+                    next_state = 'CHARGING'
+                    pump_next = 1
+                    self.set_timeout(self.var.hx_timeout_mins*60)
 
-                    else:
-                        next_state = 'PREPUMP'
-                        self.set_rad_timer(60*4)
-                        self.set_timeout(60*4)
+                else:
+                    next_state = 'PREPUMP'
+                    self.set_rad_timer(60*4)
+                    self.set_timeout(60*4)
 
         elif self.var.state.val == 'PREPUMP':
-            if timeout or self.var.hx_flow.val > (self.var.tank_top.val - 3.0):
+            if timeout or self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
+                mrflog.warn("%s state_update to CHARGING (from PREPUMP) flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                 self.clear_rad_timer()
                 pump_next = 1
-                next_state = 'CHARGE1'
-                self.set_timeout(60*10)
-
-        elif self.var.state.val == 'CHARGE1':
-            pump_next = 1
-            if timeout:
-                mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 next_state = 'CHARGING'
-                self.set_timeout(90*60)   #90 mins max for now
-            elif self.var.tank_top.val > self.var.target_temp.val :
-                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
-                next_state = 'REST'
-                self.set_timeout(60*60*self.var.min_wait_hours.val)
-                pump_next = 0
+                self.set_timeout(self.var.hx_timeout_mins*60) # 90 mins timeout for now
+
 
         elif self.var.state.val == 'CHARGING':
 
@@ -320,16 +314,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 trans = True
 
-            elif self.var.tank_top.val > self.var.target_temp.val:
-                mrflog.warn("%s %s reached target temperature in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
-                trans = True
-            elif self.var.tank_top.val > (self.var.hx_flow.val - 5.0):
-                mrflog.warn("%s %s tank top (%.2f) reached min diff re. flow temp (%.2f)  in state %s"%
-                            (self.__class__.__name__,self.label,self.var.tank_top.val,self.var.hx_flow.val,self.var.state.val))
-                trans = True
-            elif self.var.hx_ret.val > (self.var.target_temp.val - self.var.delta_targ_rx.val):  # don't want return to get too high
-                mrflog.warn("%s %s return temp (%.2f) reached limit in state %s"%
-                            (self.__class__.__name__,self.label, self.var.hx_ret.val,self.var.state.val))
+            elif not self.hx_pump_next(self,pump_curr):
                 trans = True
 
             if trans:
@@ -404,7 +389,11 @@ class MrfLandWebletHotWater(MrflandWeblet):
             [
                 self.var.target_temp.name,
                 self.var.min_head.name,
-                self.var.min_wait_hours.name
+                self.var.min_wait_hours.name,
+                self.var.hx_timeout_mins.name,
+                self.var.delta_targ_rx.name,
+                self.var.delta_flow_tank.name,
+                self.var.hysteresis.name
             ]
         )
 

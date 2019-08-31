@@ -112,7 +112,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 
 def mrfctrl_butt_html(app,tab,row,fld,cls=""):
     return """<button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
-        (cls,app,tab,row,fld,fld)
+        (cls,app,tab,row,fld,row)
 
 
 def mrfctrl_select_html(app,tab,row,fldlist,label, cls=""):
@@ -155,6 +155,7 @@ class MrfWebletVar(object):
         mrflog.warn("kwargs %s"%repr(kwargs))
         self.name = name
         self.app = app
+        self.read_only = False # can be set to prevent creation of html control when instantiated in table
         self.public = False  # set if var is placed on webpage via a method
         if kwargs.has_key('callback'):
             self._app_callback = kwargs['callback']
@@ -381,13 +382,18 @@ class MrflandWebletVars(object):
         return dc
 
 class MrfTimer(object):
-    def __init__(self,name,period,en,on,off,active):
+    def __init__(self,name,period,en,on,off,pulse,active):
         self.name = name
         self.period = period
         self.en   = en
         self.on   = on
         self.off  = off
+        self.pulse  = pulse  # None if not pulse timer , otherwise ctrl var
         self.active = active
+
+        if self.pulse != None:
+            self.off.read_only = True
+            self.on.read_only = True
 
 
 
@@ -438,8 +444,20 @@ class MrflandWeblet(object):
         self.tagperiods = {} # can use in derived class to create timer controls etc
 
         self.tagperiodvar = {} # keys above
+        pulse_timers = {} # lookup
         if 'tagperiods' in self.cdata:
-            for ttmr in self.cdata['tagperiods']:
+            for tper in self.cdata['tagperiods']:
+                pulse = False
+                if type(tper) == type({}):
+
+                    if not 'name' in tper:
+                        mrflog.warn("name not found in %s"%repr(tper))
+                        continue
+                    ttmr = tper['name']
+                    if 'pulse' in tper:
+                        pulse = tper['pulse']
+                else:
+                    ttmr = tper
                 periodname = self.tag + '_' + ttmr+'_PERIOD'
                 if not ttmr in self.tagperiods:
                     self.tagperiods[ttmr] = []
@@ -448,11 +466,16 @@ class MrflandWeblet(object):
                 self.add_var(psens.label, psens , field='active', graph=True)
                 self.tagperiodvar[ttmr] = psens.label
 
-                for tmri in range(tpn):
-
+                if pulse:
+                    ntimers  = tpn + 1
+                else:
+                    ntimers = tpn
+                for tmri in range(ntimers):
+                    ipulse = pulse and tmri == 0
                     ttn = self.tag + '_' + ttmr+'_'+str(tmri)
-                    self.cdata['timers'].append(ttn)
+                    self.cdata['timers'].append({ 'name' : ttn,  'pulse' : ipulse})
                     self.tagperiods[ttmr].append(ttn)
+
 
 
         self._timers = OrderedDict()
@@ -462,6 +485,7 @@ class MrflandWeblet(object):
 
         if self.cdata.has_key('timers'):
             for tn in self.cdata['timers']:
+
                 self.switch_timer(tn)
 
 
@@ -547,15 +571,6 @@ class MrflandWeblet(object):
             mrflog.warn("timer var changed %s  timer %s"%(name,tn))
             self.rm.timer_changed(self.tag,tn)
 
-        """
-            self._eval_timer(tn)
-            tmr = self._timers[tn]
-            if tmr.en.val :   # make sure timers are set
-                for act in ['on','off']:
-                    aval = tmr.__dict__[act]
-                    self.set_timer( aval.tod , tn , act)
-
-        """
     def add_var(self, name, initval, **kwargs):
         v = None
 
@@ -596,7 +611,19 @@ class MrflandWeblet(object):
 
 
 
-    def switch_timer(self, name):  # create a managed switch timer and associated vars
+    def switch_timer(self, param ):  # create a managed switch timer and associated vars
+        pulse = False
+        if type(param) == type(""):
+            name = param
+        elif type(param) == type({}) and 'name' in param:
+            name = param['name']
+            if 'pulse' in param:
+                pulse = param['pulse']
+                mrflog.warn("set pulse to "+repr(pulse)+ " : param was "+repr(param))
+        else:
+            mrflog.error("switch_timer param error : "+repr(param))
+            return
+
         mob = MrflandWeblet._rer.match(name)
         if not mob:  # expect all labels to end in _NNN - where NNN is unique for each first portion
             mrflog.error("%s switch_timer unexpected name %s"%(self.__class__.__name__, name))
@@ -605,30 +632,6 @@ class MrflandWeblet(object):
 
         period = mob.group(1)
 
-        """
-        pl = mob.group(1) + "_PUMP"
-        mrflog.warn("trying to match timer label %s to pump %s"%(name,pl))
-
-        smap = self.rm.senslookup(pl)
-        if smap == None:
-            pl = mob.group(1) + "_HEAT"
-            mrflog.warn("trying to match timer label %s to heater %s"%(name,pl))
-            smap = self.rm.senslookup(pl)
-
-        if smap == None:
-            pl = mob.group(1) + "_SW"
-            mrflog.warn("trying to match timer label %s to switch %s"%(name,pl))
-            smap = self.rm.senslookup(pl)
-
-        if smap == None:
-            mrflog.error("no matching control found for timer %s"%name)
-            return
-
-        self._relay_lut[name] = { 'smap' : smap , 'tag': pl }
-        if not self._relay_shares.has_key(pl):
-            self._relay_shares[pl] = dict()
-        self._relay_shares[pl][name] = True  # this is just a lookup for keys, val doesn't matter
-        """
         # create vars for timer on, off, enable and active
 
         en = name+'_en'
@@ -647,7 +650,15 @@ class MrflandWeblet(object):
         off_var = self.var.__dict__[off]
         active_var = self.var.__dict__[active]
 
-        tmr = MrfTimer(name,period,en_var,on_var,off_var,active_var)
+        if pulse:
+            pulsename =  off = name+'_pulse'
+            citem =  { 'min_val' :  1,  'max_val' :  60, 'step' : 1}
+            self.add_var(pulsename, 10, **citem)
+            pulse_var = self.var.__dict__[pulsename]
+        else:
+            pulse_var = None
+        tmr = MrfTimer(name,period,en_var,on_var,off_var,pulse_var, active_var)
+
         self._timers[name] = tmr
 
         self.rm.add_timer(self.tag,name,tmr)
@@ -657,7 +668,7 @@ class MrflandWeblet(object):
         if self._timers.has_key(label):  # check if period timer
             mrflog.warn("%s _timer_callback : period timer label %s"%(self.__class__.__name__,label))
 
-            self._eval_timer(label)
+            #self._eval_timer(label)
 
             ## reset timer if enabled
             tmr = self._timers[label]
@@ -667,18 +678,36 @@ class MrflandWeblet(object):
         if hasattr(self,'timer_callback'):  # call child class callback if defined
             self.timer_callback(label,act)
 
-    def _eval_timer(self,label):
-        #sensmap =  self._relay_lut[label]['smap']
-        pl      =  self._relay_lut[label]['tag']
-        relay   = self.rm.sensors[pl]
-        was_active = relay.req_val
-        is_active = False
-        for tn in self._relay_shares[pl]:
+    def pulse_timer_ctrl(self,label,clear=False): # convenience function
 
-            tmr = self._timers[tn]
-            is_active = is_active or tmr.is_active()
+        if not label in self._timers:
+            mrflog.error("timer %s not found"%label)
+            return
+        tmr = self._timers[label]
+        onv = tmr.__dict__['on']
+        offv = tmr.__dict__['off']
+        env = tmr.__dict__['en']
+        actv = tmr.__dict__['active']
+        pulv = tmr.__dict__['pulse']
+        if clear:
+            mrflog.warn( "try to clear timer")
+            onv.set("00:00")
+            offv.set("00:00")
+            env.set(False)
+        else:
+            pulse_time_secs = pulv.val * 60
+            mrflog.warn( "try to set timer to %d secs"%pulse_time_secs)
+            start = datetime.datetime.now()
 
-        relay.set(is_active)
+            if actv.val:  # if timer active we add 5 mins otherwise set 5 mins from now
+                end = datetime.datetime.combine(start.date(),offv.tod) +  datetime.timedelta(seconds=pulse_time_secs)
+            else:
+                end = start + datetime.timedelta(seconds=pulse_time_secs)
+
+            onv.set(start.strftime("%H:%M"))
+            offv.set(end.strftime("%H:%M"))
+            env.set(True)
+
 
     def pane_html_header(self,active=False):
         if active:
@@ -744,19 +773,28 @@ class MrflandWeblet(object):
 
             for cn in cols.keys():
                 v = cols[cn][i]
-                v.public = True
-                if ctrl:
-                    if v.val.__class__ == bool:
-                        s += "<td>"+v.html_ctrl+"</td>"
-                    else:
-                        s += "<td>"+v.html+v.html_ctrl+"</td>"
+                if v == None:
+                    s += "<td></td>"
+                elif type(v) == type(""):
+                    s += "<td>"+v+"</td>"
+
                 else:
-                    s += "<td>"+v.html+"</td>"
+                    v.public = True
+                    if ctrl and not v.read_only:
+                        if v.val.__class__ == bool:
+                            s += "<td>"+v.html_ctrl+"</td>"
+                        else:
+                            s += "<td>"+v.html+v.html_ctrl+"</td>"
+                    else:
+                        s += "<td>"+v.html+"</td>"
 
             for cn in rocols.keys():
                 v = rocols[cn][i]
-                v.public = True
-                s += "<td>"+v.html+"</td>"
+                if v == None:
+                    s += "<td></td>"
+                else:
+                    v.public = True
+                    s += "<td>"+v.html+"</td>"
 
 
 
@@ -816,18 +854,19 @@ class MrflandWeblet(object):
             tcnames.append(tn)
             tmr = self._timers[tn]
 
-            tcols['enable'].append(tmr.en)
+            if tmr.pulse:
+                html_str = ""
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='glyphicon-time')
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='glyphicon-remove')
+                tcols['enable'].append(html_str)
+            else:
+                tcols['enable'].append(tmr.en)
+
             tcols['on'].append(tmr.on)
             tcols['off'].append(tmr.off)
 
             rocols['active'].append(tmr.active)
 
-        if ro:
-            del tcols['on']
-            del tcols['enable']  # Filthy hack to unclutter these from auto controlled timers
-            for tc in tcols.keys():
-                rocols[tc] = tcols[tc]
-                del tcols[tc]
 
         return self.html_mc_var_table('Timer',tcnames, tcols ,ctrl=True,rocols=rocols)
 
@@ -839,6 +878,21 @@ class MrflandWeblet(object):
             return getattr(self,fn)(data,wsid)
         else:
             mrflog.error("%s attempt to execute undefined cmd %s"%(self.__class__.__name__,cmd))
+
+    def cmd_mrfctrl(self,data,wsid=None):
+        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+
+        if data['tab'] != 'timer_pulse':
+            return
+
+        if data['row'] == 'add':
+            self.pulse_timer_ctrl(data['fld'])
+        elif data['row'] == 'clear':
+            self.pulse_timer_ctrl(data['fld'],clear=True)
+
+
+        if hasattr(self,'mrfctrl_handler'):
+            self.mrfctrl_handler(data,wsid)
 
     def cmd_mrfvar_ctrl(self,data ,wsid=None):
         mrflog.warn("%s cmd_mrfvar_ctrl - data  %s wsid %s"%(self.__class__.__name__,repr(data),repr(wsid)))
