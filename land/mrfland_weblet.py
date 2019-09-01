@@ -900,7 +900,6 @@ class MrflandWeblet(object):
             elif data['row'] == 'clear':
                 self.pulse_timer_ctrl(data['fld'],clear=True)
 
-            return
 
         if hasattr(self,'mrfctrl_handler'):
             self.mrfctrl_handler(data,wsid)
