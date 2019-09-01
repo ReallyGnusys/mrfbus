@@ -893,14 +893,14 @@ class MrflandWeblet(object):
     def cmd_mrfctrl(self,data,wsid=None):
         mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
 
-        if data['tab'] != 'timer_pulse':
+        if data['tab'] == 'timer_pulse':
+
+            if data['row'] == 'add':
+                self.pulse_timer_ctrl(data['fld'])
+            elif data['row'] == 'clear':
+                self.pulse_timer_ctrl(data['fld'],clear=True)
+
             return
-
-        if data['row'] == 'add':
-            self.pulse_timer_ctrl(data['fld'])
-        elif data['row'] == 'clear':
-            self.pulse_timer_ctrl(data['fld'],clear=True)
-
 
         if hasattr(self,'mrfctrl_handler'):
             self.mrfctrl_handler(data,wsid)
