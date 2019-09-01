@@ -29,10 +29,11 @@ class MrfLandWebletUFH(MrflandWeblet):
     _config_ = [
                  ('max_ambient' ,  19.0  , { 'min_val' : 15.0,  'max_val' :  24.0, 'step' : 1.0}),
                  ('max_flow'    ,  36.0  , { 'min_val' : 30.0,  'max_val' :  42.0, 'step' : 1.0}),
-                 ('min_store'   ,  30.0  , { 'min_val' :  0,  'max_val' :  70.0, 'step' : 1.0}),
+                 ('min_store'   ,  30.0  , { 'min_val' :  0.0,  'max_val' :  70.0, 'step' : 1.0}),
                  ('hysterisis' ,    5.0   , { 'min_val' :  0.1,  'max_val' :  10.0, 'step' : 0.25}),
                  ('pulse_time',    30   ,   { 'min_val' :  10,  'max_val' :  60, 'step' : 1})
     ]
+    _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
@@ -86,7 +87,7 @@ class MrfLandWebletUFH(MrflandWeblet):
 
         # find period sensor
 
-        sn = self.cdata['period'] + "_PERIOD"
+        sn = self.tag + "_EN" + "_PERIOD"
         self.periodsens = self.rm.sens_search(sn)
         self.add_var('active',self.periodsens, field='active')
 

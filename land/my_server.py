@@ -33,7 +33,7 @@ if __name__ == '__main__':
     rm = MrflandRegManager( {
         'http_port'       : 8888,
         'db_uri'          : install.db_uri,
-        'periods'  : ["RAD1", "RAD2","DHW1_HX","DHW1_IM", "DHW2_HX", "DHW2_IM", "UFH"]
+        'periods'  : ["RAD1", "RAD2","DHW1_HX","DHW1_IM", "DHW2_HX", "DHW2_IM", "UFH1_EN"]
 
     })
 
@@ -79,7 +79,7 @@ if __name__ == '__main__':
 
     MrfLandWebletUFH(rm,
                          {
-                             'tag'        : 'ufh1',
+                             'tag'        : 'UFH1',
                              'label'      : 'Lounge',
                              'period'     : 'UFH',
                              'ambient'    : 'LOUNGE_AMBIENT',
@@ -87,8 +87,7 @@ if __name__ == '__main__':
                              'pump'       : 'UFH_PUMP',
                              'storesens'  : 'ACC_100',
                              'flowsens'   : 'UFH_FLOW',
-                             'retsens'    : 'UFH_RET',
-                             'timers'     :  [ 'UFH_P0', 'UFH_P1' , 'UFH_P2']
+                             'retsens'    : 'UFH_RET'
                          })
 
 
