@@ -40,6 +40,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
     ]
 
+    _tagperiods_  = [{'name':'HX','pulse' :True , 'num' : 3}, {'name' : 'IM','pulse':True , 'num' : 3}]
+
+
     def __init__(self, rm, cdata, vdata={}):
         if not 'timers' in cdata:
             cdata['timers'] = []
@@ -284,7 +287,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if timeout:
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
-            if self.hx_pump_next(self,pump_curr):
+            if self.hx_pump_next(pump_curr):
                 if self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
                     mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                     next_state = 'CHARGING'
@@ -314,7 +317,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 trans = True
 
-            elif not self.hx_pump_next(self,pump_curr):
+            elif not self.hx_pump_next(pump_curr):
                 trans = True
 
             if trans:

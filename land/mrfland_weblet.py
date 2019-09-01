@@ -435,19 +435,25 @@ class MrflandWeblet(object):
         # add timers implied by tagperiods - assumes periods defined based on our tag in regmanager instantiation
         if not 'timers' in  self.cdata:
             self.cdata['timers'] = []
-
+        """
         if 'tagperiodnum' in self.cdata:
             tpn = self.cdata['tagperiodnum']
         else:
             tpn = 2
+        """
 
         self.tagperiods = {} # can use in derived class to create timer controls etc
 
         self.tagperiodvar = {} # keys above
         pulse_timers = {} # lookup
-        if 'tagperiods' in self.cdata:
-            for tper in self.cdata['tagperiods']:
+        if hasattr(self.__class__,'_tagperiods_'):
+            tpers = self.__class__._tagperiods_
+            mrflog.warn("_tagperiods_ found type %s  %s"%(type(tpers),repr(tpers)))
+
+            for tper in tpers:
                 pulse = False
+                ntimers = 3
+                mrflog.warn("got tper "+repr(tper))
                 if type(tper) == type({}):
 
                     if not 'name' in tper:
@@ -456,8 +462,12 @@ class MrflandWeblet(object):
                     ttmr = tper['name']
                     if 'pulse' in tper:
                         pulse = tper['pulse']
+                    if 'num' in tper:
+                        ntimers  = tper['num']
                 else:
                     ttmr = tper
+                    mrflog.warn("ttmr "+repr(ttmr))
+
                 periodname = self.tag + '_' + ttmr+'_PERIOD'
                 if not ttmr in self.tagperiods:
                     self.tagperiods[ttmr] = []
@@ -466,10 +476,6 @@ class MrflandWeblet(object):
                 self.add_var(psens.label, psens , field='active', graph=True)
                 self.tagperiodvar[ttmr] = psens.label
 
-                if pulse:
-                    ntimers  = tpn + 1
-                else:
-                    ntimers = tpn
                 for tmri in range(ntimers):
                     ipulse = pulse and tmri == 0
                     ttn = self.tag + '_' + ttmr+'_'+str(tmri)
