@@ -468,7 +468,12 @@ class MrflandWeblet(object):
                     ttmr = tper
                     mrflog.warn("ttmr "+repr(ttmr))
 
-                periodname = self.tag + '_' + ttmr+'_PERIOD'
+                pertag = self.tag + '_' + ttmr
+                #ensure base period registered
+
+                self.rm.add_period(pertag)
+                periodname = pertag +'_PERIOD'
+
                 if not ttmr in self.tagperiods:
                     self.tagperiods[ttmr] = []
                 psens = self.rm.sensors[periodname]

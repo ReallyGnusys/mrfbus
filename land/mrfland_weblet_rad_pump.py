@@ -32,6 +32,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
                  ('hysterisis',    5.0   , { 'min_val' :  0.1,  'max_val' :  10.0, 'step' : 0.25}),
                  ('pulse_time',    5   ,   { 'min_val' :  1,  'max_val' :  10, 'step' : 1})
     ]
+    _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
@@ -79,8 +80,9 @@ class MrfLandWebletRadPump(MrflandWeblet):
         # end sanity checks
 
         # find period sensor
+        sn = self.tag + "_EN" + "_PERIOD"
 
-        sn = self.cdata['rad'] + "_PERIOD"
+        #sn = self.cdata['rad'] + "_PERIOD"
         self.periodsens = self.rm.sens_search(sn)
         self.add_var('active',self.periodsens, field='active')
 

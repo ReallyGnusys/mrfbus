@@ -219,6 +219,7 @@ class MrflandRegManager(object):
 
         self.period_timers = {}
         self.period_lut = {}
+        """
         if self.config.has_key('periods') and type(self.config['periods'])==type([]):
             mrflog.warn("setting up period sensors")
             pchan = 0
@@ -228,7 +229,22 @@ class MrflandRegManager(object):
                 psens = MrfSensPeriod(sn, None, 0, pchan)
                 pchan += 1
                 self.add_sensor(psens,'period')
+        """
         self.server = None
+
+
+    def add_period(self,pr):
+        sn = pr + '_PERIOD'  # sensor name
+
+        if pr in self.period_timers:
+            mrflog.warn("period %s already registered"%pr)
+            return
+
+        self.period_timers[pr] = {} # have dict of MrfTimer components for each period
+        psens = MrfSensPeriod(sn, None, 0, 0)
+        self.add_sensor(psens,'period')
+        mrflog.warn("period %s  registered"%pr)
+
 
 
     def setserver(self,server):  # OUCH , we let the server set a reference to itself..for now

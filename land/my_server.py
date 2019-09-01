@@ -32,9 +32,7 @@ if __name__ == '__main__':
 
     rm = MrflandRegManager( {
         'http_port'       : 8888,
-        'db_uri'          : install.db_uri,
-        'periods'  : ["RAD1", "RAD2","DHW1_HX","DHW1_IM", "DHW2_HX", "DHW2_IM", "UFH1_EN"]
-
+        'db_uri'          : install.db_uri
     })
 
     MrfDevHost(rm, "host", 1)
@@ -93,26 +91,24 @@ if __name__ == '__main__':
 
     MrfLandWebletRadPump(rm,
                          {
-                             'tag'        : 'rad1',
+                             'tag'        : 'RAD1',
                              'label'      : 'Main Rads',
                              'rad'        : 'RAD1',
                              'pump'       : 'RAD1_PUMP',
                              'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB1_FLOW',
-                             'retsens'    : 'RAD1_RET',
-                             'timers'     :  [ 'RAD1_P0', 'RAD1_P1' , 'RAD1_P2']
+                             'retsens'    : 'RAD1_RET'
                          })
 
     MrfLandWebletRadPump(rm,
                          {
-                             'tag'        : 'rad2',
+                             'tag'        : 'RAD2',
                              'label'      : 'Guest Rads',
                              'rad'        : 'RAD2',
                              'pump'       : 'RAD2_PUMP',
                              'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB2_FLOW',
-                             'retsens'    : 'HB2_RET',
-                             'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2']
+                             'retsens'    : 'HB2_RET'
                          })
 
 
