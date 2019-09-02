@@ -29,8 +29,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
     _config_ = [
                  ('max_return'  ,  45.0  , { 'min_val' : 30.0,  'max_val' :  60.0, 'step' : 1.0}),
                  ('min_store'   ,  50.0  , { 'min_val' : 30.0,  'max_val' :  70.0, 'step' : 1.0}),
-                 ('hysterisis',    5.0   , { 'min_val' :  0.1,  'max_val' :  10.0, 'step' : 0.25}),
-                 ('pulse_time',    5   ,   { 'min_val' :  1,  'max_val' :  10, 'step' : 1})
+                 ('hysterisis',    5.0   , { 'min_val' :  0.1,  'max_val' :  10.0, 'step' : 0.25})
     ]
     _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
@@ -127,16 +126,6 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
 
-    def mrfctrl_handler (self,data,wsid):
-        mrflog.warn( "mrfctrl_handler here (returning), data was %s"%repr(data))
-        return
-        if data['tab'] != 'timer_pulse':
-            return
-
-        if data['row'] == 'add':
-            self.pulse_timer_ctrl(self.cdata['rad']+'_P0',self.var.pulse_time.val*60)
-        elif data['row'] == 'clear':
-            self.pulse_timer_ctrl(self.cdata['rad']+'_P0',0)
 
 
     def var_changed(self,name,wsid):
@@ -218,9 +207,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
             [
                 self.var. min_store.name,
                 self.var.max_return.name,
-                self.var.hysterisis.name,
-                self.var.pulse_time.name,
-
+                self.var.hysterisis.name
             ]
         )
 

@@ -19,40 +19,48 @@ from mrflog import mrflog
 import re
 
 class MrfLandWebletPeriodTest(MrflandWeblet):
+
+    _tagperiods_ =  [ {'name' : 'RAD_PUMP', 'pulse' : True , 'num' : 3},
+                      {'name' : 'HX_PUMP' , 'pulse' : True , 'num' : 3},
+                      {'name' : 'HEAT'    , 'pulse' : True , 'num' : 3},
+                      {'name' : 'LIGHT'   , 'pulse' : True , 'num' : 3}]
+
     re_period = re.compile(r'(.*)_PERIOD')
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        self.sl = self.rm.senscaps['period']
 
         self.graph_periods = []
         self.pumps = {}
         self.pumpnames = {}
         self.pumplist = []
-        for s in self.sl:
-            self.add_var(s.label, s , field='active', graph=True)
-            self.graph_periods.append(s.label)
-            mob = self.re_period.match(s.label)
-            if mob:
-                pn = mob.group(1) + '_PUMP'
-                if self.rm.sensors.has_key(pn):
-                    pumpsens = self.rm.sensors[pn]
-                    self.pumpnames[s.label] = pn
-                    self.pumps[s.label] = pumpsens
-                    self.add_var(pn, pumpsens , field='relay')
-                    self.pumplist.append(pumpsens) # for table
+        self.graph_pumps = []
+        for tper in  self.tagperiodvar:
+            mrflog.warn("got tper :"+tper)
+
+            mrflog.warn(" = "+repr(self.tagperiodvar[tper]))
+            pname = self.cdata['targ'] + '_' + tper
+            mrflog.warn("  pname "+ pname)
+            pumpsens = self.rm.sensors[pname]
+            self.pumpnames[tper] = pname
+            self.pumps[tper] = pumpsens
+
+            self.add_var(pname, pumpsens , field='relay', graph=True)
+            self.graph_pumps.append(pname)
+            self.graph_periods.append(self.tagperiodvar[tper])
 
 
     def var_changed(self,name,wsid):
 
 
         # check all pumps are set according to period
+        mrflog.warn("var_changed "+name)
+        for name in  self.tagperiodvar:
 
-        for name in self.graph_periods:  # this is just list of period labels:
-
+            pvar = self.tagperiodvar[name]
             pump = self.pumps[name]
             pn   = self.pumpnames[name]
             pump_state = self.var.__dict__[pn].val
-            period_state = self.var.__dict__[name].val
+            period_state = self.var.__dict__[pvar].val
 
             if pump_state != period_state:
                 mrflog.warn("pump %s state = %d period %s state = %d - setting pump to %d"%(pn,pump_state,name,period_state,period_state))
@@ -66,10 +74,12 @@ class MrfLandWebletPeriodTest(MrflandWeblet):
         <hr> """
 
         s += self.rm.graph_inst({
+            "relay" : self.graph_pumps,
             "active" : self.graph_periods
         })
 
-        s += self.html_var_table(self.sl + self.pumplist)
+        s += self.html_var_table(self.graph_pumps)
+        s += self.html_var_table(self.graph_periods)
 
         s += self.timer_ctrl_table()
 

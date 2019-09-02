@@ -207,6 +207,7 @@ class MrflandRegManager(object):
         self.dups = []  ## device updates : from weblets to send to devices
         self.hostname = socket.gethostname()
         self.weblets = OrderedDict()  # has weblets by tag
+        self.all_weblets = [] # list of weblet keys - convenience
         self.timers = {}
         self.sgraphs = {}  # support graph data for these sensors during this mrfland session
         self.graph_insts = 0
@@ -338,12 +339,19 @@ class MrflandRegManager(object):
             return None
 
 
+        if type(uinf['apps']) == type([]):
+            apps = uinf['apps']
+        elif type(uinf['apps']) == type('') and uinf['apps'] == '*':
+            apps = self.all_weblets
+        else:
+            mrflog.error("failed to setup apps for "+username)
+
 
         mrflog.warn('authenticated ip '+ip)
         wsid = os.urandom(16).encode('hex')
         sessid = gen_sessid()
 
-        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],uinf['apps'],ip,req_host)
+        self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],apps,ip,req_host)
         self.comm.set_session_expire(wsid)
 
         return { 'sid' : uinf['sid'] , 'sessid' : sessid}
@@ -596,6 +604,7 @@ class MrflandRegManager(object):
             return
 
         self.weblets[weblet.tag] = weblet
+        self.all_weblets.append(weblet.tag)
         mrflog.warn("weblet_register -registered new weblet %s"%weblet.tag)
         self.db_app_load_cfg_data(apptag=weblet.tag)
     def html_pills(self,apps):

@@ -25,31 +25,30 @@ if __name__ == '__main__':
 
     rm = MrflandRegManager(
         {
-            'http_port'       : 8889,
-            'periods'  : ["RAD2", "RAD20"]
+            'http_port'       : 8889
         })
 
     MrfDevHost(rm, "host", 1)
 
-    sx02 = DevLnxtst(rm, "sx02", 0x02 ,
+    sx02 = DevLnxtst(rm, "LT02", 0x02 ,
                      {
-                         'memory' : ["mem_0x02"],
-                         'relay' : ["RAD2_PUMP", "DHW2_HX_PUMP" , "DHW2_HEAT","LIGHT2"]
+                         'memory' : ["LT02_MEM"],
+                         'relay' : ["LT02_RAD_PUMP", "LT02_HX_PUMP" , "LT02_HEAT","LT02_LIGHT"]
                      }
 
     )
-    sx20 = DevLnxtst(rm, "sx20", 0x20,
+    sx20 = DevLnxtst(rm, "LT20", 0x20,
                      {
-                         'memory' : ["mem_sx20"],
-                         'relay' : ["RAD20_PUMP", "DHW20_HX_PUMP" , "DHW20_HEAT","LIGHT20"]
+                         'memory' : ["LT20_MEM"],
+                         'relay' : ["LT20_RAD_PUMP", "LT20_HX_PUMP" , "LT20_HEAT","LT20_LIGHT"]
                      }
 
 
     )
-    sx21 = DevLnxtst(rm, "sx21", 0x21,
+    sx21 = DevLnxtst(rm, "LT21", 0x21,
                      {
-                         'memory' : ["mem_sx21"],
-                         'relay' : ["RAD21_PUMP", "DHW21_HX_PUMP" , "DHW21_HEAT","LIGHT21"]
+                         'memory' : ["LT21_MEM"],
+                         'relay' : ["LT21_RAD_PUMP", "LT21_HX_PUMP" , "LT21_HEAT","LT21_LIGHT"]
                      }
 
     )
@@ -77,9 +76,10 @@ if __name__ == '__main__':
 
     MrfLandWebletPeriodTest(rm,
                         {
-                           'tag'  : 'periods',
-                            'label': 'Periods',
-                            'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2', 'RAD20_P1','RAD20_P2']
+                            'tag'  : 'CT02',
+                            'label': 'Ctrl02',
+                            'targ' : 'LT02'
+
 
                        })
 

@@ -359,6 +359,8 @@ function plot_data_layout(sensors){
     else // default
         lhs = Object.keys(sensors)[0];
 
+    console.log("plot_data_layout lhs = "+lhs)
+    console.log(sensors)
 
 
     var layout = {

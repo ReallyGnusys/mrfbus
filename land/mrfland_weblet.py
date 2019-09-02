@@ -446,8 +446,15 @@ class MrflandWeblet(object):
 
         self.tagperiodvar = {} # keys above
         pulse_timers = {} # lookup
-        if hasattr(self.__class__,'_tagperiods_'):
+
+        tpers = None
+
+        if 'tagperiods' in cdata:  # cdata has priority over built in
+            tpers = cdata['tagperiods']
+        elif hasattr(self.__class__,'_tagperiods_'):
             tpers = self.__class__._tagperiods_
+
+        if tpers:
             mrflog.warn("_tagperiods_ found type %s  %s"%(type(tpers),repr(tpers)))
 
             for tper in tpers:
@@ -859,6 +866,7 @@ class MrflandWeblet(object):
             tnames = self._timers.keys()
 
         tcnames = []
+        pulse_timers = []
         for tn in tnames:
             if tn in exclude_list:
                 continue
@@ -869,6 +877,7 @@ class MrflandWeblet(object):
                 html_str = ""
                 html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='glyphicon-time')
                 html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='glyphicon-remove')
+                pulse_timers.append(tmr.pulse.name)
                 tcols['enable'].append(html_str)
             else:
                 tcols['enable'].append(tmr.en)
@@ -879,7 +888,12 @@ class MrflandWeblet(object):
             rocols['active'].append(tmr.active)
 
 
-        return self.html_mc_var_table('Timer',tcnames, tcols ,ctrl=True,rocols=rocols)
+        html = self.html_mc_var_table('Timer',tcnames, tcols ,ctrl=True,rocols=rocols)
+
+
+        html += self.html_var_ctrl_table(pulse_timers)  # control pulse timer vars at bottom for now
+
+        return html
 
 
     def cmd(self,cmd, data,wsid=None):
