@@ -87,6 +87,8 @@ class MrfLandWebletUFH(MrflandWeblet):
 
         # find period sensor
 
+
+
         sn = self.tag + "_EN" + "_PERIOD"
         self.periodsens = self.rm.sens_search(sn)
         self.add_var('active',self.periodsens, field='active')
@@ -94,14 +96,14 @@ class MrfLandWebletUFH(MrflandWeblet):
         # find store sensor
 
         self.storesens = self.rm.sens_search(self.cdata['storesens'])
-        self.add_var('store_temp',self.storesens, field='temp', graph=True)
+        self.add_var('store_temp',self.storesens, field='temp', graph=True, label='store')
 
         # find temp sensors
 
         self.flowsens = self.rm.sens_search(self.cdata['flowsens'])
-        self.add_var('flow_temp',self.flowsens, field='temp', graph=True)
+        self.add_var('flow_temp',self.flowsens, field='temp', graph=True,label='flow')
         self.retsens = self.rm.sens_search(self.cdata['retsens'])
-        self.add_var('return_temp',self.retsens, field='temp', graph=True)
+        self.add_var('return_temp',self.retsens, field='temp', graph=True,label='return')
 
         # ambient
         self.ambientsens = self.rm.sens_search(self.cdata['ambient'])
@@ -213,10 +215,11 @@ class MrfLandWebletUFH(MrflandWeblet):
         s += self.html_var_table(
             [
                 self.var.active.name,
+                self.var.pump.name,
                 self.var.flow_temp.name,
                 self.var.return_temp.name,
                 self.var.ambient.name,
-                self.var.pump.name,
+                self.var.outside.name,
                 self.var.store_temp.name,
                 self.var.state.name
 

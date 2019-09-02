@@ -23,7 +23,7 @@ $(document).ready(function() {
 
         e.preventDefault();
         $(this).tab('show');
-        onresize();
+        //onresize();
 
     });
 

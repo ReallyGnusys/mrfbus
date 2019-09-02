@@ -66,6 +66,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.im_period = self.var.__dict__[self.tagperiodvar['IM']]
         self.hx_period = self.var.__dict__[self.tagperiodvar['HX']]
 
+        # can override label used for display in tables
+        self.im_period.label = 'im_active'
+        self.hx_period.label = 'hx_active'
+
         # begin sanity checks
 
         ## expect MrfSensPt1000 types
@@ -350,6 +354,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         s += self.timer_ctrl_table(include_list=self.tagperiods['IM'])
 
+        s += """
+        <hr>
+        <h3>Status</h3>"""
         s += self.html_var_table(
             [
                 self.tagperiodvar['IM'],
@@ -357,6 +364,10 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.var.heat_relay.name
             ]
         )
+        s += """
+        <hr>
+        <h3>Config</h3>"""
+
         s += self.html_var_ctrl_table(
             [
                 self.var.immersion_temp.name
@@ -369,14 +380,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         s += self.timer_ctrl_table(include_list=self.tagperiods['HX'])
 
-        s += self.html_var_table(
-            [
-                self.tagperiodvar['HX']
-            ]
-        )
+        s += """
+        <hr>
+        <h3>Status</h3>"""
 
         s += self.html_var_table(
             [
+                self.tagperiodvar['HX'],
                 self.var.tank_top.name,
                 self.var.acc_top.name,
                 self.var.hx_flow.name,
@@ -387,6 +397,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
             ]
         )
 
+        s += """
+        <hr>
+        <h3>Config</h3>"""
 
         s += self.html_var_ctrl_table(
             [

@@ -154,6 +154,10 @@ class MrfWebletVar(object):
         mrflog.warn("MrfWebletVar app %s name %s val %s"%(app,name,repr(val)))
         mrflog.warn("kwargs %s"%repr(kwargs))
         self.name = name
+        if 'label' in kwargs:
+            self.label = kwargs['label']
+        else:
+            self.label = name # can override if you want ("this is printed for name")
         self.app = app
         self.read_only = False # can be set to prevent creation of html control when instantiated in table
         self.public = False  # set if var is placed on webpage via a method
@@ -161,6 +165,8 @@ class MrfWebletVar(object):
             self._app_callback = kwargs['callback']
         else:
             self._app_callback = None
+
+
         if hasattr(self,'init'):
             self.init(val, **kwargs)
 
@@ -445,7 +451,6 @@ class MrflandWeblet(object):
         self.tagperiods = {} # can use in derived class to create timer controls etc
 
         self.tagperiodvar = {} # keys above
-        pulse_timers = {} # lookup
 
         tpers = None
 
@@ -488,10 +493,11 @@ class MrflandWeblet(object):
                 self.add_var(psens.label, psens , field='active', graph=True)
                 self.tagperiodvar[ttmr] = psens.label
 
+
                 for tmri in range(ntimers):
                     ipulse = pulse and tmri == 0
                     ttn = self.tag + '_' + ttmr+'_'+str(tmri)
-                    self.cdata['timers'].append({ 'name' : ttn,  'pulse' : ipulse})
+                    self.cdata['timers'].append({ 'name' : ttn,  'pulse' : ipulse , 'index' : tmri})
                     self.tagperiods[ttmr].append(ttn)
 
 
@@ -673,6 +679,7 @@ class MrflandWeblet(object):
             citem =  { 'min_val' :  1,  'max_val' :  60, 'step' : 1}
             self.add_var(pulsename, 10, **citem)
             pulse_var = self.var.__dict__[pulsename]
+            pulse_var.label = "Config (add minutes)"
         else:
             pulse_var = None
         tmr = MrfTimer(name,period,en_var,on_var,off_var,pulse_var, active_var)
@@ -757,7 +764,7 @@ class MrflandWeblet(object):
                 vname = vn
 
             s += """
-            <tr><td>"""+self.var.__dict__[vname].name+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
+            <tr><td>"""+self.var.__dict__[vname].label+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
             self.var.__dict__[vname].public = True
 
         s += """
@@ -841,7 +848,7 @@ class MrflandWeblet(object):
 
             self.var.__dict__[vn].public = True
             s += """
-            <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+\
+            <tr><td>"""+self.var.__dict__[vn].label+"</td><td>"+\
             self.var.__dict__[vn].html+"</td><td>"+\
             self.var.__dict__[vn].html_ctrl+"</td></tr>"
 
@@ -851,7 +858,7 @@ class MrflandWeblet(object):
         return s
 
 
-    def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False):
+    def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False, labelindex=True):
         tcols =  OrderedDict()
         tcols['enable'] =  []
         tcols['on']  = []
@@ -867,17 +874,23 @@ class MrflandWeblet(object):
 
         tcnames = []
         pulse_timers = []
+
+        idx = 0
         for tn in tnames:
             if tn in exclude_list:
                 continue
-            tcnames.append(tn)
+            if labelindex:
+                tcnames.append(str(idx))
+            else:
+                tcnames.append(tn)
+            idx += 1
             tmr = self._timers[tn]
 
             if tmr.pulse:
+                pulse_timers.append(tmr.pulse.name)
                 html_str = ""
                 html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='glyphicon-time')
                 html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='glyphicon-remove')
-                pulse_timers.append(tmr.pulse.name)
                 tcols['enable'].append(html_str)
             else:
                 tcols['enable'].append(tmr.en)
