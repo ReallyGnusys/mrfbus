@@ -329,7 +329,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.set_timeout(60*60*self.var.min_wait_hours.val)   # wait 2 hours before checking again
 
         if pump_next != pump_curr:
-            mrflog.warn("pump_next %d != pump_curr - setting hx_relay to %d"%(pump_next,pump_curr,pump_next))
+            mrflog.warn("pump_next %d != pump_curr %d - setting hx_relay to %d"%(pump_next,pump_curr,pump_next))
             self.hx_relay.set(pump_next)
 
         if next_state != self.var.state.val:
