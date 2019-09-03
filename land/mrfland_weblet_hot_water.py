@@ -291,7 +291,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
             if self.hx_pump_next(pump_curr,debug=True):
-                if self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
+                if self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank.val):
                     mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                     next_state = 'CHARGING'
                     pump_next = 1
