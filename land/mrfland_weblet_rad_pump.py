@@ -29,7 +29,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
     _config_ = [
                  ('max_return'  ,  45.0  , { 'min_val' : 30.0,  'max_val' :  60.0, 'step' : 1.0}),
                  ('min_store'   ,  50.0  , { 'min_val' : 30.0,  'max_val' :  70.0, 'step' : 1.0}),
-                 ('hysterisis',    5.0   , { 'min_val' :  0.1,  'max_val' :  10.0, 'step' : 0.25})
+                 ('hysterisis',    5.0   , { 'min_val' :  0.125,  'max_val' :  10.0, 'step' : 0.125})
     ]
     _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
@@ -129,7 +129,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
     def var_changed(self,name,wsid):
-        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+        #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
         pump_curr = self.var.pump.val
 
@@ -163,8 +163,8 @@ class MrfLandWebletRadPump(MrflandWeblet):
         if pump_next != pump_curr:
             mrflog.warn("setting pump to %s"%repr(pump_next))
             self.pump.set(pump_next)
-        else:
-            mrflog.warn("leaving pump %s"%repr(pump_next))
+        #else:
+        #    mrflog.warn("leaving pump %s"%repr(pump_next))
 
 
 

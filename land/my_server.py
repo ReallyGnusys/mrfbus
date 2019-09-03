@@ -116,7 +116,7 @@ if __name__ == '__main__':
                           {
                               'tag'        : 'DHW1',
                               'label'      : 'Main Hot Water',
-                              'rad'        : 'RAD1',
+                              'radperiod'  : 'RAD1_EN',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB1',
                               'litres'     : 200
@@ -133,7 +133,7 @@ if __name__ == '__main__':
                           {
                               'tag'        : 'DHW2',
                               'label'      : 'Guest Hot Water',
-                              'rad'        : 'RAD2',
+                              'radperiod'  : 'RAD1_EN',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB2',
                               'litres'     : 200

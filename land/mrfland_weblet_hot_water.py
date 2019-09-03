@@ -34,7 +34,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
         ('delta_targ_rx',  10.0   , { 'min_val' :   6.0,  'max_val' :  25.0, 'step' : 0.5}), #
         ('delta_flow_tank',  -2.0 , { 'min_val' :  -5.0,  'max_val' :  5.0, 'step' : 0.5}),
         ('immersion_temp' ,  62.0  , { 'min_val':  40.0,  'max_val' :  65.0, 'step': 0.5}),
-        ('hysteresis'   ,  4.0   , { 'min_val'  :   0.5,  'max_val' :  4.0, 'step'  : 0.1}),
+        ('hysteresis'   ,  4.0   , { 'min_val'  :   0.125,  'max_val' :  4.0, 'step'  : 0.125}),
         ('imm_pulse_time',    30   ,   { 'min_val' :  10,  'max_val' :  60, 'step' : 5}),
         ('hx_pulse_time',    10   ,   { 'min_val' :  5,  'max_val' :  30 , 'step' : 5})
 
@@ -44,14 +44,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
 
     def __init__(self, rm, cdata, vdata={}):
-        if not 'timers' in cdata:
+        if not 'timers' in cdata:  # slightly crass way to set timer for associated RAD
             cdata['timers'] = []
         if not 'rad' in cdata:
             mrflog.error('no rad in cdata')
             self.radtimer = None
         else:
-            pumpname = cdata['rad'] + '_PUMP'
-            timer_name = cdata['rad'] + '_dhwcirculate' # create new timer for rad to allow us to pump cold water out of pipes
+            timer_name = cdata['rad'] + '_EN_dhwcirculate' # create new timer for rad to allow us to pump cold water out of pipes
             cdata['timers'].append(timer_name)
             mrflog.warn("added timer "+timer_name)
             self.radtimer = timer_name

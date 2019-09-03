@@ -434,7 +434,7 @@ class MrflandRegManager(object):
             mrflog.error("adding timer %s for period %s failed - as not in period_timers"%(name,tmr.period))
             return
         if name in self.period_timers[tmr.period]:
-            mrflog.error("%s alread registered"%name)
+            mrflog.error("%s already registered"%name)
             return
         self.period_timers[tmr.period][name] = tmr
         self.period_lut[name] = tmr.period
