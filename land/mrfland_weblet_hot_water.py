@@ -226,26 +226,26 @@ class MrfLandWebletHotWater(MrflandWeblet):
         #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
         self.state_update()
 
-    def hx_pump_next(self,pump_curr):
+    def hx_pump_next(self,pump_curr,debug=False):
         stopped = int(pump_curr == 0)
         running = int(pump_curr == 1)
         # checks temp against target ( with hysterisis)
         if not (self.var.tank_top.val < (self.var.target_temp.val - stopped * self.var.hysteresis.val)):
-            if pump_curr:  # print message if threshold reached while pumping
+            if pump_curr or debug:  # print message if threshold reached while pumping
                 mrflog.warn("target temperature reached - now  %.2f"%self.var.tank_top.val)
             return 0
 
         # checks sufficient accumulator head ( with hysterisis)
 
         if not (self.var.acc_top.val > (self.var.tank_top.val + self.var.min_head.val - running * self.var.hysteresis.val)):
-            if pump_curr: # print message if threshold reached while pumping
+            if pump_curr or debug: # print message if threshold reached while pumping
                 mrflog.warn("min_head threshold reached acc %.2f , tank  %.2f"%(self.var.acc_top.val,self.var.tank_top.val))
 
             return 0
 
         # hx_ret is not over threshold ( with hysterisis)
-        if not (self.var.hx_ret.val > (self.var.target_temp.val - self.var.delta_targ_rx.val - stopped * self.var.hysteresis.val)):
-            if pump_curr: # print message if threshold reached while pumping
+        if self.var.hx_ret.val > (self.var.target_temp.val - self.var.delta_targ_rx.val - stopped * self.var.hysteresis.val):
+            if pump_curr or debug: # print message if threshold reached while pumping
                 mrflog.warn("hx_ret threshold reached  %.2f "%(self.var.hx_ret.val))
 
             return 0
@@ -290,7 +290,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
             if timeout:
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
-            if self.hx_pump_next(pump_curr):
+            if self.hx_pump_next(pump_curr,debug=True):
                 if self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
                     mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                     next_state = 'CHARGING'
