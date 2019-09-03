@@ -32,13 +32,13 @@ class MrfLandWebletRelays(MrflandWeblet):
             return
         self.sl = self.rm.senstypes[MrfSensRelay]
 
-        mrflog.info("num MrfSensRelay found was %d"%len(self.sl))
+        mrflog.warn("num MrfSensRelay found was %d"%len(self.sl))
         self.slabs = []
         self.sens = OrderedDict()
         for s in self.sl:
             self.slabs.append(s.label)
             self.sens[s.label] = s
-        mrflog.info("MrfSensRelay : %s"%repr(self.slabs))
+        mrflog.warn("MrfSensRelay : %s"%repr(self.slabs))
 
         for s in self.sens.keys():
             self.sens[s].subscribe(self.sens_callback)
