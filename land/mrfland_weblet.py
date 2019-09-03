@@ -637,13 +637,21 @@ class MrflandWeblet(object):
 
     def switch_timer(self, param ):  # create a managed switch timer and associated vars
         pulse = False
+        index = None
         if type(param) == type(""):
             name = param
-        elif type(param) == type({}) and 'name' in param:
-            name = param['name']
+            #mrflog.error("switch_timer param string : "+repr(param))
+
+        elif type(param) == type({}):
+            if 'name' in param:
+                name = param['name']
             if 'pulse' in param:
                 pulse = param['pulse']
-                mrflog.warn("set pulse to "+repr(pulse)+ " : param was "+repr(param))
+                #mrflog.warn("set pulse to "+repr(pulse)+ " : param was "+repr(param))
+
+            if 'index' in param:
+                index = param['index']
+            #mrflog.warn("switch timer param dict %s index = %s "%(repr(param),repr(index)))
         else:
             mrflog.error("switch_timer param error : "+repr(param))
             return
@@ -679,7 +687,12 @@ class MrflandWeblet(object):
             citem =  { 'min_val' :  1,  'max_val' :  60, 'step' : 1}
             self.add_var(pulsename, 10, **citem)
             pulse_var = self.var.__dict__[pulsename]
-            pulse_var.label = "Config (add minutes)"
+            #mrflog.warn("found pulsevar index %s"%repr(index))
+            if index != None:
+                pulse_var.label = "Timer %d [minutes to add]"%index
+                #mrflog.warn("switch timer pulse index %d label %s"%(index,pulse_var.label))
+            else:
+                pulse_var.label = "Config (add minutes)"
         else:
             pulse_var = None
         tmr = MrfTimer(name,period,en_var,on_var,off_var,pulse_var, active_var)

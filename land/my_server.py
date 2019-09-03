@@ -57,18 +57,18 @@ if __name__ == '__main__':
 
 
     # RF devices
-
+    """
     DevRfmodtc(rm, "rfmodtc_21"  , 0x21,
                {
                    'relay' : ["RFTC1A_SWITCH","RFTC1B_SWITCH"],
                    'temp'  : ["RFTC1_AMBIENT"]
                })
-
+    """
 
 
     MrfLandWebletStore(rm,
                     {
-                        'tag'        : 'store',
+                        'tag'        : 'STORE',
                         'label'      : 'Heatstore',
                         'acc_tag'    : 'ACC',
                         'acc_litres' : 2200
@@ -148,27 +148,27 @@ if __name__ == '__main__':
 
     MrfLandWebletTemps(rm,
                        {
-                           'tag'  : 'temps',
+                           'tag'  : 'TEMPS',
                            'label': 'Temperatures'
                        })
 
 
     MrfLandWebletRelays(rm,
                         {
-                            'tag':'relays',
+                            'tag':'RELAYS',
                             'label':'Relays'
                         }
     )
 
     MrfLandWebletDevs(rm,
                        {
-                           'tag'  : 'devs',
+                           'tag'  : 'DEVS',
                            'label': 'Devices'
                        })
 
     MrfLandWebletHistory(rm,
                     {
-                        'tag'        : 'history',
+                        'tag'        : 'HISTORY',
                         'label'      : 'History'
 
                     })
