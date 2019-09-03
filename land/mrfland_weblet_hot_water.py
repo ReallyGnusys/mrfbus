@@ -303,7 +303,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                     self.set_timeout(60*4)
 
         elif self.var.state.val == 'PREPUMP':
-            if timeout or self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank):
+            if timeout or self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank.val):
                 mrflog.warn("%s state_update to CHARGING (from PREPUMP) flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                 self.clear_rad_timer()
                 pump_next = 1
