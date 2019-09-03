@@ -30,7 +30,7 @@ class MrfLandWebletUFH(MrflandWeblet):
                  ('max_ambient' ,  19.0  , { 'min_val' : 15.0,  'max_val' :  24.0, 'step' : 1.0}),
                  ('max_flow'    ,  36.0  , { 'min_val' : 30.0,  'max_val' :  42.0, 'step' : 1.0}),
                  ('min_store'   ,  30.0  , { 'min_val' :  0.0,  'max_val' :  70.0, 'step' : 1.0}),
-                 ('hysterisis' ,    5.0  , { 'min_val' :  0.125,  'max_val' :  4.0, 'step' : 0.125}),
+                 ('hysterisis' ,    5.0  , { 'min_val' :  0.25,  'max_val' :  4.0, 'step' : 0.25}),
                  ('pulse_time',    30    , { 'min_val' :  10,  'max_val' :  60, 'step' : 1})
     ]
     _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]

@@ -29,7 +29,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
     _config_ = [
                  ('max_return'  ,  45.0  , { 'min_val' : 30.0,  'max_val' :  60.0, 'step' : 1.0}),
                  ('min_store'   ,  50.0  , { 'min_val' : 30.0,  'max_val' :  70.0, 'step' : 1.0}),
-                 ('hysterisis',    5.0   , { 'min_val' :  0.125,  'max_val' :  10.0, 'step' : 0.125})
+                 ('hysterisis',    5.0   , { 'min_val' :  0.25,  'max_val' :  10.0, 'step' : 0.25})
     ]
     _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
