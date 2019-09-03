@@ -153,7 +153,7 @@ class MrfLandWebletUFH(MrflandWeblet):
 
 
     def var_changed(self,name,wsid):
-        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+        #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
 
         pump_curr = self.var.pump.val
 
