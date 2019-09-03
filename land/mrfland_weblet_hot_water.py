@@ -185,8 +185,8 @@ class MrfLandWebletHotWater(MrflandWeblet):
         if not self.radtimer:
             mrflog.error("radtimer not set!")
             return
-        start = datetime.datetime.now()
-        end = start + datetime.timedelta(seconds = seconds)
+        start = datetime.now()
+        end = start + timedelta(seconds = seconds)
         self.rtimer_onv.set(start.strftime("%H:%M"))
         self.rtimer_offv.set(end.strftime("%H:%M"))
         self.rtimer_env.set(True)
