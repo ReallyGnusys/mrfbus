@@ -295,7 +295,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                     mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                     next_state = 'CHARGING'
                     pump_next = 1
-                    self.set_timeout(self.var.hx_timeout_mins*60)
+                    self.set_timeout(self.var.hx_timeout_mins.val*60)
 
                 else:
                     next_state = 'PREPUMP'
@@ -308,7 +308,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.clear_rad_timer()
                 pump_next = 1
                 next_state = 'CHARGING'
-                self.set_timeout(self.var.hx_timeout_mins*60) # 90 mins timeout for now
+                self.set_timeout(self.var.hx_timeout_mins.val*60) # 90 mins timeout for now
 
 
         elif self.var.state.val == 'CHARGING':
