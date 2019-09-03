@@ -188,8 +188,8 @@ class MrfLandWebletUFH(MrflandWeblet):
         if pump_next != pump_curr:
             mrflog.warn("setting pump to %s"%repr(pump_next))
             self.pump.set(pump_next)
-        else:
-            mrflog.warn("leaving pump %s"%repr(pump_next))
+        #else:
+        #    mrflog.warn("leaving pump %s"%repr(pump_next))
 
 
 

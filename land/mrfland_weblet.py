@@ -289,8 +289,6 @@ class MrfWebletConfigVar(MrfWebletVar):
             self.check_tod()
             mrflog.warn("var changed to %s - app %s name %s"%(repr(value),repr(self.app),repr(self.name)))
             self.updated(wsid=wsid)
-        else:
-            mrflog.warn("var not changed from  %s - app %s name %s"%(repr(value),repr(self.app),repr(self.name)))
 
 
     @property

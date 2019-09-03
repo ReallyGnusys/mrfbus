@@ -224,7 +224,7 @@ class MrfLandWebletHotWater(MrflandWeblet):
     def var_changed(self,name,wsid):
         if name == 'state':  # otherwise infinite recursion!
             return
-        mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
+        #mrflog.warn("%s var_changed %s "%(self.__class__.__name__, name))
         self.state_update()
 
     def hx_pump_next(self,pump_curr):
