@@ -552,8 +552,12 @@ class MrflandWeblet(object):
 
         for vn in data.keys():
             mrflog.warn("setting var %s to %s"%(vn,repr(data[vn])))
-            dv = self.var.__dict__[vn]._val.__class__(data[vn])  # FIXME str types are unicode when they come back from DB
-            self.var.__dict__[vn].set(dv)
+
+            if vn in self.var.__dict__:
+                dv = self.var.__dict__[vn]._val.__class__(data[vn])  # FIXME str types are unicode when they come back from DB
+                self.var.__dict__[vn].set(dv)
+            else:
+                mrflog.warn("%s restore_cfg , vn %s not found in var"%(self.__class__.__name__,vn))
 
     def tbd_graph_request_data_ready(self,wsid, graphid, data):
         self.rm.webupdate(self.graphtag(graphid),

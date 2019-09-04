@@ -992,7 +992,7 @@ var _sensor_averages = {"""
         if not hasattr(self,'db'):
             return
 
-        mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
+        mrflog.warn("db_app_cfg_data_replace : kwargs %s"%repr(kwargs))
         apptag = kwargs['apptag']
         doc    = kwargs['doc']
 
@@ -1027,7 +1027,7 @@ var _sensor_averages = {"""
         if not hasattr(self,'db'):
             return
 
-        mrflog.warn("app_data_replace : kwargs %s"%repr(kwargs))
+        mrflog.warn("db_app_load_cfg_data : kwargs %s"%repr(kwargs))
         apptag = kwargs['apptag']
 
 
