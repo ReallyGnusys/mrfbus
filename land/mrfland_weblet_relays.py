@@ -48,7 +48,7 @@ class MrfLandWebletRelays(MrflandWeblet):
             self.sens[s].clear()
 
     def sens_callback(self, label, data ):
-        mrflog.info("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
+        mrflog.debug("RelaysWeblet : sens_callback  %s  data %s"%(label,repr(data)))
         self.rm.webupdate(self.mktag(self.tag, label), data)
 
 
@@ -58,7 +58,7 @@ class MrfLandWebletRelays(MrflandWeblet):
         s =  """
         <h2>%s</h2>"""%self.label
         if len(self.sl):
-            s += MrflandObjectTable(self.tag,"relays",self.sl[0]._output,self.slabs, postcontrols = [("control","_mrf_ctrl_cb")])
+            s += MrflandObjectTable(self.tag,self.tag,self.sl[0]._output,self.slabs, postcontrols = [("control","_mrf_ctrl_cb")])
         return s
 
 
