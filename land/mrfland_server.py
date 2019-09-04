@@ -721,7 +721,7 @@ class MrflandServer(object):
 
                 mrflog.debug("_resp_handler , got resp %s"%repr(resp))
                 mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
-                mrflog.debug("_resp_handler , got param %s"%repr(hdr))
+                mrflog.debug("_resp_handler , got param %s"%repr(param))
 
     def _struct_handler(self,*args, **kwargs):
         mrflog.debug("Input on data pipe")

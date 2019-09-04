@@ -99,6 +99,7 @@ class MrfStruct(LittleEndianStructure):
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
+        return len(bytes) == sizeof(self)
     def dump(self):
         return buffer(self)[:]
 
@@ -370,6 +371,8 @@ def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
         respobj = cmdset[rtype]['resp']()  # create an instance of the mrf_struct object
         #print "mrf_decode_buff got type  %s"%type(respobj)
         #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-        respobj.load(rbytes)  ## and load with raw data
-        return respobj
+        success = respobj.load(rbytes)  ## and load with raw data
+
+        if success :
+            return respobj
     return None
