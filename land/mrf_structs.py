@@ -1,13 +1,20 @@
 from ctypes import *
 import datetime
 from collections import OrderedDict
-
+#from mrflog import mrflog
 
 class MrfStruct(LittleEndianStructure):
     def fromstr(self, string):
         memmove(addressof(self), string, sizeof(self))
+
+    def sizeof(self):
+        s = 0
+        for f in self._fields_:
+            s += sizeof(f[1])
+        return s
+
     def __len__(self):
-        return sizeof(self)
+        return self.sizeof()
 
     def __getitem__(self,attname):
         return getattr(self,attname)
@@ -370,8 +377,10 @@ def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
         respobj = cmdset[rtype]['resp']()  # create an instance of the mrf_struct object
         #print "mrf_decode_buff got type  %s"%type(respobj)
         #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-        if len(rbytes) >=  sizeof(respobj):
+        if len(rbytes) >=  respobj.sizeof():
             respobj.load(rbytes)  ## and load with raw data
             return respobj
+        #else:
+        #    mrflog.warn("mrf_decode_buff  : respobj %s len %d - but rbytes len %d"%(type(respobj),sizeof(respobj),len(rbytes)))
 
     return None

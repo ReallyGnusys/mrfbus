@@ -601,7 +601,7 @@ class MrflandServer(object):
            None
         """
 
-        #print "parse_input len is %d"%len(resp)
+        mrflog.debug( "parse_input len is %d"%len(resp))
         hdr = PktHeader()
 
         if len(resp) < len(hdr):  # no way valid
@@ -619,11 +619,11 @@ class MrflandServer(object):
         if hdr.udest != 0: # only looking for packets destined for us, except for receipts
 
             if hdr.usrc != 0:
-                mrflog.warn("not receipt for us")
+                mrflog.warn("not receipt for us %s"%repr(hdr))
                 return None,None,None
 
             if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
-                mrflog.info("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
+                mrflog.warn("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
                 self.active_cmd.receipt = hdr
                 mrflog.info(repr(hdr))
 
@@ -653,10 +653,11 @@ class MrflandServer(object):
             param, rsp = ndr, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
-            mrflog.info("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
+            mrflog.debug("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
 
             # pass packet to rm , which runs device packet handler
             param, rsp = self.rm.packet(hdr,resp)
+            mrflog.debug("called rm packet \n : hdr was \n%s)"%(repr(hdr)))
 
         else:
             mrflog.warn("not resp or struct or ndr")
@@ -700,7 +701,7 @@ class MrflandServer(object):
     def _resp_handler(self,*args, **kwargs):
         rresp = os.read(self.rfd, 1024)
 
-        mrflog.info("Input on response pipe len %d"%len(rresp))
+        mrflog.debug("Input on response pipe len %d "%(len(rresp)))
         while len(rresp):
 
             hdr , param, resp  = self.parse_input(rresp)
@@ -712,20 +713,24 @@ class MrflandServer(object):
                 mrflog.warn("type hdr "+str(type(hdr)))
 
 
+            mrflog.debug("hdr on resp_pipe %s"%repr(hdr))
 
                 #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
-            if hdr  and param  and resp :
-                mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
-                self.handle_response(hdr, param , resp, response=True )
+            if hdr  and param:
+                if resp:
+                    mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                    self.handle_response(hdr, param , resp, response=True )
 
 
-                mrflog.debug("_resp_handler , got resp %s"%repr(resp))
-                mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
-                mrflog.debug("_resp_handler , got param %s"%repr(param))
+                    mrflog.debug("_resp_handler , got resp %s"%repr(resp))
+                    mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
+                    mrflog.debug("_resp_handler , got param %s"%repr(param))
+                else:
+                    mrflog.warn("failed to decode response - hdr %s param %s"%(repr(hdr),repr(param)))
 
     def _struct_handler(self,*args, **kwargs):
         mrflog.debug("Input on data pipe")
-        rresp = os.read(self.sfd, 1024)
+        rresp = os.read(self.sfd, 2048)
 
 
         while len(rresp):
@@ -733,8 +738,10 @@ class MrflandServer(object):
 
             if hdr:
                 rresp=rresp[hdr.length:]
+
             else:
                 mrflog.warn("no hdr")
+
             if hdr and param and resp :
                 mrflog.debug("received object %s response from  %d"%(type(resp),hdr.usrc))
                 self.handle_response(hdr, param , resp)
