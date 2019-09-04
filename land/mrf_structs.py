@@ -99,7 +99,6 @@ class MrfStruct(LittleEndianStructure):
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
-        return len(bytes) == sizeof(self)
     def dump(self):
         return buffer(self)[:]
 

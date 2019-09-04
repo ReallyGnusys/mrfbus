@@ -120,7 +120,7 @@ class MrfDev(object):
         else:
             resp = mrf_decode_buff(param.type, respdat, cmdset=self._cmdset)
         if not resp:
-            mrflog.error("%s failed to decode packet , hdr was %s"%(self.__class__.__name__,repr(hdr)))
+            mrflog.error("%s failed to decode packet , hdr was %s param %s len(respdat) %d"%(self.__class__.__name__,repr(hdr),repr(param),len(respdat)))
             return None, None
 
         mrflog.info(" calling app packet with resp %s"%repr(resp))
