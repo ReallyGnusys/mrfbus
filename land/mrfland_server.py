@@ -794,7 +794,7 @@ class MrflandServer(object):
                               (r'((/)([^/?]*)(.*))', mainapp, dict(rm=self.rm) )
         ]
 
-        self._webapp = tornado.web.Application(self._web_handlers,cookie_secret="dighobalanamsamarosaddhammamavijanatam")
+        self._webapp = tornado.web.Application(self._web_handlers,cookie_secret=install.cookie_secret)
 
         self.nsettings = dict()
 
