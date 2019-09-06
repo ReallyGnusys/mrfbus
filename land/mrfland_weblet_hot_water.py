@@ -241,26 +241,31 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
             return 0 , 0
 
-        # hx_ret is not over threshold ( with hysterisis) - but only if hx_flow up to speed
 
         ## switchover from prepump to charge when rx_flow reaches threshold
         swth =  (self.var.tank_top.val + self.var.delta_flow_tank.val - running * self.var.hysteresis.val)
-
         sw = self.var.hx_flow.val > swth
 
-        rxth = (self.var.hx_flow.val - self.var.delta_flow_rx.val - stopped * self.var.hysteresis.val)
 
         if sw :
+            # hx_ret is not over threshold ( with hysterisis) - but only if hx_flow up to speed
+            if pump_curr != 1:
+                mrflog.warn("over switchover threshold hx_pump changing to on: hx_flow   %.2f , tank  %.2f"%(self.var.hx_flow.val,self.var.tank_top.val))
+
+            return 1 , 0
+        else:
+            return 0, 1
+        """
             if self.var.hx_ret.val > rxth:
                 if pump_curr or debug: # print message if threshold reached while pumping
-                    mrflog.warn("hx_ret threshold reached while charging %.2f (th was %.2f)"%(self.var.hx_ret.val,rxth))
+                    mrflog.warn("switch to hx threshold reached  %.2f (th was %.2f)"%(self.var.hx_ret.val,rxth))
 
-                return 0, 0
+                return 1, 0
         else:
             return 0 , 1
 
         return 1 , 0
-
+        """
     def state_update(self, timeout=False):
 
         ## evalute Immersion heater rules for setting heater relay
@@ -300,13 +305,13 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 next_state = 'IDLE'
         elif self.var.state.val == 'IDLE':
             pnext, radnext  = self.hx_pump_next(pump_curr)
-            if pnext or radnext:
-                self.hx_pump_next(pump_curr,debug=True)  # just for printout
+            #if pnext or radnext:
+            #    self.hx_pump_next(pump_curr,debug=True)  # just for printout
             if pnext:
                 mrflog.warn("%s state_update to CHARGING flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
-                next_state = 'CHARGING'
+                next_state = 'CHARGE1'
                 pump_next = 1
-                self.set_timeout(self.var.hx_timeout_mins.val*60)
+                self.set_timeout(2*60)
 
             elif radnext:
                 next_state = 'PREPUMP'
@@ -316,11 +321,18 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         elif self.var.state.val == 'PREPUMP':
             if timeout or self.var.hx_flow.val > (self.var.tank_top.val + self.var.delta_flow_tank.val):
-                mrflog.warn("%s state_update to CHARGING (from PREPUMP) flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
+                mrflog.warn("%s state_update to CHARGE1 (from PREPUMP) flow_temp %.2f top temp %.2f"%(self.__class__.__name__,self.var.hx_flow.val, self.var.tank_top.val))
                 self.clear_rad_timer()
                 pump_next = 1
+                next_state = 'CHARGE1'
+                self.set_timeout(2*60)
+
+        #2 min fixed time (set by call code above )  with hx pump on to let hx_ret stabilise
+        elif self.var.state.val == 'CHARGE1':
+            pump_next = 1
+            if timeout:  # go to main CHARGING mode , with config timeout
+                self.set_timeout(self.var.hx_timeout_mins.val*60)
                 next_state = 'CHARGING'
-                self.set_timeout(self.var.hx_timeout_mins.val*60) # 90 mins timeout for now
 
 
         elif self.var.state.val == 'CHARGING':
@@ -329,6 +341,19 @@ class MrfLandWebletHotWater(MrflandWeblet):
             pump_next = 1
 
             pnext,radnext = self.hx_pump_next(pump_curr)
+            if not pnext:
+
+                mrflog.warn("%s %s hx pump changing to False in state  CHARGING: hx_flow   %.2f , hx_return  %.2f"%(self.__class__.__name__,self.label,self.var.hx_flow.val,self.var.hx_ret.val))
+
+
+            if pnext: # check return is not too hot cf. flow
+                rxth = (self.var.hx_flow.val - self.var.delta_flow_rx.val - int(pump_curr==0) * self.var.hysteresis.val)
+                pnext = self.var.hx_ret.val < rxth
+
+                if not pnext:
+                    mrflog.warn("%s %s hx return over threshold during state CHARGING: hx_flow   %.2f , hx_return  %.2f"%(self.__class__.__name__,self.label,self.var.hx_flow.val,self.var.hx_ret.val))
+
+
             if timeout:
                 mrflog.warn("%s %s timeout in state %s"%(self.__class__.__name__,self.label,self.var.state.val))
                 trans = True
