@@ -44,6 +44,12 @@ if [ $1 == setup ] ; then
         fi
 
     fi
+
+    echo "setting up third party statics"
+
+    python ${MRFBUS_HOME}/land/thirdparty_static.py
+
+
     echo "building venv"
 
     virtualenv venv
@@ -51,6 +57,9 @@ if [ $1 == setup ] ; then
 
     echo "installing requirements"
     pip install -r ${MRFBUS_HOME}/land/requirements.txt
+
+
+
     exit 0
 fi
 
@@ -170,6 +179,8 @@ function kill_devs {
 }
 
 if [ $mode == build ] ; then
+
+
    if [ -n "${server}" ] ; then
 
       [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1

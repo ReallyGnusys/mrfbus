@@ -60,9 +60,9 @@ users = {
 
 
     'q'     : { 'sid' : 3, 'type' : 'sysadmin', 'password' : 'q'     , 'username': 'q',
-                'apps' : ['store','rad1', 'rad2', 'DHW1','DHW2','temps','timers','relays','devs','history']},
+                'apps' : '*'},
     'p'     : { 'sid' : 4, 'type' : 'sysadmin', 'password' : 'p'     , 'username': 'p',
-                'apps' : ['store','rad1','rad2','DHW1','DHW2','temps','timers','relays','devs','history']},
+                'apps' : '*' },
     'j'     : { 'sid' : 5, 'type' : 'sysadmin', 'password' : 'j'     , 'username': 'j',
                 'apps' : ['rad2','history']}
 }

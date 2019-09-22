@@ -11,7 +11,7 @@ import pdb
 from mrf_sens_period import MrfSensPeriod
 from mrflog import mrflog
 from mrf_structs import PktTimeDate
-
+from thirdparty_static import ThirdPartyStaticMgr
 import mrfland
 
 #from mrfland import to_json
@@ -220,6 +220,9 @@ class MrflandRegManager(object):
 
         self.period_timers = {}
         self.period_lut = {}
+
+        self.tp_static_mgr = ThirdPartyStaticMgr()
+
         """
         if self.config.has_key('periods') and type(self.config['periods'])==type([]):
             mrflog.warn("setting up period sensors")
@@ -623,11 +626,18 @@ class MrflandRegManager(object):
                 s += '    <li %s><a data-toggle="pill" href="#%s">%s</a></li>\n'%(lic,wl.tag,wl.label)
         return s
 
-    def html_body(self,apps):
+    def html_body(self,apps,static_cdn=False):
         """ generate the html body """
         self.graph_insts = 0
+
+        css_html = self.tp_static_mgr.html(css=True,static_cdn=static_cdn)
+        js_html  = self.tp_static_mgr.html(static_cdn=static_cdn)
         s = """
   <body>
+    <!-- Thirdparty CSS
+    ================================================== -->
+""" + css_html+"""
+
     <div class="container">
        <ul class="nav nav-pills" id="mrf-tabs">
 """+self.html_pills(apps)+"""
@@ -635,30 +645,29 @@ class MrflandRegManager(object):
 
        <div class="tab-content">
 """
-        first = True
+        active = True  # first in list is active bootstrap pane
         for wa in self.weblets.keys():
             if wa in apps:
                 wl = self.weblets[wa]
-                s += wl.html(first)
-                first = False
+                s += wl.html(active)
+                active = False
         s += """
        </div> <!-- /tab-content -->
 
     </div> <!-- /container -->
 
-
-    <!-- Bootstrap core JavaScript
-    ================================================== -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
-    <script src="static/public/bower_components/bootstrap-timepicker/js/bootstrap-timepicker.js"></script>
-    <script src="static/public/bower_components/plotly.js/dist/plotly.min.js"></script>
-    <script src="static/secure/js/mrf_sock.js"></script>
-
+    <!-- Sensor graph data  -->
     <script type="text/javascript">
 """+self.sensor_average_js()+"""
     </script>
+    <!-- Thirdparty JavaScript
+    ================================================== -->
+""" + js_html+"""
+
+
+    <script src="static/secure/js/mrf_sock.js"></script>
+
+
   </body>
 """
         return s

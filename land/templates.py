@@ -1,3 +1,4 @@
+
 public_tp = """
 <html>
 <head>
@@ -8,12 +9,12 @@ public_tp = """
   <link rel="stylesheet" type="text/css" href="/static/public/css/asa/form.css" />
   <link rel="stylesheet" type="text/css" href="/static/public/css/asa/asa_public.css" />
   <link rel="stylesheet" type="text/css" href="/static/public/css/asa/jquery-ui-1.10.4.custom.min.css" />
-  <script type="text/javascript" src="/static/public/js/jquery/jquery.js"></script> 
+  <script type="text/javascript" src="/static/public/js/jquery/jquery.js"></script>
   <script type="text/javascript" src="/static/public/js/jquery/jquery-ui-1.10.4.custom.min.js"></script>
   <script type="text/javascript" src="/static/public/js/asa/asa_public.js"></script>
   <script type="text/javascript" src="/static/public/js/asa/asa_pstates.js"></script>
 <script type="text/javascript">
-  var _asa_pdata = {  
+  var _asa_pdata = {
        ws_url   : " {{ ws_url }} "
       };
 </script>
@@ -83,7 +84,7 @@ login_tp = """<!DOCTYPE html>
 </html>
 """
 
-    
+
 
 mrf_tp = """
 <!DOCTYPE html>
@@ -99,12 +100,9 @@ mrf_tp = """
 
     <title>MRFBUS</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="static/public/bower_components/bootstrap-timepicker/css/timepicker.min.css" rel="stylesheet">
 
     <script type="text/javascript">
-       var _mrf_sdata = {  
+       var _mrf_sdata = {
        ws_url   : " {{ ws_url }} ",
        sid      : {{ sob['sid'] }},
        username : "{{sob['username']}}",

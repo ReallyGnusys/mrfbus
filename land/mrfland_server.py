@@ -784,10 +784,20 @@ class MrflandServer(object):
             mrflog.error("MRFBUS_HOME not defined, webapp unlikely to work...")
             mrfhome = ''
 
+
+        if os.environ.has_key('PWD'):
+            cwd = os.environ['PWD']
+        else:
+            mrflog.error("PWD not defined, webapp unlikely to work...")
+            cwd = ''
+
+
+
         self._web_static_handler = NoCacheStaticFileHandler
 
         self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','public/css/asa/images')}),
                               (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
+                              (r'/static/thirdparty/(.*)', self._web_static_handler, {'path': os.path.join(cwd,'static/thirdparty')}),
                               (r'/ws', WebSocketHandler, dict(rm=self.rm)), # need rm to track connections and auth
                               (r'/pws', PubSocketHandler),
                               (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': os.path.join(mrfhome,'land','static/secure')}),

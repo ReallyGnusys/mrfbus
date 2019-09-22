@@ -38,44 +38,40 @@ class MrfLandWebletStore(MrflandWeblet):
         if not self.cdata.has_key('acc_tag'):
             mrflog.error("%s , no acc_tag in data")
             return
+
         if not self.cdata.has_key('acc_litres'):
             mrflog.error("%s , no acc_litres in data")
-
             return
-        self.litres = self.cdata['acc_litres']
 
+        self.litres = self.cdata['acc_litres']
 
         self.top_ts = self.rm.sens_search_vector_max(MrfSensPt1000, self.cdata['acc_tag'])
         self.add_var('tank_top',self.top_ts, field='temp', graph=True)
-        self.return_sens = self.rm.sens_search(self.cdata['acc_tag'] + "_RET")        
+        self.return_sens = self.rm.sens_search(self.cdata['acc_tag'] + "_RET")
         self.add_var('return_temp',self.return_sens, field='temp', graph=True)
 
 
         self.ts = self.rm.sens_search_vector(MrfSensPt1000, self.cdata['acc_tag'])
-        for l in self.ts:  # 
+        for l in self.ts:  #
             s = self.ts[l]
             self.add_var(s.label,s, field='temp', graph=True)
-  
-        mrflog.warn("Store has temp sensors at following levels %s"%repr(self.ts.keys()))
 
-        
+        mrflog.warn("Store has temp sensors at following levels %s"%repr(self.ts.keys()))
 
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
-        
+
         s =  """
         <h2>"""+self.label+"    "+self.var.tank_top.html+" &#176;C</h2>"
         sensors = []
         for level in self.ts:
             sensors.append(self.ts[level].label)
 
-            
         sensors.append(self.return_sens.label)
-         
+
         s += self.rm.graph_inst({
             "temp" : sensors
         })
-
 
         skeys = self.var.__dict__.keys()
         skeys.sort()
@@ -85,8 +81,5 @@ class MrfLandWebletStore(MrflandWeblet):
         <hr>
         <h3>Temps</h3>"""
         s += self.html_var_table(skeys)
-            
-
-        
 
         return s
