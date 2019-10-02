@@ -91,13 +91,13 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
                 s += """
                <td>
                  <span class="app-%s tab-%s row-%s fld-%s">%s</span>
-                 <i class="fa fa-clock-o mrfctrl_timepick" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
+                 <i class="glyphicon glyphicon-time mrfctrl_timepick" app="%s" tab="%s" row="%s" mc-fld="%s"></i>
               </td>"""%(app, tab, str(row),fld, ival, app, tab, str(row),fld)
             elif odict[fld] == '_mrf_ctrl_butt':
                 s += """
                <td>
                  <span class="app-%s tab-%s row-%s fld-%s">%s</span>
-                 <button class="fa %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s"></button>
+                 <button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s"></button>
               </td>"""%(app, tab, str(row),fld, ival, cls, app, tab, str(row),fld)
             else:
                 s += """<td class="app-%s tab-%s row-%s fld-%s">%s</td>"""%(app, tab, str(row), fld, ival)
@@ -111,7 +111,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
     return s
 
 def mrfctrl_butt_html(app,tab,row,fld,cls=""):
-    return """<button class="fa %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
+    return """<button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
         (cls,app,tab,row,fld,row)
 
 
@@ -308,22 +308,15 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self.val.__class__ == int or self.val.__class__ == float:
             return """
             <span class="mrfvar-ctrl-wrap" app="%s" name="%s" >
-                   <button class="fa fa-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></button>
-                   <button class="fa fa-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
+                   <button class="glyphicon glyphicon-arrow-up mrfvar-ctrl-up" app="%s" name="%s" action="up"></button>
+                   <button class="glyphicon glyphicon-arrow-down mrfvar-ctrl-down" app="%s" name="%s" action="down"></button>
             </span>"""%(self.app, self.name, self.app, self.name, self.app, self.name)
 
         if self.val.__class__ == str and self.tod.__class__ == datetime.time:
-            tpid = "mrf_timepick_%s_%s"%(self.app, self.name)
             return """
-            <span class="mrfvar-ctrl-wrap" app="%s" name="%s"  >
-                <div class="input-group date mrfvar-ctrl-timepick" id="%s" data-target-input="nearest" app="%s" name="%s">
-                    <div class="input-group-append" data-target="#%s" data-toggle="datetimepicker">
-                        <div class="input-group-text"><i class="fa fa-clock-o"></i></div>
-                    </div>
-                </div>
-            </span>"""%(self.app, self.name, tpid,self.app, self.name, tpid)
-
-
+            <span class="mrfvar-ctrl-wrap" app="%s" name="%s" >
+               <i class="glyphicon glyphicon-time mrfvar-ctrl-timepick" app="%s" name="%s"></i>
+            </span>"""%(self.app, self.name, self.app, self.name)
 
         if self.val.__class__ == str and hasattr(self,'sel_list'):
 
@@ -911,8 +904,8 @@ class MrflandWeblet(object):
             if tmr.pulse:
                 pulse_timers.append(tmr.pulse.name)
                 html_str = ""
-                html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='fa-clock-o')
-                html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='fa-times')
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='glyphicon-time')
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='glyphicon-remove')
                 tcols['enable'].append(html_str)
             else:
                 tcols['enable'].append(tmr.en)

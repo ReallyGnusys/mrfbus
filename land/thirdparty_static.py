@@ -82,7 +82,7 @@ class ThirdPartyStatic(object):
 class ThirdPartyStaticMgr(object):
     def __init__(self,force_reload=False): # hard coded js and css dependencies here for now
 
-        bootstrap = 4
+        bootstrap = 3
 
         self.css = []
         self.js  = []
@@ -94,7 +94,7 @@ class ThirdPartyStaticMgr(object):
             tpickcss = ThirdPartyStatic('css','timepicker', "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-timepicker/0.5.2/css/bootstrap-timepicker.min.css", login_only=True,force_reload=force_reload)
 
 
-            fonts =  ThirdPartyStatic('css','fonts',"bootstrap-3/fonts", login_only=False, force_reload=force_reload)
+            #fonts =  ThirdPartyStatic('css','fonts',"bootstrap-3/fonts", login_only=False, force_reload=force_reload)
 
             bootstrapjs = ThirdPartyStatic('js','bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js", login_only=True, force_reload=force_reload)
             bootstrapcss = ThirdPartyStatic('css','bootstrap',"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css", login_only=True, force_reload=force_reload)
@@ -112,13 +112,10 @@ class ThirdPartyStaticMgr(object):
 
         # waste loading plotly for login page
         plotly =  ThirdPartyStatic('js','plotly', "https://cdn.plot.ly/plotly-latest.min.js", login_only=False, force_reload=force_reload)
-        """
         if bootstrap == 3:
-            self.login_statics = [ bootstrapcss, fonts,jquery, bootstrapjs]
+            self.login_statics = [ bootstrapcss, jquery, bootstrapjs]
         else:
             self.login_statics = [ bootstrapcss, fonts, jquery, bootstrapjs]
-        """
-        self.login_statics = [ bootstrapcss, fonts,jquery, bootstrapjs]
 
         if bootstrap == 3:
             self.main_statics  = self.login_statics + [ tpickcss,tpickjs,plotly]

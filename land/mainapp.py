@@ -43,21 +43,6 @@ def logout_action(rh,sob,ip):
     rh.redirect('/login')
 
 
-_priv_js = {
-    'system' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
-    'sysadmin' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
-    'admin' :  ['asa_admin_staff_on.js','asa_admin_case_on.js','asa_admin_settings_on.js'],
-    'supervisor' :  ['asa_admin_staff_off.js','asa_admin_case_on.js'],
-    'staff' :  ['asa_admin_staff_off.js','asa_admin_case_off.js'],
-    }
-
-def _expand_priv_js(stype):
-    ht = ''
-    if _priv_js.has_key(stype):
-        for js in _priv_js[stype] :
-            ht += '<script type="text/javascript" src="/static/secure/js/'+js+'"></script>\n'
-    return ht
-
 
 def mrf_pills(weblets):
     s = ""
@@ -81,17 +66,6 @@ def mrf_html(weblets):
         s += wl.html()
     return s
 
-"""
-Aiming to retire this - .js() method removed from apps now.
- Don't want apps writers to bother with JS
-def mrf_js(weblets):
-    s = ""
-    for wa in weblets.keys():
-        wl = weblets[wa]
-        s += wl.js()
-    return s
-"""
-
 def mrf_weblet_table(weblets):
     s = "// namespace table for weblets\n"
     s += "var _weblet_table = { "
@@ -111,8 +85,6 @@ def mrf_page(rh,sob,ws_url, ip,html_body):
     mrflog.info("mrf_page: sob = "+str(sob))
     # they're in - they'll be served with a page with websocket url
     # prepared for them when they authenticated.....
-    #pjs = _expand_priv_js(sob['type'])
-    #mrflog.info("pjs:"+pjs)
     host = install.host
     rh.add_header("Expires",0)
     if install.domain:
@@ -209,22 +181,16 @@ def post_login(rh):
     #rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
 
-
-
     result = { 'result' : 'success',
-               'data' : authres,
+               'data'   : authres,
                'redirect' : secure_url
                }
-    rh.write(mrfland.to_json(result))
 
+    rh.write(mrfland.to_json(result))
 
     ro = mrfland.RetObj()
     ro.b(mrfland.staff_info())
     rh.rm.comm.comm(None,ro)
-
-
-
-
 
 
 class mainapp(tornado.web.RequestHandler):
@@ -281,10 +247,7 @@ class mainapp(tornado.web.RequestHandler):
         self.set_req_host()
         ip = self.ip
 
-        mrflog.warn("got request_host "+self.request_host)
-
-
-        mrflog.info("ip: "+ip+" uri : "+uri)
+        mrflog.warn("got request_host "+self.request_host+" from ip: "+ip+" uri : "+uri)
 
 
 

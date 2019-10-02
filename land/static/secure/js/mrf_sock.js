@@ -496,10 +496,9 @@ function init_graphs(){
 function init_app(){
 
     // init timepickers
-    /* old style controls -delete
-    $(".mrfctrl_timepick").datetimepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
+    $(".mrfctrl_timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
 
-    $('.mrfctrl_timepick').datetimepicker().on('hide.timepicker', function(e) {
+    $('.mrfctrl_timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
         console.log('The minute is ' + e.time.minutes);
@@ -544,7 +543,7 @@ function init_app(){
         //ws.send(mrf_ccmd(app,"mrfctrl",cdata));
       });
 
-      */
+
 
     //checkboxes
     $(".mrfctrl_cb").change(
@@ -642,13 +641,9 @@ function init_app(){
 
 
 
-    $(".mrfvar-ctrl-timepick").datetimepicker({
-                    format: 'HH:mm'
-                });
+    $(".mrfvar-ctrl-timepick").timepicker({showMeridian : false , showInputs : false , minuteStep : 1 });
 
-    $('.mrfvar-ctrl-timepick').on('hide.datetimepicker', function(e) {
-        console.log('HIDE The time  ');
-        /*
+    $('.mrfvar-ctrl-timepick').timepicker().on('hide.timepicker', function(e) {
         console.log('The time is ' + e.time.value);
         console.log('The hour is ' + e.time.hours);
         console.log('The minute is ' + e.time.minutes);
@@ -664,14 +659,11 @@ function init_app(){
         console.log(cdata)
 
         ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
-        */
       });
 
 
-    $('.mrfvar-ctrl-timepick').on('show.datetimepicker', function(e) {
-        console.log('Show ');
-        console.log(e)
-        /*
+    $('.mrfvar-ctrl-timepick').timepicker().on('show.timepicker', function(e) {
+
         console.log('Show : The time is ' + e.time.value);
         console.log(e);
         app = $(this).attr('app');
@@ -679,28 +671,7 @@ function init_app(){
 
         hval = $(".mrfvar-"+name).html()
         console.log("hval = "+hval)
-        $(this).datetimepicker('date', hval);
-        */
-      });
-
-   $('.mrfvar-ctrl-timepick').on('change.datetimepicker', function(e) {
-
-       console.log('Change : The time is ');
-       console.log(e)
-       console.log("moment")
-       m =  e.date
-       console.log(m)
-       app = $(this).attr('app');
-       name = $(this).attr('name');
-       val = m.format("HH:mm")
-       cdata = {"app": app , "name" : name, "op" : "set",  "val" : val }
-       console.log("cdata follows")
-       console.log(cdata)
-       ws.send(mrf_ccmd(app,"mrfvar_ctrl",cdata));
-
-       //console.log(ts)
-       //m = moment.unix(ts)
-       //console.log(m.format())
+        $(this).timepicker('setTime', hval);
 
       });
 
