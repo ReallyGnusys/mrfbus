@@ -205,9 +205,11 @@ class mainapp(tornado.web.RequestHandler):
 
     def set_req_host(self):
         # handle nginx proxying
+        mrflog.warn("req headers "+repr(self.request.headers))
+        if 'X-Real-Ip' in  self.request.headers.keys():
+            self.ip = self.request.headers['X-Real-Ip']
 
-
-        if 'X-Forwarded-For' in self.request.headers.keys():
+        elif 'X-Forwarded-For' in self.request.headers.keys():
             self.ip = self.request.headers['X-Forwarded-For']
 
             #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
@@ -290,7 +292,7 @@ class mainapp(tornado.web.RequestHandler):
             self.redirect('/login')
             return
 
-        static_cdn = True
+        static_cdn = False
         html_body = self.rm.html_body(sob['apps'],static_cdn=static_cdn)
         #static_thirdparty_html = self.rm.tp_static_mgr.local_html()
         ws_url = self.rm.ws_url(sob['wsid'],sob['req_host'])
