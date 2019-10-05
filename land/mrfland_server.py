@@ -30,6 +30,9 @@ from mrf_structs import *
 import mrfland
 import ipaddress
 
+
+oursubnet = ipaddress.ip_network(install.localnet)
+
 """
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox

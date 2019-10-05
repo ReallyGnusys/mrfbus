@@ -14,6 +14,9 @@ import ipaddress
 #alog = mrf_log()
 from mrflog import mrflog
 
+oursubnet = ipaddress.ip_network(install.localnet)
+
+
 def print_everything(*args):
     mrflog.debug( "print *args")
     for count, thing in enumerate(args):
@@ -23,7 +26,6 @@ def print_kwargs(**kwargs):
     for name, value in kwargs.items():
         mrflog.debug('{0} = {1}'.format(name, value))
 
-oursubnet = ipaddress.ip_network(install.localnet)
 
 conn = None
 
