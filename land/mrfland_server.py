@@ -28,6 +28,8 @@ from pubsock import PubSocketHandler
 
 from mrf_structs import *
 import mrfland
+import ipaddress
+
 """
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
@@ -100,6 +102,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         mrflog.info("headers:"+str(self.request.headers))
         #mrflog.debug("staff_type = "+str(stype))
 
+        self.set_req_host()
+
+        """
         rs =  self._request_summary()
         mrflog.debug("req_sum:"+rs)
         regx = r'^GET /ws\?Id=%s \(([^\(]+)\)'%self.id
@@ -119,6 +124,15 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             mrflog.debug("client ip not found!")
             return
 
+        """
+        ip = self.ip
+        mrflog.info("client ip="+ip)
+        sob =  self.rm.comm.check_socket(self.id,ip)
+        if sob == None:
+            mrflog.debug("check socket failed for ip %s  self.id %s"%(str(ip),self.id))
+            return
+
+
 
         cdata = {"id": self.id,
                  "sid":sob.sid,
@@ -129,6 +143,29 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
                  }
         self.rm.comm.add_client(self.id,cdata)
 
+
+    def set_req_host(self):
+        # handle nginx proxying
+        mrflog.warn("req headers "+repr(self.request.headers))
+        if 'X-Real-Ip' in  self.request.headers.keys():
+            self.ip = self.request.headers['X-Real-Ip']
+
+        elif 'X-Forwarded-For' in self.request.headers.keys():
+            self.ip = self.request.headers['X-Forwarded-For']
+
+            #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
+        else:
+            self.ip = self.request.remote_ip
+        self.request_host = self.request.headers['Host']
+
+        ipaddr = ipaddress.ip_address(self.ip)
+
+        if ipaddr.is_loopback:
+            self.localreq = True
+        elif ipaddr in oursubnet:
+            self.localreq = True
+        else:
+            self.localreq = False
 
 
 
