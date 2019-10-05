@@ -47,6 +47,11 @@ if [ $1 == setup ] ; then
 
     echo "setting up third party statics"
 
+    # check if request module installed
+    python -c "import request"
+
+    [ $? -ne 0 ] && echo "python request module not found : please install via pip" && exit -1
+
     python ${MRFBUS_HOME}/land/thirdparty_static.py
 
 
