@@ -9,6 +9,8 @@ sys.path.append('../lib')
 #from mrflog import mrf_log
 import templates
 import mrfland
+import ipaddress
+
 #alog = mrf_log()
 from mrflog import mrflog
 
@@ -21,6 +23,7 @@ def print_kwargs(**kwargs):
     for name, value in kwargs.items():
         mrflog.debug('{0} = {1}'.format(name, value))
 
+oursubnet = ipaddress.ip_network(install.localnet)
 
 conn = None
 
@@ -217,6 +220,16 @@ class mainapp(tornado.web.RequestHandler):
             self.ip = self.request.remote_ip
         self.request_host = self.request.headers['Host']
 
+        ipaddr = ipaddress.ip_address(self.ip)
+
+        if ipaddr.is_loopback:
+            self.localreq = True
+        elif ipaddr in oursubnet:
+            self.localreq = True
+        else:
+            self.localreq = False
+
+
     def post(self, *args, **kwargs):
         mrflog.info('post:'+str(self.request))
         mrflog.warn("mainapp post kwargs %s"%repr(kwargs))
@@ -264,12 +277,14 @@ class mainapp(tornado.web.RequestHandler):
         else:
             action = None
 
+        static_cdn = (self.localreq==False)  # dish out TP statics from CDNs if not local network request
+
         sessid = self.get_secure_cookie(install.sess_cookie)
         mrflog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
         if sessid == None:
             if page == 'login':
                 mrflog.info("returning login page as requested")
-                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.local_html(login=True))
+                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn))
             else:
                 mrflog.info("no sessid - redirecting to login page")
                 return self.redirect('/login')
@@ -279,7 +294,7 @@ class mainapp(tornado.web.RequestHandler):
         if sob == None :
             mrflog.info("session is invalid")
             if page == 'login':
-                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.local_html(login=True))
+                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn))
             else:
                 return self.redirect('/login')
 
@@ -292,7 +307,6 @@ class mainapp(tornado.web.RequestHandler):
             self.redirect('/login')
             return
 
-        static_cdn = False
         html_body = self.rm.html_body(sob['apps'],static_cdn=static_cdn)
         #static_thirdparty_html = self.rm.tp_static_mgr.local_html()
         ws_url = self.rm.ws_url(sob['wsid'],sob['req_host'])

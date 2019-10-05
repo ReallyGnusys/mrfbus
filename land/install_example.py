@@ -16,6 +16,8 @@ import socket
 host = socket.gethostname()
 #host = 'ted'
 
+localnet = '192.168.5.0/24'
+
 http_port = 8888  # real port served by tornado webapp
 http_proxy_port = 8888  # proxy port used by clients ( handled by nginx )
 

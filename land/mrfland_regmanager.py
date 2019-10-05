@@ -13,7 +13,7 @@ from mrflog import mrflog
 from mrf_structs import PktTimeDate
 from thirdparty_static import ThirdPartyStaticMgr
 import mrfland
-
+import ipaddress
 #from mrfland import to_json
 
 
@@ -60,7 +60,7 @@ class mrf_comm(object):
         self.sockets = {}
 
     def prepare_socket(self,sid,wsid,sessid,username,stype,apps,ip,req_host):
-        mrflog.info("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
+        mrflog.warn("mrf_comm.prepare_socket sid %s wsid %s sessid %s ip %s"%(repr(sid),repr(wsid),repr(sessid),repr(ip)))
         self.sockets[wsid] = staff_socket(sid,wsid,sessid,username,stype,apps,ip,req_host)
 
     def check_socket(self,wsid,ip):  # FIXME should have timeout if socket not opened in v short time after prepare_socket
@@ -71,7 +71,7 @@ class mrf_comm(object):
         skt = self.sockets[wsid]
         if skt.ip != ip:
             mrflog.error("wsid (%s) ip mismatch - expected %s got %s"%(wsid,ip,skt.ip))
-            #return None
+            return None
 
         return socket_info(skt)
 
