@@ -875,6 +875,7 @@ class MrflandWeblet(object):
 
     def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False, labelindex=True):
         tcols =  OrderedDict()
+        tcols['period'] = []
         tcols['enable'] =  []
         tcols['on']  = []
         tcols['off'] = []
@@ -900,7 +901,7 @@ class MrflandWeblet(object):
                 tcnames.append(tn)
             idx += 1
             tmr = self._timers[tn]
-
+            tcols['period'].append(tmr.period)
             if tmr.pulse:
                 pulse_timers.append(tmr.pulse.name)
                 html_str = ""
