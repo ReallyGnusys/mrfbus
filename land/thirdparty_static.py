@@ -86,7 +86,7 @@ class ThirdPartyStaticMgr(object):
 
         self.css = []
         self.js  = []
-        jquery = ThirdPartyStatic('js','jquery', "https://code.jquery.com/jquery-3.2.1.slim.min.js", login_only=True,force_reload=force_reload)
+        jquery = ThirdPartyStatic('js','jquery', "https://code.jquery.com/jquery-3.2.1.min.js", login_only=True,force_reload=force_reload)
 
         if bootstrap == 3:
             #popper = ThirdPartyStatic('js','popper',"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js", force_reload=force_reload)

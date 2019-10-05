@@ -47,15 +47,15 @@ login_tp = """<!DOCTYPE html>
 
     <title>MRFBUS login</title>
 
-    <!-- Bootstrap core CSS -->
-    <link href="static/public/bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
-
+    {% raw css_html %}
     <!-- Custom styles for this template -->
     <link href="static/public/signin.css" rel="stylesheet">
+
 
   </head>
 
   <body>
+
 
     <div class="container">
 
@@ -74,9 +74,8 @@ login_tp = """<!DOCTYPE html>
       </form>
 
     </div> <!-- /container -->
-    <!-- Placed at the end of the document so the pages load faster -->
-    <script src="static/public/bower_components/jquery/dist/jquery.min.js"></script>
-    <script src="static/public/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    {% raw js_html %}
+
     <script src="static/public/js/asa/asa_login.js"></script>
 
 

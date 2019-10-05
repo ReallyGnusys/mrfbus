@@ -34,10 +34,10 @@ remarg = re.compile(r'[?].*$')
 login_tp = tornado.template.Template(templates.login_tp)
 mrf_tp = tornado.template.Template(templates.mrf_tp)
 
-def login_page(rh,static_thirdparty_html):
+def login_page(rh,css_html,js_html):
     rh.add_header("Expires",0)
 
-    rh.write(login_tp.generate(static_thirdparty_html=static_thirdparty_html))
+    rh.write(login_tp.generate(css_html=css_html,js_html=js_html))
     #rh.write("Login page")
 
 def logout_action(rh,sob,ip):
@@ -288,7 +288,10 @@ class mainapp(tornado.web.RequestHandler):
         if sessid == None:
             if page == 'login':
                 mrflog.info("returning login page as requested")
-                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn))
+                return login_page(self,
+                                  css_html=self.rm.tp_static_mgr.html(login=True,css=True,static_cdn=static_cdn),
+                                  js_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn),
+                )
             else:
                 mrflog.info("no sessid - redirecting to login page")
                 return self.redirect('/login')
@@ -298,7 +301,12 @@ class mainapp(tornado.web.RequestHandler):
         if sob == None :
             mrflog.info("session is invalid")
             if page == 'login':
-                return login_page(self,static_thirdparty_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn))
+                return login_page(self,
+                                  css_html=self.rm.tp_static_mgr.html(login=True,css=True,static_cdn=static_cdn),
+                                  js_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn),
+                )
+
+
             else:
                 return self.redirect('/login')
 

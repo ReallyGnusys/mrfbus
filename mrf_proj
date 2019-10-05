@@ -204,9 +204,9 @@ if [ -n "${server}" ] ; then
    echo "" > ${LOGDIR}/mrfland.log
    sleep 1
    echo "starting server ./${server}"
-   export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
    source venv/bin/activate
-
+   export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
+   echo "PYTHONPATH=$PYTHONPATH"
    if [ $# -lt 2 ]  ; then
        echo "piping server to /dev/null"
        stdbuf -oL  python  ./${server} --mrfnet=${mrfnet} > /dev/null&
