@@ -279,6 +279,8 @@ class mainapp(tornado.web.RequestHandler):
 
         static_cdn = (self.localreq==False)  # dish out TP statics from CDNs if not local network request
 
+        mrflog.warn("localreq = %s : static_cdn = %s"%(repr(self.localreq),repr(static_cdn)))
+
         sessid = self.get_secure_cookie(install.sess_cookie)
         mrflog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
         if sessid == None:
