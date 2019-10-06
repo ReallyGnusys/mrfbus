@@ -102,7 +102,7 @@ mrf_tp = """
 
     <script type="text/javascript">
        var _mrf_sdata = {
-       ws_url   : " {{ ws_url }} ",
+       ws_url   : "{{ ws_url }}",
        sid      : {{ sob['sid'] }},
        username : "{{sob['username']}}",
        type     : "{{sob['type']}}"

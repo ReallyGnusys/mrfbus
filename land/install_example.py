@@ -72,4 +72,4 @@ users = {
 
 
 _ssl_cert_file = 'certs/'+host+'/cert.pem'
-_ssl_key_file =  'certs/'+host+'/private/key.pem'
+_ssl_key_file =  'certs/'+host+'/private.key'

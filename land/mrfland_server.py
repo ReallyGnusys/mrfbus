@@ -247,6 +247,11 @@ class SimpleTcpClient(object):
                     data = None
                     mrflog.info("json ob : %s"%repr(ob))
 
+                    if ob.has_key('sys_cmd'):
+                        if ob.has_key('data'):
+                            data = ob['data']
+                        self.landserver._sys_callback(self.id,ob['sys_cmd'],data)
+
                     if ob.has_key('dest') and ob.has_key('cmd'):
                         if ob['cmd'] in MrfSysCmds:
                             obdecoded = True
@@ -812,6 +817,13 @@ class MrflandServer(object):
         mrflog.info("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
+    def _sys_callback(self, tag,  cmd,data=None):
+        mrflog.info("_callback tag %s  cmd %s  data type %s  %s  "%(tag,cmd,type(data), repr(data)))
+
+        if cmd == 'reload_cert':
+            self.ssl_reload_cert_chain()
+        else:
+            mrflog.warn("sys cmd not recognised "+repr(cmd))
     def _start_tcp_service(self, port):
         self.tcp_server = MrfTcpServer( landserver = self )
         self.tcp_server.listen(port)
@@ -835,7 +847,7 @@ class MrflandServer(object):
 
         self._web_static_handler = NoCacheStaticFileHandler
 
-        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','public/css/asa/images')}),
+        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/favicon.ico')}),
                               (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
                               (r'/static/thirdparty/(.*)', self._web_static_handler, {'path': os.path.join(cwd,'static/thirdparty')}),
                               (r'/ws', WebSocketHandler, dict(rm=self.rm)), # need rm to track connections and auth
@@ -850,12 +862,20 @@ class MrflandServer(object):
 
 
         if install.https_server:
+            import ssl
+
+
+            self.ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            self.ssl_ctx.check_hostname = False
+            self.ssl_reload_cert_chain()
+            self.nsettings["ssl_options"] = self.ssl_ctx
+            """
             self.nsettings["ssl_options"] = {
                 "certfile": install._ssl_cert_file,
                 "keyfile" : install._ssl_key_file
             }
 
-
+            """
             mrflog.info("starting https server certfile %s keyfile %s"%\
                       (install._ssl_cert_file,install._ssl_key_file))
         else:
@@ -865,6 +885,10 @@ class MrflandServer(object):
 
         self.http_server.listen(self.rm.config['http_port'])
 
+
+    def ssl_reload_cert_chain(self):
+        mrflog.warn("reloading SSL cert chain")
+        self.ssl_ctx.load_cert_chain(install._ssl_cert_file,keyfile=install._ssl_key_file)
 
     def _check_if_anything(self):
         if self.q.empty():
