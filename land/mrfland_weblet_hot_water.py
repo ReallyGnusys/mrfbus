@@ -325,9 +325,9 @@ class MrfLandWebletHotWater(MrflandWeblet):
                 self.clear_rad_timer()
                 pump_next = 1
                 next_state = 'CHARGE1'
-                self.set_timeout(2*60)
+                self.set_timeout(5*60)
 
-        #2 min fixed time (set by call code above )  with hx pump on to let hx_ret stabilise
+        #5 min fixed time (set by call code above )  with hx pump on to let hx_flow and hx_ret stabilise
         elif self.var.state.val == 'CHARGE1':
             pump_next = 1
             if timeout:  # go to main CHARGING mode , with config timeout
