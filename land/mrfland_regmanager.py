@@ -469,7 +469,7 @@ class MrflandRegManager(object):
             inp['date']   = td
             persens.input(inp)
 
-    def timer_changed(self,app,name):
+    def timer_changed(self,app,name, act=None):
         if not name in self.period_lut:
             mrflog.error("%s not found in period_lut"%name)
             return
@@ -478,6 +478,17 @@ class MrflandRegManager(object):
         tmr = self.period_timers[pn][name]
         mrflog.warn(repr(tmr))
         self.eval_period(pn)
+
+        if tmr.pulse and act and act == 'off': # clear one shots when they  go inactive
+            mrflog.warn("trying to clear pulse timer "+tmr.name)
+            onv = tmr.__dict__['on']
+            offv = tmr.__dict__['off']
+            env = tmr.__dict__['en']
+
+            onv.set("00:00")
+            offv.set("00:00")
+            env.set(False)
+
         if tmr.en.val :   # make sure timers are set
             for act in ['on','off']:
                 aval = tmr.__dict__[act]
@@ -499,7 +510,7 @@ class MrflandRegManager(object):
         mrflog.warn("RegManager timer_callback, app %s tag %s act %s",app, tag,act)
 
         if tag in self.period_lut:
-            return self.timer_changed(app,tag)  # calling this will do
+            return self.timer_changed(app,tag,act=act)  # calling this will do
 
         if not self.weblets.has_key(app):
             mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
