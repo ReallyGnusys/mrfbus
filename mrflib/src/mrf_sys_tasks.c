@@ -165,8 +165,6 @@ MRF_CMD_RES mrf_task_resp(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   mrf_debug(5,"%s","mrf_task_resp L1\n");
 
 
-
-
   mrf_debug(5,"%s","pushing to app queue as MRF_CMD_USR_RESP\n");
   // now put in application queue as MRF_CMD_USR_RESP
 
@@ -222,8 +220,6 @@ MRF_CMD_RES mrf_task_if_status(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
   return MRF_CMD_RES_OK;
 
 }
-
-
 
 
 MRF_CMD_RES mrf_task_get_time(MRF_CMD_CODE cmd,uint8 bnum, const MRF_IF *ifp){
