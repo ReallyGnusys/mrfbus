@@ -178,7 +178,7 @@ class MrfLandWebletUFH(MrflandWeblet):
 
         # set relay if not already correct
         if pump_next != pump_curr:
-            mrflog.warn("setting pump to %s"%repr(pump_next))
+            mrflog.warn("setting pump to %s after var %s changed "%(repr(pump_next),name))
             self.pump.set(pump_next)
         #else:
         #    mrflog.warn("leaving pump %s"%repr(pump_next))
@@ -196,8 +196,6 @@ class MrfLandWebletUFH(MrflandWeblet):
         })
 
         s += self.timer_ctrl_table()
-
-
 
 
         s += """

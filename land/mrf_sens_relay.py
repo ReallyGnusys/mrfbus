@@ -61,7 +61,6 @@ class MrfSensRelay(MrfSens):
         self.devupdate('SET_RELAY',param)
 
     def set(self, on_off):
-        """ FIXME - this is messed up, could do with review - got here because of timers + algos + manual overrides"""
         self.req_val = on_off
         if (self.req_val != self.output['relay']):
             mrflog.warn("%s %s changing relay state to %d  output %d"%

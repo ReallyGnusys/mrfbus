@@ -448,7 +448,7 @@ class MrflandRegManager(object):
             mrflog.error("%s not found in period_timers"%pn)
         psn = pn + '_PERIOD'
         persens =  self.sensors[psn]
-        mrflog.warn("evaluating period for sensor %s"%repr(persens))
+        mrflog.warn("evaluating period for sensor %s"%persens.label)
         was_active = persens.output['active']
         is_active = False
 
@@ -461,7 +461,7 @@ class MrflandRegManager(object):
         mrflog.warn("evaluated period for sensor %s was_active %s is_active %s"%(repr(persens),repr(was_active),repr(is_active)))
 
         if was_active != is_active:
-            mrflog.warn("sensor changing to %s"%repr(is_active))
+            mrflog.warn("sensor %s changing to %s"%(persens.label,repr(is_active)))
             inp = {}
             inp['active'] = int(is_active)
             td = PktTimeDate()
@@ -585,6 +585,7 @@ class MrflandRegManager(object):
 
         cmd = self.cmdcode(dest,cmdname)  # lookup cmdcode from name
         if not cmd:
+            mrflog.error("%s devupdaten failed to decode cmdname %s for  dest %s"%(self.__class__.__name__, cmdname,dest))
             return
 
         mrflog.warn("%s devupdaten dest %s"%(self.__class__.__name__, dest))

@@ -176,7 +176,7 @@ if __name__ == '__main__':
     ml =  MrflandServer(rm,
                         {
                             'mrfbus_host_port': install.mrfbus_host_port,
-                            'mrf_netid'     : options['mrfnet'],
+                            'mrf_netid'       : options['mrfnet'],
                             'tcp_test_port'   : install.tcpport ,
                             'console'         : { 'port' : 1234}
 
