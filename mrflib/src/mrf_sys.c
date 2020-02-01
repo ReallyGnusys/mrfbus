@@ -1069,7 +1069,6 @@ void _mrf_tick(){
       }
 
 
-
       if (mif->ackqueue->data_avail()){ // always send ackqueue in IDLE
         mrf_debug(5,"idle i_f %d has ackqueue data\n",i);
         if_busy = 1;
@@ -1120,7 +1119,6 @@ void _mrf_tick(){
         }
 
       }
-
 
     }
   } // for i=0 to NUM_INTERFACES
