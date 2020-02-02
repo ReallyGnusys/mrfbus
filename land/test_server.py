@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 
 from tornado.options import  define, options, parse_command_line  #FIXME move mrfland_server.py
 
