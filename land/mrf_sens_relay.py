@@ -17,10 +17,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 import ctypes
-from .mrf_structs import *
-from .mrf_sens import MrfSens
+from mrf_structs import *
+from mrf_sens import MrfSens
 import datetime
-from .mrflog import mrflog
+from mrflog import mrflog
 
 
 class MrfSensRelay(MrfSens):

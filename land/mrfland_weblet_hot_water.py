@@ -14,13 +14,13 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from .mrf_sens import MrfSens
-from .mrf_dev  import MrfDev
-from .mrfdev_pt1000 import MrfSensPt1000
-from .mrf_sens_relay import MrfSensRelay
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
+from mrfdev_pt1000 import MrfSensPt1000
+from mrf_sens_relay import MrfSensRelay
 
-from .mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar
-from .mrflog import mrflog
+from mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar
+from mrflog import mrflog
 import re
 from datetime import datetime, timedelta
 

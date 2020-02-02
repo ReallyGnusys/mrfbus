@@ -7,15 +7,15 @@ import logging
 import re
 import sys
 sys.path.append('../lib')
-from . import install
+import install
 #import asa_prims
 #import asa
 from datetime import datetime
 import time
 import json
-from .mrflog import mrflog
-from .mainapp import mainapp
-from .public import publicapp
+from mrflog import mrflog
+from mainapp import mainapp
+from public import publicapp
 #from asa_pcomm import asa_pcomm
 import hashlib
 

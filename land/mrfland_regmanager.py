@@ -6,13 +6,13 @@ import time
 import base64
 from collections import OrderedDict
 import socket
-from . import install
+import install
 import pdb
-from .mrf_sens_period import MrfSensPeriod
-from .mrflog import mrflog
-from .mrf_structs import PktTimeDate
-from .thirdparty_static import ThirdPartyStaticMgr
-from . import mrfland
+from mrf_sens_period import MrfSensPeriod
+from mrflog import mrflog
+from mrf_structs import PktTimeDate
+from thirdparty_static import ThirdPartyStaticMgr
+import mrfland
 import ipaddress
 #from mrfland import to_json
 
@@ -332,7 +332,11 @@ class MrflandRegManager(object):
 
 
     def authenticate(self,username,password,ip,req_host):
-        mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
+        username = username.decode()
+        password = password.decode()
+        mrflog.warn('authenticate_staff : username = '+username+" , ip : "+ip)
+
+
         if username not in list(install.users.keys()):
             return None
 
@@ -351,7 +355,7 @@ class MrflandRegManager(object):
 
 
         mrflog.warn('authenticated ip '+ip)
-        wsid = os.urandom(16).encode('hex')
+        wsid = os.urandom(16).hex()
         sessid = gen_sessid()
 
         self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],apps,ip,req_host)

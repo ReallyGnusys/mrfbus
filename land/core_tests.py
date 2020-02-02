@@ -19,12 +19,12 @@ import subprocess
 import time
 import sys
 import traceback
-from .mrf_structs import *
+from mrf_structs import *
 MRFBUFFLEN = 128
 import ctypes
 
 #from teststub import StubTestCase
-from .landtest import LandTestCase
+from landtest import LandTestCase
 from datetime import datetime
 import unittest
 

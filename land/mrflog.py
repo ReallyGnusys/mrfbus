@@ -1,5 +1,5 @@
 import logging
-from . import install
+import install
 import datetime as dt
 
 

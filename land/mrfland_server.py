@@ -12,7 +12,7 @@ import socket
 import logging
 import re
 import sys
-from . import install
+import install
 import os
 import time
 import json
@@ -21,16 +21,17 @@ import signal
 import queue
 from collections import OrderedDict
 
-from .mrflog import mrflog
-from .mainapp import mainapp
-from .public import publicapp
-from .pubsock import PubSocketHandler
+from mrflog import mrflog
+from mainapp import mainapp
+from public import publicapp
+from pubsock import PubSocketHandler
 
-from .mrf_structs import *
-from . import mrfland
+from mrf_structs import *
+import mrfland
 import ipaddress
 
 
+import pdb
 oursubnet = ipaddress.ip_network(install.localnet)
 
 """
@@ -279,7 +280,7 @@ class SimpleTcpClient(object):
                         mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
                     mrflog.warn("no json ob decoded in %s"%repr(line))
-                yield self.stream.write("\n")
+                yield self.stream.write(bytes("\n",'utf-8'))
         except tornado.iostream.StreamClosedError:
             pass
 
@@ -330,7 +331,7 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
         if id not in self.clients:
             mrflog.error("%s no client with id %d"%(self.__class__.__name__,id))
             return
-        self.clients[id].stream.write(msg)
+        self.clients[id].stream.write(bytes(msg,'utf-8'))
         mrflog.info("wrote_to client %d"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -392,7 +393,7 @@ class MrflandServer(object):
 
 
         if 'console' in self.config:
-            from .thirdparty.tornado_console import ConsoleServer
+            from thirdparty.tornado_console import ConsoleServer
             #my_locals = {}
             self.console_server = ConsoleServer(locals())
             #my_locals['server'] = self.console_server

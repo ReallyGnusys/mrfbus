@@ -3,10 +3,10 @@ from tornado.ioloop import IOLoop
 
 from tornado import gen
 
-from .mrfland import DateTimeFormat
+from mrfland import DateTimeFormat
 
 
-from .mrflog import mrflog
+from mrflog import mrflog
 
 
 uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
@@ -55,7 +55,7 @@ def db_get_day_doc(**kwargs):
 
     mrflog.warn("got doc %s"%repr(doc))
 
-from .mrfland import MrflandRegManager
+from mrfland import MrflandRegManager
 
 rm = MrflandRegManager( {'http_port'       : 9999 })
 

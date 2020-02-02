@@ -88,7 +88,7 @@ elif  [ $1 == runtests ] ; then
    runtests=yes
    pids=""
 else
-   echo "illegal mode $1 - try build, run or runtests"
+   echo "illegal mode $1 - try setup, build, run or runtests"
    exit -1;
 fi
 

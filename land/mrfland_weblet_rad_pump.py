@@ -15,12 +15,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from .mrf_sens import MrfSens
-from .mrf_dev  import MrfDev
-from .mrf_sens_relay import MrfSensRelay
-from .mrfdev_pt1000  import MrfSensPt1000
-from .mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar, mrfctrl_butt_html
-from .mrflog import mrflog
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
+from mrf_sens_relay import MrfSensRelay
+from mrfdev_pt1000  import MrfSensPt1000
+from mrfland_weblet import MrflandWeblet, MrflandObjectTable, MrfWebletSensorVar, mrfctrl_butt_html
+from mrflog import mrflog
 import re
 import datetime
 

@@ -23,9 +23,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from collections import OrderedDict
-from .mrflog import mrflog
-from .mrfland import to_json
-from .mrf_sens import MrfSens
+from mrflog import mrflog
+from mrfland import to_json
+from mrf_sens import MrfSens
 import re
 import datetime
 

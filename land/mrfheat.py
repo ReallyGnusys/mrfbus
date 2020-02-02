@@ -15,9 +15,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from .mrfland import Mrfland
+from mrfland import Mrfland
 
-from .mrfland_app_heating import MrflandAppHeating
+from mrfland_app_heating import MrflandAppHeating
 
 
 if __name__ == "__main__":

@@ -15,10 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from .mrf_structs import *
-from .mrflog import mrflog
+from mrf_structs import *
+from mrflog import mrflog
 import math
-from .mrfland import DateTimeFormat
+from mrfland import DateTimeFormat
 import time
 
 class MrfSens(object):

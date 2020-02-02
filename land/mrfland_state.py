@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from datetime import datetime
-from .mrf_structs import *
-from .mrfland_app import MrflandApp
+from mrf_structs import *
+from mrfland_app import MrflandApp
 
 class DevState(object):
     def __init__(self,addr,log):

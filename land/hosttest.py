@@ -22,13 +22,13 @@ import time
 from copy import copy
 import sys
 import traceback
-from .mrf_structs import *
+from mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
 
-from .core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
-from .mrfdev_host import *
+from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
+from mrfdev_host import *
 
 
 class TestHost(DeviceTestCase):

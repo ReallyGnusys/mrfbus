@@ -22,12 +22,12 @@ import time
 from copy import copy
 import sys
 import traceback
-from .mrf_structs import *
+from mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
 
-from .core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
+from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
 
 ## Resistance and RTD calcs 

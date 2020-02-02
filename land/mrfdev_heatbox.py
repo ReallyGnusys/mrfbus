@@ -1,13 +1,13 @@
 
-from .mrf_sens import MrfSens
-from .mrf_dev import MrfDev
+from mrf_sens import MrfSens
+from mrf_dev import MrfDev
 import datetime
 import ctypes
-from .mrf_structs import *
-from .core_tests import mrf_cmd_app_test
+from mrf_structs import *
+from core_tests import mrf_cmd_app_test
 from math import sqrt
-from .mrfdev_pt1000 import PktPt1000State, PktRelayState, MrfSensPt1000, MrfSensPtRelay
-from .mrflog import mrflog
+from mrfdev_pt1000 import PktPt1000State, PktRelayState, MrfSensPt1000, MrfSensPtRelay
+from mrflog import mrflog
 
 MAX_RTDS = 7
 

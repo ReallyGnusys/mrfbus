@@ -1,21 +1,21 @@
 
 from tornado.options import  define, options, parse_command_line  #FIXME move mrfland_server.py
 
-from . import mrfland
-from .mrflog import mrflog
+import mrfland
+from mrflog import mrflog
 #from mrfdev_pt1000 import Pt1000Dev
 #from mrfdev_heatbox import DevHeatbox
-from .mrfdev_host import MrfDevHost
+from mrfdev_host import MrfDevHost
 
-from .mrfdev_lnxtst import DevLnxtst
+from mrfdev_lnxtst import DevLnxtst
 
-from .mrfland_server import MrflandServer
-from .mrfland_regmanager import MrflandRegManager
-from .mrfland_weblet_devs   import MrfLandWebletDevs
-from .mrfland_weblet_relays import MrfLandWebletRelays
-from .mrfland_weblet_mem   import MrfLandWebletMem
-from .mrfland_weblet_period_test import MrfLandWebletPeriodTest
-from . import install
+from mrfland_server import MrflandServer
+from mrfland_regmanager import MrflandRegManager
+from mrfland_weblet_devs   import MrfLandWebletDevs
+from mrfland_weblet_relays import MrfLandWebletRelays
+from mrfland_weblet_mem   import MrfLandWebletMem
+from mrfland_weblet_period_test import MrfLandWebletPeriodTest
+import install
 
 if __name__ == '__main__':
     define("mrfnet", type=int, help="mrfnet ID",default=0x25)

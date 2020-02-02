@@ -1,7 +1,7 @@
 import pymongo
 
-from .install import db_uri
-from .mrfland import sensor_null_val, sensor_round_val
+from install import db_uri
+from mrfland import sensor_null_val, sensor_round_val
 
 client = pymongo.MongoClient(db_uri)
 

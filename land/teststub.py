@@ -19,7 +19,7 @@ import queue
 import time
 import sys
 import traceback
-from .mrf_structs import *
+from mrf_structs import *
 import ctypes
 import unittest
 

@@ -30,8 +30,8 @@ import datetime
 import re
 
 #from datetime import datetime
-from . import install
-from .mrflog import mrflog
+import install
+from mrflog import mrflog
 #from mrf_structs import *
 from collections import OrderedDict
 import ipaddress

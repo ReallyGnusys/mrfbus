@@ -19,13 +19,13 @@ import queue
 import time
 import sys
 import traceback
-from .mrf_structs import *
+from mrf_structs import *
 import ctypes
 import unittest
 import select
 import socket
 import signal
-from .mrfland import to_json, json_parse
+from mrfland import to_json, json_parse
 
 
 
@@ -49,12 +49,15 @@ def readjsonstr(s):
     depth = 0
     while depth == 0:
         c = s.recv(1)
+        c = chr(c[0])
         st += c
         if c == '{':
             depth = 1
     #print "found start st = %s depth %d"%(st,depth)
     while depth != 0:
         c = s.recv(1)
+        c = chr(c[0])
+
         st += c
         if c == '{':
             depth += 1
@@ -152,7 +155,7 @@ class LandTestCase(unittest.TestCase):
         mstr = to_json(mobj)
         print("trying to send str %s"%mstr)
 
-        self.sock.send(mstr+"\n")
+        self.sock.send(bytes(mstr+"\n",'utf-8'))
         return 0
     def response(self,timeout = 0.2):
         elapsed = 0.0

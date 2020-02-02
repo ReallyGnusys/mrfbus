@@ -14,11 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from .mrf_sens import MrfSens
-from .mrf_dev  import MrfDev
-from .mrf_sens_relay import MrfSensRelay
-from .mrfland_weblet import MrflandWeblet, MrflandObjectTable
-from .mrflog import mrflog
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
+from mrf_sens_relay import MrfSensRelay
+from mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from mrflog import mrflog
 from collections import OrderedDict
 
 class MrfLandWebletRelays(MrflandWeblet):

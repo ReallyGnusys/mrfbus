@@ -1,13 +1,13 @@
 import tornado.web
 import tornado.template
 import re
-from . import install
+import install
 import os
 import base64
 import sys
 sys.path.append('../lib')
-from .mrflog import mrflog
-from . import templates
+from mrflog import mrflog
+import templates
 
 #alog = mrf_log()
 

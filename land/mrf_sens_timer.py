@@ -14,12 +14,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from .mrf_sens import MrfSens
-from .mrf_dev  import MrfDev
+from mrf_sens import MrfSens
+from mrf_dev  import MrfDev
 import datetime
 import ctypes
-from .mrf_structs import *
-from .mrflog import mrflog
+from mrf_structs import *
+from mrflog import mrflog
 
 
 class MrfSensTimer(MrfSens):

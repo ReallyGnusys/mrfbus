@@ -1,18 +1,18 @@
 import tornado.web
 import tornado.template
 import re
-from . import install
+import install
 import os
 import base64
 import sys
 sys.path.append('../lib')
 #from mrflog import mrf_log
-from . import templates
-from . import mrfland
+import templates
+import mrfland
 import ipaddress
 
 #alog = mrf_log()
-from .mrflog import mrflog
+from mrflog import mrflog
 
 oursubnet = ipaddress.ip_network(install.localnet)
 
@@ -145,7 +145,7 @@ def post_login(rh):
         return login_fail(rh,'invalid post data')
 
     username = rh.request.arguments['username']
-    mrflog.info('username : '+str(username) + " type : "+str(type(username)))
+    mrflog.warn('username : '+str(username) + " type : "+str(type(username)))
 
     if type(username) != type([]):
         return login_fail(rh,'invalid post data')
@@ -168,10 +168,10 @@ def post_login(rh):
 
     password = password[0]
 
-    mrflog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
+    mrflog.warn('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
 
     authres = rh.rm.authenticate(username,password,ip,rh.request_host)
-    mrflog.info('authenticate result = '+str(authres) )
+    mrflog.warn('authenticate result = '+str(authres) )
 
     if authres == None:
         return login_fail(rh,'invalid username or password')

@@ -107,7 +107,7 @@ class MrfStruct(LittleEndianStructure):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
     def dump(self):
-        return buffer(self)[:]
+        return bytes(memoryview(self))  # .decode('utf-8')[:]
 
 
 
