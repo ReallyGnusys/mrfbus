@@ -14,11 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
-from mrf_sens_relay import MrfSensRelay
-from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-from mrflog import mrflog
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
+from .mrf_sens_relay import MrfSensRelay
+from .mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from .mrflog import mrflog
 from collections import OrderedDict
 
 class MrfLandWebletRelays(MrflandWeblet):
@@ -27,7 +27,7 @@ class MrfLandWebletRelays(MrflandWeblet):
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
-        if not self.rm.senstypes.has_key(MrfSensRelay):
+        if MrfSensRelay not in self.rm.senstypes:
             mrflog.error("%s post_init failed to find sensor type MrfSensRelay in rm"%self.__class__.__name__)
             return
         self.sl = self.rm.senstypes[MrfSensRelay]
@@ -40,11 +40,11 @@ class MrfLandWebletRelays(MrflandWeblet):
             self.sens[s.label] = s
         mrflog.warn("MrfSensRelay : %s"%repr(self.slabs))
 
-        for s in self.sens.keys():
+        for s in list(self.sens.keys()):
             self.sens[s].subscribe(self.sens_callback)
     def run_init(self):
         mrflog.warn("%s run_init .. clearing relay states")
-        for s in self.sens.keys():
+        for s in list(self.sens.keys()):
             self.sens[s].clear()
 
     def sens_callback(self, label, data ):
@@ -64,14 +64,14 @@ class MrfLandWebletRelays(MrflandWeblet):
 
     def mrfctrl_handler(self,data,wsid=None):
         mrflog.info( "mrfctrl_handler here, data was %s"%repr(data))
-        if not data.has_key("tab") or not data.has_key("row"):
+        if "tab" not in data or "row" not in data:
             mrflog.error("cmd_mrfctrl data problem in %s"%repr(data))
             return
 
 
-        if not self.rm.sensors.has_key(str(data['row'])):
+        if str(data['row']) not in self.rm.sensors:
             mrflog.error("cmd_mrfctrl no device %s"%str(data['row']))
-            mrflog.error("got %s"%repr(self.rm.sensors.keys()))
+            mrflog.error("got %s"%repr(list(self.rm.sensors.keys())))
             return
         sens = self.rm.sensors[str(data['row'])]
 

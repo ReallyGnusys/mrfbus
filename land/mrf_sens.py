@@ -15,10 +15,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from mrf_structs import *
-from mrflog import mrflog
+from .mrf_structs import *
+from .mrflog import mrflog
 import math
-from mrfland import DateTimeFormat
+from .mrfland import DateTimeFormat
 import time
 
 class MrfSens(object):
@@ -143,8 +143,8 @@ class MrfSens(object):
     def input(self, indata):
         # input sanity check for keys and types
         #mrflog.info("new item for sens %s - %s"%(self.label,repr(indata)))
-        for ditem in indata.keys():
-            if not self._input.has_key(ditem):
+        for ditem in list(indata.keys()):
+            if ditem not in self._input:
                 mrflog.error("%s input invalid indata , no key %s in %s"%(self.__class__.__name__, ditem, repr(indata)))
                 return None
             if type(indata[ditem]) != type(self._input[ditem]()) :
@@ -163,8 +163,8 @@ class MrfSens(object):
 
         # output sanity check for keys and types
 
-        for ditem in odata.keys():
-            if not self._output.has_key(ditem):
+        for ditem in list(odata.keys()):
+            if ditem not in self._output:
                 mrflog.error("%s input invalid odata , no key %s in %s"%(self.__class__.__name__, ditem, repr(odata)))
                 return None
             if type(odata[ditem]) != type(self._output[ditem]()) :
@@ -184,5 +184,5 @@ class MrfSens(object):
         self.update_avg_totals(newinput=True)
 
         # run subscriber callbacks with new output
-        for s in self.subscribers.keys():
+        for s in list(self.subscribers.keys()):
             self.subscribers[s](self.label,self.output)

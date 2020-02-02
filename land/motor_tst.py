@@ -3,10 +3,10 @@ from tornado.ioloop import IOLoop
 
 from tornado import gen
 
-from mrfland import DateTimeFormat
+from .mrfland import DateTimeFormat
 
 
-from mrflog import mrflog
+from .mrflog import mrflog
 
 
 uri = "mongodb://mrfbus:sanghamnamami@bolt:27017/mrfbus?authSource=admin"
@@ -55,7 +55,7 @@ def db_get_day_doc(**kwargs):
 
     mrflog.warn("got doc %s"%repr(doc))
 
-from mrfland import MrflandRegManager
+from .mrfland import MrflandRegManager
 
 rm = MrflandRegManager( {'http_port'       : 9999 })
 
@@ -74,10 +74,10 @@ def tbd_graph_day_data(doc):
     gvals =  gdata[stype]
     gtime = doc['docdate']
     
-    for hour in xrange(24):
-        for minute in xrange(60):
+    for hour in range(24):
+        for minute in range(60):
             if doc['data'][hour][minute] == doc['nullval']:
-                print "got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute]))
+                print("got nullval hour %d min %d val %s"%(hour,minute,repr(doc['data'][hour][minute])))
                 return gvals
             
             gvals['ts'].append(gtime.strftime(DateTimeFormat))
@@ -127,11 +127,11 @@ def db_get_sensors(**kwargs):
         if (fld[0] == 'sensor') and (len(fld) == 3):
             stype = fld[1]
             sname = fld[2]
-            if not sensors.has_key(stype):
+            if stype not in sensors:
                 sensors[stype] = []
             sensors[stype].append(sname)
 
-    for stype in sensors.keys():
+    for stype in list(sensors.keys()):
         sensors[stype].sort()
         
     mrflog.warn("got sensors %s"%repr(sensors))
@@ -181,7 +181,7 @@ docdate = datetime.datetime.combine(datetime.datetime.now().date(),datetime.time
 sensor_id = 'LOUNGE_AMBIENT'
 stype = 'temp'
 coll = db.get_collection('sensors.%s.%s'%(stype,sensor_id))
-print "coll repr is %s"%repr(coll)
+print("coll repr is %s"%repr(coll))
 
 
 

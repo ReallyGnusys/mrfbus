@@ -14,19 +14,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_lnxtst import *
+from .mrfdev_lnxtst import *
 
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
-from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-from mrflog import mrflog
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
+from .mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from .mrflog import mrflog
 import re
 import pdb
 
 class MrfLandWebletMem(MrflandWeblet):
     def init(self):
         mrflog.warn("%s init"%(self.__class__.__name__))
-        if not self.rm.senscaps.has_key('memory'):
+        if 'memory' not in self.rm.senscaps:
             mrflog.error("%s post_init failed to find sensor category memory in rm"%self.__class__.__name__)
             return
 

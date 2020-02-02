@@ -14,17 +14,17 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
-from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-from mrflog import mrflog
+from .mrfdev_pt1000 import *
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
+from .mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from .mrflog import mrflog
 import re
 
 class MrfLandWebletTemps(MrflandWeblet):
     def init(self):
         mrflog.info("%s init"%(self.__class__.__name__))
-        if not self.rm.senscaps.has_key('temp'):
+        if 'temp' not in self.rm.senscaps:
             mrflog.error("%s post_init failed to find sensor category temp in rm"%self.__class__.__name__)
             return
 
@@ -39,7 +39,7 @@ class MrfLandWebletTemps(MrflandWeblet):
                 self.add_var(s.label, s , field='temp')
 
     def pane_html(self):
-        if self.var.__dict__.has_key('LOUNGE_AMBIENT') and self.var.__dict__.has_key('OUTSIDE_AMBIENT'):
+        if 'LOUNGE_AMBIENT' in self.var.__dict__ and 'OUTSIDE_AMBIENT' in self.var.__dict__:
             s =  """
         <h2>Lounge """+self.var.LOUNGE_AMBIENT.html+" &#176;C   Outside """+self.var.OUTSIDE_AMBIENT.html+" &#176;C</h2>"
 

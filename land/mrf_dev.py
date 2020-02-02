@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from mrf_structs import *
-from mrflog import mrflog
+from .mrf_structs import *
+from .mrflog import mrflog
 
 
 
@@ -44,12 +44,12 @@ class MrfDev(object):
         # build lookup of command names
         self.cmdnames = {}
 
-        for ccode in self._cmdset.keys():
+        for ccode in list(self._cmdset.keys()):
             self.cmdnames[self._cmdset[ccode]['name']] = ccode
 
         # construct sensors and actuators from capability spec
-        for clab in self._capspec.keys():
-            if not caplabels.has_key(clab):
+        for clab in list(self._capspec.keys()):
+            if clab not in caplabels:
                 mrflog.error("%s spec labels error  no key %s in %s"%(self.__class__.__name__, clab, repr(caplabels)))
                 return
             self.caps[clab] = []
@@ -114,7 +114,7 @@ class MrfDev(object):
             di = dict(resp.dic())
             self.sys[param.type] = di
             mrflog.info("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
-            for s in self.subscribers.keys():  # for now only update subscribers for sys command responses
+            for s in list(self.subscribers.keys()):  # for now only update subscribers for sys command responses
                 self.subscribers[s](self.label,self.sys)
 
         else:

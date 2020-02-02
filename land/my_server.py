@@ -2,26 +2,26 @@
 
 from tornado.options import  define, options, parse_command_line  #FIXME move mrfland_server.py
 
-import mrfland
+from . import mrfland
 
-from mrflog import mrflog, mrf_log_init
-from mrfdev_pt1000 import Pt1000Dev
-from mrfdev_host import MrfDevHost
-from mrfdev_rfmodtc import DevRfmodtc
+from .mrflog import mrflog, mrf_log_init
+from .mrfdev_pt1000 import Pt1000Dev
+from .mrfdev_host import MrfDevHost
+from .mrfdev_rfmodtc import DevRfmodtc
 
-from mrfland_weblet_temps  import MrfLandWebletTemps
-from mrfland_weblet_relays import MrfLandWebletRelays
-from mrfland_weblet_devs   import MrfLandWebletDevs
-from mrfland_weblet_store  import MrfLandWebletStore
-from mrfland_weblet_hot_water  import MrfLandWebletHotWater
-from mrfland_weblet_rad_pump import MrfLandWebletRadPump
-from mrfland_weblet_ufh import MrfLandWebletUFH
-from mrfland_weblet_history import MrfLandWebletHistory
+from .mrfland_weblet_temps  import MrfLandWebletTemps
+from .mrfland_weblet_relays import MrfLandWebletRelays
+from .mrfland_weblet_devs   import MrfLandWebletDevs
+from .mrfland_weblet_store  import MrfLandWebletStore
+from .mrfland_weblet_hot_water  import MrfLandWebletHotWater
+from .mrfland_weblet_rad_pump import MrfLandWebletRadPump
+from .mrfland_weblet_ufh import MrfLandWebletUFH
+from .mrfland_weblet_history import MrfLandWebletHistory
 
-from mrfland_server import MrflandServer
-import install
+from .mrfland_server import MrflandServer
+from . import install
 
-from mrfland_regmanager import MrflandRegManager
+from .mrfland_regmanager import MrflandRegManager
 
 if __name__ == '__main__':
     #mrf_log_init()

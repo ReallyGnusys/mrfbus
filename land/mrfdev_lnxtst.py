@@ -15,17 +15,17 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
 import datetime
 import ctypes
-from mrf_structs import *
-from core_tests import mrf_cmd_app_test
+from .mrf_structs import *
+from .core_tests import mrf_cmd_app_test
 from math import sqrt
-from mrflog import mrflog
+from .mrflog import mrflog
 from collections import deque
 
-from mrf_sens_relay import MrfSensRelay
+from .mrf_sens_relay import MrfSensRelay
 
 class PktLnxMemStats(MrfStruct):
     _fields_ = [

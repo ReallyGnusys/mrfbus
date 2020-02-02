@@ -16,20 +16,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
 import threading
-import Queue
+import queue
 import subprocess
 import time
 from copy import copy
 import sys
 import traceback
-from mrf_structs import *
+from .mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
 import random
 from datetime import datetime
 
-from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
+from .core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
 
 
 class TestDefault(DeviceTestCase):
@@ -83,11 +83,11 @@ class TestDefault(DeviceTestCase):
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       print "sys.argv = %s"%repr(sys.argv)
+       print("sys.argv = %s"%repr(sys.argv))
        #pa = sys.argv.pop()
        #print "pa is %s"%repr(pa)
        #print "sys.argv = %s"%repr(sys.argv)
        
        TestDefault.DEST = int(sys.argv.pop(),16)
-       print "setting dest to 0x%x"%TestDefault.DEST
+       print("setting dest to 0x%x"%TestDefault.DEST)
     unittest.main()

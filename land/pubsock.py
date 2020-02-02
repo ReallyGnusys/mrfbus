@@ -7,15 +7,15 @@ import logging
 import re
 import sys
 sys.path.append('../lib')
-import install
+from . import install
 #import asa_prims
 #import asa
 from datetime import datetime
 import time
 import json
-from mrflog import mrflog
-from mainapp import mainapp
-from public import publicapp
+from .mrflog import mrflog
+from .mainapp import mainapp
+from .public import publicapp
 #from asa_pcomm import asa_pcomm
 import hashlib
 
@@ -55,7 +55,7 @@ class PubSocketHandler(tornado.websocket.WebSocketHandler):
             allow = False
 
         # handle nginx proxying
-        if self.request.headers.has_key('X-Forwarded-For'):
+        if 'X-Forwarded-For' in self.request.headers:
             ip = self.request.headers['X-Forwarded-For']
             mrflog.info("real ip="+ip)
 
@@ -100,7 +100,7 @@ class PubSocketHandler(tornado.websocket.WebSocketHandler):
         mrflog.info("adding client : "+self.id)
 
         pcomm.add_client(self.id,cdata)
-        mrflog.info("PubSocketHandler  ws.open:Id="+self.id +" (%d clients)"%len(pcomm.clients.keys()))
+        mrflog.info("PubSocketHandler  ws.open:Id="+self.id +" (%d clients)"%len(list(pcomm.clients.keys())))
 
         asa.lookup_psock_ip(aconn,self.id,ip)
 
@@ -120,10 +120,10 @@ class PubSocketHandler(tornado.websocket.WebSocketHandler):
         for this example i will just print message to console
         """
 
-        if pcomm.clients.has_key(self.id):
+        if self.id in pcomm.clients:
             mrflog.info("psock %s sent a message : %s" % (self.id, message))
             #msgob = asa_prims.json_parse(message)
-            if msgob and hasattr(msgob,'has_key') and msgob.has_key('ccmd'):
+            if msgob and hasattr(msgob,'has_key') and 'ccmd' in msgob:
                 mrflog.info("recieved client cmd %s" % (msgob['ccmd']))
                 action_pcommand(self.id,msgob)
                 #action_client_cmd(self.id,username,msgob)
@@ -162,7 +162,7 @@ class PubSocketHandler(tornado.websocket.WebSocketHandler):
 
 
 def nobbit():
-    print "nobbit"
+    print("nobbit")
     return "nobbit"
 
 pcmds = {
@@ -171,16 +171,16 @@ pcmds = {
 }
 
 def action_pcommand(id,msgob):
-    if not msgob.has_key('ccmd'):
+    if 'ccmd' not in msgob:
         errmsg = "psocket id "+id+" sent invalid packet:"+str(msgob)
         mrflog.error(errmsg)
         return
     cmd = msgob['ccmd']
-    if pcmds.has_key(cmd):
+    if cmd in pcmds:
         mrflog.info(cmd+":evaluating action")
         try:
             ro = pcmds[cmd](aconn,id,msgob['data'])
-        except Exception,e:
+        except Exception as e:
             import traceback
             details = traceback.format_exc()
 

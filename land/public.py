@@ -1,13 +1,13 @@
 import tornado.web
 import tornado.template
 import re
-import install
+from . import install
 import os
 import base64
 import sys
 sys.path.append('../lib')
-from mrflog import mrflog
-import templates
+from .mrflog import mrflog
+from . import templates
 
 #alog = mrf_log()
 
@@ -18,7 +18,7 @@ def print_everything(*args):
 
 def print_kwargs(**kwargs):
     mrflog.debug("print_kwargs")
-    for name, value in kwargs.items():
+    for name, value in list(kwargs.items()):
         mrflog.debug('{0} = {1}'.format(name, value))
 
 
@@ -73,7 +73,7 @@ class publicapp(tornado.web.RequestHandler):
         ip = self.request.remote_ip
 
         # handle nginx proxying
-        if self.request.headers.has_key('X-Forwarded-For'):
+        if 'X-Forwarded-For' in self.request.headers:
             ip = self.request.headers['X-Forwarded-For']
         mrflog.info("ip: "+ip+" uri : "+uri)
         reqa = uri.split('/')[1:]

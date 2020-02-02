@@ -1,11 +1,11 @@
 
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
 from datetime import datetime
 import ctypes
-from mrf_structs import *
-from core_tests import mrf_cmd_app_test, DefaultAppCmds
-from mrflog import mrflog
+from .mrf_structs import *
+from .core_tests import mrf_cmd_app_test, DefaultAppCmds
+from .mrflog import mrflog
 
     
         

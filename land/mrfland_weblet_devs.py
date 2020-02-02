@@ -14,11 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfdev_pt1000 import *
-from mrf_sens import MrfSens
-from mrf_dev  import MrfDev
-from mrfland_weblet import MrflandWeblet, MrflandObjectTable
-from mrflog import mrflog
+from .mrfdev_pt1000 import *
+from .mrf_sens import MrfSens
+from .mrf_dev  import MrfDev
+from .mrfland_weblet import MrflandWeblet, MrflandObjectTable
+from .mrflog import mrflog
 import re
 import os
 
@@ -28,7 +28,7 @@ class MrfLandWebletDevs(MrflandWeblet):
         # do subscriptions here
         ## looking for all devs
 
-        dadds = self.rm.devmap.keys()
+        dadds = list(self.rm.devmap.keys())
         mrflog.warn("got dadds %s"%repr(dadds))
         self.devs = OrderedDict()
         dadds.sort()
@@ -58,7 +58,7 @@ class MrfLandWebletDevs(MrflandWeblet):
 
     def sens_callback(self, label, data ):
         mrflog.info("DevsWeblet : sens_callback  %s  data %s"%(label,repr(data)))
-        for ccode in data.keys():
+        for ccode in list(data.keys()):
             if ccode == 3:
                 tab = 'dev_info'  # ouch .. this is vile
             elif ccode == 4:
@@ -82,13 +82,13 @@ class MrfLandWebletDevs(MrflandWeblet):
         <h2>%s</h2>"""%self.label
         re1 = re.compile("_")
 
-        for tab in self.pod.keys():
+        for tab in list(self.pod.keys()):
             s += "<hr>\n"
             s += " <h3>%s</h3>\n"%re1.sub(" ", tab)
             if tab == 'unit_test':
-                s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys(), postcontrols = [("start_test","_mrf_ctrl_butt")],iclasses=cls)
+                s += MrflandObjectTable(self.tag,tab, self.pod[tab],list(self.devs.keys()), postcontrols = [("start_test","_mrf_ctrl_butt")],iclasses=cls)
             else:
-                s += MrflandObjectTable(self.tag,tab, self.pod[tab],self.devs.keys())
+                s += MrflandObjectTable(self.tag,tab, self.pod[tab],list(self.devs.keys()))
 
         return s
     def subproc_callback(self, dn):
@@ -106,7 +106,7 @@ class MrfLandWebletDevs(MrflandWeblet):
 
     def mrfctrl_handler(self,data, wsid=None):
         mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
-        if not data.has_key("tab") or not data.has_key("row"):
+        if "tab" not in data or "row" not in data:
             mrflog.error("cmd_mrfctrl data problem in %s"%repr(data))
             return
 
@@ -116,7 +116,7 @@ class MrfLandWebletDevs(MrflandWeblet):
 
         dn =  data["row"]
 
-        if not self.test_active.has_key(dn):
+        if dn not in self.test_active:
             mrflog.error("weblet devs cmd_mrfctrl row %s does not match any devname"%dn)
             return
 
@@ -124,7 +124,7 @@ class MrfLandWebletDevs(MrflandWeblet):
             mrflog.warn( "unit_test already active for device  %s"%repr(dn))
             return
 
-        if not self.rm.devices.has_key(dn):
+        if dn not in self.rm.devices:
             mrflog.warn( "can't find device  %s registered"%repr(dn))
             return
 

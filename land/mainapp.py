@@ -1,18 +1,18 @@
 import tornado.web
 import tornado.template
 import re
-import install
+from . import install
 import os
 import base64
 import sys
 sys.path.append('../lib')
 #from mrflog import mrf_log
-import templates
-import mrfland
+from . import templates
+from . import mrfland
 import ipaddress
 
 #alog = mrf_log()
-from mrflog import mrflog
+from .mrflog import mrflog
 
 oursubnet = ipaddress.ip_network(install.localnet)
 
@@ -23,7 +23,7 @@ def print_everything(*args):
         mrflog.debug( '{0}. {1}'.format(count, thing))
 def print_kwargs(**kwargs):
     mrflog.debug("print_kwargs")
-    for name, value in kwargs.items():
+    for name, value in list(kwargs.items()):
         mrflog.debug('{0} = {1}'.format(name, value))
 
 
@@ -52,7 +52,7 @@ def logout_action(rh,sob,ip):
 def mrf_pills(weblets):
     s = ""
     first = True
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         if first:
             lic = ' class="active"'
@@ -66,7 +66,7 @@ def mrf_pills(weblets):
 
 def mrf_html(weblets):
     s = ""
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         s += wl.html()
     return s
@@ -75,7 +75,7 @@ def mrf_weblet_table(weblets):
     s = "// namespace table for weblets\n"
     s += "var _weblet_table = { "
     first = True
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         if not first:
             s += ', '
@@ -115,7 +115,7 @@ def request_ip(rh):
 
         # handle nginx proxying
         return
-        if rh.request.headers.has_key('X-Forwarded-For'):
+        if 'X-Forwarded-For' in rh.request.headers:
             ip = rh.request.headers['X-Forwarded-For']
 
 
@@ -141,7 +141,7 @@ def post_login(rh):
     """
     ip = rh.ip #rh.request.remote_ip
 
-    if not 'username' in rh.request.arguments.keys():
+    if not 'username' in list(rh.request.arguments.keys()):
         return login_fail(rh,'invalid post data')
 
     username = rh.request.arguments['username']
@@ -155,7 +155,7 @@ def post_login(rh):
     username = username[0]
 
 
-    if not 'password' in rh.request.arguments.keys():
+    if not 'password' in list(rh.request.arguments.keys()):
         return login_fail(rh,'invalid post data')
 
     password = rh.request.arguments['password']
@@ -211,10 +211,10 @@ class mainapp(tornado.web.RequestHandler):
     def set_req_host(self):
         # handle nginx proxying
         mrflog.warn("req headers "+repr(self.request.headers))
-        if 'X-Real-Ip' in  self.request.headers.keys():
+        if 'X-Real-Ip' in  list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Real-Ip']
 
-        elif 'X-Forwarded-For' in self.request.headers.keys():
+        elif 'X-Forwarded-For' in list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Forwarded-For']
 
             #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
@@ -254,10 +254,10 @@ class mainapp(tornado.web.RequestHandler):
         mrflog.info("host : "+self.request.host)
 
         uri = remarg.sub('',self.request.uri)
-        mrflog.warn("get headers is %s"%repr(self.request.headers.keys()))
+        mrflog.warn("get headers is %s"%repr(list(self.request.headers.keys())))
 
         for hn in ['Host','Port','X-Forwarded-For','Referer','X-Real-Ip']:
-            if hn in self.request.headers.keys():
+            if hn in list(self.request.headers.keys()):
                 mrflog.warn("%s %s"%(hn,repr(self.request.headers[hn])))
 
 

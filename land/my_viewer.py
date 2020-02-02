@@ -2,17 +2,17 @@
 
 from tornado.options import  options, parse_command_line  #FIXME move mrfland_server.py
 
-import mrfland
+from . import mrfland
 
-from mrflog import mrflog, mrf_log_init
-from mrfland_server import MrflandServer
-from mrfland_weblet_history import MrfLandWebletHistory
-from mrfland_weblet_rad_pump import MrfLandWebletRadPump
-from mrfland_regmanager import MrflandRegManager
-from mrfdev_pt1000 import Pt1000Dev
-from mrfdev_host import MrfDevHost
+from .mrflog import mrflog, mrf_log_init
+from .mrfland_server import MrflandServer
+from .mrfland_weblet_history import MrfLandWebletHistory
+from .mrfland_weblet_rad_pump import MrfLandWebletRadPump
+from .mrfland_regmanager import MrflandRegManager
+from .mrfdev_pt1000 import Pt1000Dev
+from .mrfdev_host import MrfDevHost
 
-import install
+from . import install
             
 if __name__ == '__main__':
     #mrf_log_init()

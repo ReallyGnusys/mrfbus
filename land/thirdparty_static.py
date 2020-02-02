@@ -44,7 +44,7 @@ class ThirdPartyStatic(object):
         if not os.path.exists(self.static_dir):
             os.makedirs(self.static_dir)
         if force_reload or not os.path.exists(self.static_path):
-            print ("loading thirdparty static component from "+self.cdn_url)
+            print(("loading thirdparty static component from "+self.cdn_url))
             try:
 
                 fp = open(self.static_path,'w+')
@@ -60,10 +60,10 @@ class ThirdPartyStatic(object):
 
                 else: # we are CDN in last resort
                     srcpath = os.path.join(os.environ['MRFBUS_HOME'],'land/static',self.cdn_url)
-                    print ("opening "+srcpath)
+                    print(("opening "+srcpath))
                     srcfp = open(srcpath,'r')
 
-                    print ("fp is "+repr(srcfp))
+                    print(("fp is "+repr(srcfp)))
                     content = srcfp.read()
 
                 #print (cont, file =fp)
@@ -71,10 +71,10 @@ class ThirdPartyStatic(object):
                 fp.write(cont)
                 #fp.write(str(req.content))
                 fp.close()
-                print ("saved comp %s to %s from %s"%( label,self.static_path,self.cdn_url))
+                print(("saved comp %s to %s from %s"%( label,self.static_path,self.cdn_url)))
 
             except:
-                print("ERROR loading  comp %s to %s from %s"%( label,self.static_path,self.cdn_url))
+                print(("ERROR loading  comp %s to %s from %s"%( label,self.static_path,self.cdn_url)))
                 sys.exit(-1)
 
 

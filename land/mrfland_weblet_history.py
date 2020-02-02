@@ -14,11 +14,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
-from mrfland_weblet import MrflandWeblet, mrfctrl_butt_html, mrfctrl_select_html
-from mrflog import mrflog
-from mrfland import to_json
+from .mrfland_weblet import MrflandWeblet, mrfctrl_butt_html, mrfctrl_select_html
+from .mrflog import mrflog
+from .mrfland import to_json
 import datetime
-from mrfland_regmanager import MrflandRegManager  # FYI self/ __MrflandWeblet__.rm is this type
+from .mrfland_regmanager import MrflandRegManager  # FYI self/ __MrflandWeblet__.rm is this type
 
 class MrfLandWebletHistory(MrflandWeblet):
     _config_ = [ ('graph_days'      ,  '1' ,

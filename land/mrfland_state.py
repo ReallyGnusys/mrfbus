@@ -23,8 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 from datetime import datetime
-from mrf_structs import *
-from mrfland_app import MrflandApp
+from .mrf_structs import *
+from .mrfland_app import MrflandApp
 
 class DevState(object):
     def __init__(self,addr,log):
@@ -110,7 +110,7 @@ class MrflandState(MrflandApp):
         s += "\n----host------"
         s += "\n %s"%repr(self.host)
         s += "\n----devices %d------"%len(self.devices)
-        for d in self.devices.keys():
+        for d in list(self.devices.keys()):
             s += "\n----device addr %d------"%d
             s += "\n %s"%repr(self.devices[d])
         return s+"\n"
@@ -133,7 +133,7 @@ class MrflandState(MrflandApp):
             self.log.info("state task - chose host task %s"%repr(cr))
             return
 
-        for da in self.devices.keys():
+        for da in list(self.devices.keys()):
             self.log.debug("checking command_request for %d"%da)
             cr = self.devices[da].command_request()
             if cr:
@@ -149,7 +149,7 @@ class MrflandState(MrflandApp):
         self.last_msg_time = datetime.now()
         if hdr.usrc == self.mld.hostaddr:            
             return self.host.fyi(hdr,robj)
-        elif hdr.usrc in self.devices.keys():
+        elif hdr.usrc in list(self.devices.keys()):
             self.log.info("state fyi : got something from dev 0x%02x %s"%(hdr.usrc,repr(robj)))
             return self.devices[hdr.usrc].fyi(hdr,robj)
         else:
