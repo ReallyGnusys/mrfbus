@@ -5,6 +5,7 @@ addons:
     packages:
       - gcc-msp430
       - msp430-libc
+      - python3-wheel
       - python3-venv
 
 script:
