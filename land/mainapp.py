@@ -178,10 +178,11 @@ def post_login(rh):
 
     ## user is authenticated
     secure_url =  '/'
-    mrflog.info('staff authenticated , id = '+str(authres) + " url = "+secure_url )
+    mrflog.warn('staff authenticated , id = '+str(authres) + " url = "+secure_url )
 
     ## set session id
     rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
+    mrflog.warn('staff authenticated , id = '+str(authres) + " url = "+secure_url )
 
     #rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
@@ -190,6 +191,12 @@ def post_login(rh):
                'data'   : authres,
                'redirect' : secure_url
                }
+
+
+    wdat = mrfland.to_json(result)
+
+    mrflog.warn("writing result "+wdat)
+
 
     rh.write(mrfland.to_json(result))
 
@@ -249,8 +256,8 @@ class mainapp(tornado.web.RequestHandler):
 
 
     def get(self, *args, **kwargs):
-        mrflog.info('get:'+str(self.request))
-        mrflog.info("uri : "+self.request.uri)
+        mrflog.warn('get req:'+str(self.request))
+        mrflog.warn("uri : "+self.request.uri)
         mrflog.info("host : "+self.request.host)
 
         uri = remarg.sub('',self.request.uri)
@@ -283,8 +290,9 @@ class mainapp(tornado.web.RequestHandler):
 
         mrflog.warn("localreq = %s : static_cdn = %s"%(repr(self.localreq),repr(static_cdn)))
 
-        sessid = self.get_secure_cookie(install.sess_cookie)
-        mrflog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
+        sessid = self.get_secure_cookie(install.sess_cookie).decode('utf-8')
+        mrflog.warn("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
+
         if sessid == None:
             if page == 'login':
                 mrflog.info("returning login page as requested")
@@ -293,13 +301,13 @@ class mainapp(tornado.web.RequestHandler):
                                   js_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn),
                 )
             else:
-                mrflog.info("no sessid - redirecting to login page")
+                mrflog.warn("no sessid set - redirecting to login page")
                 return self.redirect('/login')
 
 
         sob = self.rm.comm.session_isvalid(sessid)  # if session is valid you're in
         if sob == None :
-            mrflog.info("session is invalid")
+            mrflog.warn("session is invalid %s - giving them login page again"%sessid)
             if page == 'login':
                 return login_page(self,
                                   css_html=self.rm.tp_static_mgr.html(login=True,css=True,static_cdn=static_cdn),

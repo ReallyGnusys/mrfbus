@@ -1075,4 +1075,4 @@ var _sensor_averages = {"""
             self.weblets[apptag].restore_cfg(result['data'])
 
 def gen_sessid():
-    return base64.b64encode(os.urandom(18))
+    return os.urandom(18).hex()  #base64.b64encode(os.urandom(18)).decode()

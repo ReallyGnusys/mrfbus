@@ -52,16 +52,17 @@ if [ $1 == setup ] ; then
 
     [ $? -ne 0 ] && echo "python requests module not found : please install" && exit -1
 
-    python ${MRFBUS_HOME}/land/thirdparty_static.py
+    python3 ${MRFBUS_HOME}/land/thirdparty_static.py
 
 
     echo "building venv"
 
-    virtualenv venv
+    python3 -m venv venv
+    #virtualenv venv
     source venv/bin/activate
 
     echo "installing requirements"
-    pip install -r ${MRFBUS_HOME}/land/requirements.txt
+    pip3 install -r ${MRFBUS_HOME}/land/requirements.txt
 
 
 
@@ -204,7 +205,7 @@ if [ -n "${server}" ] ; then
    echo "" > ${LOGDIR}/mrfland.log
    sleep 1
    echo "starting server ./${server}"
-   source v3env/bin/activate
+   source venv/bin/activate
    export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
    echo "PYTHONPATH=$PYTHONPATH"
    if [ $# -lt 2 ]  ; then
