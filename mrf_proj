@@ -54,16 +54,22 @@ if [ $1 == setup ] ; then
 
     python3 ${MRFBUS_HOME}/land/thirdparty_static.py
 
+    [ $? -ne 0 ] && echo "land/thirdparty_static.py error - quitting" && exit -1
 
     echo "building venv"
 
     python3 -m venv venv
+
+    [ $? -ne 0 ] && echo "python3 -m venv venv error - quitting" && exit -1
+
+
     #virtualenv venv
     source venv/bin/activate
 
     echo "installing requirements"
     pip3 install -r ${MRFBUS_HOME}/land/requirements.txt
 
+    [ $? -ne 0 ] && echo "pip3 install -r ${MRFBUS_HOME}/land/requirements.txt :  error - quitting" && exit -1
 
 
     exit 0
