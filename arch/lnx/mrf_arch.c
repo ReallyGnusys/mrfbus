@@ -320,8 +320,9 @@ int mrf_arch_run(){
 
   // if app_callback is set we establish a simple server, to wait for connections from python land server
   if ( app_callback != NULL ){
-    mrf_debug(5,"%s","creating listening socket\n");
+    mrf_debug(5,"%s on port %d","creating listening socket\n",LISTEN_ON);
     lisfd = make_listener_socket(LISTEN_ON);
+    mrf_debug(5,"opened listener socket fd = %d\n\n", lisfd);
 
     if (listen (lisfd, 1) < 0)
       {

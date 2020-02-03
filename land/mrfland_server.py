@@ -242,6 +242,7 @@ class SimpleTcpClient(object):
                 mrflog.info("got line %s"%line)
                 #s = line.decode('utf-8').strip()
                 #mrflog('got |%s|' % repr(s))
+                line = line.decode('utf-8')
                 ob = mrfland.json_parse(line)
                 obdecoded = False
                 if ob:
@@ -771,8 +772,8 @@ class MrflandServer(object):
                     mrflog.debug("_resp_handler , got resp %s"%repr(resp))
                     mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
                     mrflog.debug("_resp_handler , got param %s"%repr(param))
-                else:
-                    mrflog.warn("failed to decode response - hdr %s param %s"%(repr(hdr),repr(param)))
+                elif hdr.type != mrf_cmd_ndr:
+                    mrflog.warn("failed to decode response - hdr %s \nparam %s"%(repr(hdr),repr(param)))
 
     def _struct_handler(self,*args, **kwargs):
         mrflog.debug("Input on data pipe")
