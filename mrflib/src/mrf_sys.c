@@ -188,8 +188,8 @@ int mrf_sretry(uint8 bnum){
 
  ACK_TAG acktag;
 
- acktag.type  = mrf_cmd_retry;
- acktag.msgid = hdr->msgid;
+ acktag.type   = mrf_cmd_retry;
+ acktag.msgid  = hdr->msgid;
  acktag.dest   = hdr->hsrc;
 
  if(if_ptr->ackqueue->push(acktag) == 0){
@@ -588,7 +588,7 @@ int _Dbg_fw2(){
 // FIXME lots of duplicated code here wrt. data_response / ex packet - need to clean this up
 static int _mrf_buff_forward(uint8 bnum){
   MRF_PKT_HDR *pkt;
-  uint8 type;
+  uint8 type, fsrc;
   mrf_debug(5,"mrf_buff_forward: processing buff number %d our MRFID = %X  \n",bnum,MRFID);
   pkt = (MRF_PKT_HDR *)_mrf_buff_ptr(bnum);
   type = pkt->type;
@@ -602,6 +602,7 @@ static int _mrf_buff_forward(uint8 bnum){
   }
 #endif
 
+  fsrc = pkt->hsrc;  // we're forwarding for this device - keep a note in case need to send them retry below
   MRF_ROUTE route;
   mrf_nexthop(&route,MRFID,pkt->udest);
   //const MRF_IF *ifp = mrf_if_ptr(route.i_f);
@@ -619,7 +620,9 @@ static int _mrf_buff_forward(uint8 bnum){
   if( mrf_if_tx_queue(route.i_f,bnum) == -1){ // then outgoing queue full - need to retry
     // mrf_if_tx_queue increments if_status.stats.tx_overruns if it returns -1 here
     mrf_debug(5,"WARN:  could not queue tx of buff %d on on i_f %d  \n",bnum,route.i_f);
-
+    // restoring hdest and hsrc for retry func
+    pkt->hdest = MRFID;
+    pkt->hsrc  = fsrc;
     mrf_sretry(bnum);
   }
   else{
