@@ -28,7 +28,7 @@ cookie_secret = "changemetosomethingsecret"
 tcpport = 8912   # port used by tcp/json test service
 mrfbus_host_port = 8915  # port of mrfbus host device ( addr 1 )
 
-dbname = "mrf_"+host+'_'+instance
+dbname = "mrf_"+host+'_'+appname
 
 db_uri = "mongodb://username:password@host:27017/mrfbus?authSource=admin"
 
