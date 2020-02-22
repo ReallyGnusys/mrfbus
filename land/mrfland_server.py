@@ -660,7 +660,7 @@ class MrflandServer(object):
 
         if hdr.netid != self.netid: # only looking for packets from this netid
             mrflog.warn("not our netid")
-            print(("hdr is:\n%s\n"%repr(hdr)))
+            mrflog_warn(("hdr is:\n%s\n"%repr(hdr)))
             return None,None,None
 
         if hdr.udest != 0: # only looking for packets destined for us, except for receipts
@@ -752,13 +752,15 @@ class MrflandServer(object):
         while len(rresp):
 
             hdr , param, resp  = self.parse_input(rresp)
-
+            #pdb.set_trace()
             if hdr:
                 rresp=rresp[hdr.length:]
             else:
                 mrflog.warn("no hdr len(rresp) %d type resp %s"%(len(rresp),str(type(resp))))
                 mrflog.warn("type hdr "+str(type(hdr)))
 
+                mrflog.error("resp :"+repr(rresp))
+                sys.exit(-1)
 
             mrflog.debug("hdr on resp_pipe %s"%repr(hdr))
 

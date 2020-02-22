@@ -48,6 +48,8 @@ class MrfLandWebletPeriodTest(MrflandWeblet):
             self.graph_pumps.append(pname)
             self.graph_periods.append(self.tagperiodvar[tper])
 
+        mrflog.warn("graph_pumps  %s"%repr(self.graph_pumps))
+        mrflog.warn("graph_periods  %s"%repr(self.graph_periods))
 
     def var_changed(self,name,wsid):
 
