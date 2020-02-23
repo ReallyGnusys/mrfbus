@@ -55,19 +55,19 @@ class TestHost(DeviceTestCase):
         ccode = mrf_cmd_if_stats
         self.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.response(timeout=self.timeout)
-        print("got resp:\n%s"%repr(resp))
+        print(("got resp:\n%s"%repr(resp)))
         self.assertEqual(type(PktIfStats()),type(resp))
 
 
 
     def host_app_test(self, addr = 0):
         print("**********************")
-        print("* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest))
+        print(("* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)))
         print("**********************")
         ccode = mrf_cmd_app_test
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
-        print("got resp:\n%s"%repr(resp))
+        print(("got resp:\n%s"%repr(resp)))
         self.assertEqual(type(PktTimeDate()),type(resp))
 
 
@@ -99,5 +99,5 @@ class TestHost(DeviceTestCase):
 if __name__ == "__main__":
     if len(sys.argv) > 1:
        TestHost.DEST = int(sys.argv.pop(),16)
-       print("setting dest to 0x%x"%TestHost.DEST)
+       print(("setting dest to 0x%x"%TestHost.DEST))
     unittest.main()

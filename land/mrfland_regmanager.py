@@ -65,7 +65,7 @@ class mrf_comm(object):
 
     def check_socket(self,wsid,ip):  # FIXME should have timeout if socket not opened in v short time after prepare_socket
         mrflog.info("checking socket id %s  ip %s"%(wsid,ip))
-        if not wsid in self.sockets.keys():
+        if not wsid in list(self.sockets.keys()):
             mrflog.warn("wsid not found...(%s)"%wsid)
             return None
         skt = self.sockets[wsid]
@@ -96,14 +96,14 @@ class mrf_comm(object):
     def _jso_broadcast(self,app,raw):
         mrflog.debug( "mrf.comm._jso_broadcast : app"+str(app)+" "+str(len(self.clients))+" clients")
         mrflog.debug(" clients = "+str(self.clients))
-        for wsid in self.clients.keys() :
+        for wsid in list(self.clients.keys()) :
             mrflog.debug( "client wsid:"+wsid)
             client = self.clients[wsid]
             if (app == 'auto_graph') or app in client['apps']:
                 client['object'].write_message(raw + "\r\n\r\n")
 
     def send_object_to_client(self,id,obj):
-        if not self.clients.has_key(id):
+        if id not in self.clients:
             errstr = "asa_comm:obj to client key error, key was "+str(id)+" obj was "+str(obj)
             mrflog.error(errstr)
             return
@@ -112,12 +112,12 @@ class mrf_comm(object):
         #username = self.clients[id]['username']
         username = client['username']
 
-        if not obj.has_key('data'):
+        if 'data' not in obj:
             mrflog.error("send obj to client ... no data in %s"%repr(obj))
             return
         data = obj['data']
 
-        if not data.has_key('tag'):
+        if 'tag' not in data:
             mrflog.error("send obj to client ... no tag in %s"%repr(data))
             app = None
         else:
@@ -134,7 +134,7 @@ class mrf_comm(object):
 
         data = obj['data']
 
-        if not data.has_key('tag'):
+        if 'tag' not in data:
             mrflog.error("broadcast obsolete attempt of %s"%repr(data))
             return
         tag = data['tag']
@@ -155,10 +155,10 @@ class mrf_comm(object):
 
     def session_isvalid(self,sessid):
         self.log.info("checking session_isvalid %s"%sessid)
-        self.log.info("self.sockets.keys %s"%repr(self.sockets.keys()))
+        self.log.info("self.sockets.keys %s"%repr(list(self.sockets.keys())))
         self.log.info("self.sockets %s"%repr(self.sockets))
 
-        for wsid in self.sockets.keys():
+        for wsid in list(self.sockets.keys()):
             skt = self.sockets[wsid]
             self.log.info("wsid %s  skt %s"%(wsid,skt))
             if skt.sessid == sessid:
@@ -213,7 +213,7 @@ class MrflandRegManager(object):
         self.graph_insts = 0
         self.config = config
         self.comm = mrf_comm(log=mrflog)
-        if self.config.has_key('db_uri') and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "" and not 'password' in self.config['db_uri']:
+        if 'db_uri' in self.config and type(self.config['db_uri'])==type("") and self.config['db_uri'] != "" and not 'password' in self.config['db_uri']:
             from motor import motor_tornado
             self.db = motor_tornado.MotorClient(self.config['db_uri']).mrfbus
             mrflog.warn("opened db connection %s"%repr(self.db))
@@ -254,7 +254,7 @@ class MrflandRegManager(object):
     def setserver(self,server):  # OUCH , we let the server set a reference to itself..for now
         self.server = server   # Please only let a mrfland_server or subclass ever call this function
         ## run postinit
-        for wtag in self.weblets.keys():
+        for wtag in list(self.weblets.keys()):
             wl = self.weblets[wtag]
             if hasattr( wl, 'run_init'):
                 mrflog.warn( "calling run_init for weblet %s "%wtag)
@@ -265,7 +265,7 @@ class MrflandRegManager(object):
         self.shist_ts = []
         self.shist_start_time = time.time()  ## should be consistent with self.shist_ts[0]
         self.shist_last_time = self.shist_start_time ## last time reading arrived
-        for sl in self.sgraphs.keys():
+        for sl in list(self.sgraphs.keys()):
             mrflog.warn("graph subscribe %s"%sl)
             flds = self.sgraphs[sl]
             self.shist[sl] = {}
@@ -297,16 +297,16 @@ class MrflandRegManager(object):
         mrflog.debug("now %s"%(repr(lnow)))
         #pdb.set_trace()
         #self.shist_ts.append
-        mrflog.debug("sgraphs %s "%repr(self.sgraphs.keys()))
+        mrflog.debug("sgraphs %s "%repr(list(self.sgraphs.keys())))
 
         gdata = { 'ts' : ts,
                   'sensors' : {}
                   }
-        for sname in self.sgraphs.keys():
+        for sname in list(self.sgraphs.keys()):
             flds = self.sgraphs[sname]
             savg = self.sensors[sname].gen_average()
             for fld in flds:
-                if fld in savg.keys():
+                if fld in list(savg.keys()):
                     savg[fld] = round(savg[fld],2)
                     self.shist[sname][fld].append(savg[fld])  #limit to 2 dp precision
             #savg['ts'] = ts
@@ -322,7 +322,7 @@ class MrflandRegManager(object):
         while self.shist_last_time - self.shist_start_time  > self. _HISTORY_SECONDS_:
             mrflog.info("exceeded history secs with %s"%repr(time.localtime(self.shist_start_time)))
 
-            for sname in self.sgraphs.keys():
+            for sname in list(self.sgraphs.keys()):
                 flds = self.sgraphs[sname]
                 for fld in flds:
                     del self.shist[sname][fld][0]
@@ -332,8 +332,12 @@ class MrflandRegManager(object):
 
 
     def authenticate(self,username,password,ip,req_host):
-        mrflog.info('authenticate_staff : username = '+username+" , ip : "+ip)
-        if username not in install.users.keys():
+        username = username.decode()
+        password = password.decode()
+        mrflog.warn('authenticate_staff : username = '+username+" , ip : "+ip)
+
+
+        if username not in list(install.users.keys()):
             return None
 
         uinf =  install.users[username]
@@ -351,7 +355,7 @@ class MrflandRegManager(object):
 
 
         mrflog.warn('authenticated ip '+ip)
-        wsid = os.urandom(16).encode('hex')
+        wsid = os.urandom(16).hex()
         sessid = gen_sessid()
 
         self.comm.prepare_socket(uinf['sid'],wsid,sessid,uinf['username'],uinf['type'],apps,ip,req_host)
@@ -380,7 +384,7 @@ class MrflandRegManager(object):
 
 
     def web_client_command(self,wsid,app,cmd,data):
-        if app not in self.weblets.keys():
+        if app not in list(self.weblets.keys()):
             mrflog.error("web_client_command unknown app %s from wsid %s"%(app,wsid))
             return
         mrflog.warn("%s web_client_command cmd is %s data %s"%(self.__class__.__name__,cmd, repr(data)))
@@ -401,17 +405,17 @@ class MrflandRegManager(object):
         for slabel in data['sensors']:
             sdata = data['sensors'][slabel]
             stype = self.sensors[slabel]._stype_
-            if data.has_key('ts') and sdata.has_key(stype) and self.server:
+            if 'ts' in data and stype in sdata and self.server:
                 dt = datetime.datetime.strptime(data['ts'],mrfland.DateTimeFormat)
                 mrflog.debug("trying db insert sensor_id "+slabel+" stype "+stype+ " "+repr(dt)+"  data "+ repr(sdata[stype]))
                 self.db_sensor_data_insert(sensor_id=slabel, stype=stype, dt = dt, value=sdata[stype])
 
     def graph_req(self,slab,fld):  #for weblets to request graph data capture for sensors
-        if not self.sensors.has_key(slab):
+        if slab not in self.sensors:
             mrflog.error("%s graph_req no sensor named  %s "%(self.__class__.__name__,slab))
             return
 
-        if not self.sgraphs.has_key(slab):
+        if slab not in self.sgraphs:
             self.sgraphs[slab] = [fld] # no need for sensor ref here
             mrflog.warn("%s graph_req added for sensor  %s  fld %s"%(self.__class__.__name__,slab,fld))
         elif not fld in self.sgraphs[slab]:
@@ -421,7 +425,7 @@ class MrflandRegManager(object):
         snames = []
 
         graphs = ""
-        for stype in sensors.keys():
+        for stype in list(sensors.keys()):
             for sname in sensors[stype]:
                 graphs += "mrf-graphs-"+sname+" "
 
@@ -500,7 +504,7 @@ class MrflandRegManager(object):
 
     def tbd_timer_reg_callback(self, tag, act, callback):
         tid = tag+"."+ act
-        if not self.timers.has_key(tid):
+        if tid not in self.timers:
             mrflog.error("timer_reg_callback no tid %s"%tid)
             return
         self.timers[tid].append(callback)
@@ -512,23 +516,23 @@ class MrflandRegManager(object):
         if tag in self.period_lut:
             return self.timer_changed(app,tag,act=act)  # calling this will do
 
-        if not self.weblets.has_key(app):
+        if app not in self.weblets:
             mrflog.error("%s timer_callback no app  %s "%(self.__class__.__name__,app, tid,len(self.timers[tid])))
             return
         self.weblets[app]._timer_callback(tag, act)
 
     def senslookup(self,label):
-        if self.sensmap.has_key(label):
+        if label in self.sensmap:
             return self.sensmap[label]
 
     def senslink(self, label, addr, chan):
-        if self.sensmap.has_key(label):
+        if label in self.sensmap:
             mrflog.error("regman.senslink - already have tag %s"%label)
             return
         self.sensmap[label] = { 'addr' : addr, 'chan' : chan }
 
     def sens_search(self,label):
-        if self.sensors.has_key(label):
+        if label in self.sensors:
             return self.sensors[label]
         else:
             return None
@@ -537,7 +541,7 @@ class MrflandRegManager(object):
         svtmp = {}
         sv = OrderedDict()
         reh =  re.compile(r'%s_([0-9]+)'%label)
-        if self.senstypes.has_key(stype):
+        if stype in self.senstypes:
             sl = self.senstypes[stype]
         else:
             return None
@@ -560,7 +564,7 @@ class MrflandRegManager(object):
         sv = self.sens_search_vector(stype,label)
         if sv == None or len(sv) == 0:
             return None
-        return sv[sv.keys()[0]]
+        return sv[list(sv.keys())[0]]
 
     def webupdate(self, tag , data , wsid=None):
         if wsid:
@@ -572,11 +576,11 @@ class MrflandRegManager(object):
             self.wups.append({ 'tag': tag , 'data': data})
 
     def cmdcode(self, dest, cmdname):
-        if not self.devmap.has_key(dest):
+        if dest not in self.devmap:
             mrflog.error("cmdcode - no device at address %d"%dest)
             return None
         dev = self.devmap[dest]
-        if not dev.cmdnames.has_key(cmdname):
+        if cmdname not in dev.cmdnames:
             mrflog.error("cmdcode - device at address %d has no command %s"%(dest,cmdname))
             return None
         return dev.cmdnames[cmdname]
@@ -607,14 +611,14 @@ class MrflandRegManager(object):
 
     def packet(self,hdr,resp):
 
-        if self.devmap.has_key(hdr.usrc):
+        if hdr.usrc in self.devmap:
             return self.devmap[hdr.usrc].packet(hdr,resp)
         else:
             mrflog.warn("got packet but no dev registered for usrc %d"%hdr.usrc)
             return None, None
 
     def weblet_register(self, weblet):
-        if self.weblets.has_key(weblet.tag):
+        if weblet.tag in self.weblets:
             mrflog.error("weblet_register - key error %s"%weblet.tag)
             return
 
@@ -626,7 +630,7 @@ class MrflandRegManager(object):
         """ generate bootstrap pills """
         s = ""
         first = True
-        for wa in self.weblets.keys():
+        for wa in list(self.weblets.keys()):
             if wa in apps:
                 wl = self.weblets[wa]
                 if first:
@@ -658,7 +662,7 @@ class MrflandRegManager(object):
        <div class="tab-content">
 """
         active = True  # first in list is active bootstrap pane
-        for wa in self.weblets.keys():
+        for wa in list(self.weblets.keys()):
             if wa in apps:
                 wl = self.weblets[wa]
                 s += wl.html(active)
@@ -685,14 +689,14 @@ class MrflandRegManager(object):
         return s
     def device_register(self, dev):
         """ register new MrfDevice"""
-        if self.devices.has_key(dev.label):
+        if dev.label in self.devices:
             mrflog.error("%s device_register duplicate device label %s"%dev.label)
             return
         self.devices[dev.label] = dev
 
         self.devmap[dev.address] = dev
         ### now enumerate device sensors
-        for cap in dev.caps.keys():
+        for cap in list(dev.caps.keys()):
             mrflog.warn("enumerating sensors type %s"%cap)
             for ch in range(len(dev.caps[cap])):
                 sens = dev.caps[cap][ch]
@@ -700,15 +704,15 @@ class MrflandRegManager(object):
 
                 mrflog.warn("chan %d type  %s"%(ch,type(sens)))
     def add_sensor(self, sens,cap):
-        if self.sensors.has_key(sens.label):
+        if sens.label in self.sensors:
             mrflog.error("%s device_register duplicate sensor label %s"%sens.label)
             return
         self.sensors[sens.label] = sens
-        if not self.senstypes.has_key(type(sens)):
+        if type(sens) not in self.senstypes:
             self.senstypes[type(sens)] = []
         self.senstypes[type(sens)].append(sens)
 
-        if not self.senscaps.has_key(cap):
+        if cap not in self.senscaps:
             self.senscaps[cap] = []
         self.senscaps[cap].append(sens)
 
@@ -718,7 +722,7 @@ class MrflandRegManager(object):
 
     def quiet_task(self):  # server calls this task periodically
         mrflog.debug("quiet task")
-        for wapn in self.weblets.keys():
+        for wapn in list(self.weblets.keys()):
             wap = self.weblets[wapn]
             if wap._cfg_touched:
                 mrflog.warn("wap %s cfg change"%wapn)
@@ -735,7 +739,7 @@ class MrflandRegManager(object):
     def sensor_average_js(self):  # generate sensor average history js
         s = ""
 
-        if len(self.sgraphs.keys()) == 0:
+        if len(list(self.sgraphs.keys())) == 0:
             return s
 
         s += """
@@ -745,7 +749,7 @@ var _sensor_ts = %s ;"""%mrfland.to_json(self.shist_ts)
         s += """
 var _sensor_averages = {"""
 
-        for slab in self.sgraphs.keys():
+        for slab in list(self.sgraphs.keys()):
 
             flds = self.sgraphs[slab]
 
@@ -816,13 +820,13 @@ var _sensor_averages = {"""
     def graph_day_data(self,gdata,sensor_id, stype, doc):
         """ unwinds 2 day hour/min array data and breaks when un-initialised value found"""
 
-        if not gdata.has_key(sensor_id):
+        if sensor_id not in gdata:
             gdata[sensor_id] = {}
 
 
 
 
-        if not gdata[sensor_id].has_key(stype):
+        if stype not in gdata[sensor_id]:
             gdata[sensor_id][stype] = {
                 'ts'   : [],
                 'value': []
@@ -831,8 +835,8 @@ var _sensor_averages = {"""
         gvals =  gdata[sensor_id][stype]
         gtime = doc['docdate']
 
-        for hour in xrange(24):
-            for minute in xrange(60):
+        for hour in range(24):
+            for minute in range(60):
                 if not (doc['data'][hour][minute] == doc['nullval']):
                     gvals['ts'].append(gtime.strftime(mrfland.DateTimeFormat))
                     gvals['value'].append(doc['data'][hour][minute])
@@ -897,7 +901,7 @@ var _sensor_averages = {"""
         wtag = kwargs['wtag']
         wsid = kwargs['wsid']
 
-        if kwargs.has_key('days'):
+        if 'days' in kwargs:
             days = kwargs['days']
         else:
             days = 1
@@ -910,7 +914,7 @@ var _sensor_averages = {"""
             docdate = startdate - datetime.timedelta(days=days-1)
             coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
 
-            for day in xrange(days):
+            for day in range(days):
                 mrflog.warn("%s %d) %s"%(sensor_id,day,repr(docdate)))
                 doc = yield coll.find_one({'docdate' : docdate})
 
@@ -952,11 +956,11 @@ var _sensor_averages = {"""
             if (fld[0] == 'sensor') and (len(fld) == 3):
                 stype = fld[1]
                 sname = fld[2]
-                if not sensors.has_key(stype):
+                if stype not in sensors:
                     sensors[stype] = []
                 sensors[stype].append(sname)
 
-        for stype in sensors.keys():
+        for stype in list(sensors.keys()):
             sensors[stype].sort()
 
         mrflog.warn("got sensors %s"%repr(sensors))
@@ -1017,7 +1021,7 @@ var _sensor_averages = {"""
         apptag = kwargs['apptag']
         doc    = kwargs['doc']
 
-        if kwargs.has_key('sid'):
+        if 'sid' in kwargs:
             sid = kwargs['sid']
         else:
             sid = -1
@@ -1067,8 +1071,8 @@ var _sensor_averages = {"""
 
         mrflog.warn("loaded config  for app %s result %s"%(apptag,repr(result)))
 
-        if result.has_key('data'):
+        if 'data' in result:
             self.weblets[apptag].restore_cfg(result['data'])
 
 def gen_sessid():
-    return base64.b64encode(os.urandom(18))
+    return os.urandom(18).hex()  #base64.b64encode(os.urandom(18)).decode()

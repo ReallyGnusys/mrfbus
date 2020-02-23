@@ -26,7 +26,7 @@ import pdb
 class MrfLandWebletMem(MrflandWeblet):
     def init(self):
         mrflog.warn("%s init"%(self.__class__.__name__))
-        if not self.rm.senscaps.has_key('memory'):
+        if 'memory' not in self.rm.senscaps:
             mrflog.error("%s post_init failed to find sensor category memory in rm"%self.__class__.__name__)
             return
 

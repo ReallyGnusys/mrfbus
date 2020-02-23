@@ -320,8 +320,9 @@ int mrf_arch_run(){
 
   // if app_callback is set we establish a simple server, to wait for connections from python land server
   if ( app_callback != NULL ){
-    mrf_debug(5,"%s","creating listening socket\n");
+    mrf_debug(5,"%s on port %d","creating listening socket\n",LISTEN_ON);
     lisfd = make_listener_socket(LISTEN_ON);
+    mrf_debug(5,"opened listener socket fd = %d\n\n", lisfd);
 
     if (listen (lisfd, 1) < 0)
       {
@@ -580,18 +581,29 @@ char buff[2048];
          if (buff[bi] == 0) {
            j = 0;
            mrf_debug(5,"token %s\n",token);
-           if(!_tick_enabled && strcmp(token,TICK_ENABLE) == 0){
-             mrf_debug(5,"%s","INTERNAL:tick_enable\n");
-             epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
-             //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-             _tick_enabled = 1;
-           }
-           else if (_tick_enabled && strcmp(token,TICK_DISABLE) == 0){
-             mrf_debug(5,"%s","INTERNAL:tick_disable\n");
-             epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
-             //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
-             _tick_enabled = 0;
 
+
+           if( strcmp(token,TICK_ENABLE) == 0){
+             if ( !_tick_enabled) {
+               mrf_debug(5,"%s","INTERNAL:tick_enable\n");
+               epoll_ctl(efd, EPOLL_CTL_ADD,timerfd , &ievent[NUM_INTERFACES]);
+               //printf("TIMER event added %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+               _tick_enabled = 1;
+
+             } else{
+               mrf_debug(5,"%s","WARN INTERNAL:tick_enable while already enabled!\n");
+             }
+           }
+           else if ( strcmp(token,TICK_DISABLE) == 0){
+             if (_tick_enabled){
+               mrf_debug(5,"%s","INTERNAL:tick_disable\n");
+               epoll_ctl(efd, EPOLL_CTL_DEL,timerfd , &ievent[NUM_INTERFACES]);
+               //printf("TIMER event removed %d u32 %u infd %d\n",NUM_INTERFACES,ievent[NUM_INTERFACES].data.u32,_input_fd[NUM_INTERFACES]);
+               _tick_enabled = 0;
+             }
+             else {
+               mrf_debug(5,"%s","WARN INTERNAL:tick_disable while already disabled!\n");
+             }
            }
            else if (strcmp(token,"wake") == 0){
              mrf_debug(5,"%s","INTERNAL:wakeup\n");
@@ -688,7 +700,7 @@ int mrf_rtc_get(TIMEDATE *td){
   time_t t = time(NULL);
   mrf_debug(5,"mrf_rtc_get t %lx\n",t);
   struct tm tm = *localtime(&t);
-  mrf_debug(5,"\nyear is %u mon %u day %u hour %u min %u sec %u ",
+  mrf_debug(5,"year is %u mon %u day %u hour %u min %u sec %u\n",
          tm.tm_year,tm.tm_mon,tm.tm_mday,tm.tm_hour,tm.tm_min,tm.tm_sec);
   td->year = tm.tm_year - 100;  // mrf bus years start at 2000
   td->mon = tm.tm_mon + 1;  // matches cc RTC output months 1 - 12

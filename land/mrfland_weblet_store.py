@@ -27,7 +27,7 @@ class MrfLandWebletStore(MrflandWeblet):
         # do subscriptions here
         ## looking for all MrfSensPt1000 types
 
-        if not self.rm.senstypes.has_key(MrfSensPt1000):
+        if MrfSensPt1000 not in self.rm.senstypes:
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
         ts = self.rm.senstypes[MrfSensPt1000]
@@ -35,11 +35,11 @@ class MrfLandWebletStore(MrflandWeblet):
         mrflog.info("num MrfSensPt1000 found was %d"%len(ts))
         self.slabs = []
         self.sens = OrderedDict()
-        if not self.cdata.has_key('acc_tag'):
+        if 'acc_tag' not in self.cdata:
             mrflog.error("%s , no acc_tag in data")
             return
 
-        if not self.cdata.has_key('acc_litres'):
+        if 'acc_litres' not in self.cdata:
             mrflog.error("%s , no acc_litres in data")
             return
 
@@ -56,7 +56,7 @@ class MrfLandWebletStore(MrflandWeblet):
             s = self.ts[l]
             self.add_var(s.label,s, field='temp', graph=True)
 
-        mrflog.warn("Store has temp sensors at following levels %s"%repr(self.ts.keys()))
+        mrflog.warn("Store has temp sensors at following levels %s"%repr(list(self.ts.keys())))
 
     def pane_html(self):
         """ just want to display pt1000sens output stucture"""
@@ -73,7 +73,7 @@ class MrfLandWebletStore(MrflandWeblet):
             "temp" : sensors
         })
 
-        skeys = self.var.__dict__.keys()
+        skeys = list(self.var.__dict__.keys())
         skeys.sort()
 
         mrflog.warn("store app var keys are %s"%repr(skeys))

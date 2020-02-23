@@ -134,8 +134,8 @@ function mrf_web_update(obj){
     }
 
     if(tag.tab == 'mrfgraph') {
-        //console.log("mrfgraph tag ");
-        //console.log(tag);
+        console.warn("mrfgraph tag ");
+        console.log(tag);
         mrfgraph(tag.app, tag.row,  obj.data)
         return;
     }
@@ -244,7 +244,7 @@ function mrfgraph_data_layout(gdata){
                 });
         } else {
 
-            console.log("not temp memory or relay!"+sn);
+            console.warn("not temp memory or relay!"+sn);
         }
     }
 
@@ -356,6 +356,9 @@ function plot_data_layout(sensors){
         lhs = 'temp';
     else if('memory' in sensors)
         lhs = 'memory';
+    else if('active' in sensors)
+        lhs = 'active';
+
     else // default
         lhs = Object.keys(sensors)[0];
 
@@ -376,12 +379,12 @@ function plot_data_layout(sensors){
                 type : 'scatter'
             });
         }
-    // support optional graphing or relays on RHS second Y axis
+    // support optional graphing of relays on RHS second Y axis
     if (Object.keys(sensors).length > 1){
         if ('relay' in sensors)
             rhs = 'relay';
-        else if('active' in sensors)
-            rhs = 'active';
+        //else if('active' in sensors)
+        //    rhs = 'active';
         else // default
             rhs = Object.keys(sensors)[1];
 

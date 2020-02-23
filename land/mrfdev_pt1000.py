@@ -150,7 +150,7 @@ Pt1000AppCmds = {
 
 class MrfSensPt1000(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('milliohms' , long) ]  # hmpff
+                  ('milliohms' , int) ]  # hmpff
 
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),

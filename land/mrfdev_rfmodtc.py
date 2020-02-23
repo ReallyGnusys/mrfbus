@@ -87,7 +87,7 @@ RfmodtcAppCmds = {
 
 class MrfSensTempX100(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('tempX100' , long) ]  # hmpff
+                  ('tempX100' , int) ]  # hmpff
 
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),

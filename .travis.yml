@@ -5,7 +5,8 @@ addons:
     packages:
       - gcc-msp430
       - msp430-libc
-      - python-virtualenv
+      - python3-wheel
+      - python3-venv
 
 script:
   - export MRFBUS_HOME=$(pwd)

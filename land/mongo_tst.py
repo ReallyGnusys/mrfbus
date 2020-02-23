@@ -18,8 +18,8 @@ def check_doc_null_data(doc):
     cnull = data[0][0] == nullval
     pval = data[0][0]
     mod = False
-    for hour in xrange(24):
-        for minute in xrange(60):
+    for hour in range(24):
+        for minute in range(60):
 
             dv = data[hour][minute]
             pi = hour*60 + minute - 1
@@ -34,7 +34,7 @@ def check_doc_null_data(doc):
                 
             cn = (dv == nullval)
 
-            for n in xrange(4):
+            for n in range(4):
                 ni = hour*60 + minute + n
                 if ni/60 < 24:
                     nv = data[ni/60][ni%60]
@@ -44,14 +44,14 @@ def check_doc_null_data(doc):
                     nn = False
 
                 if cn and not nn and not pn and (pv != None ) and (nv != None):
-                    print "%s %s check_data anomaly hour %d minute %d data %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(data[hour][minute]))
+                    print("%s %s check_data anomaly hour %d minute %d data %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(data[hour][minute])))
                     val = (nv + pv) / dv.__class__(2)
-                    if doc.has_key('max_dp'):
+                    if 'max_dp' in doc:
                         val = round(val,doc['max_dp'])
                     
                     data[hour][minute] = val
                     
-                    print "%s %s mod data %s"%(doc['sensor_id'],doc['docdate'],repr(data[hour][minute]))
+                    print("%s %s mod data %s"%(doc['sensor_id'],doc['docdate'],repr(data[hour][minute])))
                     mod = True
     if mod:
         return doc
@@ -72,8 +72,8 @@ def check_doc_data_type(doc):
     dtype = data[0][0].__class__.__name__  # FIXME - how do we know first one is right?
     
     mod = False
-    for hour in xrange(24):
-        for minute in xrange(60):
+    for hour in range(24):
+        for minute in range(60):
 
             dv = data[hour][minute]
 
@@ -82,10 +82,10 @@ def check_doc_data_type(doc):
                 
                 changed = data[0][0].__class__(data[hour][minute])
                     
-                print "%s %s  data type anomaly hour %d min %d  val %s  changed to %s"%(doc['sensor_id'],
+                print("%s %s  data type anomaly hour %d min %d  val %s  changed to %s"%(doc['sensor_id'],
                                                                                         doc['docdate'],hour,minute,
                                                                                         repr(data[hour][minute]),
-                                                                                        repr(changed))
+                                                                                        repr(changed)))
                 data[hour][minute] = changed                                
                 mod = True
     if mod:
@@ -105,30 +105,30 @@ def check_doc_data_precision(doc):
     mod = False
     stype = doc['stype']
 
-    if doc.has_key('min_res'):
+    if 'min_res' in doc:
         del(doc['min_res'])
-        print "had min_res!"
+        print("had min_res!")
         return doc
 
     maxdp = sensor_round_val(stype)
 
-    if maxdp and not doc.has_key('max_dp'):
+    if maxdp and 'max_dp' not in doc:
         doc['max_dp'] = maxdp
-        print "no max_dp!"
+        print("no max_dp!")
         return doc
 
-    if doc.has_key('max_dp'):
+    if 'max_dp' in doc:
         maxdp = doc['max_dp']
     else:
         maxdp = None
-    for hour in xrange(24):
-        for minute in xrange(60):
+    for hour in range(24):
+        for minute in range(60):
                 
             cv = data[hour][minute]
 
             if cv.__class__ == float:
                 if maxdp and (round(cv,maxdp) != cv):
-                    print "%s %s check_precision anomaly hour %d minute %d data %s should be %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(cv),repr(round(cv,maxdp)))
+                    print("%s %s check_precision anomaly hour %d minute %d data %s should be %s"%(doc['sensor_id'],doc['docdate'],hour,minute,repr(cv),repr(round(cv,maxdp))))
                     data[hour][minute] = round(cv,maxdp)
                     #data[hour][minute] = data[hour][minute] * 
                     #print "%s %s mod data %s"%(doc['sensor_id'],doc['docdate'],repr(data[hour][minute]))

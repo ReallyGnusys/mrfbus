@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
 import threading
-import Queue
+import queue
 import subprocess
 import time
 from copy import copy
@@ -68,19 +68,19 @@ class TestLnxtst(DeviceTestCase):
         ccode = mrf_cmd_if_stats
         self.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
+        print("got resp:\n%s"%repr(resp))
         self.assertEqual(type(PktIfStats()),type(resp))
         
         
 
     def host_app_test(self, addr = 0):
-        print "**********************"
-        print "* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)
-        print "**********************"
+        print("**********************")
+        print("* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest))
+        print("**********************")
         ccode = mrf_cmd_app_test
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
-        print "got resp:\n%s"%repr(resp)
+        print("got resp:\n%s"%repr(resp))
         self.assertEqual(type(PktTimeDate()),type(resp))
 
 
@@ -101,39 +101,39 @@ class TestLnxtst(DeviceTestCase):
         return
 
     def test04_app_cmd_test(self):
-        print "**********************"
-        print "* PT1000 app_cmd_test (dest 0x%02x)"%(self.dest)
-        print "**********************"
-        print "Sending mrf_app_cmd_test"
+        print("**********************")
+        print("* PT1000 app_cmd_test (dest 0x%02x)"%(self.dest))
+        print("**********************")
+        print("Sending mrf_app_cmd_test")
         ccode = mrf_app_cmd_test
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
         self.assertTrue(self.check_attrs(resp,PktTimeDate()))
-        print "pt1000 app_cmd_test PASSED"
+        print("pt1000 app_cmd_test PASSED")
 
 
     def test05_read_mstats(self):
-        print "**********************"
-        print "* lnxtst read_mstats test (dest 0x%02x)"%self.dest
-        print "**********************"
+        print("**********************")
+        print("* lnxtst read_mstats test (dest 0x%02x)"%self.dest)
+        print("**********************")
        
         ccode = mrf_app_cmd_mstats
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
-        print "resp %s"%repr(resp)
+        print("resp %s"%repr(resp))
         self.assertTrue(self.check_attrs(resp,PktLnxMemStats()))
-        print "pt1000 read_state test PASSED"
+        print("pt1000 read_state test PASSED")
 
         
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       print "sys.argv = %s"%repr(sys.argv)
+       print("sys.argv = %s"%repr(sys.argv))
        #pa = sys.argv.pop()
        #print "pa is %s"%repr(pa)
        #print "sys.argv = %s"%repr(sys.argv)
        
        TestLnxtst.DEST = int(sys.argv.pop(),16)
-       print "setting dest to 0x%x"%TestLnxtst.DEST
+       print("setting dest to 0x%x"%TestLnxtst.DEST)
     unittest.main()

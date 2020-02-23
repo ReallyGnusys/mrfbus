@@ -74,7 +74,7 @@ class MrfStruct(LittleEndianStructure):
         return dc
 
     def dic_set(self,dic):
-        for attr in dic.keys():
+        for attr in list(dic.keys()):
             setattr(self,attr,dic[attr])
     def __eq__(self,other):
         if type(other) == type(None):
@@ -93,21 +93,21 @@ class MrfStruct(LittleEndianStructure):
         return not self.__eq__(other)
 
     def tbd_unmunge(self):
-        print ("mungeabletype is %s"%type(c_uint()))
+        print(("mungeabletype is %s"%type(c_uint())))
         for field in self._fields_:
             att = getattr(self,field[0])
             attype = field[1]
-            print ("got att %s  type %s"%(field[0],type(attype())))
+            print(("got att %s  type %s"%(field[0],type(attype()))))
             if type(attype()) == type(c_uint()):
                 print ("its for munging")
                 nattr = att >> 16 + ((att & 0xffff) << 16)
                 setattr(self,field[0],nattr)
-        print (repr(self))
+        print((repr(self)))
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
     def dump(self):
-        return buffer(self)[:]
+        return bytes(memoryview(self))  # .decode('utf-8')[:]
 
 
 
@@ -373,7 +373,7 @@ MrfSysCmds = {
 
 
 def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
-    if rtype in cmdset.keys() and cmdset[rtype]['resp']:
+    if rtype in list(cmdset.keys()) and cmdset[rtype]['resp']:
         respobj = cmdset[rtype]['resp']()  # create an instance of the mrf_struct object
         #print "mrf_decode_buff got type  %s"%type(respobj)
         #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]

@@ -16,9 +16,9 @@ import install
 import os
 import time
 import json
-from urlparse import urlparse
+from urllib.parse import urlparse
 import signal
-import Queue
+import queue
 from collections import OrderedDict
 
 from mrflog import mrflog
@@ -31,6 +31,7 @@ import mrfland
 import ipaddress
 
 
+import pdb
 oursubnet = ipaddress.ip_network(install.localnet)
 
 """
@@ -150,10 +151,10 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
     def set_req_host(self):
         # handle nginx proxying
         mrflog.warn("req headers "+repr(self.request.headers))
-        if 'X-Real-Ip' in  self.request.headers.keys():
+        if 'X-Real-Ip' in  list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Real-Ip']
 
-        elif 'X-Forwarded-For' in self.request.headers.keys():
+        elif 'X-Forwarded-For' in list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Forwarded-For']
 
             #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
@@ -176,7 +177,7 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         mrflog.info("client message on wsid ="+self.id+" "+str(message))
         cobj = mrfland.json_parse(message)
 
-        if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
+        if cobj and "app" in cobj and "ccmd" in cobj:
             mrflog.info("decoded client command %s"%repr(cobj))
             self.rm.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
 
@@ -241,18 +242,19 @@ class SimpleTcpClient(object):
                 mrflog.info("got line %s"%line)
                 #s = line.decode('utf-8').strip()
                 #mrflog('got |%s|' % repr(s))
+                line = line.decode('utf-8')
                 ob = mrfland.json_parse(line)
                 obdecoded = False
                 if ob:
                     data = None
                     mrflog.info("json ob : %s"%repr(ob))
 
-                    if ob.has_key('sys_cmd'):
-                        if ob.has_key('data'):
+                    if 'sys_cmd' in ob:
+                        if 'data' in ob:
                             data = ob['data']
                         self.landserver._sys_callback(self.id,ob['sys_cmd'],data)
 
-                    if ob.has_key('dest') and ob.has_key('cmd'):
+                    if 'dest' in ob and 'cmd' in ob:
                         if ob['cmd'] in MrfSysCmds:
                             obdecoded = True
                             if MrfSysCmds[ob['cmd']]['param'] != None:
@@ -279,7 +281,7 @@ class SimpleTcpClient(object):
                         mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
                     mrflog.warn("no json ob decoded in %s"%repr(line))
-                yield self.stream.write("\n")
+                yield self.stream.write(bytes("\n",'utf-8'))
         except tornado.iostream.StreamClosedError:
             pass
 
@@ -322,15 +324,15 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
     def client_disconnect(self,id):
         self.clients.pop(id)
         mrflog.info("removed tcp client %s"%repr(id))
-        mrflog.info("tcp clients now %s"%repr(self.clients.keys()))
+        mrflog.info("tcp clients now %s"%repr(list(self.clients.keys())))
     def tag_is_tcp_client(self,tag):
-        return self.clients.has_key(tag)
+        return tag in self.clients
 
     def write_to_client(self,id , msg):
-        if not self.clients.has_key(id):
+        if id not in self.clients:
             mrflog.error("%s no client with id %d"%(self.__class__.__name__,id))
             return
-        self.clients[id].stream.write(msg)
+        self.clients[id].stream.write(bytes(msg,'utf-8'))
         mrflog.info("wrote_to client %d"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -368,7 +370,7 @@ class MrflandServer(object):
         server = self  # FIXME ouch
         self.rm.setserver(server)  # double OUCH
 
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
 
@@ -376,11 +378,11 @@ class MrflandServer(object):
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
 
-        if self.config.has_key('mrfbus_host_port'):
+        if 'mrfbus_host_port' in self.config:
             self._start_mrfnet(self.config['mrfbus_host_port'],self.config['mrf_netid'])
         self.quiet_cnt = 0
         self._start_webapp()
-        if self.config.has_key('tcp_test_port'):
+        if 'tcp_test_port' in self.config:
             self._start_tcp_service( self.config['tcp_test_port'])
         self.ioloop = tornado.ioloop.IOLoop.instance()
         mrflog.warn("MrflandServer tornado IOLoop starting : IOLoop.time %s"%repr(self.ioloop.time()))
@@ -391,7 +393,7 @@ class MrflandServer(object):
 
 
 
-        if self.config.has_key('console'):
+        if 'console' in self.config:
             from thirdparty.tornado_console import ConsoleServer
             #my_locals = {}
             self.console_server = ConsoleServer(locals())
@@ -418,7 +420,7 @@ class MrflandServer(object):
 
     def timer_callback(self, *args, **kwargs):
 
-        if not kwargs.has_key('tag') or not kwargs.has_key('act'):
+        if 'tag' not in kwargs or 'act' not in kwargs:
             mrflog.error("timer_callback got kwargs %s quitting"%repr(kwargs.keys))
             return
         mrflog.info("timer_callback got kwargs %s"%repr(kwargs.keys))
@@ -426,7 +428,7 @@ class MrflandServer(object):
         tag = kwargs['tag']
         act = kwargs['act']
         tid = app+"."+tag+"."+ act
-        if not self.timers.has_key(tid):
+        if tid not in self.timers:
             mrflog.error("timer_callback : no timer with tid  %s"%tid)
             return
         tinf = self.timers[tid]
@@ -446,7 +448,7 @@ class MrflandServer(object):
 
 
         tid = app+"."+tag+"."+ act
-        if self.timers.has_key(tid):
+        if tid in self.timers:
             tinf = self.timers[tid]
             mrflog.info("removing existing timeout for tid %s"%tid)
             tornado.ioloop.IOLoop.instance().remove_timeout(tinf['thandle'])
@@ -472,7 +474,7 @@ class MrflandServer(object):
     def _run_updates(self):
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
-            if wup.has_key('wsid'):
+            if 'wsid' in wup:
                 ro.a(mrfland.mrf_cmd('web-update',wup))
                 self.rm.comm.comm(wup['wsid'],ro)
             else:
@@ -558,13 +560,13 @@ class MrflandServer(object):
             return -1
 
     def TBD_app_cmd_set(self,dest):
-        for appn in self.apps.keys():
+        for appn in list(self.apps.keys()):
             app = self.apps[appn]
             if self.apps[appn].i_manage(dest):
                 return self.apps[appn].cmd_set(dest)
 
     def _dev_cmd_set(self,dest):
-        if not self.rm.devmap.has_key(dest):
+        if dest not in self.rm.devmap:
             mrflog.error("no device %d found in rm"%dest)
             return None
 
@@ -573,11 +575,11 @@ class MrflandServer(object):
     def _run_cmd(self,cobj):
         mrflog.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
         if cobj.dest > 255:
-            print "dest > 255"
+            print("dest > 255")
             return -1
 
         appcmds = self._dev_cmd_set(cobj.dest)
-        if cobj.cmd_code in MrfSysCmds.keys():
+        if cobj.cmd_code in list(MrfSysCmds.keys()):
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
         elif (appcmds and cobj.cmd_code in appcmds):
             paramtype = appcmds[cobj.cmd_code]['param']
@@ -604,7 +606,7 @@ class MrflandServer(object):
         if cobj.dstruct:
             mlen += len(cobj.dstruct)
         if mlen > 64:
-            print "mlen = %d"%mlen
+            print("mlen = %d"%mlen)
             return -1
         msg = bytearray(mlen)
         msg[0] = mlen
@@ -619,7 +621,7 @@ class MrflandServer(object):
                 n += 1
 
         csum = 0
-        for i in xrange(mlen -1):
+        for i in range(mlen -1):
             csum += int(msg[i])
         csum = csum % 256
         msg[mlen - 1] = csum
@@ -658,7 +660,7 @@ class MrflandServer(object):
 
         if hdr.netid != self.netid: # only looking for packets from this netid
             mrflog.warn("not our netid")
-            print ("hdr is:\n%s\n"%repr(hdr))
+            mrflog_warn(("hdr is:\n%s\n"%repr(hdr)))
             return None,None,None
 
         if hdr.udest != 0: # only looking for packets destined for us, except for receipts
@@ -750,13 +752,15 @@ class MrflandServer(object):
         while len(rresp):
 
             hdr , param, resp  = self.parse_input(rresp)
-
+            #pdb.set_trace()
             if hdr:
                 rresp=rresp[hdr.length:]
             else:
                 mrflog.warn("no hdr len(rresp) %d type resp %s"%(len(rresp),str(type(resp))))
                 mrflog.warn("type hdr "+str(type(hdr)))
 
+                mrflog.error("resp :"+repr(rresp))
+                sys.exit(-1)
 
             mrflog.debug("hdr on resp_pipe %s"%repr(hdr))
 
@@ -770,8 +774,8 @@ class MrflandServer(object):
                     mrflog.debug("_resp_handler , got resp %s"%repr(resp))
                     mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
                     mrflog.debug("_resp_handler , got param %s"%repr(param))
-                else:
-                    mrflog.warn("failed to decode response - hdr %s param %s"%(repr(hdr),repr(param)))
+                elif hdr.type != mrf_cmd_ndr:
+                    mrflog.warn("failed to decode response - hdr %s \nparam %s"%(repr(hdr),repr(param)))
 
     def _struct_handler(self,*args, **kwargs):
         mrflog.debug("Input on data pipe")
@@ -830,14 +834,14 @@ class MrflandServer(object):
         mrflog.info("started tcpserver on port %d"%port)
     def _start_webapp(self):
 
-        if os.environ.has_key('MRFBUS_HOME'):
+        if 'MRFBUS_HOME' in os.environ:
             mrfhome = os.environ['MRFBUS_HOME']
         else:
             mrflog.error("MRFBUS_HOME not defined, webapp unlikely to work...")
             mrfhome = ''
 
 
-        if os.environ.has_key('PWD'):
+        if 'PWD' in os.environ:
             cwd = os.environ['PWD']
         else:
             mrflog.error("PWD not defined, webapp unlikely to work...")

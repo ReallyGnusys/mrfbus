@@ -22,7 +22,7 @@ import select
 import signal
 import logging
 import socket
-import Queue
+import queue
 import json
 import traceback
 import base64
@@ -50,9 +50,9 @@ def tbd_set_session_expire(uname,seconds = install.session_timeout):
 
 
 def search_userdb(key,value):
-    for un in install.users.keys():
+    for un in list(install.users.keys()):
         uinf = install.users[un]
-        if uinf.has_key(key) and uinf[key] == value:
+        if key in uinf and uinf[key] == value:
             return uinf
     return None
 

@@ -52,17 +52,24 @@ if [ $1 == setup ] ; then
 
     [ $? -ne 0 ] && echo "python requests module not found : please install" && exit -1
 
-    python ${MRFBUS_HOME}/land/thirdparty_static.py
+    python3 ${MRFBUS_HOME}/land/thirdparty_static.py
 
+    [ $? -ne 0 ] && echo "land/thirdparty_static.py error - quitting" && exit -1
 
     echo "building venv"
 
-    virtualenv venv
+    python3 -m venv venv
+
+    [ $? -ne 0 ] && echo "python3 -m venv venv error - quitting" && exit -1
+
+
+    #virtualenv venv
     source venv/bin/activate
 
     echo "installing requirements"
-    pip install -r ${MRFBUS_HOME}/land/requirements.txt
+    pip3 install -r ${MRFBUS_HOME}/land/requirements.txt
 
+    [ $? -ne 0 ] && echo "pip3 install -r ${MRFBUS_HOME}/land/requirements.txt :  error - quitting" && exit -1
 
 
     exit 0
@@ -88,7 +95,7 @@ elif  [ $1 == runtests ] ; then
    runtests=yes
    pids=""
 else
-   echo "illegal mode $1 - try build, run or runtests"
+   echo "illegal mode $1 - try setup, build, run or runtests"
    exit -1;
 fi
 

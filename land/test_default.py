@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 '''  Copyright (c) 2012-16 Gnusys Ltd
 
 This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
 import threading
-import Queue
+import queue
 import subprocess
 import time
 from copy import copy
@@ -57,7 +57,7 @@ class TestDefault(DeviceTestCase):
         self.app_info_test(self.dest)
         self.app_cmd_info_test(self.dest)
 
-    
+
     def test01_core_tests(self):
         self.set_time_test(self.dest,self.host)
         return
@@ -67,27 +67,27 @@ class TestDefault(DeviceTestCase):
         if True:
             self.get_time_test(self.host)
             self.set_time_test(self.dest,self.host)
-        
-        
+
+
             self.dev_info_test(self.dest)
             self.dev_status_test(self.dest)
             self.sys_info_test(self.dest)
             self.app_info_test(self.dest)
 
             self.get_time_test(self.dest)
-    
+
             return
 
-        
+
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       print "sys.argv = %s"%repr(sys.argv)
+       print("sys.argv = %s"%repr(sys.argv))
        #pa = sys.argv.pop()
        #print "pa is %s"%repr(pa)
        #print "sys.argv = %s"%repr(sys.argv)
-       
+
        TestDefault.DEST = int(sys.argv.pop(),16)
-       print "setting dest to 0x%x"%TestDefault.DEST
+       print("setting dest to 0x%x"%TestDefault.DEST)
     unittest.main()

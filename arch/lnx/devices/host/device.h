@@ -30,6 +30,6 @@ typedef  enum { PIPE0,
 
 #define _MRF_BUFFS 16
 
-#define IQUEUE_DEPTH 4
+#define IQUEUE_DEPTH 8
 
 #endif

@@ -44,12 +44,12 @@ class MrfDev(object):
         # build lookup of command names
         self.cmdnames = {}
 
-        for ccode in self._cmdset.keys():
+        for ccode in list(self._cmdset.keys()):
             self.cmdnames[self._cmdset[ccode]['name']] = ccode
 
         # construct sensors and actuators from capability spec
-        for clab in self._capspec.keys():
-            if not caplabels.has_key(clab):
+        for clab in list(self._capspec.keys()):
+            if clab not in caplabels:
                 mrflog.error("%s spec labels error  no key %s in %s"%(self.__class__.__name__, clab, repr(caplabels)))
                 return
             self.caps[clab] = []
@@ -114,13 +114,14 @@ class MrfDev(object):
             di = dict(resp.dic())
             self.sys[param.type] = di
             mrflog.info("have sys command %s  type %s  resp %s"%(repr(param.type), type(di), repr(di)))
-            for s in self.subscribers.keys():  # for now only update subscribers for sys command responses
+            for s in list(self.subscribers.keys()):  # for now only update subscribers for sys command responses
                 self.subscribers[s](self.label,self.sys)
 
         else:
             resp = mrf_decode_buff(param.type, respdat, cmdset=self._cmdset)
         if not resp:
             mrflog.error("%s failed to decode packet , hdr was %s\n param was %s len(respdat) %d"%(self.__class__.__name__,repr(hdr),repr(param),len(respdat)))
+            mrflog.error("respdat :"+repr(respdat))
             return None, None
 
         mrflog.info(" calling app packet with resp %s"%repr(resp))

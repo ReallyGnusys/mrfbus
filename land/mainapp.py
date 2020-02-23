@@ -23,7 +23,7 @@ def print_everything(*args):
         mrflog.debug( '{0}. {1}'.format(count, thing))
 def print_kwargs(**kwargs):
     mrflog.debug("print_kwargs")
-    for name, value in kwargs.items():
+    for name, value in list(kwargs.items()):
         mrflog.debug('{0} = {1}'.format(name, value))
 
 
@@ -52,7 +52,7 @@ def logout_action(rh,sob,ip):
 def mrf_pills(weblets):
     s = ""
     first = True
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         if first:
             lic = ' class="active"'
@@ -66,7 +66,7 @@ def mrf_pills(weblets):
 
 def mrf_html(weblets):
     s = ""
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         s += wl.html()
     return s
@@ -75,7 +75,7 @@ def mrf_weblet_table(weblets):
     s = "// namespace table for weblets\n"
     s += "var _weblet_table = { "
     first = True
-    for wa in weblets.keys():
+    for wa in list(weblets.keys()):
         wl = weblets[wa]
         if not first:
             s += ', '
@@ -115,7 +115,7 @@ def request_ip(rh):
 
         # handle nginx proxying
         return
-        if rh.request.headers.has_key('X-Forwarded-For'):
+        if 'X-Forwarded-For' in rh.request.headers:
             ip = rh.request.headers['X-Forwarded-For']
 
 
@@ -141,11 +141,11 @@ def post_login(rh):
     """
     ip = rh.ip #rh.request.remote_ip
 
-    if not 'username' in rh.request.arguments.keys():
+    if not 'username' in list(rh.request.arguments.keys()):
         return login_fail(rh,'invalid post data')
 
     username = rh.request.arguments['username']
-    mrflog.info('username : '+str(username) + " type : "+str(type(username)))
+    mrflog.warn('username : '+str(username) + " type : "+str(type(username)))
 
     if type(username) != type([]):
         return login_fail(rh,'invalid post data')
@@ -155,7 +155,7 @@ def post_login(rh):
     username = username[0]
 
 
-    if not 'password' in rh.request.arguments.keys():
+    if not 'password' in list(rh.request.arguments.keys()):
         return login_fail(rh,'invalid post data')
 
     password = rh.request.arguments['password']
@@ -168,20 +168,21 @@ def post_login(rh):
 
     password = password[0]
 
-    mrflog.info('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
+    mrflog.warn('have username : '+str(username) + ' password : '+str(password)+" ip :"+ ip  )
 
     authres = rh.rm.authenticate(username,password,ip,rh.request_host)
-    mrflog.info('authenticate result = '+str(authres) )
+    mrflog.warn('authenticate result = '+str(authres) )
 
     if authres == None:
         return login_fail(rh,'invalid username or password')
 
     ## user is authenticated
     secure_url =  '/'
-    mrflog.info('staff authenticated , id = '+str(authres) + " url = "+secure_url )
+    mrflog.warn('staff authenticated , id = '+str(authres) + " url = "+secure_url )
 
     ## set session id
     rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
+    mrflog.warn('staff authenticated , id = '+str(authres) + " url = "+secure_url )
 
     #rh.set_secure_cookie(install.sess_cookie,authres['sessid'])
 
@@ -190,6 +191,12 @@ def post_login(rh):
                'data'   : authres,
                'redirect' : secure_url
                }
+
+
+    wdat = mrfland.to_json(result)
+
+    mrflog.warn("writing result "+wdat)
+
 
     rh.write(mrfland.to_json(result))
 
@@ -211,10 +218,10 @@ class mainapp(tornado.web.RequestHandler):
     def set_req_host(self):
         # handle nginx proxying
         mrflog.warn("req headers "+repr(self.request.headers))
-        if 'X-Real-Ip' in  self.request.headers.keys():
+        if 'X-Real-Ip' in  list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Real-Ip']
 
-        elif 'X-Forwarded-For' in self.request.headers.keys():
+        elif 'X-Forwarded-For' in list(self.request.headers.keys()):
             self.ip = self.request.headers['X-Forwarded-For']
 
             #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
@@ -249,15 +256,15 @@ class mainapp(tornado.web.RequestHandler):
 
 
     def get(self, *args, **kwargs):
-        mrflog.info('get:'+str(self.request))
-        mrflog.info("uri : "+self.request.uri)
+        mrflog.warn('get req:'+str(self.request))
+        mrflog.warn("uri : "+self.request.uri)
         mrflog.info("host : "+self.request.host)
 
         uri = remarg.sub('',self.request.uri)
-        mrflog.warn("get headers is %s"%repr(self.request.headers.keys()))
+        mrflog.warn("get headers is %s"%repr(list(self.request.headers.keys())))
 
         for hn in ['Host','Port','X-Forwarded-For','Referer','X-Real-Ip']:
-            if hn in self.request.headers.keys():
+            if hn in list(self.request.headers.keys()):
                 mrflog.warn("%s %s"%(hn,repr(self.request.headers[hn])))
 
 
@@ -283,8 +290,9 @@ class mainapp(tornado.web.RequestHandler):
 
         mrflog.warn("localreq = %s : static_cdn = %s"%(repr(self.localreq),repr(static_cdn)))
 
-        sessid = self.get_secure_cookie(install.sess_cookie)
-        mrflog.info("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
+        sessid = self.get_secure_cookie(install.sess_cookie).decode('utf-8')
+        mrflog.warn("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
+
         if sessid == None:
             if page == 'login':
                 mrflog.info("returning login page as requested")
@@ -293,13 +301,13 @@ class mainapp(tornado.web.RequestHandler):
                                   js_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn),
                 )
             else:
-                mrflog.info("no sessid - redirecting to login page")
+                mrflog.warn("no sessid set - redirecting to login page")
                 return self.redirect('/login')
 
 
         sob = self.rm.comm.session_isvalid(sessid)  # if session is valid you're in
         if sob == None :
-            mrflog.info("session is invalid")
+            mrflog.warn("session is invalid %s - giving them login page again"%sessid)
             if page == 'login':
                 return login_page(self,
                                   css_html=self.rm.tp_static_mgr.html(login=True,css=True,static_cdn=static_cdn),

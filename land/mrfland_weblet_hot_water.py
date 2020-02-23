@@ -71,36 +71,36 @@ class MrfLandWebletHotWater(MrflandWeblet):
 
         ## expect MrfSensPt1000 types
 
-        if not self.rm.senstypes.has_key(MrfSensPt1000):
+        if MrfSensPt1000 not in self.rm.senstypes:
             mrflog.error("%s post_init failed to find sensor type MrfSensPt1000 in rm"%self.__class__.__name__)
             return
 
         ## expect MrfSensRelay types
 
-        if not self.rm.senstypes.has_key(MrfSensRelay):
+        if MrfSensRelay not in self.rm.senstypes:
             mrflog.error("%s post_init failed to find sensor type MrfSensRelay in rm"%self.__class__.__name__)
             return
 
 
         ## expect config data fields as follows
 
-        if not self.cdata.has_key('rad'):
+        if 'rad' not in self.cdata:
             mrflog.error("%s , no rad in data"%self.__class__.__name__)
             return
 
 
-        if not self.cdata.has_key('acctop'):
+        if 'acctop' not in self.cdata:
             mrflog.error("%s , no acctop in data"%self.__class__.__name__)
             return
 
-        if not self.cdata.has_key('heatbox'):
+        if 'heatbox' not in self.cdata:
             mrflog.error("%s , no heatbox in data"%self.__class__.__name__)
             return
-        if not self.cdata.has_key('tag'):
+        if 'tag' not in self.cdata:
             mrflog.error("%s , tag"%self.__class__.__name__)
             return
 
-        if not self.cdata.has_key('litres'):
+        if 'litres' not in self.cdata:
             mrflog.error("%s , litres"%self.__class__.__name__)
             return
 
