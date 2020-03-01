@@ -47,7 +47,7 @@ DefaultAppCmds = {
 class DeviceTestCase(LandTestCase):
 
     def setUp(self):
-        print "DeviceTestCase setup"
+        print("DeviceTestCase setup")
         LandTestCase.setUp(self)
         self.devname = 'hostsim'
         self.num_ifs = 4
@@ -55,9 +55,9 @@ class DeviceTestCase(LandTestCase):
         self.checkgit = False # True
 
     def dev_info_test(self,dest):
-        print "*********************************"
-        print "*  device info test (dest 0x%02x)"%dest
-        print "*********************************"
+        print("*********************************")
+        print("*  device info test (dest 0x%02x)"%dest)
+        print("*********************************")
         ccode = mrf_cmd_device_info
         st = datetime.now()
         self.cmd(dest,ccode,dstruct=None)
@@ -71,9 +71,9 @@ class DeviceTestCase(LandTestCase):
 
 
         if rv:
-            print "PASSED device info test (dest 0x%02x)"%dest
+            print("PASSED device info test (dest 0x%02x)"%dest)
         else:
-            print "FAILED device info test (dest 0x%02x)"%dest
+            print("FAILED device info test (dest 0x%02x)"%dest)
 
 
     def dev_status(self,dest):
@@ -82,15 +82,15 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
+        print("Response received in %s"%(end-st))
         return resp
 
     def dev_status_test(self,dest):
-        print "**********************"
-        print "* device status test (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* device status test (dest 0x%02x)"%dest)
+        print("**********************")
         resp = self.dev_status(dest)
-        print "dev_status_test : dest %u , received :\n%s"%(dest,repr(resp))
+        print("dev_status_test : dest %u , received :\n%s"%(dest,repr(resp)))
 
         self.assertTrue(self.check_attrs(resp,PktDeviceStatus()))
 
@@ -107,9 +107,9 @@ class DeviceTestCase(LandTestCase):
         self.assertEqual(resp['rx_pkts'], rxp+1)
         self.assertEqual(resp['tx_pkts'], txp+1)
     def sys_info_test(self,dest):
-        print "**********************"
-        print "* sys info test   (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* sys info test   (dest 0x%02x)"%dest)
+        print("**********************")
 
         if self.checkgit:
             gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.environ['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
@@ -121,37 +121,37 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "****got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("****got resp:\n%s"%repr(resp))
         pass_fail = self.check_attrs(resp,PktSysInfo())
-        print "****passfail is:\n%s"%repr(pass_fail)
+        print("****passfail is:\n%s"%repr(pass_fail))
         self.assertTrue(pass_fail)
 
         if (resp['num_cmds'] <  (MRF_NUM_SYS_CMDS -2 )) or  (resp['num_cmds'] >  MRF_NUM_SYS_CMDS):
-            print "Error num_cmds was %d  MRF_NUM_SYS_CMDS was %d"%(resp['num_cmds'],MRF_NUM_SYS_CMDS);
+            print("Error num_cmds was %d  MRF_NUM_SYS_CMDS was %d"%(resp['num_cmds'],MRF_NUM_SYS_CMDS));
             pass_fail = False
-        print "****passfail(2) is:\n%s"%repr(pass_fail)
+        print("****passfail(2) is:\n%s"%repr(pass_fail))
         self.assertTrue(pass_fail)
 
 
         if self.checkgit and gitversion != resp["mrfbus_version"]:
             pass_fail = False
-            print "****passfail(3) is:\n%s"%repr(pass_fail)
-            print "gitversion %s"%gitversion
-            print "respversion %s"%resp["mrfbus_version"]
+            print("****passfail(3) is:\n%s"%repr(pass_fail))
+            print("gitversion %s"%gitversion)
+            print("respversion %s"%resp["mrfbus_version"])
 
             self.assertTrue(pass_fail)
 
         if pass_fail:
-            print "PASSED sys_info test (dest 0x%02x)"%dest
+            print("PASSED sys_info test (dest 0x%02x)"%dest)
         else:
-            print "FAILED sys_info test (dest 0x%02x)"%dest
+            print("FAILED sys_info test (dest 0x%02x)"%dest)
 
 
     def sys_cmd_info_test(self,dest):
-        print "**********************"
-        print "* sys cmd info test   (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* sys cmd info test   (dest 0x%02x)"%dest)
+        print("**********************")
         if self.checkgit:
             gitversion = subprocess.check_output(["git", "--git-dir="+os.path.join(os.environ['MRFBUS_HOME'],'.git'), "rev-parse",'HEAD']).rstrip('\n')
 
@@ -160,8 +160,8 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("got resp:\n%s"%repr(resp))
         self.assertTrue(self.check_attrs(resp,PktSysInfo()))
 
 
@@ -169,7 +169,7 @@ class DeviceTestCase(LandTestCase):
 
 
         if self.checkgit:
-            print "checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit
+            print("checking git hash - self.checkgit = %s , gitcheck set"%self.checkgit)
             self.assertEqual(gitversion,resp["mrfbus_version"])
 
         ## long winded faff to check git hash
@@ -187,41 +187,41 @@ class DeviceTestCase(LandTestCase):
         """
         ccode = mrf_cmd_cmd_info   # eyup
         paramstr = PktUint8()
-        for cmdnum in xrange(MRF_NUM_SYS_CMDS): # oooer!
+        for cmdnum in range(MRF_NUM_SYS_CMDS): # oooer!
             paramstr.value = cmdnum
-            print "trying to get cmd info for cmd %d"%cmdnum
+            print("trying to get cmd info for cmd %d"%cmdnum)
             st = datetime.now()
             self.cmd(dest,ccode,dstruct=paramstr)
             resp = self.response(timeout=self.timeout)
             end = datetime.now()
-            print "Response received in %s"%(end-st)
-            print "got resp:\n%s"%str(resp)
+            print("Response received in %s"%(end-st))
+            print("got resp:\n%s"%str(resp))
             self.assertTrue(self.check_attrs(resp,PktCmdInfo()))
 
     def get_time_test(self,dest):
-        print "**********************"
-        print "* get time test (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* get time test (dest 0x%02x)"%dest)
+        print("**********************")
         ccode = mrf_cmd_get_time
         st = datetime.now()
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("got resp:\n%s"%repr(resp))
         self.assertTrue(self.check_attrs(resp,PktTimeDate()))
 
     def set_time_test(self,dest,ref):
-        print "**********************"
-        print "* set time test (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* set time test (dest 0x%02x)"%dest)
+        print("**********************")
         ccode = mrf_cmd_get_time
         st = datetime.now()
         self.cmd(ref,ccode)
         reftime = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime))
+        print("Response received in %s"%(end-st))
+        print("ref node time (addr 0x%0x :\n%s"%(ref,repr(reftime)))
 
         result = self.check_attrs(reftime,PktTimeDate())
         self.assertTrue(result)
@@ -230,8 +230,8 @@ class DeviceTestCase(LandTestCase):
         self.cmd(dest,mrf_cmd_set_time,dstruct=reftime)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("got resp:\n%s"%repr(resp))
         result2 = self.check_attrs(resp,PktTimeDate())
         self.assertTrue(result2)
 
@@ -245,72 +245,72 @@ class DeviceTestCase(LandTestCase):
         self.assertTrue(result3)
         """
         if result and result2: # and result3:
-            print "PASSED set time test (dest 0x%02x)"%dest
+            print("PASSED set time test (dest 0x%02x)"%dest)
         else:
-            print "FAILED set time test (dest 0x%02x)"%dest
+            print("FAILED set time test (dest 0x%02x)"%dest)
 
-        print "set_time_test PASSED"
+        print("set_time_test PASSED")
     def app_info_test(self,dest):
-        print "**********************"
-        print "* app info test (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* app info test (dest 0x%02x)"%dest)
+        print("**********************")
         ccode = mrf_cmd_app_info
         st = datetime.now()
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("got resp:\n%s"%repr(resp))
         res = self.check_attrs(resp,PktAppInfo())
         if res:
-            print "PASSED app info test (dest 0x%02x)"%dest
+            print("PASSED app info test (dest 0x%02x)"%dest)
         else:
-            print "FAILED app info test (dest 0x%02x)"%dest
+            print("FAILED app info test (dest 0x%02x)"%dest)
 
         self.assertTrue(res)
 
 
     def app_cmd_info_test(self,dest):
-        print "**********************"
-        print "* app cmd info test (dest 0x%02x)"%dest
-        print "**********************"
+        print("**********************")
+        print("* app cmd info test (dest 0x%02x)"%dest)
+        print("**********************")
         ccode = mrf_cmd_app_info
         st = datetime.now()
         self.cmd(dest,ccode)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
-        print "Response received in %s"%(end-st)
-        print "got resp:\n%s"%repr(resp)
+        print("Response received in %s"%(end-st))
+        print("got resp:\n%s"%repr(resp))
         self.assertTrue(self.check_attrs(resp,PktAppInfo()))
         num_cmds = resp['num_cmds']
         ccode = mrf_cmd_app_cmd_info   # eyup
         paramstr = PktUint8()
-        for cmdnum in xrange(num_cmds): # oooer!
+        for cmdnum in range(num_cmds): # oooer!
             paramstr.value = cmdnum
-            print "trying to get app cmd info for cmd %d"%cmdnum
+            print("trying to get app cmd info for cmd %d"%cmdnum)
             st = datetime.now()
             self.cmd(dest,ccode,dstruct=paramstr)
             resp = self.response(timeout=self.timeout)
             end = datetime.now()
-            print "Response received in %s"%(end-st)
-            print "got resp:\n%s"%str(resp)
+            print("Response received in %s"%(end-st))
+            print("got resp:\n%s"%str(resp))
 
 
     def if_info_test(self,dest):
-        print "*********************************"
-        print "*  if_info_test (dest 0x%02x)"%dest
-        print "*********************************"
+        print("*********************************")
+        print("*  if_info_test (dest 0x%02x)"%dest)
+        print("*********************************")
         ccode = mrf_cmd_device_info
         st = datetime.now()
         self.cmd(dest,ccode,dstruct=None)
         resp = self.response(timeout=self.timeout)
         end = datetime.now()
         self.assertTrue(type(resp)!=type(None))
-        print("resp:"+repr(resp))
+        print(("resp:"+repr(resp)))
         self.assertTrue("num_ifs" in resp)
 
         num_ifs = resp["num_ifs"]
-        print("num_ifs:"+repr(num_ifs))
+        print(("num_ifs:"+repr(num_ifs)))
         ccode = mrf_cmd_if_stats   # eyup
         paramstr = PktUint8()
 
@@ -320,8 +320,8 @@ class DeviceTestCase(LandTestCase):
             self.cmd(dest,ccode,dstruct=paramstr)
             resp = self.response(timeout=self.timeout)
             end = datetime.now()
-            print "Response received in %s"%(end-st)
-            print "got resp:\n%s"%str(resp)
+            print("Response received in %s"%(end-st))
+            print("got resp:\n%s"%str(resp))
             self.assertTrue(self.check_attrs(resp,PktIfStats()))
 
 
@@ -340,9 +340,9 @@ class TestMrfBus(DeviceTestCase):
 
     #@unittest.skip("temp disabled - can it ever work? ")
     def test01_discover_devices(self,dests = [ 0x01, 0x2,0x20]):
-        print "*********************************"
-        print "* test01_discover_devices  (dests %s)"%repr(dests)
-        print "*********************************"
+        print("*********************************")
+        print("* test01_discover_devices  (dests %s)"%repr(dests))
+        print("*********************************")
 
         devs = []
         cmd_code = mrf_cmd_device_info
@@ -351,16 +351,16 @@ class TestMrfBus(DeviceTestCase):
             rsp = self.response(timeout=self.timeout)
             if self.check_attrs(rsp,PktDeviceInfo()):
                 devs.append(rsp)
-                print "found device at dest %x"%dest
-                print repr(rsp)
+                print("found device at dest %x"%dest)
+                print(repr(rsp))
             else:
-                print "no device found at dest %x"%dest
+                print("no device found at dest %x"%dest)
 
         return
         self.assertEqual(len(devs),len(dests))
         found = []
         for dev in devs:
-            print dev
+            print(dev)
             self.assertTrue(dev.mrfid in dests)
             self.assertTrue(dev.mrfid not in found)
             found.append(dev.mrfid)
@@ -397,7 +397,7 @@ class TestMrfBus(DeviceTestCase):
             self.if_info_test(dest)
     @unittest.skip("temp disabled - too long")
     def test03_device_tests_repeat(self):
-        for i in xrange(2):
+        for i in range(2):
             self.test02_device_tests()
 
 
@@ -405,4 +405,4 @@ class TestMrfBus(DeviceTestCase):
 
 if __name__ == "__main__":
     res = unittest.main()
-    print ("type res = "+str(type(res))+"  val is "+repr(res))
+    print(("type res = "+str(type(res))+"  val is "+repr(res)))

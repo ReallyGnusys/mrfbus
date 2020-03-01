@@ -25,7 +25,7 @@ from math import sqrt
 from mrflog import mrflog
 from collections import deque
 
-from mrfdev_pt1000 import MrfSensPtRelay, PktRelayState # FIXME should be in shared lib
+from mrf_sens_relay import MrfSensRelay
 
 class PktLnxMemStats(MrfStruct):
     _fields_ = [
@@ -120,7 +120,7 @@ class DevLnxtst(MrfDev):
 
     _capspec = {
             'memory' : MrfSensMemory,
-            'relay'  : MrfSensPtRelay
+            'relay'  : MrfSensRelay
     }
 
     _cmdset = LnxtstAppCmds

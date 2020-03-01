@@ -26,41 +26,28 @@ from mrf_structs import *
 import unittest
 MRFBUFFLEN = 128
 import ctypes
-import random
-from datetime import datetime
 
 from core_tests import DeviceTestCase, mrf_cmd_app_test, DefaultAppCmds
-
-from mrfdev_lnxtst import *
-
+from mrfdev_host import *
 
 
-class TestLnxtst(DeviceTestCase):
-    DEST = 0x02
-    def host_test(self):
-        self.devname = 'hostsim'
+class TestHost(DeviceTestCase):
+    DEST = 0x01
+    def setUp(self):
+        DeviceTestCase.setUp(self)
+        self.devname = 'host'
         self.num_ifs = 4
         self.num_buffs = 16
         self.timeout = 0.6
-        self.dest = TestLnxtst.DEST
-        self.app_cmds = DefaultAppCmds
-
-    def setUp(self):
-        DeviceTestCase.setUp(self)
-        self.devname = 'usbrf'
-        self.num_ifs = 2
-        self.num_buffs = 8
-        self.timeout = 0.6
-        self.dest = TestLnxtst.DEST
+        self.dest =0x01
         self.host= 0x01
-        #self.app_cmds = LnxtstAppCmds
+        #self.app_cmds = Pt1000AppCmds
         self.app_cmds = copy(MrfSysCmds)
-        self.app_cmds.update(LnxtstAppCmds)
         self.checkgit = False
         #self.host_test()
 
 
-        
+
 
     def if_status(self,i_f=0):
         paramstr = PktUint8()
@@ -68,19 +55,19 @@ class TestLnxtst(DeviceTestCase):
         ccode = mrf_cmd_if_stats
         self.cmd(self.dest,ccode,dstruct=paramstr)
         resp = self.response(timeout=self.timeout)
-        print("got resp:\n%s"%repr(resp))
+        print(("got resp:\n%s"%repr(resp)))
         self.assertEqual(type(PktIfStats()),type(resp))
-        
-        
+
+
 
     def host_app_test(self, addr = 0):
         print("**********************")
-        print("* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest))
+        print(("* host_app test addr = %d (dest 0x%02x)"%(addr,self.dest)))
         print("**********************")
         ccode = mrf_cmd_app_test
         self.cmd(self.dest,ccode)
         resp = self.response(timeout=self.timeout)
-        print("got resp:\n%s"%repr(resp))
+        print(("got resp:\n%s"%repr(resp)))
         self.assertEqual(type(PktTimeDate()),type(resp))
 
 
@@ -94,46 +81,23 @@ class TestLnxtst(DeviceTestCase):
         self.app_info_test(self.dest)
         self.app_cmd_info_test(self.dest)
 
-    
+
     def test01_core_tests(self):
-        self.set_time_test(self.dest,self.host)
+        #self.set_time_test(self.dest,self.host)
         #self.get_time_test(self.host)
         return
-
-    def test04_app_cmd_test(self):
-        print("**********************")
-        print("* PT1000 app_cmd_test (dest 0x%02x)"%(self.dest))
-        print("**********************")
-        print("Sending mrf_app_cmd_test")
-        ccode = mrf_app_cmd_test
-        self.cmd(self.dest,ccode)
-        resp = self.response(timeout=self.timeout)
-        self.assertTrue(self.check_attrs(resp,PktTimeDate()))
-        print("pt1000 app_cmd_test PASSED")
+        self.app_info_test(self.dest)
 
 
-    def test05_read_mstats(self):
-        print("**********************")
-        print("* lnxtst read_mstats test (dest 0x%02x)"%self.dest)
-        print("**********************")
-       
-        ccode = mrf_app_cmd_mstats
-        self.cmd(self.dest,ccode)
-        resp = self.response(timeout=self.timeout)
-        print("resp %s"%repr(resp))
-        self.assertTrue(self.check_attrs(resp,PktLnxMemStats()))
-        print("pt1000 read_state test PASSED")
 
-        
+
+    def skipped_test02_burnin(self):
+        for i in range(100):
+            self.test01_device_tests()
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
-       print("sys.argv = %s"%repr(sys.argv))
-       #pa = sys.argv.pop()
-       #print "pa is %s"%repr(pa)
-       #print "sys.argv = %s"%repr(sys.argv)
-       
-       TestLnxtst.DEST = int(sys.argv.pop(),16)
-       print("setting dest to 0x%x"%TestLnxtst.DEST)
+       TestHost.DEST = int(sys.argv.pop(),16)
+       print(("setting dest to 0x%x"%TestHost.DEST))
     unittest.main()

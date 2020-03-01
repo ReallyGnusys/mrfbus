@@ -180,15 +180,16 @@ typedef struct  __attribute__ ((packed))   {
 }MRF_PKT_UINT16;
 
 
-// 53 bytes
 typedef struct  __attribute__ ((packed))   {
   char dev_name[10];
+  char arch[10];
   uint8 mrfid;
   uint8 netid;
   uint8 num_buffs;
   uint8 num_ifs;
 } MRF_PKT_DEVICE_INFO;
 
+// 53 bytes
 typedef struct  __attribute__ ((packed))   {
   char  mrfbus_version[42];
   char  build[8];

@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from mrf_sens import MrfSens
 from mrf_dev  import MrfDev
+from mrf_sens_relay import MrfSensRelay
 import datetime
 import ctypes
 from mrf_structs import *
@@ -65,11 +66,6 @@ class PktPt1000State(MrfStruct):
         ("ref_i",c_uint32)
         ]
 
-class PktRelayState(MrfStruct):
-    _fields_ = [
-        ("chan", c_uint8),
-        ("val", c_uint8)
-        ]
 
 
 
@@ -154,7 +150,7 @@ Pt1000AppCmds = {
 
 class MrfSensPt1000(MrfSens):
     _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('milliohms' , long) ]  # hmpff
+                  ('milliohms' , int) ]  # hmpff
 
     _out_flds_ = [ ('send_date' , datetime.datetime.now ),
                    ('recd_date' , datetime.datetime.now),
@@ -227,83 +223,12 @@ class MrfSensPt1000(MrfSens):
         return outdata
 
 
-class MrfSensPtRelay(MrfSens):
-    _in_flds_ = [ ('date', PktTimeDate) ,
-                  ('relay' , int) ]  # hmpff
-
-    _out_flds_ = [ ('send_date' , datetime.datetime.now ),
-                   ('recd_date' , datetime.datetime.now),
-                   ('relay' , int )
-    ]
-    _history_ =  { 'fields' : ['relay']
-                 }
-    _stype_ = 'relay'
-    def init(self):
-        self.req_val     = 0
-        self.on_off      = 0
-        self.force_val   = 0
-        self.override    = False
-        #self.clear()  # this doesn't work at sens init, as network is not up... but called again by weblet relays run_init
-    def clear(self):
-        self.override    = False
-        self.on_off      = 1  # yes we need this to get a turn off command sent on init
-        self.set(0)  # turn off all relays on server start
-
-    def genout(self,indata):
-        outdata = dict()
-        #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
-        outdata['send_date'] = indata['date'].to_datetime()
-        outdata['recd_date'] = datetime.datetime.now()
-        outdata['relay']  = int(indata['relay'])
-        return outdata
-
-    def _cmd(self,on_off):
-        self.on_off = on_off
-        cdata = {}
-
-        cdata['chan'] = self.channel
-        cdata['val'] = int(on_off)
-        param = PktRelayState()
-        param.dic_set(cdata)
-        mrflog.debug("%s sending SET_RELAY with param %s"%
-                    (self.__class__.__name__ , repr(param)))
-        self.devupdate('SET_RELAY',param)
-
-    def set(self, on_off):
-        """ FIXME - this is messed up, could do with review - got here because of timers + algos + manual overrides"""
-        self.req_val = on_off
-        if (self.override == False and self.on_off != self.req_val) or (self.req_val != self.output['relay']):
-            mrflog.warn("%s %s changing relay state to %d - override %s on_off %d req_val %d output %d"%
-                        (self.__class__.__name__,self.label,self.req_val,self.override,self.on_off,self.req_val,self.output['relay']))
-            self._cmd(on_off)
-        else:
-            mrflog.warn("%s %s NOT changing relay state to %d on_off %d override %d on_off %d req_val %d output %d"%
-                        (self.__class__.__name__,self.label,self.req_val,self.on_off,self.override,self.on_off,self.req_val,self.output['relay']))
-
-    def force(self, on_off):
-        self.force_val = on_off
-        self.override = True
-        if self.on_off != on_off or on_off != self.output['relay']:
-            mrflog.warn("%s %s force relay state to %d self.on_off %d  output %d"%
-                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
-            self._cmd(on_off)
-        else:
-            mrflog.warn("%s %s NOT force relay state to %d self.on_off %d  output %d"%
-                        (self.__class__.__name__,self.label,on_off, self.on_off,self.output['relay']))
-
-    def release(self):
-        self.override = False
-        if self.on_off != self.req_val or self.req_val != self.output['relay']:  # restore request value
-            self._cmd(self.req_val)
-            mrflog.warn("%s %s release relay state to %d self.on_off %d  req_val %d output %d"%
-                        (self.__class__.__name__,self.label,self.on_off,self.self.output['relay']))
-
 
 class Pt1000Dev(MrfDev):
 
     _capspec = {
-        'temp' : MrfSensPt1000,
-        'relay' : MrfSensPtRelay}
+        'temp'  : MrfSensPt1000,
+        'relay' : MrfSensRelay}
     _cmdset = Pt1000AppCmds
 
     def init(self):

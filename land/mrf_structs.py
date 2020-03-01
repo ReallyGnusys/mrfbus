@@ -1,13 +1,20 @@
 from ctypes import *
 import datetime
 from collections import OrderedDict
-
+#from mrflog import mrflog
 
 class MrfStruct(LittleEndianStructure):
     def fromstr(self, string):
         memmove(addressof(self), string, sizeof(self))
+
+    def sizeof(self):
+        s = 0
+        for f in self._fields_:
+            s += sizeof(f[1])
+        return s
+
     def __len__(self):
-        return sizeof(self)
+        return self.sizeof()
 
     def __getitem__(self,attname):
         return getattr(self,attname)
@@ -67,7 +74,7 @@ class MrfStruct(LittleEndianStructure):
         return dc
 
     def dic_set(self,dic):
-        for attr in dic.keys():
+        for attr in list(dic.keys()):
             setattr(self,attr,dic[attr])
     def __eq__(self,other):
         if type(other) == type(None):
@@ -86,21 +93,21 @@ class MrfStruct(LittleEndianStructure):
         return not self.__eq__(other)
 
     def tbd_unmunge(self):
-        print ("mungeabletype is %s"%type(c_uint()))
+        print(("mungeabletype is %s"%type(c_uint())))
         for field in self._fields_:
             att = getattr(self,field[0])
             attype = field[1]
-            print ("got att %s  type %s"%(field[0],type(attype())))
+            print(("got att %s  type %s"%(field[0],type(attype()))))
             if type(attype()) == type(c_uint()):
                 print ("its for munging")
                 nattr = att >> 16 + ((att & 0xffff) << 16)
                 setattr(self,field[0],nattr)
-        print (repr(self))
+        print((repr(self)))
     def load(self, bytes):
         fit = min(len(bytes), sizeof(self))
         memmove(addressof(self), bytes, fit)
     def dump(self):
-        return buffer(self)[:]
+        return bytes(memoryview(self))  # .decode('utf-8')[:]
 
 
 
@@ -132,6 +139,7 @@ class PktResp(MrfStruct):
 class PktDeviceInfo(MrfStruct):
     _fields_ = [
         ("dev_name", c_uint8*10),
+        ("arch"    , c_uint8*10),
         ("mrfid", c_uint8),
         ("netid", c_uint8),
         ("num_buffs", c_uint8),
@@ -240,6 +248,13 @@ class PktNDR(MrfStruct):
         ("hrsc", c_uint8),
         ("hdest", c_uint8)
     ]
+
+
+class PktRelayState(MrfStruct):
+    _fields_ = [
+        ("chan", c_uint8),
+        ("val", c_uint8)
+        ]
 
 
 # FIXME should be able to generate core command set arg and return templates from C here
@@ -358,10 +373,14 @@ MrfSysCmds = {
 
 
 def mrf_decode_buff(rtype,rbytes, cmdset=MrfSysCmds):
-    if rtype in cmdset.keys() and cmdset[rtype]['resp']:
+    if rtype in list(cmdset.keys()) and cmdset[rtype]['resp']:
         respobj = cmdset[rtype]['resp']()  # create an instance of the mrf_struct object
         #print "mrf_decode_buff got type  %s"%type(respobj)
         #respdat = bytes(resp)[len(hdr)+len(param):len(hdr)+len(param) + len(respobj)]
-        respobj.load(rbytes)  ## and load with raw data
-        return respobj
+        if len(rbytes) >=  respobj.sizeof():
+            respobj.load(rbytes)  ## and load with raw data
+            return respobj
+        #else:
+        #    mrflog.warn("mrf_decode_buff  : respobj %s len %d - but rbytes len %d"%(type(respobj),sizeof(respobj),len(rbytes)))
+
     return None

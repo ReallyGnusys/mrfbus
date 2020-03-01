@@ -11,11 +11,11 @@ from mrfdev_rfmodtc import DevRfmodtc
 
 from mrfland_weblet_temps  import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
-from mrfland_weblet_timers import MrfLandWebletTimers
 from mrfland_weblet_devs   import MrfLandWebletDevs
 from mrfland_weblet_store  import MrfLandWebletStore
 from mrfland_weblet_hot_water  import MrfLandWebletHotWater
 from mrfland_weblet_rad_pump import MrfLandWebletRadPump
+from mrfland_weblet_ufh import MrfLandWebletUFH
 from mrfland_weblet_history import MrfLandWebletHistory
 
 from mrfland_server import MrflandServer
@@ -25,15 +25,15 @@ from mrfland_regmanager import MrflandRegManager
 
 if __name__ == '__main__':
     #mrf_log_init()
-    define("mrfnet", type=int, help="mrfnet ID",default=0x25)
+    define("mrfnet", type=int, help="mrfnet ID",default=0x25)  # for tornado  - do we still need this?
 
     parse_command_line()
 
 
     rm = MrflandRegManager( {
-            'http_port'       : 8888,
-            'db_uri'          : install.db_uri
-        })
+        'http_port'       : 8888,
+        'db_uri'          : install.db_uri
+    })
 
     MrfDevHost(rm, "host", 1)
 
@@ -57,52 +57,58 @@ if __name__ == '__main__':
 
 
     # RF devices
-
+    """
     DevRfmodtc(rm, "rfmodtc_21"  , 0x21,
                {
                    'relay' : ["RFTC1A_SWITCH","RFTC1B_SWITCH"],
                    'temp'  : ["RFTC1_AMBIENT"]
                })
-
+    """
 
 
     MrfLandWebletStore(rm,
                     {
-                        'tag'        : 'store',
+                        'tag'        : 'STORE',
                         'label'      : 'Heatstore',
                         'acc_tag'    : 'ACC',
                         'acc_litres' : 2200
 
                     })
 
+    MrfLandWebletUFH(rm,
+                         {
+                             'tag'        : 'UFH1',
+                             'label'      : 'Lounge',
+                             'period'     : 'UFH',
+                             'ambient'    : 'LOUNGE_AMBIENT',
+                             'outside'    : 'OUTSIDE_AMBIENT',
+                             'pump'       : 'UFH_PUMP',
+                             'storesens'  : 'ACC_100',
+                             'flowsens'   : 'UFH_FLOW',
+                             'retsens'    : 'UFH_RET'
+                         })
+
+
     MrfLandWebletRadPump(rm,
                          {
-                             'tag'        : 'rad1',
+                             'tag'        : 'RAD1',
                              'label'      : 'Main Rads',
                              'rad'        : 'RAD1',
                              'pump'       : 'RAD1_PUMP',
+                             'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB1_FLOW',
-                             'retsens'    : 'RAD1_RET',
-                             'timers'     :  [ 'RAD1_P0', 'RAD1_P1' , 'RAD1_P2']
-                         },
-                         {
-                             'max_return' : 45.0,
-                             'hysterisis' : 5.0
+                             'retsens'    : 'RAD1_RET'
                          })
 
     MrfLandWebletRadPump(rm,
                          {
-                             'tag'        : 'rad2',
+                             'tag'        : 'RAD2',
                              'label'      : 'Guest Rads',
                              'rad'        : 'RAD2',
                              'pump'       : 'RAD2_PUMP',
+                             'storesens'  : 'ACC_100',
                              'flowsens'   : 'HB2_FLOW',
-                             'retsens'    : 'HB2_RET',
-                             'timers'     :  [ 'RAD2_P0', 'RAD2_P1' , 'RAD2_P2']
-                         },
-                         {
-                             'max_return' : 45.0,
-                             'hysterisis' : 5.0
+                             'retsens'    : 'HB2_RET'
                          })
 
 
@@ -114,6 +120,7 @@ if __name__ == '__main__':
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB1',
                               'litres'     : 200
+
                           },
                           {
                               'target_temp': 60.0,
@@ -126,7 +133,7 @@ if __name__ == '__main__':
                           {
                               'tag'        : 'DHW2',
                               'label'      : 'Guest Hot Water',
-                              'rad'        : 'RAD2',
+                              'rad'  : 'RAD2',
                               'acctop'     : 'ACC_100',
                               'heatbox'    : 'HB2',
                               'litres'     : 200
@@ -141,34 +148,27 @@ if __name__ == '__main__':
 
     MrfLandWebletTemps(rm,
                        {
-                           'tag'  : 'temps',
+                           'tag'  : 'TEMPS',
                            'label': 'Temperatures'
                        })
 
-    MrfLandWebletTimers(rm,
-                        {
-                            'tag':'timers',
-                            'label':'Timers',
-                            'timers':  [ "RAD2_P0", "RAD2_P1", "UFH_P0", "UFH_P1", "DHW1_P0", "DHW2_P0" ]
-
-                        })
 
     MrfLandWebletRelays(rm,
                         {
-                            'tag':'relays',
+                            'tag':'RELAYS',
                             'label':'Relays'
                         }
     )
 
     MrfLandWebletDevs(rm,
                        {
-                           'tag'  : 'devs',
+                           'tag'  : 'DEVS',
                            'label': 'Devices'
                        })
 
     MrfLandWebletHistory(rm,
                     {
-                        'tag'        : 'history',
+                        'tag'        : 'HISTORY',
                         'label'      : 'History'
 
                     })
@@ -176,7 +176,7 @@ if __name__ == '__main__':
     ml =  MrflandServer(rm,
                         {
                             'mrfbus_host_port': install.mrfbus_host_port,
-                            'mrf_netid'     : options['mrfnet'],
+                            'mrf_netid'       : options['mrfnet'],
                             'tcp_test_port'   : install.tcpport ,
                             'console'         : { 'port' : 1234}
 

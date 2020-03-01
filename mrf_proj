@@ -44,13 +44,34 @@ if [ $1 == setup ] ; then
         fi
 
     fi
+
+    echo "setting up third party statics"
+
+    # check if request module installed
+    python -c "import requests"
+
+    [ $? -ne 0 ] && echo "python requests module not found : please install" && exit -1
+
+    python3 ${MRFBUS_HOME}/land/thirdparty_static.py
+
+    [ $? -ne 0 ] && echo "land/thirdparty_static.py error - quitting" && exit -1
+
     echo "building venv"
 
-    virtualenv venv
+    python3 -m venv venv
+
+    [ $? -ne 0 ] && echo "python3 -m venv venv error - quitting" && exit -1
+
+
+    #virtualenv venv
     source venv/bin/activate
 
     echo "installing requirements"
-    pip install -r ${MRFBUS_HOME}/land/requirements.txt
+    pip3 install -r ${MRFBUS_HOME}/land/requirements.txt
+
+    [ $? -ne 0 ] && echo "pip3 install -r ${MRFBUS_HOME}/land/requirements.txt :  error - quitting" && exit -1
+
+
     exit 0
 fi
 
@@ -71,7 +92,7 @@ elif  [ $1 == runtests ] ; then
    runtests=yes
    pids=""
 else
-   echo "illegal mode $1 - try build, run or runtests"
+   echo "illegal mode $1 - try setup, build, run or runtests"
    exit -1;
 fi
 
@@ -172,22 +193,30 @@ function kill_devs {
 
 }
 
-[ $mode == build ] && echo "build complete" && exit 0
+if [ $mode == build ] ; then
+
+
+   if [ -n "${server}" ] ; then
+
+      [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1
+
+
+      [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
+      [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land/install_example.py" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
+   fi
+   echo "build complete" && exit 0
+
+fi
 
 
 if [ -n "${server}" ] ; then
 
-   [ ! -e ./${server} ] && [ ! -e ${MRFBUS_HOME}/land/${server} ] && echo "no server ${server} found" && kill_devs && exit 1
-
-
-   [ ! -e  ./${server} ] && echo "copying server from ${MRFBUS_HOME}/land/${server}" && cp ${MRFBUS_HOME}/land/${server} ./${server}
-   [ ! -e  ./install.py ] && echo "copying install.py from ${MRFBUS_HOME}/land/install_example.py" && cp ${MRFBUS_HOME}/land/install_example.py ./install.py
    echo "" > ${LOGDIR}/mrfland.log
    sleep 1
    echo "starting server ./${server}"
-   export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
    source venv/bin/activate
-
+   export PYTHONPATH=$(pwd):${MRFBUS_HOME}/land
+   echo "PYTHONPATH=$PYTHONPATH"
    if [ $# -lt 2 ]  ; then
        echo "piping server to /dev/null"
        stdbuf -oL  python  ./${server} --mrfnet=${mrfnet} > /dev/null&

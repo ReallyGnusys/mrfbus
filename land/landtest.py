@@ -15,7 +15,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import os
 import threading
-import Queue
+import queue
 import time
 import sys
 import traceback
@@ -39,7 +39,7 @@ def endjsonstr(s):
         if c == '}':
             end = 1
         st += c
-    print "found end st = %s"%st
+    print("found end st = %s"%st)
     return st
 
 
@@ -49,12 +49,15 @@ def readjsonstr(s):
     depth = 0
     while depth == 0:
         c = s.recv(1)
+        c = chr(c[0])
         st += c
         if c == '{':
             depth = 1
     #print "found start st = %s depth %d"%(st,depth)
     while depth != 0:
         c = s.recv(1)
+        c = chr(c[0])
+
         st += c
         if c == '{':
             depth += 1
@@ -68,10 +71,10 @@ def readjsonstr(s):
 
 class LandTestCase(unittest.TestCase):
     def setUp(self):
-        print "StubTestCase setUp : entry"
+        print("StubTestCase setUp : entry")
         def exit_nicely(signum,frame):
             signal.signal(signal.SIGINT, self.original_sigint)
-            print "CTRL-C pressed , quitting"
+            print("CTRL-C pressed , quitting")
             self.tearDown()
         self.original_sigint = signal.getsignal(signal.SIGINT)
         signal.signal(signal.SIGINT, exit_nicely)
@@ -89,44 +92,44 @@ class LandTestCase(unittest.TestCase):
                 connected = True
             except:
                 conn_attempts += 1
-                print("failed to connected to server , attempt "+repr(conn_attempts))
+                print(("failed to connected to server , attempt "+repr(conn_attempts)))
                 time.sleep(1)
 
         print ("connected to server")
         #self.sock.setblocking(0)
 
     def tearDown(self):
-        print "tearDown closing socket"
+        print("tearDown closing socket")
         self.sock.close()
 
     def cmd(self,dest,cmd_code,dstruct=None):
 
         if dest > 255:
-            print "dest > 255"
+            print("dest > 255")
             return -1
 
-        print "landtest.cmd  dest %d cmd_code %d dstruct %s"%(dest,cmd_code,dstruct)
-        if cmd_code in MrfSysCmds.keys():
+        print("landtest.cmd  dest %d cmd_code %d dstruct %s"%(dest,cmd_code,dstruct))
+        if cmd_code in list(MrfSysCmds.keys()):
             paramtype = MrfSysCmds[cmd_code]['param']
 
-        elif cmd_code in self.app_cmds.keys():
+        elif cmd_code in list(self.app_cmds.keys()):
             paramtype = self.app_cmds[cmd_code]['param']
             #print "got app command - cmd_code %d  paramtype %s :\n   %s"%(cmd_code,
             #                                                              repr(paramtype),
             #                                                              repr(dstruct),
             #)
         else:
-            print "unrecognised cmd_code (01xs) %d"%cmd_code
+            print("unrecognised cmd_code (01xs) %d"%cmd_code)
             return -1
 
 
         if type(dstruct) == type(None) and type(paramtype) != type(None):
-            print "No param sent , expected %s"%type(paramtype)
-            print "got %s"%repr(dstruct)
+            print("No param sent , expected %s"%type(paramtype))
+            print("got %s"%repr(dstruct))
             return -1
 
         if type(paramtype) == type(None) and type(dstruct) != type(None):
-            print "Param sent ( type %s ) but None expected"%type(dstruct)
+            print("Param sent ( type %s ) but None expected"%type(dstruct))
             return -1
 
         ddic = None
@@ -137,7 +140,7 @@ class LandTestCase(unittest.TestCase):
                 ddic = dstruct.dic()
 
             if not self.check_attrs(ddic,paramtype()):
-                print "check attrs failed for cmd"
+                print("check attrs failed for cmd")
                 return -1
 
 
@@ -150,15 +153,15 @@ class LandTestCase(unittest.TestCase):
 
 
         mstr = to_json(mobj)
-        print "trying to send str %s"%mstr
+        print("trying to send str %s"%mstr)
 
-        self.sock.send(mstr+"\n")
+        self.sock.send(bytes(mstr+"\n",'utf-8'))
         return 0
     def response(self,timeout = 0.2):
         elapsed = 0.0
         tinc = 0.1
         resp = readjsonstr(self.sock)
-        print "landtest:got response %s"%resp
+        print("landtest:got response %s"%resp)
 
         robj = json_parse(resp)
 
@@ -167,7 +170,7 @@ class LandTestCase(unittest.TestCase):
         return robj
 
     def quit(self):
-        print "landtest quit...doing nothing"
+        print("landtest quit...doing nothing")
 
 
 
@@ -177,29 +180,29 @@ class LandTestCase(unittest.TestCase):
         for at in exp.iter_fields():
             #print "checking at %s from expected"%at
             if at not in rsp:
-                print "check_attrs: attr %s not found in response"%at
-                print "resp was %s"%repr(rsp)
+                print("check_attrs: attr %s not found in response"%at)
+                print("resp was %s"%repr(rsp))
                 return False
             if checkval and rsp[at] != exp[at]:
-                print "check_attrs: value check failed for attr %s : exp %s resp %s"%(at,repr(exp[at]),repr(rsp[at]))
+                print("check_attrs: value check failed for attr %s : exp %s resp %s"%(at,repr(exp[at]),repr(rsp[at])))
                 return False
         #print "check_attrs level 1 passed"
         #print "rsp.keys %s "%repr(rsp.keys())
-        for at in rsp.keys():
+        for at in list(rsp.keys()):
             #print "rchecking at %s"%at
             if at not in exp.dic():
-                print "check_attrs: attr %s found in response but not expected"%at
+                print("check_attrs: attr %s found in response but not expected"%at)
                 return False
         return True
 
     def check_resp(self,rsp,exp):  # rsp is a dict
         edic = exp.dic()
         for at in exp.iter_fields():
-            if not rsp.has_key(at):
-                print "check_resp no key %s in  rsp %s"%(at,repr(rsp))
+            if at not in rsp:
+                print("check_resp no key %s in  rsp %s"%(at,repr(rsp)))
                 return False
             if rsp[at] != edic[at]:
-                print "check_resp value mismatch for key %s in  rsp %s exp %s"%(at,repr(rsp),repr(exp))
+                print("check_resp value mismatch for key %s in  rsp %s exp %s"%(at,repr(rsp),repr(exp)))
                 return False
         return True
 
@@ -212,12 +215,12 @@ class LandTestCase(unittest.TestCase):
             return rv
         rsp = self.response()
 
-        print "received:\n %s"%repr(rsp)
-        print "expected:\n %s"%repr(expected)
+        print("received:\n %s"%repr(rsp))
+        print("expected:\n %s"%repr(expected))
         if self.check_resp(rsp,expected) == False:
-            print "ERROR "
-            print "cmd_test failed"
+            print("ERROR ")
+            print("cmd_test failed")
             return -1
         else:
-            print "cmd_test passed"
+            print("cmd_test passed")
             return 0

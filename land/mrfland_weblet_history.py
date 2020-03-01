@@ -38,8 +38,8 @@ class MrfLandWebletHistory(MrflandWeblet):
         self.graph_type = 'Ambient'
 
 
-    def cmd_mrfctrl(self,data,wsid):
-        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+    def mrfctrl_handler(self,data,wsid):
+        mrflog.warn("mrfctrl_handler here, data was %s"%repr(data))
 
         if data['tab'] != self.graphid:
             return
@@ -84,7 +84,7 @@ class MrfLandWebletHistory(MrflandWeblet):
         else:
             sens = None
 
-        if sens:
+        if False:  # sens:    FIXME - what is this , generates javascript browser error - NOT VALID!!
             s += """
 <script type="text/javascript">
 """+to_json(sens)+"""

@@ -31,7 +31,7 @@ import datetime
 
 
 def tr_fn(inp , tr_dic):
-    if tr_dic.has_key(inp):
+    if inp in tr_dic:
         return tr_dic[inp]
     else:
         return inp
@@ -47,7 +47,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
     # get rid of columns we don't want to display
 
     odict = OrderedDict()
-    for fld in idict.keys():
+    for fld in list(idict.keys()):
         if fld not in mask_cols:
             odict[fld] = idict[fld]
 
@@ -55,7 +55,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
         odict[cntrl[0]] = cntrl[1]
     s += """
              <th>%s</th>"""%(tr_fn('tag',tr_hdr))   # always need tag - this is row name
-    for fld in odict.keys():
+    for fld in list(odict.keys()):
         s += """
              <th>%s</th>"""%(tr_fn(fld,tr_hdr))
     s += """
@@ -66,16 +66,16 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
         s += """
            <tr>"""
         s += """<td class="app-%s tab-%s row-%s ">%s</td>"""%(app, tab ,str(row),str(row))
-        if init_vals.has_key(row):
+        if row in init_vals:
             ivals = init_vals[row]
         else:
             ivals = None
-        for fld in odict.keys():
-            if iclasses.has_key(fld):
+        for fld in list(odict.keys()):
+            if fld in iclasses:
                 cls = " %s"%iclasses[fld]
             else:
                 cls = ''
-            if ivals and ivals.has_key(fld):
+            if ivals and fld in ivals:
                 ival = ivals[fld]
             else:
                 ival = ''
@@ -112,7 +112,7 @@ def MrflandObjectTable(app,tab, idict, rows, controls = [], postcontrols = [] , 
 
 def mrfctrl_butt_html(app,tab,row,fld,cls=""):
     return """<button class="glyphicon %s mrfctrl_butt" app="%s" tab="%s" row="%s" mc-fld="%s">%s</button>"""%\
-        (cls,app,tab,row,fld,fld)
+        (cls,app,tab,row,fld,row)
 
 
 def mrfctrl_select_html(app,tab,row,fldlist,label, cls=""):
@@ -154,12 +154,19 @@ class MrfWebletVar(object):
         mrflog.warn("MrfWebletVar app %s name %s val %s"%(app,name,repr(val)))
         mrflog.warn("kwargs %s"%repr(kwargs))
         self.name = name
+        if 'label' in kwargs:
+            self.label = kwargs['label']
+        else:
+            self.label = name # can override if you want ("this is printed for name")
         self.app = app
+        self.read_only = False # can be set to prevent creation of html control when instantiated in table
         self.public = False  # set if var is placed on webpage via a method
-        if kwargs.has_key('callback'):
+        if 'callback' in kwargs:
             self._app_callback = kwargs['callback']
         else:
             self._app_callback = None
+
+
         if hasattr(self,'init'):
             self.init(val, **kwargs)
 
@@ -185,9 +192,9 @@ class MrfWebletVar(object):
 class MrfWebletConfigVar(MrfWebletVar):
     def init(self,val, **kwargs):
         self._val = val  # just a simple value we keep here
-        print "MrfWebletConfigVar init kwargs %s"%repr(kwargs)
+        print("MrfWebletConfigVar init kwargs %s"%repr(kwargs))
 
-        if kwargs.has_key('save'):  # can override default save to DB of cfg var changes
+        if 'save' in kwargs:  # can override default save to DB of cfg var changes
             self.save = kwargs['save']
         else:
             self.save = True
@@ -230,7 +237,7 @@ class MrfWebletConfigVar(MrfWebletVar):
             self.max_val = max_val
             self.min_val = min_val
             self.step    = step
-        elif  self.val.__class__ == str and  kwargs.has_key('sel_list'):
+        elif  self.val.__class__ == str and  'sel_list' in kwargs:
             self.sel_list =  kwargs['sel_list']
             mrflog.warn("config var select")
 
@@ -239,8 +246,8 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self.val.__class__ == str:
             mrflog.warn("yes it's str")
             r = parse_timestr(self.val)
-            if r.__class__ == datetime.time:
-                mrflog.warn("yes it's time")
+            #if r.__class__ == datetime.time:
+            #    mrflog.warn("yes it's time")
             self.tod = r
         else:
             #mrflog.warn("check_tod he say no - got class %s val %s"%(self.val.__class__, repr(self.val)))
@@ -280,8 +287,8 @@ class MrfWebletConfigVar(MrfWebletVar):
         if self._val != value:
             self._val = value
             self.check_tod()
+            mrflog.warn("var changed to %s - app %s name %s"%(repr(value),repr(self.app),repr(self.name)))
             self.updated(wsid=wsid)
-
 
 
     @property
@@ -365,7 +372,7 @@ class MrfWebletSensorVar(MrfWebletVar):
 
 class MrflandWebletVars(object):
     def cfg_dict(self):
-        keys = self.__dict__.keys()
+        keys = list(self.__dict__.keys())
         rv = dict()
         for key in keys:
             v = self.__dict__[key]
@@ -379,12 +386,18 @@ class MrflandWebletVars(object):
         return dc
 
 class MrfTimer(object):
-    def __init__(self,name,en,on,off,active):
+    def __init__(self,name,period,en,on,off,pulse,active):
         self.name = name
+        self.period = period
         self.en   = en
         self.on   = on
         self.off  = off
+        self.pulse  = pulse  # None if not pulse timer , otherwise ctrl var
         self.active = active
+
+        if self.pulse != None:
+            self.off.read_only = True
+            self.on.read_only = True
 
 
 
@@ -406,10 +419,10 @@ class MrfTimer(object):
 
 class MrflandWeblet(object):
     def __init__(self, rm, cdata, vdata={}):
-        if not cdata.has_key('tag'):
+        if 'tag' not in cdata:
             mrflog.error('weblet data does not contain tag')
             return
-        if not cdata.has_key('label'):
+        if 'label' not in cdata:
             mrflog.error('weblet data does not contain label')
             return
 
@@ -423,14 +436,78 @@ class MrflandWeblet(object):
         self.var = MrflandWebletVars()
         self._cfg_touched = False
 
+        # add timers implied by tagperiods - assumes periods defined based on our tag in regmanager instantiation
+        if not 'timers' in  self.cdata:
+            self.cdata['timers'] = []
+        """
+        if 'tagperiodnum' in self.cdata:
+            tpn = self.cdata['tagperiodnum']
+        else:
+            tpn = 2
+        """
+
+        self.tagperiods = {} # can use in derived class to create timer controls etc
+
+        self.tagperiodvar = {} # keys above
+
+        tpers = None
+
+        if 'tagperiods' in cdata:  # cdata has priority over built in
+            tpers = cdata['tagperiods']
+        elif hasattr(self.__class__,'_tagperiods_'):
+            tpers = self.__class__._tagperiods_
+
+        if tpers:
+            mrflog.warn("_tagperiods_ found type %s  %s"%(type(tpers),repr(tpers)))
+
+            for tper in tpers:
+                pulse = False
+                ntimers = 3
+                mrflog.warn("got tper "+repr(tper))
+                if type(tper) == type({}):
+
+                    if not 'name' in tper:
+                        mrflog.warn("name not found in %s"%repr(tper))
+                        continue
+                    ttmr = tper['name']
+                    if 'pulse' in tper:
+                        pulse = tper['pulse']
+                    if 'num' in tper:
+                        ntimers  = tper['num']
+                else:
+                    ttmr = tper
+                    mrflog.warn("ttmr "+repr(ttmr))
+
+                pertag = self.tag + '_' + ttmr
+                #ensure base period registered
+
+                self.rm.add_period(pertag)
+                periodname = pertag +'_PERIOD'
+
+                if not ttmr in self.tagperiods:
+                    self.tagperiods[ttmr] = []
+                psens = self.rm.sensors[periodname]
+                mrflog.warn("creating tag period var "+psens.label)
+                self.add_var(psens.label, psens , field='active', graph=True)
+                self.tagperiodvar[ttmr] = psens.label
+
+
+                for tmri in range(ntimers):
+                    ipulse = pulse and tmri == 0
+                    ttn = self.tag + '_' + ttmr+'_'+str(tmri)
+                    self.cdata['timers'].append({ 'name' : ttn,  'pulse' : ipulse , 'index' : tmri})
+                    self.tagperiods[ttmr].append(ttn)
+
+
 
         self._timers = OrderedDict()
 
-        self._relay_lut = dict()
-        self._relay_shares = dict()
+        #self._relay_lut = dict()
+        #self._relay_shares = dict()
 
-        if self.cdata.has_key('timers'):
+        if 'timers' in self.cdata:
             for tn in self.cdata['timers']:
+
                 self.switch_timer(tn)
 
 
@@ -439,18 +516,12 @@ class MrflandWeblet(object):
             mrflog.warn("weblet has _config_ %s"%(repr(self._config_)))
 
             for citem in self.__class__._config_:
-                if vdata.has_key(citem[0]):  # can override default in weblet instantiation
+                if citem[0] in vdata:  # can override default in weblet instantiation
                     init_val = vdata[citem[0]]
                 else:
                     init_val = citem[1]
 
                 self.add_var(citem[0],init_val, **citem[2])
-                """
-                if type(citem[1]) == type(False):
-                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val))
-                elif type(citem[1]) == type(1) or type(citem[1]) == type(1.0):
-                    self.add_var(citem[0],  MrfWebletConfigVar(self.tag,citem[0],init_val, min_val= citem[3],max_val=citem[4],step=citem[5]))
-                """
 
         if hasattr(self, 'init'):
             self.init()
@@ -459,7 +530,7 @@ class MrflandWeblet(object):
     def _run_init(self):  # called once server is set .. e.g. timers can be set
         # set any enabled timers
 
-        for tn in self._timers.keys():
+        for tn in list(self._timers.keys()):
             tmr = self._timers[tn]
 
             if tmr.en.val:  # set timers if enabled
@@ -479,10 +550,14 @@ class MrflandWeblet(object):
     def restore_cfg(self,data):
         mrflog.warn("weblet %s restoring data %s"%(self.tag,repr(data)))
 
-        for vn in data.keys():
+        for vn in list(data.keys()):
             mrflog.warn("setting var %s to %s"%(vn,repr(data[vn])))
-            dv = self.var.__dict__[vn]._val.__class__(data[vn])  # FIXME str types are unicode when they come back from DB
-            self.var.__dict__[vn].set(dv)
+
+            if vn in self.var.__dict__:
+                dv = self.var.__dict__[vn]._val.__class__(data[vn])  # FIXME str types are unicode when they come back from DB
+                self.var.__dict__[vn].set(dv)
+            else:
+                mrflog.warn("%s restore_cfg , vn %s not found in var"%(self.__class__.__name__,vn))
 
     def tbd_graph_request_data_ready(self,wsid, graphid, data):
         self.rm.webupdate(self.graphtag(graphid),
@@ -507,23 +582,20 @@ class MrflandWeblet(object):
 
 
 
-        # hmpff... see if this var belongs to a timer
-
-        mob = MrflandWeblet._ret.match(name)
-        if mob and self._timers.has_key(mob.group(1)):
-            tn = mob.group(1)
-            mrflog.warn("timer var changed %s  timer %s"%(name,tn))
-            self._eval_timer(tn)
-            tmr = self._timers[tn]
-            if tmr.en.val :   # make sure timers are set
-                for act in ['on','off']:
-                    aval = tmr.__dict__[act]
-                    self.set_timer( aval.tod , tn , act)
 
         if self.var.__dict__[name].__class__.__name__ == 'MrfWebletConfigVar':
             self._cfg_touched = True
         if hasattr(self,'var_changed'):
             self.var_changed(name,wsid=wsid)
+
+
+        # hmpff... see if this var belongs to a timer
+
+        mob = MrflandWeblet._ret.match(name)
+        if mob and mob.group(1) in self._timers:
+            tn = mob.group(1)
+            mrflog.warn("timer var changed %s  timer %s"%(name,tn))
+            self.rm.timer_changed(self.tag,tn)
 
     def add_var(self, name, initval, **kwargs):
         v = None
@@ -532,7 +604,7 @@ class MrflandWeblet(object):
         #kwargs['callback'] = self.var_callback
 
         if issubclass(initval.__class__ , MrfSens):
-            if not kwargs.has_key('field'):
+            if 'field' not in kwargs:
                 mrflog.error("add_var initval was sensor but no field keyword")
                 return
             mrflog.warn("%s add_var SensorVar name %s"%(self.__class__.__name__, name))
@@ -546,7 +618,7 @@ class MrflandWeblet(object):
             mrflog.error("%s add_var failed name %s initval %s"%(self.__class__.__name__, name, repr(initval)))
         if v:
             setattr(self.var, name, v)
-            if kwargs.has_key('graph') and kwargs['graph'] == True :  # FIXME : MUST only be sensor var
+            if 'graph' in kwargs and kwargs['graph'] == True :  # FIXME : MUST only be sensor var
                 self.rm.graph_req(v.sens.label,kwargs['field'])  # ask for managed graph
 
     def has_var(self,name):
@@ -565,34 +637,34 @@ class MrflandWeblet(object):
 
 
 
-    def switch_timer(self, name):  # create a managed switch timer and associated vars
+    def switch_timer(self, param ):  # create a managed switch timer and associated vars
+        pulse = False
+        index = None
+        if type(param) == type(""):
+            name = param
+            #mrflog.error("switch_timer param string : "+repr(param))
+
+        elif type(param) == type({}):
+            if 'name' in param:
+                name = param['name']
+            if 'pulse' in param:
+                pulse = param['pulse']
+                #mrflog.warn("set pulse to "+repr(pulse)+ " : param was "+repr(param))
+
+            if 'index' in param:
+                index = param['index']
+            #mrflog.warn("switch timer param dict %s index = %s "%(repr(param),repr(index)))
+        else:
+            mrflog.error("switch_timer param error : "+repr(param))
+            return
+
         mob = MrflandWeblet._rer.match(name)
-        if not mob:  # expect all labels to end in _on or _off
+        if not mob:  # expect all labels to end in _NNN - where NNN is unique for each first portion
             mrflog.error("%s switch_timer unexpected name %s"%(self.__class__.__name__, name))
             return
                  # try to find matching pump label
-        pl = mob.group(1) + "_PUMP"
-        mrflog.warn("trying to match timer label %s to pump %s"%(name,pl))
 
-        smap = self.rm.senslookup(pl)
-        if smap == None:
-            pl = mob.group(1) + "_HEAT"
-            mrflog.warn("trying to match timer label %s to heater %s"%(name,pl))
-            smap = self.rm.senslookup(pl)
-
-        if smap == None:
-            pl = mob.group(1) + "_SW"
-            mrflog.warn("trying to match timer label %s to switch %s"%(name,pl))
-            smap = self.rm.senslookup(pl)
-
-        if smap == None:
-            mrflog.error("no matching control found for timer %s"%name)
-            return
-
-        self._relay_lut[name] = { 'smap' : smap , 'tag': pl }
-        if not self._relay_shares.has_key(pl):
-            self._relay_shares[pl] = dict()
-        self._relay_shares[pl][name] = True  # this is just a lookup for keys, val doesn't matter
+        period = mob.group(1)
 
         # create vars for timer on, off, enable and active
 
@@ -612,16 +684,31 @@ class MrflandWeblet(object):
         off_var = self.var.__dict__[off]
         active_var = self.var.__dict__[active]
 
-        self._timers[name] = MrfTimer(name,en_var,on_var,off_var,active_var)
+        if pulse:
+            pulsename =  off = name+'_pulse'
+            citem =  { 'min_val' :  1,  'max_val' :  60, 'step' : 1}
+            self.add_var(pulsename, 10, **citem)
+            pulse_var = self.var.__dict__[pulsename]
+            #mrflog.warn("found pulsevar index %s"%repr(index))
+            if index != None:
+                pulse_var.label = "Timer %d [minutes to add]"%index
+                #mrflog.warn("switch timer pulse index %d label %s"%(index,pulse_var.label))
+            else:
+                pulse_var.label = "Config (add minutes)"
+        else:
+            pulse_var = None
+        tmr = MrfTimer(name,period,en_var,on_var,off_var,pulse_var, active_var)
 
+        self._timers[name] = tmr
 
+        self.rm.add_timer(self.tag,name,tmr)
 
     def _timer_callback(self, label, act):
         mrflog.warn("%s : _timer_callback label %s act %s  "%(self.__class__.__name__,label,act))
-        if self._timers.has_key(label):  # check if period timer
+        if label in self._timers:  # check if period timer
             mrflog.warn("%s _timer_callback : period timer label %s"%(self.__class__.__name__,label))
 
-            self._eval_timer(label)
+            #self._eval_timer(label)
 
             ## reset timer if enabled
             tmr = self._timers[label]
@@ -631,18 +718,36 @@ class MrflandWeblet(object):
         if hasattr(self,'timer_callback'):  # call child class callback if defined
             self.timer_callback(label,act)
 
-    def _eval_timer(self,label):
-        sensmap =  self._relay_lut[label]['smap']
-        pl = self._relay_lut[label]['tag']
-        relay = self.rm.sensors[pl]
-        was_active = relay.req_val
-        is_active = False
-        for tn in self._relay_shares[pl]:
+    def pulse_timer_ctrl(self,label,clear=False): # convenience function
 
-            tmr = self._timers[tn]
-            is_active = is_active or tmr.is_active()
+        if not label in self._timers:
+            mrflog.error("timer %s not found"%label)
+            return
+        tmr = self._timers[label]
+        onv = tmr.__dict__['on']
+        offv = tmr.__dict__['off']
+        env = tmr.__dict__['en']
+        actv = tmr.__dict__['active']
+        pulv = tmr.__dict__['pulse']
+        if clear:
+            mrflog.warn( "try to clear timer")
+            onv.set("00:00")
+            offv.set("00:00")
+            env.set(False)
+        else:
+            pulse_time_secs = pulv.val * 60
+            mrflog.warn( "try to set timer to %d secs"%pulse_time_secs)
+            start = datetime.datetime.now()
 
-        relay.set(is_active)
+            if actv.val:  # if timer active we add 5 mins otherwise set 5 mins from now
+                end = datetime.datetime.combine(start.date(),offv.tod) +  datetime.timedelta(seconds=pulse_time_secs)
+            else:
+                end = start + datetime.timedelta(seconds=pulse_time_secs)
+
+            onv.set(start.strftime("%H:%M"))
+            offv.set(end.strftime("%H:%M"))
+            env.set(True)
+
 
     def pane_html_header(self,active=False):
         if active:
@@ -674,7 +779,8 @@ class MrflandWeblet(object):
                 vname = vn
 
             s += """
-            <tr><td>"""+self.var.__dict__[vname].name+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
+            <tr><td>"""+self.var.__dict__[vname].label+"</td><td>"+self.var.__dict__[vname].html+"</td></tr>"
+            self.var.__dict__[vname].public = True
 
         s += """
           </tbody>
@@ -690,10 +796,10 @@ class MrflandWeblet(object):
            <tr>"""
         s+= "<th>"+hdr+"</th>"
 
-        for cn in cols.keys():
+        for cn in list(cols.keys()):
             s+= "<th>"+cn+"</th>"
 
-        for cn in rocols.keys():
+        for cn in list(rocols.keys()):
             s+= "<th>"+cn+"</th>"
 
         s += """
@@ -705,21 +811,30 @@ class MrflandWeblet(object):
             s += """
            <tr><td>"""+rownames[i]+"</td>"
 
-            for cn in cols.keys():
+            for cn in list(cols.keys()):
                 v = cols[cn][i]
-                v.public = True
-                if ctrl:
-                    if v.val.__class__ == bool:
-                        s += "<td>"+v.html_ctrl+"</td>"
-                    else:
-                        s += "<td>"+v.html+v.html_ctrl+"</td>"
-                else:
-                    s += "<td>"+v.html+"</td>"
+                if v == None:
+                    s += "<td></td>"
+                elif type(v) == type(""):
+                    s += "<td>"+v+"</td>"
 
-            for cn in rocols.keys():
+                else:
+                    v.public = True
+                    if ctrl and not v.read_only:
+                        if v.val.__class__ == bool:
+                            s += "<td>"+v.html_ctrl+"</td>"
+                        else:
+                            s += "<td>"+v.html+v.html_ctrl+"</td>"
+                    else:
+                        s += "<td>"+v.html+"</td>"
+
+            for cn in list(rocols.keys()):
                 v = rocols[cn][i]
-                v.public = True
-                s += "<td>"+v.html+"</td>"
+                if v == None:
+                    s += "<td></td>"
+                else:
+                    v.public = True
+                    s += "<td>"+v.html+"</td>"
 
 
 
@@ -748,7 +863,7 @@ class MrflandWeblet(object):
 
             self.var.__dict__[vn].public = True
             s += """
-            <tr><td>"""+self.var.__dict__[vn].name+"</td><td>"+\
+            <tr><td>"""+self.var.__dict__[vn].label+"</td><td>"+\
             self.var.__dict__[vn].html+"</td><td>"+\
             self.var.__dict__[vn].html_ctrl+"</td></tr>"
 
@@ -758,8 +873,9 @@ class MrflandWeblet(object):
         return s
 
 
-    def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False):
+    def timer_ctrl_table(self ,exclude_list=[],include_list=None, ro=False, labelindex=True):
         tcols =  OrderedDict()
+        tcols['period'] = []
         tcols['enable'] =  []
         tcols['on']  = []
         tcols['off'] = []
@@ -770,29 +886,43 @@ class MrflandWeblet(object):
         if include_list:
             tnames = include_list
         else:
-            tnames = self._timers.keys()
+            tnames = list(self._timers.keys())
 
         tcnames = []
+        pulse_timers = []
+
+        idx = 0
         for tn in tnames:
             if tn in exclude_list:
                 continue
-            tcnames.append(tn)
+            if labelindex:
+                tcnames.append(str(idx))
+            else:
+                tcnames.append(tn)
+            idx += 1
             tmr = self._timers[tn]
+            tcols['period'].append(tmr.period)
+            if tmr.pulse:
+                pulse_timers.append(tmr.pulse.name)
+                html_str = ""
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse', 'add', tn , cls='glyphicon-time')
+                html_str += mrfctrl_butt_html(self.tag,'timer_pulse',  'clear', tn , cls='glyphicon-remove')
+                tcols['enable'].append(html_str)
+            else:
+                tcols['enable'].append(tmr.en)
 
-            tcols['enable'].append(tmr.en)
             tcols['on'].append(tmr.on)
             tcols['off'].append(tmr.off)
 
             rocols['active'].append(tmr.active)
 
-        if ro:
-            del tcols['on']
-            del tcols['enable']  # Filthy hack to unclutter these from auto controlled timers
-            for tc in tcols.keys():
-                rocols[tc] = tcols[tc]
-                del tcols[tc]
 
-        return self.html_mc_var_table('Name',tcnames, tcols ,ctrl=True,rocols=rocols)
+        html = self.html_mc_var_table('Timer',tcnames, tcols ,ctrl=True,rocols=rocols)
+
+
+        html += self.html_var_ctrl_table(pulse_timers)  # control pulse timer vars at bottom for now
+
+        return html
 
 
     def cmd(self,cmd, data,wsid=None):
@@ -803,27 +933,41 @@ class MrflandWeblet(object):
         else:
             mrflog.error("%s attempt to execute undefined cmd %s"%(self.__class__.__name__,cmd))
 
+    def cmd_mrfctrl(self,data,wsid=None):
+        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+
+        if data['tab'] == 'timer_pulse':
+
+            if data['row'] == 'add':
+                self.pulse_timer_ctrl(data['fld'])
+            elif data['row'] == 'clear':
+                self.pulse_timer_ctrl(data['fld'],clear=True)
+
+
+        if hasattr(self,'mrfctrl_handler'):
+            self.mrfctrl_handler(data,wsid)
+
     def cmd_mrfvar_ctrl(self,data ,wsid=None):
         mrflog.warn("%s cmd_mrfvar_ctrl - data  %s wsid %s"%(self.__class__.__name__,repr(data),repr(wsid)))
 
-        if not data.has_key('op'):
+        if 'op' not in data:
             mrflog.error("%s cmd_mrfvar_ctrl no op specified - data  was  %s"%(self.__class__.__name__,repr(data)))
             return
 
-        if not data.has_key('name'):
+        if 'name' not in data:
             mrflog.error("%s cmd_mrfvar_ctrl no name specified - data  was  %s"%(self.__class__.__name__,repr(data)))
             return
 
         vn = data['name']
 
-        if not self.var.__dict__.has_key(vn):
+        if vn not in self.var.__dict__:
             mrflog.error("%s cmd_mrfvar_ctrl no var found with name %s - data  was  %s"%(self.__class__.__name__,vn,repr(data)))
             return
 
         va = self.var.__dict__[vn]
 
         if data['op'] == 'set':
-            if not data.has_key('val'):
+            if 'val' not in data:
                 mrflog.error("%s cmd_mrfvar_ctrl op was set but no val in data  %s"%(self.__class__.__name__,repr(data)))
                 return
 

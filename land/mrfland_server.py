@@ -16,9 +16,9 @@ import install
 import os
 import time
 import json
-from urlparse import urlparse
+from urllib.parse import urlparse
 import signal
-import Queue
+import queue
 from collections import OrderedDict
 
 from mrflog import mrflog
@@ -28,13 +28,20 @@ from pubsock import PubSocketHandler
 
 from mrf_structs import *
 import mrfland
+import ipaddress
+
+
+import pdb
+oursubnet = ipaddress.ip_network(install.localnet)
+
+"""
 from mrfdev_pt1000 import Pt1000Dev
 from mrfdev_heatbox import DevHeatbox
 from mrfdev_host import MrfDevHost
 from mrfland_weblet_temps import MrfLandWebletTemps
 from mrfland_weblet_relays import MrfLandWebletRelays
 from mrfland_weblet_timers import MrfLandWebletTimers
-
+"""
 
 
 
@@ -99,6 +106,9 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         mrflog.info("headers:"+str(self.request.headers))
         #mrflog.debug("staff_type = "+str(stype))
 
+        self.set_req_host()
+
+        """
         rs =  self._request_summary()
         mrflog.debug("req_sum:"+rs)
         regx = r'^GET /ws\?Id=%s \(([^\(]+)\)'%self.id
@@ -118,6 +128,15 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
             mrflog.debug("client ip not found!")
             return
 
+        """
+        ip = self.ip
+        mrflog.info("client ip="+ip)
+        sob =  self.rm.comm.check_socket(self.id,ip)
+        if sob == None:
+            mrflog.debug("check socket failed for ip %s  self.id %s"%(str(ip),self.id))
+            return
+
+
 
         cdata = {"id": self.id,
                  "sid":sob.sid,
@@ -129,13 +148,36 @@ class WebSocketHandler(tornado.websocket.WebSocketHandler):
         self.rm.comm.add_client(self.id,cdata)
 
 
+    def set_req_host(self):
+        # handle nginx proxying
+        mrflog.warn("req headers "+repr(self.request.headers))
+        if 'X-Real-Ip' in  list(self.request.headers.keys()):
+            self.ip = self.request.headers['X-Real-Ip']
+
+        elif 'X-Forwarded-For' in list(self.request.headers.keys()):
+            self.ip = self.request.headers['X-Forwarded-For']
+
+            #self.request_host = self.request.headers['Host']+":"+self.request.headers['Port']
+        else:
+            self.ip = self.request.remote_ip
+        self.request_host = self.request.headers['Host']
+
+        ipaddr = ipaddress.ip_address(self.ip)
+
+        if ipaddr.is_loopback:
+            self.localreq = True
+        elif ipaddr in oursubnet:
+            self.localreq = True
+        else:
+            self.localreq = False
+
 
 
     def on_message(self, message):
         mrflog.info("client message on wsid ="+self.id+" "+str(message))
         cobj = mrfland.json_parse(message)
 
-        if cobj and cobj.has_key("app") and cobj.has_key("ccmd"):
+        if cobj and "app" in cobj and "ccmd" in cobj:
             mrflog.info("decoded client command %s"%repr(cobj))
             self.rm.web_client_command(self.id,cobj["app"],cobj["ccmd"],cobj["data"])
 
@@ -200,13 +242,19 @@ class SimpleTcpClient(object):
                 mrflog.info("got line %s"%line)
                 #s = line.decode('utf-8').strip()
                 #mrflog('got |%s|' % repr(s))
+                line = line.decode('utf-8')
                 ob = mrfland.json_parse(line)
                 obdecoded = False
                 if ob:
                     data = None
                     mrflog.info("json ob : %s"%repr(ob))
 
-                    if ob.has_key('dest') and ob.has_key('cmd'):
+                    if 'sys_cmd' in ob:
+                        if 'data' in ob:
+                            data = ob['data']
+                        self.landserver._sys_callback(self.id,ob['sys_cmd'],data)
+
+                    if 'dest' in ob and 'cmd' in ob:
                         if ob['cmd'] in MrfSysCmds:
                             obdecoded = True
                             if MrfSysCmds[ob['cmd']]['param'] != None:
@@ -233,7 +281,7 @@ class SimpleTcpClient(object):
                         mrflog.info("no valid cmd decoded in  %s"%repr(line))
                 else:
                     mrflog.warn("no json ob decoded in %s"%repr(line))
-                yield self.stream.write("\n")
+                yield self.stream.write(bytes("\n",'utf-8'))
         except tornado.iostream.StreamClosedError:
             pass
 
@@ -276,15 +324,15 @@ class MrfTcpServer(tornado.tcpserver.TCPServer):
     def client_disconnect(self,id):
         self.clients.pop(id)
         mrflog.info("removed tcp client %s"%repr(id))
-        mrflog.info("tcp clients now %s"%repr(self.clients.keys()))
+        mrflog.info("tcp clients now %s"%repr(list(self.clients.keys())))
     def tag_is_tcp_client(self,tag):
-        return self.clients.has_key(tag)
+        return tag in self.clients
 
     def write_to_client(self,id , msg):
-        if not self.clients.has_key(id):
+        if id not in self.clients:
             mrflog.error("%s no client with id %d"%(self.__class__.__name__,id))
             return
-        self.clients[id].stream.write(msg)
+        self.clients[id].stream.write(bytes(msg,'utf-8'))
         mrflog.info("wrote_to client %d"%id)
     @tornado.gen.coroutine
     def handle_stream(self, stream, address):
@@ -322,7 +370,7 @@ class MrflandServer(object):
         server = self  # FIXME ouch
         self.rm.setserver(server)  # double OUCH
 
-        self.q = Queue.Queue()
+        self.q = queue.Queue()
         self.active_cmd = None
         self.active_timer = 0
 
@@ -330,11 +378,11 @@ class MrflandServer(object):
         signal.signal(signal.SIGINT, exit_nicely)
         self._active = False
 
-        if self.config.has_key('mrfbus_host_port'):
+        if 'mrfbus_host_port' in self.config:
             self._start_mrfnet(self.config['mrfbus_host_port'],self.config['mrf_netid'])
         self.quiet_cnt = 0
         self._start_webapp()
-        if self.config.has_key('tcp_test_port'):
+        if 'tcp_test_port' in self.config:
             self._start_tcp_service( self.config['tcp_test_port'])
         self.ioloop = tornado.ioloop.IOLoop.instance()
         mrflog.warn("MrflandServer tornado IOLoop starting : IOLoop.time %s"%repr(self.ioloop.time()))
@@ -345,7 +393,7 @@ class MrflandServer(object):
 
 
 
-        if self.config.has_key('console'):
+        if 'console' in self.config:
             from thirdparty.tornado_console import ConsoleServer
             #my_locals = {}
             self.console_server = ConsoleServer(locals())
@@ -372,7 +420,7 @@ class MrflandServer(object):
 
     def timer_callback(self, *args, **kwargs):
 
-        if not kwargs.has_key('tag') or not kwargs.has_key('act'):
+        if 'tag' not in kwargs or 'act' not in kwargs:
             mrflog.error("timer_callback got kwargs %s quitting"%repr(kwargs.keys))
             return
         mrflog.info("timer_callback got kwargs %s"%repr(kwargs.keys))
@@ -380,7 +428,7 @@ class MrflandServer(object):
         tag = kwargs['tag']
         act = kwargs['act']
         tid = app+"."+tag+"."+ act
-        if not self.timers.has_key(tid):
+        if tid not in self.timers:
             mrflog.error("timer_callback : no timer with tid  %s"%tid)
             return
         tinf = self.timers[tid]
@@ -400,7 +448,7 @@ class MrflandServer(object):
 
 
         tid = app+"."+tag+"."+ act
-        if self.timers.has_key(tid):
+        if tid in self.timers:
             tinf = self.timers[tid]
             mrflog.info("removing existing timeout for tid %s"%tid)
             tornado.ioloop.IOLoop.instance().remove_timeout(tinf['thandle'])
@@ -426,7 +474,7 @@ class MrflandServer(object):
     def _run_updates(self):
         for wup in self.rm.wups:
             ro = mrfland.RetObj()
-            if wup.has_key('wsid'):
+            if 'wsid' in wup:
                 ro.a(mrfland.mrf_cmd('web-update',wup))
                 self.rm.comm.comm(wup['wsid'],ro)
             else:
@@ -512,13 +560,13 @@ class MrflandServer(object):
             return -1
 
     def TBD_app_cmd_set(self,dest):
-        for appn in self.apps.keys():
+        for appn in list(self.apps.keys()):
             app = self.apps[appn]
             if self.apps[appn].i_manage(dest):
                 return self.apps[appn].cmd_set(dest)
 
     def _dev_cmd_set(self,dest):
-        if not self.rm.devmap.has_key(dest):
+        if dest not in self.rm.devmap:
             mrflog.error("no device %d found in rm"%dest)
             return None
 
@@ -527,11 +575,11 @@ class MrflandServer(object):
     def _run_cmd(self,cobj):
         mrflog.debug("cmd : dest %d cmd_code %s"%(cobj.dest,repr(cobj.cmd_code)))
         if cobj.dest > 255:
-            print "dest > 255"
+            print("dest > 255")
             return -1
 
         appcmds = self._dev_cmd_set(cobj.dest)
-        if cobj.cmd_code in MrfSysCmds.keys():
+        if cobj.cmd_code in list(MrfSysCmds.keys()):
             paramtype = MrfSysCmds[cobj.cmd_code]['param']
         elif (appcmds and cobj.cmd_code in appcmds):
             paramtype = appcmds[cobj.cmd_code]['param']
@@ -558,7 +606,7 @@ class MrflandServer(object):
         if cobj.dstruct:
             mlen += len(cobj.dstruct)
         if mlen > 64:
-            print "mlen = %d"%mlen
+            print("mlen = %d"%mlen)
             return -1
         msg = bytearray(mlen)
         msg[0] = mlen
@@ -573,7 +621,7 @@ class MrflandServer(object):
                 n += 1
 
         csum = 0
-        for i in xrange(mlen -1):
+        for i in range(mlen -1):
             csum += int(msg[i])
         csum = csum % 256
         msg[mlen - 1] = csum
@@ -600,7 +648,7 @@ class MrflandServer(object):
            None
         """
 
-        #print "parse_input len is %d"%len(resp)
+        mrflog.debug( "parse_input len is %d"%len(resp))
         hdr = PktHeader()
 
         if len(resp) < len(hdr):  # no way valid
@@ -612,17 +660,17 @@ class MrflandServer(object):
 
         if hdr.netid != self.netid: # only looking for packets from this netid
             mrflog.warn("not our netid")
-            print ("hdr is:\n%s\n"%repr(hdr))
+            mrflog_warn(("hdr is:\n%s\n"%repr(hdr)))
             return None,None,None
 
         if hdr.udest != 0: # only looking for packets destined for us, except for receipts
 
             if hdr.usrc != 0:
-                mrflog.warn("not receipt for us")
+                mrflog.warn("not receipt for us %s"%repr(hdr))
                 return None,None,None
 
             if self.active_cmd and hdr.udest == self.active_cmd.dest and hdr.type == self.active_cmd.cmd_code:
-                mrflog.info("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
+                mrflog.warn("got receipt for active cmd  msgid 0x%02x"%hdr.msgid)
                 self.active_cmd.receipt = hdr
                 mrflog.info(repr(hdr))
 
@@ -652,10 +700,11 @@ class MrflandServer(object):
             param, rsp = ndr, None
         elif  hdr.type == mrf_cmd_resp or hdr.type == mrf_cmd_usr_resp or hdr.type == mrf_cmd_usr_struct:
             ## here just pass this to rm device model to handle
-            mrflog.info("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
+            mrflog.debug("server parse resp got hdr %s  len(resp) 0x%X"%(repr(hdr),len(resp)))
 
             # pass packet to rm , which runs device packet handler
             param, rsp = self.rm.packet(hdr,resp)
+            mrflog.debug("called rm packet \n : hdr was \n%s)"%(repr(hdr)))
 
         else:
             mrflog.warn("not resp or struct or ndr")
@@ -699,32 +748,38 @@ class MrflandServer(object):
     def _resp_handler(self,*args, **kwargs):
         rresp = os.read(self.rfd, 1024)
 
-        mrflog.info("Input on response pipe len %d"%len(rresp))
+        mrflog.debug("Input on response pipe len %d "%(len(rresp)))
         while len(rresp):
 
             hdr , param, resp  = self.parse_input(rresp)
-
+            #pdb.set_trace()
             if hdr:
                 rresp=rresp[hdr.length:]
             else:
                 mrflog.warn("no hdr len(rresp) %d type resp %s"%(len(rresp),str(type(resp))))
                 mrflog.warn("type hdr "+str(type(hdr)))
 
+                mrflog.error("resp :"+repr(rresp))
+                sys.exit(-1)
 
+            mrflog.debug("hdr on resp_pipe %s"%repr(hdr))
 
                 #mrflog.warn("ccnt %d hdr %s parm %s resp %s"%(ccnt,repr(hdr),repr(param),repr(resp)))
-            if hdr  and param  and resp :
-                mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
-                self.handle_response(hdr, param , resp, response=True )
+            if hdr  and param:
+                if resp:
+                    mrflog.info("received object %s response from  %d robj %s"%(type(param),hdr.usrc,type(resp)))
+                    self.handle_response(hdr, param , resp, response=True )
 
 
-                mrflog.debug("_resp_handler , got resp %s"%repr(resp))
-                mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
-                mrflog.debug("_resp_handler , got param %s"%repr(hdr))
+                    mrflog.debug("_resp_handler , got resp %s"%repr(resp))
+                    mrflog.debug("_resp_handler , got hdr %s"%repr(hdr))
+                    mrflog.debug("_resp_handler , got param %s"%repr(param))
+                elif hdr.type != mrf_cmd_ndr:
+                    mrflog.warn("failed to decode response - hdr %s \nparam %s"%(repr(hdr),repr(param)))
 
     def _struct_handler(self,*args, **kwargs):
         mrflog.debug("Input on data pipe")
-        rresp = os.read(self.sfd, 1024)
+        rresp = os.read(self.sfd, 2048)
 
 
         while len(rresp):
@@ -732,8 +787,10 @@ class MrflandServer(object):
 
             if hdr:
                 rresp=rresp[hdr.length:]
+
             else:
                 mrflog.warn("no hdr")
+
             if hdr and param and resp :
                 mrflog.debug("received object %s response from  %d"%(type(resp),hdr.usrc))
                 self.handle_response(hdr, param , resp)
@@ -764,40 +821,65 @@ class MrflandServer(object):
         mrflog.info("_callback tag %s dest %d cmd %s  data type %s  %s  "%(tag,dest,cmd,type(data), repr(data)))
         self.queue_cmd(tag, dest, cmd,data)
 
+    def _sys_callback(self, tag,  cmd,data=None):
+        mrflog.info("_callback tag %s  cmd %s  data type %s  %s  "%(tag,cmd,type(data), repr(data)))
+
+        if cmd == 'reload_cert':
+            self.ssl_reload_cert_chain()
+        else:
+            mrflog.warn("sys cmd not recognised "+repr(cmd))
     def _start_tcp_service(self, port):
         self.tcp_server = MrfTcpServer( landserver = self )
         self.tcp_server.listen(port)
         mrflog.info("started tcpserver on port %d"%port)
     def _start_webapp(self):
 
-        if os.environ.has_key('MRFBUS_HOME'):
+        if 'MRFBUS_HOME' in os.environ:
             mrfhome = os.environ['MRFBUS_HOME']
         else:
             mrflog.error("MRFBUS_HOME not defined, webapp unlikely to work...")
             mrfhome = ''
 
+
+        if 'PWD' in os.environ:
+            cwd = os.environ['PWD']
+        else:
+            mrflog.error("PWD not defined, webapp unlikely to work...")
+            cwd = ''
+
+
+
         self._web_static_handler = NoCacheStaticFileHandler
 
-        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','public/css/asa/images')}),
+        self._web_handlers = [(r'/(favicon.ico)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/favicon.ico')}),
                               (r'/static/public/(.*)', self._web_static_handler, {'path': os.path.join(mrfhome,'land','static/public')}),
+                              (r'/static/thirdparty/(.*)', self._web_static_handler, {'path': os.path.join(cwd,'static/thirdparty')}),
                               (r'/ws', WebSocketHandler, dict(rm=self.rm)), # need rm to track connections and auth
                               (r'/pws', PubSocketHandler),
                               (r'/static/secure/(.*)',AuthStaticFileHandler , {'path': os.path.join(mrfhome,'land','static/secure')}),
                               (r'((/)([^/?]*)(.*))', mainapp, dict(rm=self.rm) )
         ]
 
-        self._webapp = tornado.web.Application(self._web_handlers,cookie_secret="dighobalanamsamarosaddhammamavijanatam")
+        self._webapp = tornado.web.Application(self._web_handlers,cookie_secret=install.cookie_secret)
 
         self.nsettings = dict()
 
 
         if install.https_server:
+            import ssl
+
+
+            self.ssl_ctx = ssl.create_default_context(purpose=ssl.Purpose.CLIENT_AUTH)
+            self.ssl_ctx.check_hostname = False
+            self.ssl_reload_cert_chain()
+            self.nsettings["ssl_options"] = self.ssl_ctx
+            """
             self.nsettings["ssl_options"] = {
                 "certfile": install._ssl_cert_file,
                 "keyfile" : install._ssl_key_file
             }
 
-
+            """
             mrflog.info("starting https server certfile %s keyfile %s"%\
                       (install._ssl_cert_file,install._ssl_key_file))
         else:
@@ -807,6 +889,10 @@ class MrflandServer(object):
 
         self.http_server.listen(self.rm.config['http_port'])
 
+
+    def ssl_reload_cert_chain(self):
+        mrflog.warn("reloading SSL cert chain")
+        self.ssl_ctx.load_cert_chain(install._ssl_cert_file,keyfile=install._ssl_key_file)
 
     def _check_if_anything(self):
         if self.q.empty():

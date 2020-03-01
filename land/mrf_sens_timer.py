@@ -23,13 +23,13 @@ from mrflog import mrflog
 
 
 class MrfSensTimer(MrfSens):
-    _in_flds_ = [ ('cname', unicode), ('val' , dict) ]
-    
+    _in_flds_ = [ ('cname', str), ('val' , dict) ]
+
     _out_flds_ = [ ('on' , datetime.time ),
                    ('off' , datetime.time ),
                    ('active', bool) ]
     _stype_ = 'timer'
-    
+
     def is_active(self , outdata = None):
         if outdata == None:
             outdata = self.output
@@ -48,10 +48,10 @@ class MrfSensTimer(MrfSens):
     def genout(self,indata):
         outdata = dict()
         #mrflog.info("%s input got type %s data %s"%(self.__class__.__name__, type(indata), indata))
-        if not indata.has_key('cname'):
+        if 'cname' not in indata:
             mrflog.error("%s genout no key cname in %s"%(self.__class__.__name__, repr(indata)))
             return
-        
+
         cname = indata['cname']
         outdata[cname] = datetime.time(hour=indata['val']['hour'], minute=indata['val']['minute'], second=indata['val']['second'])
 
@@ -60,7 +60,5 @@ class MrfSensTimer(MrfSens):
         outdata['active'] = self.is_active(outdata)
 
         mrflog.warn("%s %s genout %s"%(self.__class__.__name__, self.label, repr(outdata)))
-        mrflog.warn("%s %s subsribers = %s"%(self.__class__.__name__, self.label, repr(self.subscribers)))
+        mrflog.warn("%s %s subscribers = %s"%(self.__class__.__name__, self.label, repr(self.subscribers)))
         return outdata
-        
-

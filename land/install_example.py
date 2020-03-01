@@ -8,21 +8,27 @@
 
 test = True
 
-instance = 'heat-1'
+appname = 'test_1'
+
 #domain = 'localdom'
 domain = None   # save adding .localdom to req urls
 
 import socket
-host = socket.gethostname()
+host = socket.gethostname().split('.')[0]
 #host = 'ted'
+
+localnet = '192.168.5.0/24'
 
 http_port = 8888  # real port served by tornado webapp
 http_proxy_port = 8888  # proxy port used by clients ( handled by nginx )
+
+cookie_secret = "changemetosomethingsecret"
 
 
 tcpport = 8912   # port used by tcp/json test service
 mrfbus_host_port = 8915  # port of mrfbus host device ( addr 1 )
 
+dbname = "mrf_"+host+'_'+appname
 
 db_uri = "mongodb://username:password@host:27017/mrfbus?authSource=admin"
 
@@ -58,9 +64,9 @@ users = {
 
 
     'q'     : { 'sid' : 3, 'type' : 'sysadmin', 'password' : 'q'     , 'username': 'q',
-                'apps' : ['store','rad1', 'rad2', 'DHW1','DHW2','temps','timers','relays','devs','history']},
+                'apps' : '*'},
     'p'     : { 'sid' : 4, 'type' : 'sysadmin', 'password' : 'p'     , 'username': 'p',
-                'apps' : ['store','rad1','rad2','DHW1','DHW2','temps','timers','relays','devs','history']},
+                'apps' : '*' },
     'j'     : { 'sid' : 5, 'type' : 'sysadmin', 'password' : 'j'     , 'username': 'j',
                 'apps' : ['rad2','history']}
 }
@@ -68,4 +74,4 @@ users = {
 
 
 _ssl_cert_file = 'certs/'+host+'/cert.pem'
-_ssl_key_file =  'certs/'+host+'/private/key.pem'
+_ssl_key_file =  'certs/'+host+'/private.key'

@@ -24,12 +24,13 @@ from mrflog import mrflog
 import re
 import datetime
 
-class MrfLandWebletRadPump(MrflandWeblet):
+class MrfLandWebletUFH(MrflandWeblet):
 
     _config_ = [
-                 ('max_return'  ,  45.0  , { 'min_val' : 30.0,  'max_val' :  60.0, 'step' : 1.0}),
-                 ('min_store'   ,  50.0  , { 'min_val' : 30.0,  'max_val' :  70.0, 'step' : 1.0}),
-                 ('hysterisis',    5.0   , { 'min_val' :  0.25,  'max_val' :  10.0, 'step' : 0.25})
+                 ('max_ambient' ,  19.0  , { 'min_val' : 15.0,  'max_val' :  24.0, 'step' : 0.25}),
+                 ('max_flow'    ,  36.0  , { 'min_val' : 30.0,  'max_val' :  42.0, 'step' : 0.5}),
+                 ('min_store'   ,  30.0  , { 'min_val' :  0.0,  'max_val' :  70.0, 'step' : 0.5}),
+                 ('hysterisis' ,    5.0  , { 'min_val' :  0.25,  'max_val' :  4.0, 'step' : 0.25})
     ]
     _tagperiods_  = [{'name':'EN','pulse' :True , 'num' : 3}]
 
@@ -52,6 +53,14 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
         ## expect config data fields as follows
+        if 'ambient' not in self.cdata:
+            mrflog.error("%s , no ambient in data"%self.__class__.__name__)
+            return
+
+        if 'outside' not in self.cdata:
+            mrflog.error("%s , no outside in data"%self.__class__.__name__)
+            return
+
 
         if 'pump' not in self.cdata:
             mrflog.error("%s , no pump in data"%self.__class__.__name__)
@@ -71,31 +80,37 @@ class MrfLandWebletRadPump(MrflandWeblet):
             mrflog.error("%s , no retsens in data"%self.__class__.__name__)
             return
 
-        if 'rad' not in self.cdata:
-            mrflog.error("%s , no rad in data"%self.__class__.__name__)
-            return
 
 
         # end sanity checks
 
         # find period sensor
-        sn = self.tag + "_EN" + "_PERIOD"
 
-        #sn = self.cdata['rad'] + "_PERIOD"
+
+
+        sn = self.tag + "_EN" + "_PERIOD"
         self.periodsens = self.rm.sens_search(sn)
         self.add_var('active',self.periodsens, field='active')
 
         # find store sensor
 
         self.storesens = self.rm.sens_search(self.cdata['storesens'])
-        self.add_var('store_temp',self.storesens, field='temp', graph=True)
+        self.add_var('store_temp',self.storesens, field='temp', graph=True, label='store')
 
         # find temp sensors
 
         self.flowsens = self.rm.sens_search(self.cdata['flowsens'])
-        self.add_var('flow_temp',self.flowsens, field='temp', graph=True)
+        self.add_var('flow_temp',self.flowsens, field='temp', graph=True,label='flow')
         self.retsens = self.rm.sens_search(self.cdata['retsens'])
-        self.add_var('return_temp',self.retsens, field='temp', graph=True)
+        self.add_var('return_temp',self.retsens, field='temp', graph=True,label='return')
+
+        # ambient
+        self.ambientsens = self.rm.sens_search(self.cdata['ambient'])
+        self.add_var('ambient',self.ambientsens, field='temp', graph=True)
+
+        # outside
+        self.outsidesens = self.rm.sens_search(self.cdata['outside'])
+        self.add_var('outside',self.outsidesens, field='temp', graph=True)
 
 
         # find relay
@@ -103,19 +118,16 @@ class MrfLandWebletRadPump(MrflandWeblet):
         self.pump = self.rm.sens_search(self.cdata['pump'])
         self.add_var('pump',self.pump, field='relay', graph=True)
 
-
-
         ## declare state var
 
-        if self.var.return_temp.val < self.var.max_return.val:
-            self.add_var('state','UP', save=False)  # values UP DOWN , i.e. hysterisis ref select
-        else:
-            self.add_var('state','DOWN', save=False)  # values UP DOWN , i.e. hysterisis ref select
+        self.add_var('state','UP', save=False)  # values UP DOWN , i.e. hysterisis ref select
 
         ## normal vars to keep state of algo
 
-        self.return_state = 'UP'
         self.store_state  = 'UP'
+
+        self.ambient_state  = 'UP'
+
 
 
     def run_init(self):
@@ -125,6 +137,10 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
 
+    def mrfctrl_handler(self,data,wsid):
+        mrflog.warn( "cmd_mrfctrl here, data was %s"%repr(data))
+
+        return
 
 
 
@@ -135,20 +151,21 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         ## eval hysterisis states
 
-        if self.return_state == 'UP'and self.var.return_temp.val > self.var.max_return.val:
-                self.return_state = 'DOWN'
-        elif self.return_state == 'DOWN' and  self.var.return_temp.val < (self.var.max_return.val - self.var.hysterisis.val):
-            self.return_state = 'UP'
+        if self.ambient_state == 'UP'and self.var.ambient.val > self.var.max_ambient.val:
+                self.ambient_state = 'DOWN'
+        elif self.ambient_state == 'DOWN' and  self.var.ambient.val < (self.var.max_ambient.val - self.var.hysterisis.val):
+            self.ambient_state = 'UP'
+
 
 
         if self.store_state == 'UP' and self.var.store_temp.val < self.var.min_store.val:
-                self.store_state == 'DOWN'
+                self.store_state = 'DOWN'
         elif self.store_state == 'DOWN' and  self.var.store_temp.val >  (self.var.min_store.val + self.var.hysterisis.val):
-            self.store_state == 'UP'
+            self.store_state = 'UP'
 
 
-        if self.store_state == 'UP' and self.return_state == 'UP':  # for debug aid
-            self.var.state.set("UP")
+        if self.store_state == 'UP' and self.ambient_state == 'UP':
+            self.var.state.set("UP")    # only make mrfvar for debug aid
         else:
             self.var.state.set("DOWN")
 
@@ -161,7 +178,7 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         # set relay if not already correct
         if pump_next != pump_curr:
-            mrflog.warn("setting pump to %s"%repr(pump_next))
+            mrflog.warn("setting pump to %s after var %s changed "%(repr(pump_next),name))
             self.pump.set(pump_next)
         #else:
         #    mrflog.warn("leaving pump %s"%repr(pump_next))
@@ -171,16 +188,14 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
     def pane_html(self):
         s =  """
-        <h2>"""+self.label+" </h2>"  #   "+self.var.tank_top.html+" &#176;C</h2>"
+        <h2>"""+self.label+" "+ self.var.ambient.html + " &#176;C  Outside "+self.var.outside.html+" &#176;C</h2>"
 
         s += self.rm.graph_inst({
-            "temp" : [self.flowsens.label, self.retsens.label, self.storesens.label],
+            "temp" : [self.ambientsens.label, self.outsidesens.label, self.flowsens.label, self.retsens.label, self.storesens.label],
             "relay": [self.pump.label]
         })
 
-
         s += self.timer_ctrl_table()
-
 
 
         s += """
@@ -190,10 +205,12 @@ class MrfLandWebletRadPump(MrflandWeblet):
         s += self.html_var_table(
             [
                 self.var.active.name,
-                self.var.store_temp.name,
+                self.var.pump.name,
                 self.var.flow_temp.name,
                 self.var.return_temp.name,
-                self.var.pump.name,
+                self.var.ambient.name,
+                self.var.outside.name,
+                self.var.store_temp.name,
                 self.var.state.name
 
             ]
@@ -205,8 +222,8 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
         s += self.html_var_ctrl_table(
             [
-                self.var. min_store.name,
-                self.var.max_return.name,
+                self.var.max_ambient.name,
+                self.var.min_store.name,
                 self.var.hysterisis.name
             ]
         )

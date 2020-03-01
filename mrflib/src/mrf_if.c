@@ -137,6 +137,9 @@ int8 mrf_if_tx_queue(I_F i_f, uint8 bnum ){
   }
   else {
   // fall through if no space in queue
+      mrf_debug(5,"mrf_if_tx_queue qp->push failed , i_f %d buff %d retry_count %d qip %d qop %d items %d\n",
+                i_f,bnum,mbst->retry_count,qp->get_qip(),qp->get_qop(),qp->items());
+
     mrf_if_ptr(i_f)->status->stats.tx_overruns++;
   return -1;
   }

@@ -23,7 +23,7 @@ $(document).ready(function() {
 
         e.preventDefault();
         $(this).tab('show');
-        onresize();
+        //onresize();
 
     });
 
@@ -69,22 +69,6 @@ function ParseJsonString(str) {
     return obj;
 }
 
-/* retiring pending appeal ..
-
-function convert_obj_date(obj){
-    if ((typeof obj == 'object') && (typeof obj.date == 'string'))
-        obj.date = new Date(obj.date);
-    return obj;
-
-}
-
-function convert_obj_date_name(obj,name){
-    if ((typeof obj == 'object') &&  ( obj != null ) && obj.hasOwnProperty(name) &&  ( typeof obj[name] == 'string'))
-        obj[name] = new Date(obj[name]);
-    return obj;
-
-}
-*/
 
 function MrfSocket(socket){
     this.set_socket(socket);
@@ -150,8 +134,8 @@ function mrf_web_update(obj){
     }
 
     if(tag.tab == 'mrfgraph') {
-        //console.log("mrfgraph tag ");
-        //console.log(tag);
+        console.warn("mrfgraph tag ");
+        console.log(tag);
         mrfgraph(tag.app, tag.row,  obj.data)
         return;
     }
@@ -260,7 +244,7 @@ function mrfgraph_data_layout(gdata){
                 });
         } else {
 
-            console.log("not temp memory or relay!"+sn);
+            console.warn("not temp memory or relay!"+sn);
         }
     }
 
@@ -286,8 +270,8 @@ function mrfgraph(app, graph, data){
 
 
 function mrf_auto_graph(label, data){
-    console.log("mrf_auto_graph "+label);
-    console.log(data);
+    //console.log("mrf_auto_graph "+label);
+    //console.log(data);
     dbg = false
 
 
@@ -306,8 +290,8 @@ function mrf_auto_graph(label, data){
             if (fld == 'ts') // shouldn't happen
                 continue;
 
-            if (typeof(_sensor_averages[slabel][fld]) == 'undefined'){
-                console.error("failed to find fld  "+fld+"  in averages for "+slabel);
+            if (typeof(_sensor_averages[slabel][fld]) == 'undefined'){  // skip any flds not in graphs - system sends all outputs for now
+                //console.("failed to find fld  "+fld+"  in averages for "+slabel);
                 continue;
             }
 
@@ -337,9 +321,12 @@ function mrf_auto_graph(label, data){
         for (var slabel in data.sensors) {
 
             for (var fld in data.sensors[slabel])
-                _sensor_averages[slabel][fld].value.shift();
+                if (typeof(_sensor_averages[slabel][fld]) != 'undefined') {// skip any flds not in graphs - system sends all outputs for now
 
-            console.log("deleted old value for "+slabel+" "+fld+" "+fd);
+                    _sensor_averages[slabel][fld].value.shift();
+
+                    console.log("deleted old value for "+slabel+" "+fld+" "+fd);
+                }
 
         }
     }
@@ -352,7 +339,7 @@ function mrf_auto_graph(label, data){
         plot = plots[idx];
         var divid = plot.getAttribute("id");
         var dl = plot_data_layout($(plot).data("sensors"));
-        console.log("trying to update plot "+divid);
+        //console.log("trying to update plot "+divid);
         Plotly.update(divid,dl.data,dl.layout);
         //console.log("updated plot "+divid);
     }
@@ -360,33 +347,58 @@ function mrf_auto_graph(label, data){
 
 function plot_data_layout(sensors){
 
-       var data = [];
-        var layout = {
-            yaxis: {title: 'temp'},
-        };
-        for (tid in sensors.temp) {
-            tsens = sensors.temp[tid];
-            console.log("plot_data_layout trying tsens "+tsens)
+    var data = [];
+    var lhs;
+
+    // FIXME hard coding here of numbers on LHS ( only one type - e.g. temp, memory ) - and logic on RHS ( 0 or 1 values)
+    // no built in way of determining type at present, hence following
+    if ('temp' in sensors)
+        lhs = 'temp';
+    else if('memory' in sensors)
+        lhs = 'memory';
+    else if('active' in sensors)
+        lhs = 'active';
+
+    else // default
+        lhs = Object.keys(sensors)[0];
+
+    console.log("plot_data_layout lhs = "+lhs)
+    console.log(sensors)
+
+
+    var layout = {
+        yaxis: {title: lhs},
+    };
+        for (tid in sensors[lhs]) {
+            tsens = sensors[lhs][tid];
+            //console.log("plot_data_layout trying tsens "+tsens)
             data.push( {
-                x : _sensor_averages[tsens].temp.ts,
-                y : _sensor_averages[tsens].temp.value,
+                x : _sensor_averages[tsens][lhs].ts,
+                y : _sensor_averages[tsens][lhs].value,
                 name : tsens,
                 type : 'scatter'
             });
         }
-        // support optional graphing or relays on RHS second Y axis
-        if (typeof(sensors.relay) != 'undefined'){
-            layout.yaxis2 =  {
-                title: 'relay',
+    // support optional graphing of relays on RHS second Y axis
+    if (Object.keys(sensors).length > 1){
+        if ('relay' in sensors)
+            rhs = 'relay';
+        //else if('active' in sensors)
+        //    rhs = 'active';
+        else // default
+            rhs = Object.keys(sensors)[1];
+
+        layout.yaxis2 =  {
+                title: rhs,
                 overlaying: 'y',
                 side: 'right'
-            };
-            for (tid in sensors.relay) {
+        };
+        for (tid in sensors[rhs]) {
                 //console.log("trying relay "+tsens)
-                tsens = sensors.relay[tid];
+                tsens = sensors[rhs][tid];
                 data.push( {
-                    x : _sensor_averages[tsens].relay.ts,
-                    y : _sensor_averages[tsens].relay.value,
+                    x : _sensor_averages[tsens][rhs].ts,
+                    y : _sensor_averages[tsens][rhs].value,
                     name : tsens,
                     yaxis : 'y2',
                     type : 'linear',
@@ -398,7 +410,9 @@ function plot_data_layout(sensors){
             }
         }
 
+
     /* FIXME! should be able to automate graph updates and shouldn't be copying */
+    /*
     for (tid in sensors.memory) {
         tsens = sensors.memory[tid];
         //console.log("plot_data_layout trying tsens "+tsens)
@@ -412,7 +426,7 @@ function plot_data_layout(sensors){
             type : 'scatter'
         });
         }
-
+        */
 
     return { data : data ,  layout : layout};
 }

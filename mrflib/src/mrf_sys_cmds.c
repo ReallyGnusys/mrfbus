@@ -6,7 +6,7 @@
 * it under the terms of the GNU General Public License as published by
 * the Free Software Foundation, either version 3 of the License, or
 * (at your option) any later version.
-* 
+*
 * This program is distributed in the hope that it will be useful,
 * but WITHOUT ANY WARRANTY; without even the implied warranty of
 * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -23,32 +23,31 @@ const uint8 _mrfid = MRFID;
 
 #define _DEVNAME_STR_  SYM_NAME(_CONCAT_(DEVTYPE,MRFID))
 
-const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) , MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
+const MRF_PKT_DEVICE_INFO device_info  = { SYM_NAME(DEVTYPE) ,SYM_NAME(ARCH),  MRFID, MRFNET, _MRF_BUFFS,NUM_INTERFACES };
 const MRF_PKT_SYS_INFO sys_info        = {  SYM_NAME(GITSH), SYM_NAME(MRFBLD), /*(const uint8)*/MRF_NUM_SYS_CMDS,GITMOD };
 const MRF_PKT_APP_INFO app_info        = {SYM_NAME(MRF_APP), MRF_NUM_APP_CMDS};
 
 
 extern const MRF_CMD mrf_sys_cmds[MRF_NUM_SYS_CMDS] = {
-  {"ACK"        , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_ack      },
-  {"RETRY"      , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , 0                          , 0                          ,  NULL               , mrf_task_retry      },
-  {"RESP"       , MRF_CFLG_INTR | MRF_CFLG_NO_ACK , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL               , mrf_task_resp     },
-  {"DEVICE_INFO", MRF_CFLG_INTR                   , 0                          , sizeof(MRF_PKT_DEVICE_INFO),  (void*)&device_info, NULL },
-  {"DEVICE_STATUS"    , MRF_CFLG_INTR            , 0                          , sizeof(MRF_PKT_DEVICE_STATUS)    ,  NULL               , mrf_task_device_status },
-  {"SYS_INFO"   , MRF_CFLG_INTR                   , 0                          , sizeof(MRF_PKT_SYS_INFO),  (void*)&sys_info, NULL },
-  {"IF_STATUS"  , MRF_CFLG_INTR                    , sizeof(MRF_PKT_UINT8)     , sizeof(IF_STATS      )    ,  NULL               , mrf_task_if_status  },
-  {"GET_TIME"   , MRF_CFLG_INTR                    , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL               , mrf_task_get_time },
-  {"SET_TIME"   , MRF_CFLG_INTR                    , sizeof(MRF_PKT_TIMEDATE)   , sizeof(MRF_PKT_TIMEDATE)   ,  NULL               , mrf_task_set_time   },
-  {"BUFF_STATE"  , MRF_CFLG_INTR                    , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_BUFF_STATE) ,  NULL               , mrf_task_buff_state }  ,
-  {"CMD_INFO",  MRF_CFLG_INTR                         , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO),  NULL          , mrf_task_cmd_info   },
-  {"APP_INFO",  MRF_CFLG_INTR                         , 0                          , sizeof(MRF_PKT_APP_INFO),   (void*)&app_info, NULL},
-  {"APP_CMD_INFO",  MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO),  NULL          , mrf_task_app_cmd_info   },
-  {"TEST_1"     , 0                                , 0                          , sizeof(MRF_PKT_TIMEDATE)   ,  NULL          , mrf_task_test_1   },
-  {"USR_STRUCT" , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_struct  },
-  {"USR_RESP"   , 0                                , sizeof(MRF_PKT_RESP)       , 0                          ,  NULL      , mrf_task_usr_resp     },
-{"RESET"       ,  MRF_CFLG_NO_ACK                , 0                          , 0                          ,  NULL      , mrf_task_reset      },
-  {"PING"        ,  MRF_CFLG_INTR                  , 0                          , sizeof(MRF_PKT_PING_RES)   ,  NULL     , mrf_task_ping},
-  {"NDR"      , MRF_CFLG_INTR                      , sizeof(MRF_PKT_NDR)        , 0                          ,  NULL     , mrf_task_ndr      }
-
+  {"ACK"          , MRF_CFLG_INTR|MRF_CFLG_NO_ACK , 0                          , 0                            ,  NULL               , mrf_task_ack      },
+  {"RETRY"        , MRF_CFLG_INTR|MRF_CFLG_NO_ACK , 0                          , 0                            ,  NULL               , mrf_task_retry      },
+  {"RESP"         , MRF_CFLG_INTR|MRF_CFLG_NO_ACK , sizeof(MRF_PKT_RESP)       , 0                            ,  NULL               , mrf_task_resp     },
+  {"DEVICE_INFO"  , MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_DEVICE_INFO)  ,  (void*)&device_info, NULL },
+  {"DEVICE_STATUS", MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_DEVICE_STATUS),  NULL               , mrf_task_device_status },
+  {"SYS_INFO"     , MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_SYS_INFO)     ,  (void*)&sys_info   , NULL },
+  {"IF_STATUS"    , MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(IF_STATS      )       ,  NULL               , mrf_task_if_status  },
+  {"GET_TIME"     , MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_TIMEDATE)     ,  NULL               , mrf_task_get_time },
+  {"SET_TIME"     , MRF_CFLG_INTR                 , sizeof(MRF_PKT_TIMEDATE)   , sizeof(MRF_PKT_TIMEDATE)     ,  NULL               , mrf_task_set_time   },
+  {"BUFF_STATE"   , MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_BUFF_STATE)   ,  NULL               , mrf_task_buff_state }  ,
+  {"CMD_INFO"     , MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO)     ,  NULL               , mrf_task_cmd_info   },
+  {"APP_INFO"     , MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_APP_INFO)     ,   (void*)&app_info  , NULL},
+  {"APP_CMD_INFO" , MRF_CFLG_INTR                 , sizeof(MRF_PKT_UINT8)      , sizeof(MRF_PKT_CMD_INFO)     ,  NULL               , mrf_task_app_cmd_info   },
+  {"TEST_1"       , 0                             , 0                          , sizeof(MRF_PKT_TIMEDATE)     ,  NULL               , mrf_task_test_1   },
+  {"USR_STRUCT"   , 0                             , sizeof(MRF_PKT_RESP)       , 0                            ,  NULL               , mrf_task_usr_struct  },
+  {"USR_RESP"     , 0                             , sizeof(MRF_PKT_RESP)       , 0                            ,  NULL               , mrf_task_usr_resp     },
+  {"RESET"        , MRF_CFLG_NO_ACK               , 0                          , 0                            ,  NULL               , mrf_task_reset      },
+  {"PING"         , MRF_CFLG_INTR                 , 0                          , sizeof(MRF_PKT_PING_RES)     ,  NULL               , mrf_task_ping},
+  {"NDR"          , MRF_CFLG_INTR                 , sizeof(MRF_PKT_NDR)        , 0                            ,  NULL               , mrf_task_ndr      }
 
 };
 
