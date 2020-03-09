@@ -354,6 +354,8 @@ void aesCBC(unsigned char mode, unsigned char *in, unsigned char *out, unsigned 
 
 #endif
 
+/*
+
 #pragma vector=DMA_VECTOR
 __interrupt void DMA_ISR(void)
 
@@ -371,7 +373,6 @@ __interrupt void DMA_ISR(void)
   }
 }
 
-/*
 #pragma vector=AES_VECTOR
 __interrupt void AES_ISR(void)
 
