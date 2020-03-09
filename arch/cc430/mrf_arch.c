@@ -22,9 +22,8 @@
 #include <legacymsp430.h>
 #include <rtc_arch.h>
 #include "hal_pmm.h"
-
-#include "mrf_pinmacros.h"
 #include "mrf_aes.h"
+#include "mrf_pinmacros.h"
 #define _WAKE_PORT P1
 #define _WAKE_BIT  0
 
@@ -53,7 +52,6 @@ int putchar(int c){
 int _print_mrf_cmd(MRF_CMD_CODE cmd){
   // empty for cc
   // should not be calling this in cross platform code.. only during debug..
-  return 0;
 }
 
 extern void init_clock(void);
@@ -106,8 +104,6 @@ int mrf_arch_boot(){
 
 
   //aes_init();
-
-
   return 0;
 }
 

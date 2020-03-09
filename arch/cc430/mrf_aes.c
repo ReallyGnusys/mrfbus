@@ -28,32 +28,35 @@
 int dma_int_cnt;
 int aes_int_cnt;
 static volatile int _aes_busy;
-extern const uint8_t  *_mrf_key;
-uint8_t _mrf_dec_key[8];
+extern const uint16_t  _mrf_key[8];
+uint16_t _mrf_dec_key[8];
 
 int _aes_keygen_err(){
   return 0;
 }
 
+uint16_t aesctl0;
+
+volatile void aesdbg1(){
+  aesctl0 =  *(uint16_t *)AESACTL0_;
+}
 
 void aes_init(){
   //uint16_t *keyreg = (uint16_t *)(&AESAKEY);
   dma_int_cnt = 0;
   aes_int_cnt = 0;
   *(uint16_t *)AESACTL0_ = AESSWRST;                          // reset AES, AESCMEN=0, AESOPx=00
-
+  aesdbg1();
 
   // generate decryption key
   for (int i=0;i<8;i++)
     _mrf_dec_key[i] = 0;
 
   *(uint16_t *)AESACTL0_ = 2;                     // AESCMEN=1, AESCMx=01
+  aesdbg1();
 
   for (int i=0;i<8;i++)
     *(uint16_t *)AESAKEY_ = _mrf_key[i];
-
-
-
 
 
   for (int i=0;(i<150) &&((*(uint16_t *)AESACTL0_ & AESRDYIFG) == 0) ;i++);
@@ -368,7 +371,7 @@ __interrupt void DMA_ISR(void)
   }
 }
 
-
+/*
 #pragma vector=AES_VECTOR
 __interrupt void AES_ISR(void)
 
@@ -379,3 +382,4 @@ __interrupt void AES_ISR(void)
   aes_get_output();
 
 }
+*/

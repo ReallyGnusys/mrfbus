@@ -29,6 +29,9 @@
 
 #include "mrf_relays.h"
 #include "rtc_arch.h"
+#include "mrf_aes.h"
+
+
 void mrf_rf_idle(I_F i_f);
 
 typedef enum {
@@ -64,6 +67,10 @@ int _appdbg_22(){
   return 22;
 }
 
+// aes temp test
+
+
+
 
 int mrf_app_init(){
 
@@ -78,6 +85,8 @@ int mrf_app_init(){
   mrf_nexthop(&_base_route, MRFID, 0);  // get relay/basestation route
   _appdbg_22();
   _sec_count = 0;
+
+
 
   tgrad100 =  (100*((uint32_t)*((uint16_t *)0x1A1C) - *((uint16_t *)0x1A1A)))/55;  // cal points for 85 and 30C
   tycross100 =   (100*(uint32_t)(*((uint16_t *)0x1A1A))) - (30*tgrad100);
@@ -95,6 +104,7 @@ int mrf_app_init(){
   ADC12CTL0 |= ADC12ENC;
 
   rtc_second_signal_enable();
+  //aes_init();
 
   return 0;
 }
