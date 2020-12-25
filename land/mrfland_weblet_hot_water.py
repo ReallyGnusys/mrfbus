@@ -162,13 +162,6 @@ class MrfLandWebletHotWater(MrflandWeblet):
         self.rtimer_env  = tmr.__dict__['en']
         self.rtimer_actv = tmr.__dict__['active']
 
-    def run_init(self):
-        mrflog.warn("%s run_init"%(self.__class__.__name__))
-        # start timer
-        now = datetime.now()
-        td  = timedelta(seconds = 30)
-        tod = now + td
-        self.set_timer( tod.time() , 'state' , 'TO')
 
 
     def set_timeout(self,seconds):

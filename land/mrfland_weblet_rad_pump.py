@@ -142,9 +142,9 @@ class MrfLandWebletRadPump(MrflandWeblet):
 
 
         if self.store_state == 'UP' and self.var.store_temp.val < self.var.min_store.val:
-                self.store_state == 'DOWN'
+                self.store_state = 'DOWN'
         elif self.store_state == 'DOWN' and  self.var.store_temp.val >  (self.var.min_store.val + self.var.hysterisis.val):
-            self.store_state == 'UP'
+            self.store_state = 'UP'
 
 
         if self.store_state == 'UP' and self.return_state == 'UP':  # for debug aid
