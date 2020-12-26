@@ -944,7 +944,10 @@ var _sensor_averages = {"""
     def db_get_sensors(self,**kwargs):
 
 
-        cnames = yield self.db.collection_names()
+        #pdb.set_trace()
+
+        #mrflog.warn("get_sensors  self.db %s"%repr(dir(self.db)))
+        cnames = yield self.db.list_collection_names()
 
 
         mrflog.warn("got cnames %s"%repr(cnames))
@@ -987,12 +990,12 @@ var _sensor_averages = {"""
 
         coll = self.db.get_collection('sensor.%s.%s'%(stype,sensor_id))
 
-        future = coll.update({'docdate':docdate},
+        future = coll.update_one({'docdate':docdate},
                                  { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
         result = yield future
 
 
-        if result['updatedExisting']:
+        if result.modified_count > 0:
             mrflog.info("doc update result good %s "%repr(result))
         else:
             mrflog.warn("result dodgy %s "%repr(result))
@@ -1005,7 +1008,7 @@ var _sensor_averages = {"""
                                  { "$set" : { 'data.'+str(hour)+'.'+str(minute) : value } })
 
             result = yield future
-            if result['updatedExisting']:
+            if result.modified_count > 0:
                 mrflog.warn("doc update(2) result good %s "%repr(result))
             else:
                 mrflog.error("result(2) bad %s "%repr(result))
