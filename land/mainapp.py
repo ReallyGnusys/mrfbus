@@ -290,7 +290,11 @@ class mainapp(tornado.web.RequestHandler):
 
         mrflog.warn("localreq = %s : static_cdn = %s"%(repr(self.localreq),repr(static_cdn)))
 
-        sessid = self.get_secure_cookie(install.sess_cookie).decode('utf-8')
+        sessid = self.get_secure_cookie(install.sess_cookie)
+
+        if sessid:
+            sessid= sessid.decode('utf-8')
+        
         mrflog.warn("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
 
         if sessid == None:
