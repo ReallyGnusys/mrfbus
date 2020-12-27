@@ -660,7 +660,7 @@ class MrflandServer(object):
 
         if hdr.netid != self.netid: # only looking for packets from this netid
             mrflog.warn("not our netid")
-            mrflog_warn(("hdr is:\n%s\n"%repr(hdr)))
+            mrflog.warn(("hdr is:\n%s\n"%repr(hdr)))
             return None,None,None
 
         if hdr.udest != 0: # only looking for packets destined for us, except for receipts

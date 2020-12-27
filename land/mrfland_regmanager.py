@@ -1074,7 +1074,7 @@ var _sensor_averages = {"""
 
         mrflog.warn("loaded config  for app %s result %s"%(apptag,repr(result)))
 
-        if 'data' in result:
+        if result and 'data' in result:
             self.weblets[apptag].restore_cfg(result['data'])
 
 def gen_sessid():
