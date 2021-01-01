@@ -38,6 +38,7 @@ def login_page(rh,css_html,js_html):
     rh.add_header("Expires",0)
 
     rh.write(login_tp.generate(css_html=css_html,js_html=js_html))
+    mrflog.warn("login_page : exit")
     #rh.write("Login page")
 
 def logout_action(rh,sob,ip):
@@ -294,12 +295,12 @@ class mainapp(tornado.web.RequestHandler):
 
         if sessid:
             sessid= sessid.decode('utf-8')
-        
+
         mrflog.warn("page = "+page+"  action = "+str(action)+" sessid = "+str(sessid))
 
         if sessid == None:
             if page == 'login':
-                mrflog.info("returning login page as requested")
+                mrflog.warn("returning login page as requested")
                 return login_page(self,
                                   css_html=self.rm.tp_static_mgr.html(login=True,css=True,static_cdn=static_cdn),
                                   js_html=self.rm.tp_static_mgr.html(login=True,static_cdn=static_cdn),
@@ -323,7 +324,7 @@ class mainapp(tornado.web.RequestHandler):
                 return self.redirect('/login')
 
         if  ( page == 'logout') :
-            mrflog.info("calling logout_action")
+            mrflog.warn("calling logout_action")
             wsid = sob['wsid']
             self.rm.comm.staff_logout(sob,ip)
             self.clear_cookie(install.sess_cookie)
